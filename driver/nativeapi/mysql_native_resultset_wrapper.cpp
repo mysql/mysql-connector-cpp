@@ -40,9 +40,9 @@ namespace NativeAPI
 {
 
 /* {{{ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper */
-MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::st_mysql_res * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
-											/*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
-	: /*logger(l),*/ capi(_capi), rs(res)
+MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::MYSQL_RES * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
+                      /*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
+  : /*logger(l),*/ capi(_capi), rs(res)
 {
 }
 /* }}} */
@@ -51,7 +51,7 @@ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::st_mysql_res * res,
 /* {{{ MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper */
 MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper()
 {
-	capi->free_result(rs);
+  capi->free_result(rs);
 }
 /* }}} */
 
@@ -60,25 +60,25 @@ MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper()
 void
 MySQL_NativeResultsetWrapper::data_seek(uint64_t offset)
 {
-	capi->data_seek(rs, offset);
+  capi->data_seek(rs, offset);
 }
 /* }}} */
 
 
 /* {{{ MySQL_NativeResultsetWrapper::fetch_field */
-::st_mysql_field *
+::MYSQL_FIELD *
 MySQL_NativeResultsetWrapper::fetch_field()
 {
-	return capi->fetch_field(rs);
+  return capi->fetch_field(rs);
 }
 /* }}} */
 
 
 /* {{{ MySQL_NativeResultsetWrapper::fetch_field_direct */
-::st_mysql_field *
+::MYSQL_FIELD *
 MySQL_NativeResultsetWrapper::fetch_field_direct(unsigned int field_nr)
 {
-	return capi->fetch_field_direct(rs, field_nr);
+  return capi->fetch_field_direct(rs, field_nr);
 }
 /* }}} */
 
@@ -87,7 +87,7 @@ MySQL_NativeResultsetWrapper::fetch_field_direct(unsigned int field_nr)
 unsigned long *
 MySQL_NativeResultsetWrapper::fetch_lengths()
 {
-	return capi->fetch_lengths(rs);
+  return capi->fetch_lengths(rs);
 }
 /* }}} */
 
@@ -96,7 +96,7 @@ MySQL_NativeResultsetWrapper::fetch_lengths()
 char**
 MySQL_NativeResultsetWrapper::fetch_row()
 {
-	return capi->fetch_row(rs);
+  return capi->fetch_row(rs);
 }
 /* }}} */
 
@@ -105,7 +105,7 @@ MySQL_NativeResultsetWrapper::fetch_row()
 unsigned int
 MySQL_NativeResultsetWrapper::num_fields()
 {
-	return capi->num_fields(rs);
+  return capi->num_fields(rs);
 }
 /* }}} */
 
@@ -114,7 +114,7 @@ MySQL_NativeResultsetWrapper::num_fields()
 uint64_t
 MySQL_NativeResultsetWrapper::num_rows()
 {
-	return capi->num_rows(rs);
+  return capi->num_rows(rs);
 }
 /* }}} */
 

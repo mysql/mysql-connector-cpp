@@ -308,8 +308,7 @@ void variant::getUsingWrongDatatype()
     std::string user ("mysql_user");
     connection_properties["user"]= user;
 
-    const int *val= connection_properties["user"].get< int >();
-    val = NULL;
+    connection_properties["user"].get< int >();
 
     FAIL("No exception II");
   }

@@ -46,13 +46,81 @@ namespace mysql
 namespace NativeAPI
 {
 
+/*
+  Function to convert sql::mysql::MySQL_Connection_Options to
+  libmysqlclient mysql_option
+*/
+mysql_option
+get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
+{
+  switch(opt)
+  {
+  case sql::mysql::MYSQL_OPT_CONNECT_TIMEOUT: return ::MYSQL_OPT_CONNECT_TIMEOUT;
+  case sql::mysql::MYSQL_OPT_COMPRESS: return ::MYSQL_OPT_COMPRESS;
+  case sql::mysql::MYSQL_OPT_NAMED_PIPE: return ::MYSQL_OPT_NAMED_PIPE;
+  case sql::mysql::MYSQL_INIT_COMMAND: return ::MYSQL_INIT_COMMAND;
+  case sql::mysql::MYSQL_READ_DEFAULT_FILE: return ::MYSQL_READ_DEFAULT_FILE;
+  case sql::mysql::MYSQL_READ_DEFAULT_GROUP: return ::MYSQL_READ_DEFAULT_GROUP;
+  case sql::mysql::MYSQL_SET_CHARSET_DIR: return ::MYSQL_SET_CHARSET_DIR;
+  case sql::mysql::MYSQL_SET_CHARSET_NAME: return ::MYSQL_SET_CHARSET_NAME;
+  case sql::mysql::MYSQL_OPT_LOCAL_INFILE: return ::MYSQL_OPT_LOCAL_INFILE;
+  case sql::mysql::MYSQL_OPT_PROTOCOL: return ::MYSQL_OPT_PROTOCOL;
+  case sql::mysql::MYSQL_SHARED_MEMORY_BASE_NAME: return ::MYSQL_SHARED_MEMORY_BASE_NAME;
+  case sql::mysql::MYSQL_OPT_READ_TIMEOUT: return ::MYSQL_OPT_READ_TIMEOUT;
+  case sql::mysql::MYSQL_OPT_WRITE_TIMEOUT: return ::MYSQL_OPT_WRITE_TIMEOUT;
+  case sql::mysql::MYSQL_OPT_USE_RESULT: return ::MYSQL_OPT_USE_RESULT;
+  case sql::mysql::MYSQL_REPORT_DATA_TRUNCATION: return ::MYSQL_REPORT_DATA_TRUNCATION;
+  case sql::mysql::MYSQL_OPT_RECONNECT: return ::MYSQL_OPT_RECONNECT;
+  case sql::mysql::MYSQL_PLUGIN_DIR: return ::MYSQL_PLUGIN_DIR;
+  case sql::mysql::MYSQL_DEFAULT_AUTH: return ::MYSQL_DEFAULT_AUTH;
+  case sql::mysql::MYSQL_OPT_BIND: return ::MYSQL_OPT_BIND;
+  case sql::mysql::MYSQL_OPT_SSL_KEY: return ::MYSQL_OPT_SSL_KEY;
+  case sql::mysql::MYSQL_OPT_SSL_CERT: return ::MYSQL_OPT_SSL_CERT;
+  case sql::mysql::MYSQL_OPT_SSL_CA: return ::MYSQL_OPT_SSL_CA;
+  case sql::mysql::MYSQL_OPT_SSL_CAPATH: return ::MYSQL_OPT_SSL_CAPATH;
+  case sql::mysql::MYSQL_OPT_SSL_CIPHER: return ::MYSQL_OPT_SSL_CIPHER;
+  case sql::mysql::MYSQL_OPT_SSL_CRL: return ::MYSQL_OPT_SSL_CRL;
+  case sql::mysql::MYSQL_OPT_SSL_CRLPATH: return ::MYSQL_OPT_SSL_CRLPATH;
+  case sql::mysql::MYSQL_OPT_CONNECT_ATTR_RESET: return ::MYSQL_OPT_CONNECT_ATTR_RESET;
+  case sql::mysql::MYSQL_OPT_CONNECT_ATTR_ADD: return ::MYSQL_OPT_CONNECT_ATTR_ADD;
+  case sql::mysql::MYSQL_OPT_CONNECT_ATTR_DELETE: return ::MYSQL_OPT_CONNECT_ATTR_DELETE;
+  case sql::mysql::MYSQL_SERVER_PUBLIC_KEY: return ::MYSQL_SERVER_PUBLIC_KEY;
+  case sql::mysql::MYSQL_ENABLE_CLEARTEXT_PLUGIN: return ::MYSQL_ENABLE_CLEARTEXT_PLUGIN;
+  case sql::mysql::MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS: return ::MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS;
+  case sql::mysql::MYSQL_OPT_MAX_ALLOWED_PACKET: return ::MYSQL_OPT_MAX_ALLOWED_PACKET;
+  case sql::mysql::MYSQL_OPT_NET_BUFFER_LENGTH: return ::MYSQL_OPT_NET_BUFFER_LENGTH;
+  case sql::mysql::MYSQL_OPT_TLS_VERSION: return ::MYSQL_OPT_TLS_VERSION;
+  case sql::mysql::MYSQL_OPT_SSL_MODE: return ::MYSQL_OPT_SSL_MODE;
+
+
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 80000
+  case sql::mysql::MYSQL_OPT_RETRY_COUNT: return ::MYSQL_OPT_RETRY_COUNT;
+  case sql::mysql::MYSQL_OPT_GET_SERVER_PUBLIC_KEY: return ::MYSQL_OPT_GET_SERVER_PUBLIC_KEY;
+  case sql::mysql::MYSQL_OPT_OPTIONAL_RESULTSET_METADATA: return ::MYSQL_OPT_OPTIONAL_RESULTSET_METADATA;
+#else
+  case sql::mysql::MYSQL_OPT_SSL_VERIFY_SERVER_CERT: return ::MYSQL_OPT_SSL_VERIFY_SERVER_CERT;
+  case sql::mysql::MYSQL_OPT_USE_REMOTE_CONNECTION: return ::MYSQL_OPT_USE_REMOTE_CONNECTION;
+  case sql::mysql::MYSQL_OPT_USE_EMBEDDED_CONNECTION: return ::MYSQL_OPT_USE_EMBEDDED_CONNECTION;
+  case sql::mysql::MYSQL_OPT_GUESS_CONNECTION: return ::MYSQL_OPT_GUESS_CONNECTION;
+  case sql::mysql::MYSQL_SET_CLIENT_IP: return ::MYSQL_SET_CLIENT_IP;
+  case sql::mysql::MYSQL_SECURE_AUTH: return ::MYSQL_SECURE_AUTH;
+  case sql::mysql::MYSQL_OPT_SSL_ENFORCE: return ::MYSQL_OPT_SSL_ENFORCE;
+#endif
+
+  }
+
+  //return something, just for remove compiler warning
+  //will never get here!
+  return ::MYSQL_OPT_CONNECT_TIMEOUT;
+}
+
 /* {{{ MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper() */
 MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api)
-	: api(_api), mysql(api->init(NULL))
+  : api(_api), mysql(api->init(NULL))
 {
-	if (mysql == NULL) {
-		throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
-	}
+  if (mysql == NULL) {
+    throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
+  }
 }
 /* }}} */
 
@@ -60,7 +128,7 @@ MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(boost::shared_ptr<I
 /* {{{ MySQL_NativeConnectionWrapper::~MySQL_NativeConnectionWrapper() */
 MySQL_NativeConnectionWrapper::~MySQL_NativeConnectionWrapper()
 {
-	api->close(mysql);
+  api->close(mysql);
 }
 /* }}} */
 
@@ -69,7 +137,7 @@ MySQL_NativeConnectionWrapper::~MySQL_NativeConnectionWrapper()
 uint64_t
 MySQL_NativeConnectionWrapper::affected_rows()
 {
-	return api->affected_rows(mysql);
+  return api->affected_rows(mysql);
 }
 /* }}} */
 
@@ -78,7 +146,7 @@ MySQL_NativeConnectionWrapper::affected_rows()
 bool
 MySQL_NativeConnectionWrapper::autocommit(bool mode)
 {
-	return (api->autocommit(mysql, mode) != '\0');
+  return (api->autocommit(mysql, mode) != '\0');
 }
 /* }}} */
 
@@ -86,17 +154,17 @@ MySQL_NativeConnectionWrapper::autocommit(bool mode)
 /* {{{ MySQL_NativeConnectionWrapper::connect() */
 bool
 MySQL_NativeConnectionWrapper::connect(const ::sql::SQLString & host,
-									const ::sql::SQLString & user,
-									const ::sql::SQLString & passwd,
-									const ::sql::SQLString & db,
-									unsigned int			 port,
-									const ::sql::SQLString & socket_or_pipe,
-									unsigned long			client_flag)
+                  const ::sql::SQLString & user,
+                  const ::sql::SQLString & passwd,
+                  const ::sql::SQLString & db,
+                  unsigned int			 port,
+                  const ::sql::SQLString & socket_or_pipe,
+                  unsigned long			client_flag)
 {
-	return (NULL != api->real_connect(mysql, nullIfEmpty(host), user.c_str(),
-									nullIfEmpty(passwd),
-									nullIfEmpty(db), port,
-									nullIfEmpty(socket_or_pipe), client_flag));
+  return (NULL != api->real_connect(mysql, nullIfEmpty(host), user.c_str(),
+                  nullIfEmpty(passwd),
+                  nullIfEmpty(db), port,
+                  nullIfEmpty(socket_or_pipe), client_flag));
 }
 /* }}} */
 
@@ -105,7 +173,7 @@ MySQL_NativeConnectionWrapper::connect(const ::sql::SQLString & host,
 bool
 MySQL_NativeConnectionWrapper::commit()
 {
-	return (api->commit(mysql) != '\0');
+  return (api->commit(mysql) != '\0');
 }
 /* }}} */
 
@@ -114,7 +182,7 @@ MySQL_NativeConnectionWrapper::commit()
 void
 MySQL_NativeConnectionWrapper::debug(const SQLString & debug)
 {
-	api->debug(debug.c_str());
+  api->debug(debug.c_str());
 }
 /* }}} */
 
@@ -123,7 +191,7 @@ MySQL_NativeConnectionWrapper::debug(const SQLString & debug)
 unsigned int
 MySQL_NativeConnectionWrapper::errNo()
 {
-	return api->mysql_errno(mysql);
+  return api->mysql_errno(mysql);
 }
 /* }}} */
 
@@ -132,12 +200,12 @@ MySQL_NativeConnectionWrapper::errNo()
 SQLString
 MySQL_NativeConnectionWrapper::escapeString(const SQLString & s)
 {
-	boost::scoped_array< char > buffer(new char[s.length() * 2 + 1]);
-	if (!buffer.get()) {
-		return "";
-	}
-	unsigned long return_len = api->real_escape_string(mysql, buffer.get(), s.c_str(), (unsigned long) s.length());
-	return sql::SQLString(buffer.get(), return_len);
+  boost::scoped_array< char > buffer(new char[s.length() * 2 + 1]);
+  if (!buffer.get()) {
+    return "";
+  }
+  unsigned long return_len = api->real_escape_string(mysql, buffer.get(), s.c_str(), (unsigned long) s.length());
+  return sql::SQLString(buffer.get(), return_len);
 }
 /* }}} */
 
@@ -146,7 +214,7 @@ MySQL_NativeConnectionWrapper::escapeString(const SQLString & s)
 SQLString
 MySQL_NativeConnectionWrapper::error()
 {
-	return api->error(mysql);
+  return api->error(mysql);
 }
 /* }}} */
 
@@ -155,7 +223,7 @@ MySQL_NativeConnectionWrapper::error()
 unsigned int
 MySQL_NativeConnectionWrapper::field_count()
 {
-	return api->field_count(mysql);
+  return api->field_count(mysql);
 }
 /* }}} */
 
@@ -164,7 +232,7 @@ MySQL_NativeConnectionWrapper::field_count()
 unsigned long
 MySQL_NativeConnectionWrapper::get_client_version()
 {
-	return api->get_client_version();
+  return api->get_client_version();
 }
 /* }}} */
 
@@ -173,8 +241,8 @@ MySQL_NativeConnectionWrapper::get_client_version()
 const SQLString &
 MySQL_NativeConnectionWrapper::get_server_info()
 {
-	serverInfo = api->get_server_info(mysql);
-	return serverInfo;
+  serverInfo = api->get_server_info(mysql);
+  return serverInfo;
 }
 /* }}} */
 
@@ -183,7 +251,7 @@ MySQL_NativeConnectionWrapper::get_server_info()
 unsigned long
 MySQL_NativeConnectionWrapper::get_server_version()
 {
-	return api->get_server_version(mysql);
+  return api->get_server_version(mysql);
 }
 /* }}} */
 
@@ -192,7 +260,7 @@ MySQL_NativeConnectionWrapper::get_server_version()
 void
 MySQL_NativeConnectionWrapper::get_character_set_info(void *cs)
 {
-	return api->get_character_set_info(mysql, cs);
+  return api->get_character_set_info(mysql, cs);
 }
 /* }}} */
 
@@ -201,7 +269,7 @@ MySQL_NativeConnectionWrapper::get_character_set_info(void *cs)
 bool
 MySQL_NativeConnectionWrapper::more_results()
 {
-	return (api->more_results(mysql) != '\0');
+  return (api->more_results(mysql) != '\0');
 }
 /* }}} */
 
@@ -210,7 +278,7 @@ MySQL_NativeConnectionWrapper::more_results()
 int
 MySQL_NativeConnectionWrapper::next_result()
 {
-	return api->next_result(mysql);
+  return api->next_result(mysql);
 }
 /* }}} */
 
@@ -219,7 +287,7 @@ MySQL_NativeConnectionWrapper::next_result()
 int
 MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option, const void * value)
 {
-	return api->options(mysql, static_cast< mysql_option >(option), value);
+  return api->options(mysql, get_mysql_option(option), value);
 }
 /* }}} */
 
@@ -227,9 +295,9 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 /* {{{ MySQL_NativeConnectionWrapper::options(SQLString &) */
 int
 MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
-									   const ::sql::SQLString &str)
+                     const ::sql::SQLString &str)
 {
-	return api->options(mysql, static_cast< mysql_option >(option), str.c_str());
+  return api->options(mysql,get_mysql_option(option), str.c_str());
 }
 /* }}} */
 
@@ -237,28 +305,28 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 /* {{{ MySQL_NativeConnectionWrapper::options(bool &) */
 int
 MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
-									   const bool &option_val)
+                     const bool &option_val)
 {
-	my_bool dummy= option_val ? '\1' : '\0';
-	return api->options(mysql, static_cast< mysql_option >(option), &dummy);
+  my_bool dummy= option_val ? '\1' : '\0';
+  return api->options(mysql, get_mysql_option(option), &dummy);
 }
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(int &) */
 int
 MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
-									   const int &option_val)
+                     const int &option_val)
 {
-	return api->options(mysql, static_cast< mysql_option >(option), &option_val);
+  return api->options(mysql, get_mysql_option(option), &option_val);
 }
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(SQLString &, SQLString &) */
 int
 MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
-						   const ::sql::SQLString &key, const ::sql::SQLString &value)
+               const ::sql::SQLString &key, const ::sql::SQLString &value)
 {
-	return api->options(mysql, static_cast< mysql_option >(option), key.c_str(), value.c_str());
+  return api->options(mysql, get_mysql_option(option), key.c_str(), value.c_str());
 }
 /* }}} */
 
@@ -267,7 +335,7 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 int
 MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option, const void * value)
 {
-	return api->get_option(mysql, static_cast< mysql_option >(option), value);
+  return api->get_option(mysql, get_mysql_option(option), value);
 }
 /* }}} */
 
@@ -275,9 +343,9 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
 /* {{{ MySQL_NativeConnectionWrapper::get_option(SQLString &) */
 int
 MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
-									   const ::sql::SQLString &str)
+                     const ::sql::SQLString &str)
 {
-	return api->get_option(mysql, static_cast< mysql_option >(option), str.c_str());
+  return api->get_option(mysql, get_mysql_option(option), str.c_str());
 }
 /* }}} */
 
@@ -285,19 +353,19 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
 /* {{{ MySQL_NativeConnectionWrapper::get_option(bool &) */
 int
 MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
-									   const bool &option_val)
+                     const bool &option_val)
 {
-	my_bool dummy= option_val ? '\1' : '\0';
-	return api->get_option(mysql, static_cast< mysql_option >(option), &dummy);
+  my_bool dummy= option_val ? '\1' : '\0';
+  return api->get_option(mysql, get_mysql_option(option), &dummy);
 }
 
 
 /* {{{ MySQL_NativeConnectionWrapper::get_option(int &) */
 int
 MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options option,
-									   const int &option_val)
+                     const int &option_val)
 {
-	return api->get_option(mysql, static_cast< mysql_option >(option), &option_val);
+  return api->get_option(mysql, get_mysql_option(option), &option_val);
 }
 
 
@@ -305,7 +373,7 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
 int
 MySQL_NativeConnectionWrapper::query(const SQLString & stmt_str)
 {
-	return api->real_query(mysql, stmt_str.c_str(), stmt_str.length());
+  return api->real_query(mysql, stmt_str.c_str(), stmt_str.length());
 }
 /* }}} */
 
@@ -314,7 +382,7 @@ MySQL_NativeConnectionWrapper::query(const SQLString & stmt_str)
 int
 MySQL_NativeConnectionWrapper::ping()
 {
-	return api->ping(mysql);
+  return api->ping(mysql);
 }
 /* }}} */
 
@@ -323,7 +391,7 @@ MySQL_NativeConnectionWrapper::ping()
 bool
 MySQL_NativeConnectionWrapper::rollback()
 {
-	return (api->rollback(mysql) != '\0');
+  return (api->rollback(mysql) != '\0');
 }
 /* }}} */
 
@@ -332,7 +400,7 @@ MySQL_NativeConnectionWrapper::rollback()
 SQLString
 MySQL_NativeConnectionWrapper::sqlstate()
 {
-	return api->sqlstate(mysql);
+  return api->sqlstate(mysql);
 }
 /* }}} */
 
@@ -350,13 +418,13 @@ MySQL_NativeConnectionWrapper::info()
 /* {{{ MySQL_NativeConnectionWrapper::ssl_set() */
 bool
 MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
-								const SQLString & cert,
-								const SQLString & ca,
-								const SQLString & capath,
-								const SQLString & cipher)
+                const SQLString & cert,
+                const SQLString & ca,
+                const SQLString & capath,
+                const SQLString & cipher)
 {
   return ('\0' != api->ssl_set(mysql, nullIfEmpty(key), nullIfEmpty(cert),
-							nullIfEmpty(ca), nullIfEmpty(capath), nullIfEmpty(cipher)));
+              nullIfEmpty(ca), nullIfEmpty(capath), nullIfEmpty(cipher)));
 }
 /* }}} */
 
@@ -365,34 +433,34 @@ MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::store_result()
 {
-	::st_mysql_res * raw= api->store_result(mysql);
+  ::MYSQL_RES * raw= api->store_result(mysql);
 
-	if (raw == NULL) {
-		/*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-			this->errNo(), this->sqlstate(), this->error());*/
-		return NULL;
-	}
+  if (raw == NULL) {
+    /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+      this->errNo(), this->sqlstate(), this->error());*/
+    return NULL;
+  }
 
-	return new MySQL_NativeResultsetWrapper(raw, api);
+  return new MySQL_NativeResultsetWrapper(raw, api);
 }
 /* }}} */
 
 
 static const int protocolType2mysql[PROTOCOL_COUNT][2]= {
-	{PROTOCOL_TCP,		MYSQL_PROTOCOL_TCP},
-	{PROTOCOL_SOCKET,	MYSQL_PROTOCOL_SOCKET},
-	{PROTOCOL_PIPE,		MYSQL_PROTOCOL_PIPE}
+  {PROTOCOL_TCP,		MYSQL_PROTOCOL_TCP},
+  {PROTOCOL_SOCKET,	MYSQL_PROTOCOL_SOCKET},
+  {PROTOCOL_PIPE,		MYSQL_PROTOCOL_PIPE}
 };
 /* {{{ MySQL_NativeConnectionWrapper::use_protocol() */
 int MySQL_NativeConnectionWrapper::use_protocol(Protocol_Type protocol)
 {
-	for (int i= 0; i< PROTOCOL_COUNT; ++i)
-	{
-		if (protocolType2mysql[i][0] == protocol)
-			return options(MYSQL_OPT_PROTOCOL, (const char *)&protocolType2mysql[i][1]);
-	}
+  for (int i= 0; i< PROTOCOL_COUNT; ++i)
+  {
+    if (protocolType2mysql[i][0] == protocol)
+      return options(MYSQL_OPT_PROTOCOL, (const char *)&protocolType2mysql[i][1]);
+  }
 
-	return -1;
+  return -1;
 }
 /* }}} */
 
@@ -401,15 +469,15 @@ int MySQL_NativeConnectionWrapper::use_protocol(Protocol_Type protocol)
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::use_result()
 {
-	::st_mysql_res * raw= api->use_result(mysql);
+  ::MYSQL_RES * raw= api->use_result(mysql);
 
-	if (raw == NULL) {
-		/*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
-							this->errNo(), this->sqlstate(), this->error());*/
-		return NULL;
-	}
+  if (raw == NULL) {
+    /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
+              this->errNo(), this->sqlstate(), this->error());*/
+    return NULL;
+  }
 
-	return new MySQL_NativeResultsetWrapper(raw, api);
+  return new MySQL_NativeResultsetWrapper(raw, api);
 }
 /* }}} */
 
@@ -418,14 +486,14 @@ MySQL_NativeConnectionWrapper::use_result()
 NativeStatementWrapper &
 MySQL_NativeConnectionWrapper::stmt_init()
 {
-	::st_mysql_stmt * raw= api->stmt_init(mysql);
+  ::MYSQL_STMT * raw= api->stmt_init(mysql);
 
-	if (raw == NULL) {
-		/*CPP_ERR_FMT("No statement : %d:(%s) %s", e->errNo(), proxy->sqlstate(), proxy->error());*/
-		::sql::mysql::util::throwSQLException(*this);
-	}
+  if (raw == NULL) {
+    /*CPP_ERR_FMT("No statement : %d:(%s) %s", e->errNo(), proxy->sqlstate(), proxy->error());*/
+    ::sql::mysql::util::throwSQLException(*this);
+  }
 
-	return *(new MySQL_NativeStatementWrapper(raw, api, this));
+  return *(new MySQL_NativeStatementWrapper(raw, api, this));
 }
 /* }}} */
 
@@ -434,7 +502,7 @@ MySQL_NativeConnectionWrapper::stmt_init()
 unsigned int
 MySQL_NativeConnectionWrapper::warning_count()
 {
-	return api->warning_count(mysql);
+  return api->warning_count(mysql);
 }
 /* }}} */
 

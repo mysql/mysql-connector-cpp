@@ -261,6 +261,7 @@ void connectionmetadata::getBestRowIdentifier()
 void connectionmetadata::getColumnPrivileges()
 {
   logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
+
   int rows=0;
   bool got_warning=false;
   std::stringstream msg;
@@ -343,6 +344,13 @@ void connectionmetadata::getColumnPrivileges()
 void connectionmetadata::getColumns()
 {
   logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
+
+  if (getMySQLVersion(con) < 80000)
+  {
+    SKIP("Due to changes on the VARBINARY, this test is disabled.");
+    return;
+  }
+
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
@@ -446,6 +454,14 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(res->getInt(11), res->getInt("NULLABLE"));
       ASSERT_EQUALS(it->remarks, res->getString(12));
       ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));
+      if(it->column_def != res->getString(13))
+      {
+        msg.str("");
+        msg << "... \t\tWARNING - check COLUMN_def for " << it->sqldef;
+        msg << " - expecting COLUMN_def = " << it->column_def << " got " << res->getString(13);
+        logMsg(msg.str());
+        got_warning=true;
+      }
       ASSERT_EQUALS(it->column_def, res->getString(13));
       ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
       ASSERT_EQUALS(res->getInt(14), res->getInt("SQL_DATA_TYPE"));
@@ -587,7 +603,7 @@ void connectionmetadata::getDatabaseVersions()
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
-    ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
+    ASSERT_LT(8, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
 
@@ -1092,24 +1108,28 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(DatabaseMetaData::tableIndexOther, res->getInt(7));
     ASSERT(!res->next());
 
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
-    stmt->execute("CREATE INDEX idx_col4_col5 ON test(col5 DESC, col4 ASC)");
-    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
-    ASSERT(res->next());
-    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
-    ASSERT(res->next());
-    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
-    ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
-    ASSERT(res->next());
-    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
-    ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
-    ASSERT(!res->next());
+    //Was wrong on previous versions....
+    if (getMySQLVersion(con) >= 80000)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
+      stmt->execute("CREATE INDEX idx_col4_col5 ON test(col5 DESC, col4 ASC)");
+      res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+      ASSERT(res->next());
+      ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS("D", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+      ASSERT(!res->next());
+    }
 
     try
     {

@@ -32,7 +32,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "native_statement_wrapper.h"
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_STMT;
+#else
 struct st_mysql_stmt;
+#define MYSQL_STMT st_mysql_stmt
+#endif
 
 namespace sql
 {
@@ -51,59 +56,59 @@ class NativeConnectionWrapper;
 class MySQL_NativeStatementWrapper : public NativeStatementWrapper
 {
 
-	boost::shared_ptr<IMySQLCAPI>	api;
-	::st_mysql_stmt *				stmt;
-	NativeConnectionWrapper *		conn;
+  boost::shared_ptr<IMySQLCAPI>	api;
+  ::MYSQL_STMT *				stmt;
+  NativeConnectionWrapper *		conn;
 
-	MySQL_NativeStatementWrapper(){}
+  MySQL_NativeStatementWrapper(){}
 
 public:
-	MySQL_NativeStatementWrapper(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
-	~MySQL_NativeStatementWrapper();
+  MySQL_NativeStatementWrapper(::MYSQL_STMT *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
+  ~MySQL_NativeStatementWrapper();
 
-	uint64_t affected_rows();
+  uint64_t affected_rows();
 
-	bool attr_set(MySQL_Statement_Options option, const void *arg);
+  bool attr_set(MySQL_Statement_Options option, const void *arg);
 
-	bool bind_param(::st_mysql_bind *);
+  bool bind_param(::MYSQL_BIND *);
 
-	bool bind_result(::st_mysql_bind *);
+  bool bind_result(::MYSQL_BIND *);
 
-	void data_seek(uint64_t );
+  void data_seek(uint64_t );
 
-	unsigned int errNo();
+  unsigned int errNo();
 
-	sql::SQLString error();
+  sql::SQLString error();
 
-	int execute ();
+  int execute ();
 
-	int fetch();
+  int fetch();
 
-	unsigned int field_count();
+  unsigned int field_count();
 
-	bool more_results();
+  bool more_results();
 
-	int next_result();
+  int next_result();
 
-	uint64_t num_rows();
+  uint64_t num_rows();
 
-	unsigned long param_count();
+  unsigned long param_count();
 
-	int prepare (const ::sql::SQLString &);
+  int prepare (const ::sql::SQLString &);
 
-	NativeResultsetWrapper * result_metadata();
+  NativeResultsetWrapper * result_metadata();
 
-	bool send_long_data(unsigned int par_number, const char * data, unsigned long len);
+  bool send_long_data(unsigned int par_number, const char * data, unsigned long len);
 
-	::sql::SQLString sqlstate();
+  ::sql::SQLString sqlstate();
 
-	int store_result();
+  int store_result();
 
-	int stmt_next_result();
+  int stmt_next_result();
 
-	bool stmt_free_result();
+  bool stmt_free_result();
 
-	unsigned int warning_count();
+  unsigned int warning_count();
 };
 
 

@@ -533,7 +533,7 @@ void bugs::bug71606()
 void bugs::bug72700()
 {
   logMsg("bugs::bug72700");
-  ASSERT(stmt->execute("select astext(geomfromtext('point(10 10)'))"));
+  ASSERT(stmt->execute("select ST_AsText(ST_GeomFromText('point(10 10)'))"));
 
   try
   {
@@ -570,9 +570,9 @@ void bugs::bug72700()
 
 void bugs::bug66871()
 {
-  sql::Connection *con;
-  sql::Statement *stmt;
-  sql::ResultSet *res;
+  sql::Connection *con = NULL;
+  sql::Statement *stmt = NULL;
+  sql::ResultSet *res = NULL;
 
   logMsg("bugs::bug66871");
   try
@@ -798,7 +798,9 @@ void bugs::bug21066575()
         std::stringstream ss;
         ss << "id = " << res->getInt(1);
         ss << std::endl;
-        ss << "f1 = " << res->getString(2);
+        std::string out = res->getString(2);
+        ASSERT_EQUALS(1024000UL, static_cast<uint64_t>(out.length()));
+        ss << "f1 = " << out;
         logMsg(ss.str().c_str());
       }
       //Detect if process frees ResultSet resources.

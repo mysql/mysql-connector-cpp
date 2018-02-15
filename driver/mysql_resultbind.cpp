@@ -88,8 +88,8 @@ static struct st_buffer_size_type
     case MYSQL_TYPE_VAR_STRING:
 #if LIBMYSQL_VERSION_ID > 50700
     case MYSQL_TYPE_JSON:
-      return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
 #endif //LIBMYSQL_VERSION_ID > 50700
+      return st_buffer_size_type(new char[field->max_length + 1], field->max_length + 1, field->type);
 
     case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:

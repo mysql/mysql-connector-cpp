@@ -30,8 +30,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <boost/weak_ptr.hpp>
 
 #include <cppconn/resultset_metadata.h>
+#include <cppconn/version_info.h>
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_FIELD;
+#else
 struct st_mysql_field;
+#define MYSQL_FIELD st_mysql_field
+#endif
 
 namespace sql
 {
@@ -47,74 +53,74 @@ class MySQL_DebugLogger;
 
 class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
-	boost::weak_ptr< NativeAPI::NativeResultsetWrapper > result;
-	boost::shared_ptr< MySQL_DebugLogger > logger;
-	unsigned int num_fields;
+  boost::weak_ptr< NativeAPI::NativeResultsetWrapper > result;
+  boost::shared_ptr< MySQL_DebugLogger > logger;
+  unsigned int num_fields;
 
 public:
-	MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l);
-	virtual ~MySQL_ResultSetMetaData();
+  MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l);
+  virtual ~MySQL_ResultSetMetaData();
 
-	SQLString getCatalogName(unsigned int columnIndex);
+  SQLString getCatalogName(unsigned int columnIndex);
 
-	unsigned int getColumnCount();
+  unsigned int getColumnCount();
 
-	unsigned int getColumnDisplaySize(unsigned int columnIndex);
+  unsigned int getColumnDisplaySize(unsigned int columnIndex);
 
-	SQLString getColumnLabel(unsigned int columnIndex);
+  SQLString getColumnLabel(unsigned int columnIndex);
 
-	SQLString getColumnName(unsigned int columnIndex);
+  SQLString getColumnName(unsigned int columnIndex);
 
-	int getColumnType(unsigned int columnIndex);
+  int getColumnType(unsigned int columnIndex);
 
-	SQLString getColumnTypeName(unsigned int columnIndex);
+  SQLString getColumnTypeName(unsigned int columnIndex);
 
-	SQLString getColumnCharset(unsigned int columnIndex);
+  SQLString getColumnCharset(unsigned int columnIndex);
 
-	SQLString getColumnCollation(unsigned int columnIndex);
+  SQLString getColumnCollation(unsigned int columnIndex);
 
-	unsigned int getPrecision(unsigned int columnIndex);
+  unsigned int getPrecision(unsigned int columnIndex);
 
-	unsigned int getScale(unsigned int columnIndex);
+  unsigned int getScale(unsigned int columnIndex);
 
-	SQLString getSchemaName(unsigned int columnIndex);
+  SQLString getSchemaName(unsigned int columnIndex);
 
-	SQLString getTableName(unsigned int columnIndex);
+  SQLString getTableName(unsigned int columnIndex);
 
-	bool isAutoIncrement(unsigned int columnIndex);
+  bool isAutoIncrement(unsigned int columnIndex);
 
-	bool isCaseSensitive(unsigned int columnIndex);
+  bool isCaseSensitive(unsigned int columnIndex);
 
-	bool isCurrency(unsigned int columnIndex);
+  bool isCurrency(unsigned int columnIndex);
 
-	bool isDefinitelyWritable(unsigned int columnIndex);
+  bool isDefinitelyWritable(unsigned int columnIndex);
 
-	int isNullable(unsigned int columnIndex);
+  int isNullable(unsigned int columnIndex);
 
-	bool isNumeric(unsigned int columnIndex);
+  bool isNumeric(unsigned int columnIndex);
 
-	bool isReadOnly(unsigned int columnIndex);
+  bool isReadOnly(unsigned int columnIndex);
 
-	bool isSearchable(unsigned int columnIndex);
+  bool isSearchable(unsigned int columnIndex);
 
-	bool isSigned(unsigned int columnIndex);
+  bool isSigned(unsigned int columnIndex);
 
-	bool isWritable(unsigned int columnIndex);
+  bool isWritable(unsigned int columnIndex);
 
-	bool isZerofill(unsigned int columnIndex);
+  bool isZerofill(unsigned int columnIndex);
 
 protected:
-	void checkValid() const;
+  void checkValid() const;
 
-	void checkColumnIndex(unsigned int columnIndex) const;
+  void checkColumnIndex(unsigned int columnIndex) const;
 
-	::st_mysql_field * getFieldMeta(unsigned int columnIndex) const;
+  ::MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 
-	/* Prevent use of these */
-	MySQL_ResultSetMetaData(const MySQL_ResultSetMetaData &);
-	void operator=(MySQL_ResultSetMetaData &);
+  /* Prevent use of these */
+  MySQL_ResultSetMetaData(const MySQL_ResultSetMetaData &);
+  void operator=(MySQL_ResultSetMetaData &);
 };
 
 } /* namespace mysql */

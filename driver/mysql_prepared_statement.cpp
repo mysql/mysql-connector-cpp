@@ -311,7 +311,7 @@ public:
   void clearParameters()
   {
     for (unsigned int i = 0; i < param_count; ++i) {
-      delete (char*) bind[i].length;
+      delete bind[i].length;
       bind[i].length = NULL;
       delete[] (char*) bind[i].buffer;
       bind[i].buffer = NULL;

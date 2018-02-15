@@ -71,7 +71,7 @@ namespace testsuite
 
     TestCase();
     TestCase(const TestCase &other);
-
+    ~TestCase(){}
   public:
 
     TestCase(   SuiteClass &    obj

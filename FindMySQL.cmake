@@ -1,7 +1,7 @@
 # -*- indent-tabs-mode:nil; -*-
 # vim: set expandtab:
 #
-#   Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+#   Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPLv2
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -112,6 +112,7 @@ set(ENV_OR_OPT_VARS
   MYSQL_DIR
   MYSQL_INCLUDE_DIR
   MYSQL_LIB_DIR
+  MYSQL_LIB_DIR_RUNTIME
   MYSQL_CFLAGS
   MYSQL_CXXFLAGS
   MYSQL_CONFIG_EXECUTABLE
@@ -121,6 +122,12 @@ set(ENV_OR_OPT_VARS
   MYSQL_EXTRA_LIBRARIES
   MYSQL_LINK_FLAGS
 )
+
+IF(NOT WIN32)
+set(MYSQL_COMPILER_ID
+    MYSQL_COMPILER_VERSION
+)
+ENDIF(NOT WIN32)
 
 # Mark the variable names that have values that are paths
 set(ENV_OR_OPT_PATH_VARS
@@ -145,7 +152,7 @@ foreach(_xvar ${ENV_OR_OPT_VARS})
     set(${_xvar} $ENV{${_xvar}})
   endif()
 
-  # Notmalize the path if the variable is set and is a path 
+  # Notmalize the path if the variable is set and is a path
   if(${_xvar})
     list(FIND ENV_OR_OPT_PATH_VARS ${_xvar} _index)
     if (${_index} GREATER -1)
@@ -565,7 +572,7 @@ if(MYSQL_LIB_DIR)
   set(MYSQL_LIBRARIES ${MYSQL_LIB})
 
 elseif(MYSQL_DIR AND
-       (NOT _mysql_config_in_mysql_dir) AND 
+       (NOT _mysql_config_in_mysql_dir) AND
        (NOT _mysql_config_set_by_user))
 
   if(FINDMYSQL_DEBUG)
@@ -599,6 +606,12 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
     message(FATAL_ERROR "Could not find the library dir from running "
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
+
+  # In case mysql_config returns two paths: (0) runtime and (1) libmysqlclient
+  LIST(LENGTH MYSQL_LIB_DIR n)
+  IF( ${n} GREATER 1)
+    LIST(GET MYSQL_LIB_DIR 0 MYSQL_LIB_DIR_RUNTIME)
+  ENDIF()
 
   foreach(_libdir ${MYSQL_LIB_DIR})
     if(NOT EXISTS "${_libdir}")
@@ -799,7 +812,24 @@ endif()
 # set(CMAKE_CXX_FLAGS_${CMAKEBT}     "${CMAKE_CXX_FLAGS_${CMAKEBT}} ${MYSQL_CXXFLAGS}")
 
 include_directories("${MYSQL_INCLUDE_DIR}")
-link_directories("${MYSQL_LIB_DIR}")
+link_directories("${MYSQL_LIB_DIR}" "${MYSQL_LIB_DIR_RUNTIME}")
+
+IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  SET(RPATH " ${RPATH} ${MYSQL_LIB_DIR_RUNTIME}")
+ENDIF()
+
+##########################################################################
+#
+# Get libmysqlclient compiler ID and VERSION
+#
+##########################################################################
+IF(NOT WIN32)
+_mysql_conf(MYSQL_COMPILER_VERSION "")
+STRING(REGEX MATCH "Compiler:[a-zA-Z0-9\\. ]+" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+STRING(REGEX REPLACE "Compiler: " "" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+STRING(REGEX MATCH "[a-zA-Z0-9]+" MYSQL_COMPILER_ID ${MYSQL_COMPILER_VERSION})
+STRING(REGEX REPLACE "[a-zA-Z0-9]+ " "" MYSQL_COMPILER_VERSION ${MYSQL_COMPILER_VERSION})
+ENDIF(NOT WIN32)
 
 ##########################################################################
 #
@@ -812,6 +842,7 @@ message(STATUS "MySQL client environment/cmake variables set that the user can o
 message(STATUS "  MYSQL_DIR                   : ${MYSQL_DIR}")
 message(STATUS "  MYSQL_INCLUDE_DIR           : ${MYSQL_INCLUDE_DIR}")
 message(STATUS "  MYSQL_LIB_DIR               : ${MYSQL_LIB_DIR}")
+message(STATUS "  MYSQL_LIB_DIR_RUNTIME       : ${MYSQL_LIB_DIR_RUNTIME}")
 message(STATUS "  MYSQL_CONFIG_EXECUTABLE     : ${MYSQL_CONFIG_EXECUTABLE}")
 message(STATUS "  MYSQL_CXX_LINKAGE           : ${MYSQL_CXX_LINKAGE}")
 message(STATUS "  MYSQL_CFLAGS                : ${MYSQL_CFLAGS}")
@@ -830,3 +861,8 @@ message(STATUS "  MYSQL_VERSION               : ${MYSQL_VERSION}")
 message(STATUS "  MYSQL_VERSION_ID            : ${MYSQL_VERSION_ID}")
 message(STATUS "  MYSQL_LIB                   : ${MYSQL_LIB}")
 message(STATUS "  MYSQL_LIBRARIES             : ${MYSQL_LIBRARIES}")
+
+IF(NOT WIN32)
+message(STATUS "  MYSQL_COMPILER_ID           : ${MYSQL_COMPILER_ID}")
+message(STATUS "  MYSQL_COMPILER_VERSION      : ${MYSQL_COMPILER_VERSION}")
+ENDIF(NOT WIN32)

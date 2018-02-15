@@ -34,10 +34,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 #include "../mysql_statement_options.h"
+#include "../cppconn/version_info.h"
 
-
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_BIND;
+struct MYSQL_RES;
+#else
 struct st_mysql_bind;
 struct st_mysql_res;
+#define MYSQL_BIND st_mysql_bind
+#define MYSQL_RES st_mysql_res
+#endif
 
 namespace sql
 {
@@ -57,52 +64,52 @@ class NativeStatementWrapper : public boost::noncopyable
 {
 public:
 
-	virtual ~NativeStatementWrapper(){}
+  virtual ~NativeStatementWrapper(){}
 
-	virtual uint64_t affected_rows() = 0;
+  virtual uint64_t affected_rows() = 0;
 
-	virtual bool attr_set(MySQL_Statement_Options attr, const void *arg) = 0;
+  virtual bool attr_set(MySQL_Statement_Options attr, const void *arg) = 0;
 
-	virtual bool bind_param(::st_mysql_bind *) = 0;
+  virtual bool bind_param(::MYSQL_BIND *) = 0;
 
-	virtual bool bind_result(::st_mysql_bind *) = 0;
+  virtual bool bind_result(::MYSQL_BIND *) = 0;
 
-	virtual void data_seek(uint64_t) = 0;
+  virtual void data_seek(uint64_t) = 0;
 
-	virtual unsigned int errNo() = 0;
+  virtual unsigned int errNo() = 0;
 
-	virtual ::sql::SQLString error() = 0;
+  virtual ::sql::SQLString error() = 0;
 
-	virtual int execute() = 0;
+  virtual int execute() = 0;
 
-	virtual int fetch() = 0;
+  virtual int fetch() = 0;
 
-	virtual unsigned int field_count() = 0;
+  virtual unsigned int field_count() = 0;
 
-	virtual bool more_results() = 0;
+  virtual bool more_results() = 0;
 
-	virtual int next_result() = 0;
+  virtual int next_result() = 0;
 
-	virtual uint64_t num_rows() = 0;
+  virtual uint64_t num_rows() = 0;
 
-	virtual unsigned long param_count() = 0;
+  virtual unsigned long param_count() = 0;
 
-	virtual int prepare(const ::sql::SQLString &) = 0;
+  virtual int prepare(const ::sql::SQLString &) = 0;
 
-	virtual NativeResultsetWrapper * result_metadata () = 0;
+  virtual NativeResultsetWrapper * result_metadata () = 0;
 
-	virtual bool send_long_data(unsigned int par_number, const char * data, unsigned long len) = 0;
+  virtual bool send_long_data(unsigned int par_number, const char * data, unsigned long len) = 0;
 
-	virtual ::sql::SQLString sqlstate() = 0;
+  virtual ::sql::SQLString sqlstate() = 0;
 
-	virtual int store_result() = 0;
+  virtual int store_result() = 0;
 
-	virtual int stmt_next_result() = 0;
+  virtual int stmt_next_result() = 0;
 
-	virtual bool stmt_free_result() = 0;
+  virtual bool stmt_free_result() = 0;
 
-	/* some enhancements comparing to mysql api */
-	virtual unsigned int warning_count() = 0;
+  /* some enhancements comparing to mysql api */
+  virtual unsigned int warning_count() = 0;
 };
 
 

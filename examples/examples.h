@@ -28,9 +28,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define	_EXAMPLES_H
 
 /*
-  __FUNCTION__/__func__ is not portable. We do not promise 
+  __FUNCTION__/__func__ is not portable. We do not promise
   that  our example definition covers each and every compiler.
-  If not, it is up to you to find a different definition for 
+  If not, it is up to you to find a different definition for
   your setup.
 */
 
@@ -53,7 +53,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 /*
-  Again, either you are lucky and this definition 
+  Again, either you are lucky and this definition
   works for you or you have to find your own.
 */
 #ifndef __LINE__
@@ -62,18 +62,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 // Connection properties
 #define EXAMPLE_DB   "test"
-#define EXAMPLE_HOST "tcp://127.0.0.1:3306"
+#define EXAMPLE_HOST "tcp://127.0.0.1:3006"
 #define EXAMPLE_USER "root"
-#define EXAMPLE_PASS "root"
+#define EXAMPLE_PASS ""
 
 // Sample data
 #define EXAMPLE_NUM_TEST_ROWS 4
 struct _test_data {
-	int id;
-	const char* label;
+  int id;
+  const char* label;
 };
 static _test_data test_data[EXAMPLE_NUM_TEST_ROWS] = {
-	{1, ""}, {2, "a"}, {3, "b"}, {4, "c"},
+  {1, ""}, {2, "a"}, {3, "b"}, {4, "c"},
 };
 
 

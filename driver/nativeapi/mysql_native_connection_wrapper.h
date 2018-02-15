@@ -50,99 +50,104 @@ inline const char * nullIfEmpty(const ::sql::SQLString & str)
 
 class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
 {
-	/* api should be declared before mysql here */
-	boost::shared_ptr< IMySQLCAPI >	api;
-
-	struct ::st_mysql *				mysql;
-
-	::sql::SQLString				serverInfo;
+  /* api should be declared before mysql here */
+  boost::shared_ptr< IMySQLCAPI >	api;
 
 
-	MySQL_NativeConnectionWrapper(){}
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL* mysql;
+#else
+struct st_mysql* mysql;
+#endif
+
+  ::sql::SQLString				serverInfo;
+
+
+  MySQL_NativeConnectionWrapper(){}
 
 public:
 
-	MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api);
+  MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api);
 
-	virtual ~MySQL_NativeConnectionWrapper();
-
-
-	uint64_t affected_rows();
-
-	bool autocommit(bool);
-
-	bool connect(const ::sql::SQLString & host,
-				const ::sql::SQLString & user,
-				const ::sql::SQLString & passwd,
-				const ::sql::SQLString & db,
-				unsigned int			 port,
-				const ::sql::SQLString & socket_or_pipe,
-				unsigned long			client_flag);
-
-	bool commit();
-
-	void debug(const ::sql::SQLString &);
-
-	unsigned int errNo();
-
-	::sql::SQLString error();
-
-	::sql::SQLString escapeString(const ::sql::SQLString &);
-
-	unsigned int field_count();
-
-	unsigned long get_client_version();
-
-	const ::sql::SQLString & get_server_info();
-
-	unsigned long get_server_version();
-
-	void get_character_set_info(void *cs);
-
-	bool more_results();
-
-	int next_result();
-
-	int options(::sql::mysql::MySQL_Connection_Options, const void * );
-	int options(::sql::mysql::MySQL_Connection_Options,
-				const ::sql::SQLString &);
-	int options(::sql::mysql::MySQL_Connection_Options, const bool &);
-	int options(::sql::mysql::MySQL_Connection_Options, const int &);
-	int options(::sql::mysql::MySQL_Connection_Options,
-				const ::sql::SQLString &, const ::sql::SQLString &);
-
-	int get_option(::sql::mysql::MySQL_Connection_Options, const void * );
-	int get_option(::sql::mysql::MySQL_Connection_Options,
-				const ::sql::SQLString &);
-	int get_option(::sql::mysql::MySQL_Connection_Options, const bool &);
-	int get_option(::sql::mysql::MySQL_Connection_Options, const int &);
-
-	int query(const ::sql::SQLString &);
-
-	int ping();
-
-	/* int real_query(const ::sql::SQLString &, uint64_t);*/
+  virtual ~MySQL_NativeConnectionWrapper();
 
 
-	bool rollback();
+  uint64_t affected_rows();
 
-	::sql::SQLString sqlstate();
+  bool autocommit(bool);
 
-	bool ssl_set(const ::sql::SQLString & key,
-				const ::sql::SQLString & cert,
-				const ::sql::SQLString & ca,
-				const ::sql::SQLString & capath,
-				const ::sql::SQLString & cipher);
+  bool connect(const ::sql::SQLString & host,
+        const ::sql::SQLString & user,
+        const ::sql::SQLString & passwd,
+        const ::sql::SQLString & db,
+        unsigned int			 port,
+        const ::sql::SQLString & socket_or_pipe,
+        unsigned long			client_flag);
 
-	::sql::SQLString info();
+  bool commit();
 
-	NativeResultsetWrapper * store_result();
+  void debug(const ::sql::SQLString &);
 
-	int use_protocol(Protocol_Type protocol);
+  unsigned int errNo();
 
-	NativeResultsetWrapper * use_result();
+  ::sql::SQLString error();
 
-	NativeStatementWrapper & stmt_init();
+  ::sql::SQLString escapeString(const ::sql::SQLString &);
+
+  unsigned int field_count();
+
+  unsigned long get_client_version();
+
+  const ::sql::SQLString & get_server_info();
+
+  unsigned long get_server_version();
+
+  void get_character_set_info(void *cs);
+
+  bool more_results();
+
+  int next_result();
+
+  int options(::sql::mysql::MySQL_Connection_Options, const void * );
+  int options(::sql::mysql::MySQL_Connection_Options,
+        const ::sql::SQLString &);
+  int options(::sql::mysql::MySQL_Connection_Options, const bool &);
+  int options(::sql::mysql::MySQL_Connection_Options, const int &);
+  int options(::sql::mysql::MySQL_Connection_Options,
+        const ::sql::SQLString &, const ::sql::SQLString &);
+
+  int get_option(::sql::mysql::MySQL_Connection_Options, const void * );
+  int get_option(::sql::mysql::MySQL_Connection_Options,
+        const ::sql::SQLString &);
+  int get_option(::sql::mysql::MySQL_Connection_Options, const bool &);
+  int get_option(::sql::mysql::MySQL_Connection_Options, const int &);
+
+  int query(const ::sql::SQLString &);
+
+  int ping();
+
+  /* int real_query(const ::sql::SQLString &, uint64_t);*/
+
+
+  bool rollback();
+
+  ::sql::SQLString sqlstate();
+
+  bool ssl_set(const ::sql::SQLString & key,
+        const ::sql::SQLString & cert,
+        const ::sql::SQLString & ca,
+        const ::sql::SQLString & capath,
+        const ::sql::SQLString & cipher);
+
+  ::sql::SQLString info();
+
+  NativeResultsetWrapper * store_result();
+
+  int use_protocol(Protocol_Type protocol);
+
+  NativeResultsetWrapper * use_result();
+
+  NativeStatementWrapper & stmt_init();
 
   unsigned int warning_count();
 };

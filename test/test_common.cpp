@@ -85,8 +85,11 @@ static int silent = 1;
 #pragma warning(disable:4800)
 #endif
 
+#include "mysql_version.h"
+#if LIBMYSQL_VERSION_ID < 80000
 #ifdef _WIN32
 #include "my_global.h"
+#endif
 #endif
 
 extern "C"

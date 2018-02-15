@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
 
 The MySQL Connector/C++ is licensed under the terms of the GPLv2
 <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,15 +35,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace sql
 {
 
+#if (__cplusplus < 201103L)
 #define MEMORY_ALLOC_OPERATORS(Class) \
-	void* operator new(size_t size) throw (std::bad_alloc) { return ::operator new(size); }  \
-	void* operator new(size_t, void*) throw(); \
-	void* operator new(size_t, const std::nothrow_t&) throw(); \
-	void* operator new[](size_t) throw (std::bad_alloc); \
-	void* operator new[](size_t, void*) throw(); \
-	void* operator new[](size_t, const std::nothrow_t&) throw(); \
-	void* operator new(size_t N, std::allocator<Class>&);
+  void* operator new(size_t size) throw (std::bad_alloc) { return ::operator new(size); }  \
+  void* operator new(size_t, void*) throw(); \
+  void* operator new(size_t, const std::nothrow_t&) throw(); \
+  void* operator new[](size_t) throw (std::bad_alloc); \
+  void* operator new[](size_t, void*) throw(); \
+  void* operator new[](size_t, const std::nothrow_t&) throw(); \
+  void* operator new(size_t N, std::allocator<Class>&);
+#else
+#define MEMORY_ALLOC_OPERATORS(Class) \
+  void* operator new(size_t size){ return ::operator new(size); }  \
+  void* operator new(size_t, void*) noexcept; \
+  void* operator new(size_t, const std::nothrow_t&) noexcept; \
+  void* operator new[](size_t); \
+  void* operator new[](size_t, void*) noexcept; \
+  void* operator new[](size_t, const std::nothrow_t&) noexcept; \
+  void* operator new(size_t N, std::allocator<Class>&);
 
+#endif
 #ifdef _WIN32
 #pragma warning (disable : 4290)
 //warning C4290: C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
@@ -58,91 +69,91 @@ class CPPCONN_PUBLIC_FUNC SQLException : public std::runtime_error
 #pragma warning(pop)
 #endif
 protected:
-	const std::string sql_state;
-	const int errNo;
+  const std::string sql_state;
+  const int errNo;
 
 public:
-	SQLException(const SQLException& e) : std::runtime_error(e.what()), sql_state(e.sql_state), errNo(e.errNo) {}
+  SQLException(const SQLException& e) : std::runtime_error(e.what()), sql_state(e.sql_state), errNo(e.errNo) {}
 
-	SQLException(const std::string& reason, const std::string& SQLState, int vendorCode) :
-		std::runtime_error	(reason		),
-		sql_state			(SQLState	),
-		errNo				(vendorCode)
-	{}
+  SQLException(const std::string& reason, const std::string& SQLState, int vendorCode) :
+    std::runtime_error	(reason		),
+    sql_state			(SQLState	),
+    errNo				(vendorCode)
+  {}
 
-	SQLException(const std::string& reason, const std::string& SQLState) : std::runtime_error(reason), sql_state(SQLState), errNo(0) {}
+  SQLException(const std::string& reason, const std::string& SQLState) : std::runtime_error(reason), sql_state(SQLState), errNo(0) {}
 
-	SQLException(const std::string& reason) : std::runtime_error(reason), sql_state("HY000"), errNo(0) {}
+  SQLException(const std::string& reason) : std::runtime_error(reason), sql_state("HY000"), errNo(0) {}
 
-	SQLException() : std::runtime_error(""), sql_state("HY000"), errNo(0) {}
+  SQLException() : std::runtime_error(""), sql_state("HY000"), errNo(0) {}
 
-	const std::string & getSQLState() const
-	{
-		return sql_state;
-	}
+  const std::string & getSQLState() const
+  {
+    return sql_state;
+  }
 
-	const char * getSQLStateCStr() const
-	{
-		return sql_state.c_str();
-	}
+  const char * getSQLStateCStr() const
+  {
+    return sql_state.c_str();
+  }
 
 
-	int getErrorCode() const
-	{
-		return errNo;
-	}
+  int getErrorCode() const
+  {
+    return errNo;
+  }
 
-	virtual ~SQLException() throw () {};
+  virtual ~SQLException() throw () {};
 
 protected:
-	MEMORY_ALLOC_OPERATORS(SQLException)
+  MEMORY_ALLOC_OPERATORS(SQLException)
 };
 
 struct CPPCONN_PUBLIC_FUNC MethodNotImplementedException : public SQLException
 {
-	MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
-	MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
+  MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+  MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
 struct CPPCONN_PUBLIC_FUNC InvalidArgumentException : public SQLException
 {
-	InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
-	InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
+  InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+  InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
 struct CPPCONN_PUBLIC_FUNC InvalidInstanceException : public SQLException
 {
-	InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
-	InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
+  InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+  InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
 
 struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
 {
-	NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
-	NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
+  NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
+  NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
 struct CPPCONN_PUBLIC_FUNC SQLUnsupportedOptionException : public SQLException
 {
-	SQLUnsupportedOptionException(const SQLUnsupportedOptionException& e, const std::string conn_option) :
-		SQLException(e.what(), e.sql_state, e.errNo),
-		option(conn_option )  
-	{}
+  SQLUnsupportedOptionException(const SQLUnsupportedOptionException& e, const std::string conn_option) :
+    SQLException(e.what(), e.sql_state, e.errNo),
+    option(conn_option )
+  {}
 
-	SQLUnsupportedOptionException(const std::string& reason, const std::string conn_option) : 
-		SQLException(reason, "", 0),
-		option(conn_option )  
-	{}
+  SQLUnsupportedOptionException(const std::string& reason, const std::string conn_option) :
+    SQLException(reason, "", 0),
+    option(conn_option )
+  {}
 
-	const char *getConnectionOption() const
-	{
-		return option.c_str();
-	}
+  const char *getConnectionOption() const
+  {
+    return option.c_str();
+  }
 
-	~SQLUnsupportedOptionException() throw () {};
+  ~SQLUnsupportedOptionException() throw () {};
 protected:
-	const std::string option;
+  const std::string option;
 };
 
 
