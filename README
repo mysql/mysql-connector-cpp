@@ -18,8 +18,3 @@ For the new features/bugfix history, see release notes at
 
 For installation instructions see the relevant sections in the on-line
 documentation.
-
-Build Information
-Compiler: @CONNECTOR_COMPILER@
-Compiler version: @CONNECTOR_COMPILER_VERSION@
-Compile flags: @CONNECTOR_COMPILE_FLAGS@
