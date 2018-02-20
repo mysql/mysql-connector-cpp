@@ -35,6 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace sql
 {
 
+#if __cplusplus < 201703L
 #define MEMORY_ALLOC_OPERATORS(Class) \
 	void* operator new(size_t size) throw (std::bad_alloc) { return ::operator new(size); }  \
 	void* operator new(size_t, void*) throw(); \
@@ -43,6 +44,16 @@ namespace sql
 	void* operator new[](size_t, void*) throw(); \
 	void* operator new[](size_t, const std::nothrow_t&) throw(); \
 	void* operator new(size_t N, std::allocator<Class>&);
+#else
+#define MEMORY_ALLOC_OPERATORS(Class) \
+	void* operator new(size_t size) { return ::operator new(size); }  \
+	void* operator new(size_t, void*) noexcept(true); \
+	void* operator new(size_t, const std::nothrow_t&) noexcept(true); \
+	void* operator new[](size_t); \
+	void* operator new[](size_t, void*) noexcept(true); \
+	void* operator new[](size_t, const std::nothrow_t&) noexcept(true); \
+	void* operator new(size_t N, std::allocator<Class>&);
+#endif
 
 #ifdef _WIN32
 #pragma warning (disable : 4290)
