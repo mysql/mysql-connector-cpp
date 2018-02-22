@@ -30,6 +30,7 @@
 
 
 #include "bugs.h"
+#include <locale>
 #include <sstream>
 #include <limits>
 #include "driver/mysql_error.h"
@@ -803,7 +804,9 @@ void bugs::bug21066575()
         std::stringstream ss;
         ss << "id = " << res->getInt(1);
         ss << std::endl;
-        ss << "f1 = " << res->getString(2);
+        std::string out = res->getString(2);
+        ASSERT_EQUALS(1024000UL, static_cast<uint64_t>(out.length()));
+        ss << "f1 = " << out;
         logMsg(ss.str().c_str());
       }
       //Detect if process frees ResultSet resources.
@@ -1058,6 +1061,36 @@ void bugs::bug23212333()
 
   pstmt->setString(1, buffer);
   pstmt->execute();
+}
+
+void bugs::bug17227390()
+{
+  try
+  {
+    std::locale::global(std::locale("fr_CA.UTF-8"));
+
+    for (int i=0; i < 2; ++i)
+    {
+      if (i == 0)
+      {
+        pstmt.reset( con->prepareStatement("select 1.001 as number;") );
+        res.reset( pstmt->executeQuery() );
+      }
+      else
+      {
+        res.reset(stmt->executeQuery("select 1.001 as number;"));
+      }
+
+      res->next();
+
+      ASSERT_EQUALS(1.001L, res->getDouble(1));
+      ASSERT_EQUALS(1.001L, res->getDouble("number"));
+
+    }
+  }
+  catch (...) {
+    // Some systems don't have this encoding, so could throw error here
+  }
 }
 
 } /* namespace regression */

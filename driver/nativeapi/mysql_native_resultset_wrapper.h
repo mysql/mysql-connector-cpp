@@ -36,8 +36,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "native_resultset_wrapper.h"
+#include "../cppconn/version_info.h"
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_RES;
+#else
 struct st_mysql_res;
+#define MYSQL_RES st_mysql_res
+#endif
 
 namespace sql
 {
@@ -54,15 +60,15 @@ class IMySQLCAPI;
 class MySQL_NativeResultsetWrapper : public NativeResultsetWrapper
 {
 public:
-  MySQL_NativeResultsetWrapper(::st_mysql_res *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
+  MySQL_NativeResultsetWrapper(::MYSQL_RES *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
 
   ~MySQL_NativeResultsetWrapper();
 
   void data_seek(uint64_t);
 
-  ::st_mysql_field * fetch_field();
+  ::MYSQL_FIELD * fetch_field();
 
-  ::st_mysql_field * fetch_field_direct(unsigned int);
+  ::MYSQL_FIELD * fetch_field_direct(unsigned int);
 
   unsigned long * fetch_lengths();
 
@@ -83,7 +89,7 @@ private:
 
   boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
 
-  ::st_mysql_res * rs;
+  ::MYSQL_RES * rs;
 };
 
 } /* namespace NativeAPI */

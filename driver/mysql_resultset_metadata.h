@@ -36,8 +36,14 @@
 #include <boost/weak_ptr.hpp>
 
 #include <cppconn/resultset_metadata.h>
+#include <cppconn/version_info.h>
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_FIELD;
+#else
 struct st_mysql_field;
+#define MYSQL_FIELD st_mysql_field
+#endif
 
 namespace sql
 {
@@ -114,7 +120,7 @@ protected:
 
   void checkColumnIndex(unsigned int columnIndex) const;
 
-  ::st_mysql_field * getFieldMeta(unsigned int columnIndex) const;
+  ::MYSQL_FIELD * getFieldMeta(unsigned int columnIndex) const;
 
 private:
 

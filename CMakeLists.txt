@@ -647,4 +647,64 @@ IF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   ENDIF(${CMAKE_C_COMPILER} MATCHES "gcc$")
 ENDIF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-INSTALL(FILES "BUILDINFO" DESTINATION . OPTIONAL)
+
+#
+# Get locations of the openSSL libraries (resolving links on Unix) and
+# store them in OPENSSL_FILES global variable.
+#
+
+function(bundle_ssl_libs)
+  MESSAGE(STATUS "Finding SSL libraries on ${MYSQL_LIB_DIR}")
+  if(WIN32)
+
+    install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION ${INSTALL_LIBDIR}
+     FILES_MATCHING REGEX "(.*eay.*)")
+
+  else()
+
+    find_library(_lib_ssl
+      NAMES
+        libssl ssl
+      PATHS
+        "${MYSQL_LIB_DIR}/"
+      NO_DEFAULT_PATH
+      NO_CMAKE_ENVIRONMENT_PATH
+    )
+
+    find_library(_lib_crypto
+      NAMES
+        libcrypto crypto
+      PATHS
+        "${MYSQL_LIB_DIR}/"
+      NO_DEFAULT_PATH
+      NO_CMAKE_ENVIRONMENT_PATH
+    )
+    set(SSL_LIBS_PACKAGE "")
+    list(APPEND SSL_LIBS_PACKAGE "${_lib_ssl}" "${_lib_crypto}" )
+
+  foreach(lib ${SSL_LIBS_PACKAGE})
+
+    MESSAGE(STATUS "Packaging ${lib}")
+
+    get_filename_component(lib_realpath "${lib}"  REALPATH)
+
+    install(FILES ${lib} ${lib_realpath} DESTINATION ${INSTALL_LIBDIR} OPTIONAL)
+
+  endforeach()
+
+    #install(DIRECTORY "${MYSQL_LIB_DIR}" DESTINATION ${INSTALL_LIBDIR}
+    # FILES_MATCHING REGEX "(.*crypt.*)|(.*ssl.*)" EXCLUDE )
+
+  endif()
+
+endfunction()
+
+if(BUNDLE_DEPENDENCIES)
+  message(STATUS "Bundling OpenSSL libraries")
+  bundle_ssl_libs()
+endif()
+
+# Create the BUILDINFO file
+# =========================
+#
+include(buildinfo.cmake)

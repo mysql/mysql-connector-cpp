@@ -244,6 +244,8 @@ static const String2IntMap booleanOptions[]=
     {"sslVerify",                   MYSQL_OPT_SSL_VERIFY_SERVER_CERT, false}, // Deprecated
     {"sslEnforce",                  MYSQL_OPT_SSL_ENFORCE, false} // Deprecated
 #else
+    {"sslVerify",                   MYSQL_OPT_SSL_MODE, true}, // Deprecated
+    {"sslEnforce",                  MYSQL_OPT_SSL_MODE, true}, // Deprecated
     {"OPT_GET_SERVER_PUBLIC_KEY",   MYSQL_OPT_GET_SERVER_PUBLIC_KEY, false},
     {"OPT_OPTIONAL_RESULTSET_METADATA", MYSQL_OPT_OPTIONAL_RESULTSET_METADATA, false},
 #endif
@@ -762,6 +764,23 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       }
     } else if (!it->first.compare("OPT_CONNECT_ATTR_RESET")) {
       proxy->options(MYSQL_OPT_CONNECT_ATTR_RESET, 0);
+
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80000
+
+    } else if (!it->first.compare("sslVerify")) {
+
+      ssl_mode ssl_mode_val = (it->second).get< bool >() ? SSL_MODE_VERIFY_CA
+                                           : SSL_MODE_PREFERRED;
+      proxy->options(MYSQL_OPT_SSL_MODE, &ssl_mode_val);
+
+
+    } else if (!it->first.compare("sslEnforce")) {
+      ssl_mode ssl_mode_val = (it->second).get< bool >() ? SSL_MODE_REQUIRED
+                                                         : SSL_MODE_PREFERRED;
+      proxy->options(MYSQL_OPT_SSL_MODE, &ssl_mode_val);
+
+#endif
+
 
     /* If you need to add new integer connection option that should result in
        calling mysql_optiong - add its mapping to the intOptions array

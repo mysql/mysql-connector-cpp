@@ -3151,11 +3151,11 @@ void connection::cached_sha2_auth()
   }
 
   try {
-    stmt->execute("DROP USER 'doomuser'@'localhost';");
+    stmt->execute("DROP USER 'doomuser'@'%';");
   } catch (...) {}
 
 
-  stmt->execute("CREATE USER 'doomuser'@'localhost' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
+  stmt->execute("CREATE USER 'doomuser'@'%' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
 
   sql::ConnectOptionsMap opts;
   opts["hostName"] = url;
@@ -3197,7 +3197,7 @@ void connection::cached_sha2_auth()
   // Cleanup
   con.reset(getConnection());
   stmt.reset(con->createStatement());
-  stmt->execute("DROP USER 'doomuser'@'localhost';");
+  stmt->execute("DROP USER 'doomuser'@'%';");
 }
 
 

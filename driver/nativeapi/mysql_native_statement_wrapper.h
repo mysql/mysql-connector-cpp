@@ -38,7 +38,12 @@
 
 #include "native_statement_wrapper.h"
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_STMT;
+#else
 struct st_mysql_stmt;
+#define MYSQL_STMT st_mysql_stmt
+#endif
 
 namespace sql
 {
@@ -58,22 +63,22 @@ class MySQL_NativeStatementWrapper : public NativeStatementWrapper
 {
 
   boost::shared_ptr<IMySQLCAPI>	api;
-  ::st_mysql_stmt *				stmt;
+  ::MYSQL_STMT *				stmt;
   NativeConnectionWrapper *		conn;
 
   MySQL_NativeStatementWrapper(){}
 
 public:
-  MySQL_NativeStatementWrapper(::st_mysql_stmt *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
+  MySQL_NativeStatementWrapper(::MYSQL_STMT *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
   ~MySQL_NativeStatementWrapper();
 
   uint64_t affected_rows();
 
   bool attr_set(MySQL_Statement_Options option, const void *arg);
 
-  bool bind_param(::st_mysql_bind *);
+  bool bind_param(::MYSQL_BIND *);
 
-  bool bind_result(::st_mysql_bind *);
+  bool bind_result(::MYSQL_BIND *);
 
   void data_seek(uint64_t );
 

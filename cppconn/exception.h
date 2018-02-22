@@ -162,6 +162,7 @@ protected:
   const std::string option;
 };
 
+
 } /* namespace sql */
 
 #endif /* _SQL_EXCEPTION_H_ */

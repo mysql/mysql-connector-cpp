@@ -439,7 +439,7 @@ MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::store_result()
 {
-  ::st_mysql_res * raw= api->store_result(mysql);
+  ::MYSQL_RES * raw= api->store_result(mysql);
 
   if (raw == NULL) {
     /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
@@ -475,7 +475,7 @@ int MySQL_NativeConnectionWrapper::use_protocol(Protocol_Type protocol)
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::use_result()
 {
-  ::st_mysql_res * raw= api->use_result(mysql);
+  ::MYSQL_RES * raw= api->use_result(mysql);
 
   if (raw == NULL) {
     /*CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
@@ -492,7 +492,7 @@ MySQL_NativeConnectionWrapper::use_result()
 NativeStatementWrapper &
 MySQL_NativeConnectionWrapper::stmt_init()
 {
-  ::st_mysql_stmt * raw= api->stmt_init(mysql);
+  ::MYSQL_STMT * raw= api->stmt_init(mysql);
 
   if (raw == NULL) {
     /*CPP_ERR_FMT("No statement : %d:(%s) %s", e->errNo(), proxy->sqlstate(), proxy->error());*/

@@ -27,6 +27,12 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
+GA 1.1.11 -
+- Add MySQL 8.0 support
+- Fix WHAT TOOL AND OPTIONS WERE USED TO COMPILE MYSQL C++ CONNECTOR (Bug#23556661)
+GA 1.1.9 -
+- Fix SQL::RESULTSET::GETDOUBLE RETURN WRONG VALUE WITH FR_CA LOCALE (Bug#69719)
+- "LOCALHOST" DOESN'T WORK FOR IPV6-ONLY BOUND HOST IN WB (Bug#69663)
 
 GA 1.1.8 -
 - Add connect options MYSQL_OPT_MAX_ALLOWED_PACKET, MYSQL_OPT_NET_BUFFER_LENGTH,

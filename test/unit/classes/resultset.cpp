@@ -287,6 +287,7 @@ void resultset::getTypes()
       res->first();
 
       ASSERT_EQUALS(res->getDouble("id"), res->getDouble(1));
+
       try
       {
         res->getDouble(0);
@@ -560,6 +561,7 @@ void resultset::getTypes()
         logMsg(msg.str());
         got_warning=true;
       }
+
       //ASSERT_EQUALS(pres->getDouble("id"), res->getDouble("id"));
 
       if (pres->getInt("id") != res->getInt("id"))

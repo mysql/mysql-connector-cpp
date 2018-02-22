@@ -36,6 +36,7 @@
 #include "nativeapi/mysql_private_iface.h"
 #include <cppconn/config.h>
 #include <cppconn/sqlstring.h>
+#include <cppconn/exception.h>
 #include <boost/shared_ptr.hpp>
 
 
@@ -155,6 +156,20 @@ const char * mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared
 char * utf8_strup(const char * const src, size_t srclen);
 
 long double strtold(const char *nptr, char **endptr);
+
+/*
+  Generic string to number conversion function template.
+
+  Retrurns numeric value after converting given string in a given base,
+  which should be either 10, 16 or 8. Throws error if the whole string
+  could not be converted to a number.
+
+  Unlike strtod() and friends, this function does not depend on the current
+  locale setting but always uses the "C" locale (so that, e.g., decimal point
+  character is always '.').
+*/
+
+long double strtonum(const std::string &str, int radix = 10);
 
 typedef struct st_our_charset
 {

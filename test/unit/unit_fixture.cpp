@@ -176,7 +176,7 @@ void unit_fixture::init()
   columns.push_back(columndefinition("BINARY", "BINARY(1)", sql::DataType::BINARY, "a", true, 1, 0, true, "", 1, "NO", false));
   columns.push_back(columndefinition("VARBINARY", "VARBINARY(1)", sql::DataType::VARBINARY, "a", true, 1, 0, true, "", 1, "NO", false));
   columns.push_back(columndefinition("VARBINARY", "VARBINARY(2) NOT NULL", sql::DataType::VARBINARY, "a", true, 2, 0, false, "", 2, "NO", false));
-  columns.push_back(columndefinition("VARBINARY", "VARBINARY(20) NOT NULL DEFAULT 'Lawrin'", sql::DataType::VARBINARY, "a", true, 20, 0, false, "0x4C617772696E", 20, "NO", false));
+  columns.push_back(columndefinition("VARBINARY", "VARBINARY(20) NOT NULL DEFAULT 0x4C617772696E", sql::DataType::VARBINARY, "a", true, 20, 0, false, "0x4C617772696E", 20, "NO", false));
   columns.push_back(columndefinition("TINYBLOB", "TINYBLOB", sql::DataType::VARBINARY, "a", true, 255, 0, true, "", 255, "NO", false));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT", sql::DataType::VARCHAR, "a", true, 255, 0, true, "", 255, "NO", false, "a"));
   columns.push_back(columndefinition("TINYTEXT", "TINYTEXT NOT NULL", sql::DataType::VARCHAR, "a", true, 255, 0, false, "", 255, "NO", false));

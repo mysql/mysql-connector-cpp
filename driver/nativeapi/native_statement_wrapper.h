@@ -40,10 +40,17 @@
 #endif
 
 #include "../mysql_statement_options.h"
+#include "../cppconn/version_info.h"
 
-
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_BIND;
+struct MYSQL_RES;
+#else
 struct st_mysql_bind;
 struct st_mysql_res;
+#define MYSQL_BIND st_mysql_bind
+#define MYSQL_RES st_mysql_res
+#endif
 
 namespace sql
 {
@@ -69,9 +76,9 @@ public:
 
   virtual bool attr_set(MySQL_Statement_Options attr, const void *arg) = 0;
 
-  virtual bool bind_param(::st_mysql_bind *) = 0;
+  virtual bool bind_param(::MYSQL_BIND *) = 0;
 
-  virtual bool bind_result(::st_mysql_bind *) = 0;
+  virtual bool bind_result(::MYSQL_BIND *) = 0;
 
   virtual void data_seek(uint64_t) = 0;
 

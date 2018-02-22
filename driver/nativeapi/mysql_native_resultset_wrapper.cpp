@@ -46,7 +46,7 @@ namespace NativeAPI
 {
 
 /* {{{ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper */
-MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::st_mysql_res * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
+MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::MYSQL_RES * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
                       /*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
   : /*logger(l),*/ capi(_capi), rs(res)
 {
@@ -72,7 +72,7 @@ MySQL_NativeResultsetWrapper::data_seek(uint64_t offset)
 
 
 /* {{{ MySQL_NativeResultsetWrapper::fetch_field */
-::st_mysql_field *
+::MYSQL_FIELD *
 MySQL_NativeResultsetWrapper::fetch_field()
 {
   return capi->fetch_field(rs);
@@ -81,7 +81,7 @@ MySQL_NativeResultsetWrapper::fetch_field()
 
 
 /* {{{ MySQL_NativeResultsetWrapper::fetch_field_direct */
-::st_mysql_field *
+::MYSQL_FIELD *
 MySQL_NativeResultsetWrapper::fetch_field_direct(unsigned int field_nr)
 {
   return capi->fetch_field_direct(rs, field_nr);

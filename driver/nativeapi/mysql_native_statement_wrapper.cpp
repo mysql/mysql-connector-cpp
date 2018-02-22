@@ -52,7 +52,7 @@ namespace NativeAPI
  *
  */
 /* {{{ MySQL_NativeStatementWrapper::MySQL_NativeStatementWrapper() */
-MySQL_NativeStatementWrapper::MySQL_NativeStatementWrapper(::st_mysql_stmt * _stmt, boost::shared_ptr<IMySQLCAPI> _api, NativeConnectionWrapper * connProxy)
+MySQL_NativeStatementWrapper::MySQL_NativeStatementWrapper(::MYSQL_STMT * _stmt, boost::shared_ptr<IMySQLCAPI> _api, NativeConnectionWrapper * connProxy)
   : api (_api), stmt(_stmt), conn(connProxy)
 {
 }
@@ -87,7 +87,7 @@ MySQL_NativeStatementWrapper::attr_set(MySQL_Statement_Options option, const voi
 
 /* {{{ MySQL_NativeStatementWrapper::bind_param() */
 bool
-MySQL_NativeStatementWrapper::bind_param(::st_mysql_bind * bind )
+MySQL_NativeStatementWrapper::bind_param(::MYSQL_BIND * bind )
 {
   return (api->stmt_bind_param(stmt, bind) != '\0');
 }
@@ -96,7 +96,7 @@ MySQL_NativeStatementWrapper::bind_param(::st_mysql_bind * bind )
 
 /* {{{ MySQL_NativeStatementWrapper::bind_result() */
 bool
-MySQL_NativeStatementWrapper::bind_result(::st_mysql_bind * bind)
+MySQL_NativeStatementWrapper::bind_result(::MYSQL_BIND * bind)
 {
   return (api->stmt_bind_result(stmt, bind) != '\0');
 }
@@ -206,7 +206,7 @@ MySQL_NativeStatementWrapper::prepare(const ::sql::SQLString & stmt_str)
 NativeResultsetWrapper *
 MySQL_NativeStatementWrapper::result_metadata()
 {
-  ::st_mysql_res * raw = api->stmt_result_metadata(stmt);
+	::MYSQL_RES * raw = api->stmt_result_metadata(stmt);
 
   if (raw == NULL) {
     return NULL;

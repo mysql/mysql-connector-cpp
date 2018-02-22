@@ -68,7 +68,7 @@
 
 // Connection properties
 #define EXAMPLE_DB   "test"
-#define EXAMPLE_HOST "tcp://127.0.0.1:13000"
+#define EXAMPLE_HOST "tcp://127.0.0.1:3006"
 #define EXAMPLE_USER "root"
 #define EXAMPLE_PASS ""
 

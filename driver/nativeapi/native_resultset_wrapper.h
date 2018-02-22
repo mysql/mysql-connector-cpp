@@ -39,8 +39,14 @@
 #include <stdint.h>
 #endif
 
+#include "../cppconn/version_info.h"
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL_FIELD;
+#else
 struct st_mysql_field;
+#define MYSQL_FIELD st_mysql_field
+#endif
 
 namespace sql
 {
@@ -56,9 +62,9 @@ public:
 
   virtual void data_seek(uint64_t) = 0;
 
-  virtual ::st_mysql_field * fetch_field() = 0;
+  virtual ::MYSQL_FIELD * fetch_field() = 0;
 
-  virtual ::st_mysql_field * fetch_field_direct(unsigned int) = 0;
+  virtual ::MYSQL_FIELD * fetch_field_direct(unsigned int) = 0;
 
   virtual unsigned long * fetch_lengths() = 0;
 

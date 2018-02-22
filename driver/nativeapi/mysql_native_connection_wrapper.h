@@ -59,7 +59,12 @@ class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
   /* api should be declared before mysql here */
   boost::shared_ptr< IMySQLCAPI >	api;
 
-  struct ::st_mysql *				mysql;
+
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
+struct MYSQL* mysql;
+#else
+struct st_mysql* mysql;
+#endif
 
   ::sql::SQLString				serverInfo;
 
