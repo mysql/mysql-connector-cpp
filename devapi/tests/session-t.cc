@@ -1097,4 +1097,15 @@ TEST_F(Sess, bugs)
   catch(...)
   {}
 
+  //memory leak when using bad ssl_ca
+  EXPECT_THROW(mysqlx::Session(SessionOption::SSL_CA, "Bad",
+                               SessionOption::SSL_MODE, SSLMode::VERIFY_CA,
+                               SessionOption::PORT, get_port(),
+                               SessionOption::USER,get_user(),
+                               SessionOption::PWD, get_password() ?
+                                 get_password() :
+                                 nullptr
+                                 ),
+               Error);
+
 }

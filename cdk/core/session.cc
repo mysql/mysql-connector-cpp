@@ -49,7 +49,7 @@ struct Session_builder
   using TCPIP = cdk::connection::TCPIP;
   using Socket_base = foundation::connection::Socket_base;
 
-  cdk::api::Connection *m_conn = NULL;
+  unique_ptr<cdk::api::Connection> m_conn;
   mysqlx::Session      *m_sess = NULL;
   const mysqlx::string *m_database = NULL;
   bool m_throw_errors = false;
@@ -193,7 +193,7 @@ Session_builder::operator() (
       calling mysqlx::Session() ctor which might throw errors.
     */
 
-    m_conn = tls_conn;
+    m_conn.reset(tls_conn);
     m_sess = new mysqlx::Session(*tls_conn, options);
   }
   else
@@ -207,7 +207,7 @@ Session_builder::operator() (
     */
 
     m_sess = new mysqlx::Session(*connection, options);
-    m_conn = connection.release();
+    m_conn.reset(connection.release());
   }
 
   m_database = options.database();
@@ -230,7 +230,7 @@ Session_builder::operator() (
     return false;  // continue to next host if available
 
   m_sess = new mysqlx::Session(*connection, options);
-  m_conn = connection.release();
+  m_conn.reset(connection.release());
 
   m_database = options.database();
 
@@ -369,7 +369,7 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
   assert(sb.m_sess);
 
   m_session = sb.m_sess;
-  m_connection = sb.m_conn;
+  m_connection = sb.m_conn.release();
 }
 
 
@@ -403,7 +403,7 @@ Session::Session(ds::Multi_source &ds)
 
   m_session = sb.m_sess;
   m_database = sb.m_database;
-  m_connection = sb.m_conn;
+  m_connection = sb.m_conn.release();
 }
 
 
@@ -419,7 +419,7 @@ Session::Session(ds::Unix_socket &ds, const ds::Unix_socket::Options &options)
   assert(sb.m_sess);
 
   m_session = sb.m_sess;
-  m_connection = sb.m_conn;
+  m_connection = sb.m_conn.release();
 }
 #endif //#ifndef WIN32
 

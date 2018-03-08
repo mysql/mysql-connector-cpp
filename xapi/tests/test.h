@@ -73,7 +73,7 @@ protected:
 
   unsigned short m_port;
   const char *m_status;
-  mysqlx_session_t *m_sess;
+  mysqlx_session_t *m_sess = NULL;
 
   const char *m_xplugin_usr;
   const char *m_xplugin_pwd;
@@ -172,6 +172,9 @@ protected:
     const char *xplugin_usr = usr ? usr : m_xplugin_usr;
     const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
     const char *xplugin_host = m_xplugin_host;
+
+    mysqlx_session_close(m_sess);
+    m_sess = NULL;
 
     m_sess = mysqlx_get_session(
       xplugin_host, m_port,

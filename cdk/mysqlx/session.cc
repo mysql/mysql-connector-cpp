@@ -175,19 +175,6 @@ bool error_category_server::do_equivalent(int code,
 */
 
 
-class SessionAuthInterface
-{
-public:
-
-  virtual ~SessionAuthInterface() {}
-
-  virtual const char* auth_method() = 0;
-  virtual bytes auth_data() = 0;
-  virtual bytes auth_response() = 0;
-  virtual bytes auth_continue(bytes) = 0;
-};
-
-
 class AuthPlain
     : public SessionAuthInterface
 {
@@ -318,8 +305,7 @@ void Session::authenticate(const Session::Options &options,
                            bool  secure_conn)
 {
 
-  delete m_auth_interface;
-  m_auth_interface = NULL;
+  m_auth_interface.reset();
 
   using cdk::ds::mysqlx::Protocol_options;
   auto am = options.auth_method();
@@ -330,13 +316,13 @@ void Session::authenticate(const Session::Options &options,
   switch (am)
   {
     case Protocol_options::MYSQL41:
-      m_auth_interface = new AuthMysql41(options);
+      m_auth_interface.reset(new AuthMysql41(options));
     break;
     case Protocol_options::PLAIN:
-      m_auth_interface = new AuthPlain(options);
+      m_auth_interface.reset(new AuthPlain(options));
     break;
     case Protocol_options::EXTERNAL:
-      m_auth_interface = new AuthExternal(options);
+      m_auth_interface.reset(new AuthExternal(options));
     break;
     case Protocol_options::DEFAULT:
       assert(false);  // should not happen
@@ -366,7 +352,7 @@ Session::~Session()
 
   try
   {
-    delete m_auth_interface;
+    m_auth_interface.reset();
   }
   catch (...)
   {
@@ -671,8 +657,7 @@ Reply_init &Session::set_command(Proto_op *cmd)
 void Session::auth_ok(bytes data)
 {
   m_isvalid = true;
-  delete m_auth_interface;
-  m_auth_interface = NULL;
+  m_auth_interface.reset();
 }
 
 
@@ -688,8 +673,7 @@ void Session::auth_fail(bytes data)
   add_diagnostics(Severity::ERROR, error_code(cdkerrc::auth_failure),
                   std::string(data.begin(), data.end()));
   m_isvalid = false;
-  delete m_auth_interface;
-  m_auth_interface = NULL;
+  m_auth_interface.reset();
 }
 
 

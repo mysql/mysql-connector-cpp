@@ -249,8 +249,6 @@ TEST_F(xapi, warnings_test)
   }
   EXPECT_EQ(3, warn_count);
 
-  mysqlx_session_close(get_session());
-
   authenticate();
 
   EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "cc_api_test", 1)) != NULL);
@@ -800,6 +798,7 @@ TEST_F(xapi, auth_method)
   local_sess = mysqlx_get_session_from_options(opt, conn_error, &conn_err_code);
   if (!local_sess)
     FAIL() << "Failed to establish session";
+
   mysqlx_session_close(local_sess);
   local_sess = NULL;
 
@@ -858,17 +857,26 @@ TEST_F(xapi, auth_method)
   if (!local_sess)
     FAIL() << "Session could not be established";
 
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
   connstr = conn.str().data();
   local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=required&auth=plain").data(),
                                            conn_error, &conn_err_code);
   if (!local_sess)
     FAIL() << "Session could not be established";
 
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
+
   connstr = conn.str().data();
   local_sess = mysqlx_get_session_from_url(connstr.append("?ssl-mode=required&auth=mysql41").data(),
                                            conn_error, &conn_err_code);
   if (!local_sess)
     FAIL() << "Session could not be established";
+
+  mysqlx_session_close(local_sess);
+  local_sess = NULL;
 }
 
 

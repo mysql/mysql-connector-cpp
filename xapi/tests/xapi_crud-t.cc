@@ -1153,6 +1153,8 @@ TEST_F(xapi, param_safety_test)
   EXPECT_EQ(RESULT_ERROR, mysqlx_stmt_bind(stmt, PARAM_END));
   printf("\nExpected error: %s", mysqlx_error_message(stmt));
   EXPECT_TRUE(mysqlx_execute(stmt) == NULL);
+
+  mysqlx_free_options(opt);
 }
 
 
@@ -2288,7 +2290,6 @@ TEST_F(xapi_bugs, schemas_list_test)
   {
     exec_sql(queries[i]);
   }
-  mysqlx_session_close(get_session());
 
   authenticate(NULL, NULL, NULL);
   if (!get_session())

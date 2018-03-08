@@ -390,7 +390,18 @@ typedef Session Reply_init;
 
 class Reply;
 class Cursor;
-class SessionAuthInterface;
+
+class SessionAuthInterface
+{
+public:
+
+  virtual ~SessionAuthInterface() {}
+
+  virtual const char* auth_method() = 0;
+  virtual bytes auth_data()  = 0;
+  virtual bytes auth_response() = 0;
+  virtual bytes auth_continue(bytes) = 0;
+};
 
 
 typedef protocol::mysqlx::api::Protocol_fields Protocol_fields;
@@ -421,7 +432,7 @@ protected:
 
   Reply* m_current_reply;
 
-  SessionAuthInterface* m_auth_interface;
+  scoped_ptr<SessionAuthInterface> m_auth_interface;
 
   shared_ptr<Proto_op> m_cmd;
   enum { CMD_SQL, CMD_ADMIN, CMD_COLL_ADD } m_cmd_type;

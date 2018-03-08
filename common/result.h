@@ -364,6 +364,8 @@ public:
 
 struct Meta_data_base
 {
+  virtual ~Meta_data_base(){}
+
   col_count_t col_count() const { return m_col_count; }
 
   virtual const Format_info& get_format(cdk::col_count_t pos) const = 0;
