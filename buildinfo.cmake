@@ -75,5 +75,5 @@ file(APPEND ${buildinfo_out} "MySQL version  : ${MYSQL_VERSION}\n"
 )
   # TODO: Boost version
 
-install(FILES "${buildinfo_out}" DESTINATION ${DOC_DESTINATION})
+install(FILES "${buildinfo_out}" DESTINATION ${DOC_DESTINATION} COMPONENT Readme)
 

@@ -70,11 +70,13 @@ IF(WIN32)
   INSTALL(TARGETS mysqlcppconn_thread mysqlcppconn_thread-static
           RUNTIME DESTINATION lib
           ARCHIVE DESTINATION lib
+          COMPONENT JDBCDev
   )
 ELSE(WIN32)
   INSTALL(TARGETS mysqlcppconn_thread mysqlcppconn_thread-static
           LIBRARY DESTINATION ${INSTALL_LIBDIR}
           ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+          COMPONENT JDBCDev
   )
 ENDIF(WIN32)
 

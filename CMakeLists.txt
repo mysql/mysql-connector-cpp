@@ -461,7 +461,7 @@ INSTALL(FILES
   ${CPACK_RESOURCE_FILE_LICENSE}
   "${CMAKE_SOURCE_DIR}/Licenses_for_Third-Party_Components.txt"
   "${CMAKE_SOURCE_DIR}/ANNOUNCEMENT"
-  DESTINATION ${DOC_DESTINATION} OPTIONAL)
+  DESTINATION ${DOC_DESTINATION} OPTIONAL COMPONENT Readme)
 
 SET(COMMON_IGNORE_FILES
         "/CMakeFiles/"
@@ -658,7 +658,7 @@ function(bundle_ssl_libs)
   if(WIN32)
 
     install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION ${INSTALL_LIBDIR}
-     FILES_MATCHING REGEX "(.*eay.*)")
+     FILES_MATCHING REGEX "(.*eay.*)" COMPONENT JDBCDll)
 
   else()
 
@@ -688,7 +688,7 @@ function(bundle_ssl_libs)
 
     get_filename_component(lib_realpath "${lib}"  REALPATH)
 
-    install(FILES ${lib} ${lib_realpath} DESTINATION ${INSTALL_LIBDIR} OPTIONAL)
+    install(FILES ${lib} ${lib_realpath} DESTINATION ${INSTALL_LIBDIR} OPTIONAL COMPONENT Readme)
 
   endforeach()
 
