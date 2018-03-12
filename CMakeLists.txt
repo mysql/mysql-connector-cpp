@@ -699,7 +699,7 @@ function(bundle_ssl_libs)
 
 endfunction()
 
-if(BUNDLE_DEPENDENCIES)
+if(BUNDLE_RUNTIME_LIBRARIES)
   message(STATUS "Bundling OpenSSL libraries")
   bundle_ssl_libs()
 endif()
