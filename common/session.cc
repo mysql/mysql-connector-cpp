@@ -353,24 +353,3 @@ void Session_impl::prepare_for_cmd()
     m_current_result->store();
   m_current_result = nullptr;
 }
-
-
-// ---------------------------------------------------------------------------
-
-void mysqlx::common::GUID::generate()
-{
-  using namespace uuid;
-
-  static const char *hex_digit = "0123456789ABCDEF";
-  uuid_type uuid;
-
-  generate_uuid(uuid);
-
-  for (unsigned i = 0; i < sizeof(uuid) && 2*i < sizeof(m_data); ++i)
-  {
-    m_data[2*i] = hex_digit[uuid[i] >> 4];
-    m_data[2 * i + 1] = hex_digit[uuid[i] % 16];
-  }
-}
-
-

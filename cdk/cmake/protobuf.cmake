@@ -184,7 +184,6 @@ MACRO(USE_FULL_PROTOBUF)
   set(PROTOBUF_LITE OFF CACHE BOOL "Using lite version of Protobuf library" FORCE)
 ENDMACRO()
 
-
 # Standard PROTOBUF_GENERATE_CPP modified to our usage
 
 FUNCTION(MYSQLX_PROTOBUF_GENERATE_CPP SRCS HDRS)
@@ -213,6 +212,7 @@ FUNCTION(MYSQLX_PROTOBUF_GENERATE_CPP SRCS HDRS)
       COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
            -I ${ABS_PATH} ${ABS_FIL}
+           --proto_path=${PROJECT_SOURCE_DIR}/protobuf/protobuf-2.6.1/src
       DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler (${PROTOBUF_PROTOC_EXECUTABLE}) on ${FIL}"
       VERBATIM)

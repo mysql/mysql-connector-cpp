@@ -147,14 +147,20 @@ const char * mysqlx_result_struct::read_json(size_t *json_byte_size)
 }
 
 
-const char * mysqlx_result_struct::get_next_doc_id()
+const char * mysqlx_result_struct::get_next_generated_id()
 {
-  if (m_current_id_index >= m_guids.size())
+  if (m_doc_id_list.empty() && m_current_id_index == 0)
+  {
+    if (!m_reply)
+      return NULL;
+    for (auto id : m_reply->generated_ids())
+      m_doc_id_list.push_back(id);
+  }
+
+  if (m_current_id_index >= m_doc_id_list.size())
     return NULL;
 
-  m_doc_id_list.emplace_back((std::string)m_guids[m_current_id_index++]);
-
-  return m_doc_id_list.back().c_str();
+  return m_doc_id_list[m_current_id_index++].c_str();
 }
 
 

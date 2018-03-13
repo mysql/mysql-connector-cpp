@@ -39,6 +39,13 @@
 
 PUSH_PB_WARNINGS
 #include "protobuf/mysqlx.pb.h"
+#include "protobuf/mysqlx_connection.pb.h"
+#include "protobuf/mysqlx_crud.pb.h"
+#include "protobuf/mysqlx_expect.pb.h"
+#include "protobuf/mysqlx_notice.pb.h"
+#include "protobuf/mysqlx_resultset.pb.h"
+#include "protobuf/mysqlx_session.pb.h"
+#include "protobuf/mysqlx_sql.pb.h"
 POP_PB_WARNINGS
 
 

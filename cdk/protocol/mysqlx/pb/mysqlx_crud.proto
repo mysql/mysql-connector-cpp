@@ -1,29 +1,36 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; version 2 of the
- * License.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0,
+ * as published by the Free Software Foundation.
  *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an additional
+ * permission to link the program and your derivative works with the
+ * separately licensed software that they have included with MySQL.
+ *  
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License, version 2.0, for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301  USA
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 syntax = "proto2";
+
 
 // ifdef PROTOBUF_LITE: option optimize_for = LITE_RUNTIME;
 
 // Basic CRUD operations
 package Mysqlx.Crud;
-option java_package = "com.mysql.cj.mysqlx.protobuf";
+option java_package = "com.mysql.cj.x.protobuf";
 
+import "mysqlx.proto"; // comment_out_if PROTOBUF_LITE
 import "mysqlx_expr.proto";
 import "mysqlx_datatypes.proto";
 
@@ -118,11 +125,17 @@ message UpdateOperation {
 // :param grouping: column expression list for aggregation (GROUP BY)
 // :param grouping_criteria: filter criteria for aggregated groups
 // :param locking: perform row locking on matches
+// :param locking_options: additional options how to handle locked rows
 // :Returns: :protobuf:msg:`Mysqlx.Resultset::`
 message Find {
   enum RowLock {
     SHARED_LOCK = 1;   // Lock matching rows against updates
     EXCLUSIVE_LOCK = 2;  // Lock matching rows so no other transaction can read or write to it
+  };
+
+  enum RowLockOptions {
+    NOWAIT = 1;   // Do not wait to acquire row lock, fail with an error if a requested row is locked
+    SKIP_LOCKED = 2;  // Do not wait to acquire a row lock, remove locked rows from the result set
   };
 
   required Collection collection = 2;
@@ -136,6 +149,9 @@ message Find {
   repeated Mysqlx.Expr.Expr grouping = 8;
   optional Mysqlx.Expr.Expr grouping_criteria = 9;
   optional RowLock locking = 12;
+  optional RowLockOptions locking_options = 13;
+
+  option (client_message_id) = CRUD_FIND; // comment_out_if PROTOBUF_LITE
 };
 
 // Insert documents/rows into a collection/table
@@ -159,6 +175,8 @@ message Insert {
   repeated TypedRow row = 4;
   repeated Mysqlx.Datatypes.Scalar args = 5;
   optional bool upsert = 6 [default = false];
+
+  option (client_message_id) = CRUD_INSERT; // comment_out_if PROTOBUF_LITE
 };
 
 // Update documents/rows in a collection/table
@@ -181,6 +199,8 @@ message Update {
   repeated Order order = 6;
 
   repeated UpdateOperation operation = 7;
+
+  option (client_message_id) = CRUD_UPDATE; // comment_out_if PROTOBUF_LITE
 };
 
 // Delete documents/rows from a Collection/Table
@@ -200,6 +220,8 @@ message Delete {
   repeated Mysqlx.Datatypes.Scalar args = 6;
   optional Limit limit = 4;
   repeated Order order = 5;
+
+  option (client_message_id) = CRUD_DELETE; // comment_out_if PROTOBUF_LITE
 };
 
 
@@ -249,6 +271,8 @@ message CreateView {
   repeated string column = 6;
   required Find stmt = 7;
   optional bool replace_existing = 8 [default = false];
+
+  option (client_message_id) = CRUD_CREATE_VIEW; // comment_out_if PROTOBUF_LITE
 }
 
 
@@ -272,6 +296,8 @@ message ModifyView {
 
   repeated string column = 6;
   optional Find stmt = 7;
+
+  option (client_message_id) = CRUD_MODIFY_VIEW; // comment_out_if PROTOBUF_LITE
 }
 
 
@@ -283,4 +309,6 @@ message ModifyView {
 message DropView {
   required Collection collection = 1;
   optional bool if_exists = 2 [ default = false ];
+
+  option (client_message_id) = CRUD_DROP_VIEW; // comment_out_if PROTOBUF_LITE
 }

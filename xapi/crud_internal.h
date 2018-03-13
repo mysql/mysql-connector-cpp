@@ -98,7 +98,7 @@ public:
 
   const char * read_json(size_t *json_byte_size);
 
-  const char *get_next_doc_id();
+  const char *get_next_generated_id();
 
 };
 

@@ -276,7 +276,8 @@ void process_notice<notice_type::SessionStateChange>(
   {
   case Mysqlx::Notice::SessionStateChanged::CLIENT_ID_ASSIGNED:
   {
-    uint64_t id = msg.value().v_unsigned_int();
+    assert(msg.value_size() == 1 && msg.value(0).has_v_unsigned_int());
+    uint64_t id = msg.value(0).v_unsigned_int();
     assert(id < std::numeric_limits<unsigned long>::max());
     prc.client_id((unsigned long)id);
     break;
@@ -287,29 +288,29 @@ void process_notice<notice_type::SessionStateChange>(
     break;
 
   case Mysqlx::Notice::SessionStateChanged::CURRENT_SCHEMA:
-    assert(msg.value().has_v_string());
+    assert(msg.value_size() == 1 && msg.value(0).has_v_string());
     // NOTE: Assuming the reported schema name is in utf8 encoding
-    prc.current_schema(msg.value().v_string().value());
+    prc.current_schema(msg.value(0).v_string().value());
     break;
 
   case Mysqlx::Notice::SessionStateChanged::ROWS_AFFECTED:
-    assert(msg.value().has_v_unsigned_int());
-    prc.row_stats(prc.ROWS_AFFECTED, msg.value().v_unsigned_int());
+    assert(msg.value_size() == 1 && msg.value(0).has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_AFFECTED, msg.value(0).v_unsigned_int());
     break;
 
   case Mysqlx::Notice::SessionStateChanged::ROWS_FOUND:
-    assert(msg.value().has_v_unsigned_int());
-    prc.row_stats(prc.ROWS_FOUND, msg.value().v_unsigned_int());
+    assert(msg.value_size() == 1 && msg.value(0).has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_FOUND, msg.value(0).v_unsigned_int());
     break;
 
   case Mysqlx::Notice::SessionStateChanged::ROWS_MATCHED:
-    assert(msg.value().has_v_unsigned_int());
-    prc.row_stats(prc.ROWS_MATCHED, msg.value().v_unsigned_int());
+    assert(msg.value_size() == 1 && msg.value(0).has_v_unsigned_int());
+    prc.row_stats(prc.ROWS_MATCHED, msg.value(0).v_unsigned_int());
     break;
 
   case Mysqlx::Notice::SessionStateChanged::GENERATED_INSERT_ID:
-    assert(msg.value().has_v_unsigned_int());
-    prc.last_insert_id(msg.value().v_unsigned_int());
+    assert(msg.value_size() == 1 && msg.value(0).has_v_unsigned_int());
+    prc.last_insert_id(msg.value(0).v_unsigned_int());
     break;
 
   case Mysqlx::Notice::SessionStateChanged::TRX_COMMITTED:
@@ -322,6 +323,15 @@ void process_notice<notice_type::SessionStateChange>(
 
   case Mysqlx::Notice::SessionStateChanged::PRODUCED_MESSAGE:
   default: break;
+
+  case Mysqlx::Notice::SessionStateChanged::GENERATED_DOCUMENT_IDS:
+    for (auto it = msg.value().begin();
+         it != msg.value().end();
+         ++it)
+    {
+      prc.generated_document_id(it->v_octets().value());
+    }
+    break;
   }
 }
 

@@ -71,6 +71,8 @@ public:
   void skip_result() { m_impl.skip_result(); }
   row_count_t affected_rows() { return m_impl.affected_rows(); }
   row_count_t last_insert_id() { return m_impl.last_insert_id(); }
+  const std::vector<std::string>& generated_ids() const
+  { return m_impl.generated_ids(); }
   void discard() { m_impl.discard(); }
 
   // Diagnostics interface

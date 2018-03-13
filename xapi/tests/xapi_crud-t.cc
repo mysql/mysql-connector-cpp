@@ -2496,7 +2496,7 @@ TEST_F(xapi_bugs, collection_id_test)
   EXPECT_EQ(NULL, res = mysqlx_execute(stmt));
   printf("\nExpected error: %s\n", mysqlx_error_message(stmt));
 
-  while ((id = mysqlx_fetch_doc_id(res)) != NULL)
+  while ((id = mysqlx_fetch_generated_id(res)) != NULL)
   {
     strcpy(id_buf[i], id);
     ++i;

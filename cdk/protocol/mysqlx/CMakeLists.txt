@@ -75,17 +75,33 @@ if(NOT use_full_protobuf)
 set(LITE "${CMAKE_CURRENT_BINARY_DIR}/lite")
 file(MAKE_DIRECTORY ${LITE})
 
+UNSET(proto_mysqlx_defs_lite)
+
 foreach(proto ${proto_mysqlx_defs})
   get_filename_component(name ${proto} NAME)
   #message("Generating lite version of protobuf source: ${name}")
   file(READ "${proto}" CONTENTS)
-  string(REPLACE
-    "syntax = \"proto2\""
-    "syntax = \"proto2\";\noption optimize_for = LITE_RUNTIME"
-    CONTENTS "${CONTENTS}")
-  file(WRITE "${LITE}/${name}" "${CONTENTS}")
+  unset(NEW_CONTENTS)
+  FOREACH(LINE ${CONTENTS})
+    STRING(REGEX REPLACE
+      "([\\t ]*)//[\\t ]*ifdef[\\t ]+(PROTOBUF_LITE)[\\t ]*:[\\t ]*(.*)" "\\1\\3"
+      LINE ${LINE}
+    )
+    LIST(APPEND NEW_CONTENTS "${LINE}")
+  ENDFOREACH()
+
+  STRING(REGEX REPLACE
+    "//[\\t ]+ifndef[\\t ]+PROTOBUF_LITE.*//[\\t ]+endif[\\t ]*" ""
+    NEW_CONTENTS "${NEW_CONTENTS}")
+
+  STRING(REGEX REPLACE
+    "(\r*\n)([^\r\n]*//[\\t ]+comment_out_if[\\t ]+PROTOBUF_LITE)" "\\1// \\2"
+    NEW_CONTENTS "${NEW_CONTENTS}")
+
+  file(WRITE "${LITE}/${name}" "${NEW_CONTENTS}")
   #configure_file(lite_template.in "${LITE}/${name}" @ONLY)
-  list(APPEND proto_mysqlx_defs_lite "${LITE}/${name}")
+
+   list(APPEND proto_mysqlx_defs_lite "${LITE}/${name}")
 endforeach()
 
 set(proto_mysqlx_defs ${proto_mysqlx_defs_lite})

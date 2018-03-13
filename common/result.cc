@@ -338,7 +338,6 @@ void Result_impl_base::end_of_data()
   m_pending_rows = false;
 }
 
-
 // Handle diagnostic information.
 
 

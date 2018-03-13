@@ -36,6 +36,7 @@
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
+#include <vector>
 
 #include "../global.h"
 #include "session.h"
@@ -890,12 +891,9 @@ public:
   using Row_filter_t = std::function<bool(const Row_data&)>;
   Row_filter_t m_row_filter = [](const Row_data&) { return true; };
 
+  // Get generated document id information.
 
-  // Storage for generated document id information
-
-  using GUID = mysqlx::common::GUID;
-
-  std::vector<GUID>   m_guids;
+  const std::vector<std::string>& get_generated_ids() const;
 
 protected:
 
@@ -977,7 +975,6 @@ protected:
     m_row_cache_size = 0;
   }
 
-
   // -- Diagnostic information
 
   /*
@@ -1056,6 +1053,14 @@ unsigned Result_impl_base::get_warning_count() const
     THROW("Attempt to get warning count for empty result");
   const_cast<Result_impl_base*>(this)->load_diagnostics();
   return m_reply->entry_count(cdk::api::Severity::WARNING);
+}
+
+inline
+const std::vector<std::string>& Result_impl_base::get_generated_ids() const
+{
+  if (!m_reply)
+    THROW("Attempt to get generated ids for empty result");
+  return m_reply->generated_ids();
 }
 
 inline

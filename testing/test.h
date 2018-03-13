@@ -207,7 +207,7 @@ protected:
 
   void output_id_list(Result& res)
   {
-    std::vector<mysqlx::GUID> ids = res.getDocumentIds();
+    std::vector<std::string> ids = res.getGeneratedIds();
     for (auto id : ids)
     {
       std::cout << "- added doc with id: " << id << std::endl;

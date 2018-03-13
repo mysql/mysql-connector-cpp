@@ -106,11 +106,9 @@ public:
   uint64_t get_affected_rows() const;
   uint64_t get_auto_increment() const;
 
-  using GUID = common::GUID;
-  using DocIdList = internal::List_initializer<const std::vector<GUID>&>;
+  using DocIdList = internal::List_initializer<const std::vector<std::string>&>;
 
-  const GUID& get_document_id() const;
-  DocIdList get_document_ids() const;
+  DocIdList get_generated_ids() const;
 
   // Handling multi-results
 

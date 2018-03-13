@@ -44,7 +44,6 @@
 */
 
 using namespace ::mysqlx;
-using common::GUID;
 using mysqlx::col_count_t;
 using mysqlx::row_count_t;
 
@@ -524,23 +523,9 @@ uint64_t internal::Result_detail::get_auto_increment() const
 }
 
 
-const GUID& internal::Result_detail::get_document_id() const
+auto internal::Result_detail::get_generated_ids() const -> DocIdList
 {
-  if (get_impl().m_guids.size() == 0)
-    throw Error("Can only be used on add operations.");
-  if (get_impl().m_guids.size() > 1)
-    throw Error("Multiple documents added... should use getDocumentIds()");
-
-  return get_impl().m_guids.front();
-}
-
-
-auto internal::Result_detail::get_document_ids() const -> DocIdList
-{
-  if (get_impl().m_guids.size() == 0)
-    throw Error("Can only be used on add operations.");
-
-  return get_impl().m_guids;
+  return get_impl().get_generated_ids();
 }
 
 

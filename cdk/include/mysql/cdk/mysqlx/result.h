@@ -54,6 +54,7 @@ protected:
 
   mysqlx::Session* m_session;
   Diagnostic_arena m_da;
+  std::vector<std::string> m_generated_ids;
   bool             m_error;
 
   Session& get_session()
@@ -117,6 +118,11 @@ public:
     if (!m_session || has_results() || !m_session->m_executed)
       throw_error("Only available after end of query execute");
     return m_session->m_stmt_stats.last_insert_id;
+  }
+
+  const std::vector<std::string>& generated_ids() const
+  {
+    return m_generated_ids;
   }
 
   virtual void discard();

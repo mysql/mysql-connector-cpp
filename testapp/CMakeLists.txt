@@ -459,6 +459,6 @@ file(INSTALL ${debug_libs} DESTINATION run/debug)
 #
 
 if (NOT WIN32 AND NOT libs)
-  flie(INSTALL ${debug_libs} DESTINATAION run)
+  file(INSTALL ${debug_libs} DESTINATAION run)
 endif()
 

@@ -1603,17 +1603,11 @@ bool check_object_exists(
 class Op_collection_add
   : public Op_base<common::Collection_add_if>
   , public cdk::Doc_source
-  , public cdk::JSON::Processor
-  , public cdk::JSON::Processor::Any_prc
-  , public cdk::JSON::Processor::Any_prc::Scalar_prc
 {
   using string = std::wstring;
 
   Object_ref    m_coll;
   std::vector<std::string> m_json;  // note: UTF8 JSON strings
-  common::GUID  m_id;
-  std::vector<common::GUID> m_id_list;
-  bool  m_generated_id;
   unsigned m_pos;
   const cdk::Expression *m_expr = nullptr;
   bool m_upsert = false;
@@ -1627,7 +1621,6 @@ public:
   )
     : Op_base(sess)
     , m_coll(coll)
-    , m_generated_id(true)
     , m_pos(0)
     , m_upsert(upsert)
   {}
@@ -1667,7 +1660,6 @@ public:
   void execute_prepare() override
   {
     m_pos = 0;
-    m_generated_id = true;
   }
 
   void execute_cleanup() override
@@ -1693,12 +1685,6 @@ public:
   }
 
 
-  void init_result(Result_impl_base &res) override
-  {
-    res.m_guids = std::move(m_id_list);
-  }
-
-
   // Doc_source
 
   bool next() override
@@ -1716,78 +1702,6 @@ public:
 
   void process(cdk::Expression::Processor &ep) const override;
 
-
-  /*
-    JSON::Processor
-
-    It is used to see if a document contains an '_id' field. If this is the case
-    then the document id is stored in m_id.
-  */
-
-  void doc_begin() override {}
-  void doc_end() override {}
-
-
-  cdk::JSON::Processor::Any_prc*
-  key_val(const cdk::string &key) override
-  {
-    // look only at key '_id'
-    if (key != L"_id")
-      return NULL;
-    // process '_id' value
-    m_generated_id= false;
-    return this;
-  }
-
-  // JSON::Processor::Any_prc
-
-  cdk::JSON::Processor::Any_prc::List_prc*
-  arr() override { assert(false); return NULL; }
-  cdk::JSON::Processor::Any_prc::Doc_prc*
-  doc() override { assert(false); return NULL; }
-
-  cdk::JSON::Processor::Any_prc::Scalar_prc*
-  scalar() override
-  {
-    return this;
-  }
-
-  // JSON::Processor::Any_prc::Scalar_prc
-
-  void str(const cdk::string &val) override
-  {
-    m_id= val;
-  }
-
-  void null() override
-  {
-    THROW("Document id can not be null");
-  }
-
-  void num(int64_t) override
-  {
-    THROW("Document id must be a string");
-  }
-
-  void num(uint64_t) override
-  {
-    THROW("Document id must be a string");
-  }
-
-  void num(float) override
-  {
-    THROW("Document id must be a string");
-  }
-
-  void num(double) override
-  {
-    THROW("Document id must be a string");
-  }
-
-  void yesno(bool) override
-  {
-    THROW("Document id must be a string");
-  }
 };
 
 
@@ -1869,43 +1783,9 @@ void Op_collection_add::process(cdk::Expression::Processor &ep) const
   }
 
   const std::string &json = m_json.at(m_pos-1);
-  auto self = const_cast<Op_collection_add*>(this);
 
-  // Parse JSON string to find _id if defined.
-  // TODO: Avoid parsing (if inserted document id is returned by server).
-
-  cdk::Codec<cdk::TYPE_DOCUMENT> codec;
-  self->m_generated_id = true;
-  codec.from_bytes(cdk::bytes(json), *self);
-
-  if (m_generated_id)
-  {
-    self->m_id.generate();
-    std::string id(m_id);
-
-    struct : cdk::Expression
-    {
-      const std::string *m_json;
-
-      void process(Processor &prc) const override
-      {
-        safe_prc(prc)->scalar()->val()->str(*m_json);
-      }
-    }
-    doc;
-    doc.m_json = &json;
-
-    Insert_id expr(doc, id);
-    expr.process(ep);
-  }
-  else
-  {
-    // TODO: Report as opaque value of type DOCUMENT using JSON format.
-    ep.scalar()->val()->str(json);
-  }
-
-  //Save added "_id" to the list
-  self->m_id_list.push_back(m_id);
+  // TODO: Report as opaque value of type DOCUMENT using JSON format.
+  ep.scalar()->val()->str(json);
 }
 
 

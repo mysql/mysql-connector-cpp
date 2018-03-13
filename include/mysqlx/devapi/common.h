@@ -56,7 +56,6 @@ namespace mysqlx {
 using std::out_of_range;
 
 using common::byte;
-using common::GUID;
 class Value;
 
 

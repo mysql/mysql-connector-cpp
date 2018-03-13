@@ -904,6 +904,13 @@ void Session::row_stats(row_stats_t stats, row_count_t val)
   }
 }
 
+void Session::generated_document_id(const std::string& id)
+{
+  if (m_current_reply)
+  {
+    m_current_reply->m_generated_ids.push_back(id);
+  }
+}
 
 void Session::send_cmd()
 {

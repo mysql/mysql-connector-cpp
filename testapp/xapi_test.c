@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <mysqlx/xapi.h>
+#include <string.h>
 
 /* Error processing macros */
 #define CRUD_CHECK(C, S) if (!C) \
@@ -67,6 +68,8 @@ int main(int argc, const char* argv[])
 
   const char   *url = (argc > 1 ? argv[1] : "mysqlx://root@127.0.0.1");
 
+
+
   char conn_error[MYSQLX_MAX_ERROR_LEN];
   int conn_err_code;
 
@@ -78,6 +81,8 @@ int main(int argc, const char* argv[])
 
   int rc = 0;
   int row_num = 0;
+
+
 
   /*
     Connect and create session.
@@ -91,6 +96,38 @@ int main(int argc, const char* argv[])
   }
 
   printf("\nConnected...");
+
+  {
+  /*
+    TODO: Only working with server version 8
+  */
+    res = mysqlx_sql(sess,
+                     "show variables like 'version'",
+                     MYSQLX_NULL_TERMINATED);
+
+    row = mysqlx_row_fetch_one(res);
+    size_t len=1024;
+    char buffer[len];
+
+
+    if (RESULT_OK != mysqlx_get_bytes(row, 1, 0, buffer, &len))
+        return -1;
+
+    int major_version;
+
+    major_version = atoi(buffer);
+
+    mysqlx_result_free(res);
+
+    if (major_version < 8)
+    {
+      printf("\nSession closed");
+      mysqlx_session_close(sess);
+      return 0;
+    }
+
+  }
+
 
   /* Drop test table if exists */
 

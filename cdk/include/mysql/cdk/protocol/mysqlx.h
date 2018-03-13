@@ -1072,6 +1072,7 @@ public:
   virtual void row_stats(row_stats_t, row_count_t) {}
   virtual void last_insert_id(insert_id_t) {}
   virtual void trx_event(trx_event_t) {}
+  virtual void generated_document_id(const std::string&) {}
 };
 
 template<>

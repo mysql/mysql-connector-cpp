@@ -692,6 +692,7 @@ private:
   void row_stats(row_stats_t, row_count_t);
   void last_insert_id(insert_id_t);
   // TODO: void trx_event(trx_event_t);
+  void generated_document_id(const std::string&);
 
   /*
      Helper functions to send/receive protocol messages

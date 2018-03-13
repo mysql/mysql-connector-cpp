@@ -316,14 +316,15 @@ void Crud::add_data(Collection &coll)
   DbDoc doc("{ \"name\": \"foo\", \"age\": 1 }");
 
   add = coll.add(doc, doc).execute();
-  output_id_list(add);
 
-  add = coll.add("{ \"name\": \"baz\", \"age\": 3,\
+  Result add2;
+  add2 = coll.add("{ \"name\": \"baz\", \"age\": 3,\
                   \"birth\": { \"day\": 20, \"month\": \"Apr\" } }")
         .add("{ \"name\": \"bar\", \"age\": 2, \
                     \"food\": [\"Milk\", \"Soup\"] }")
 
         .execute();
+  output_id_list(add2);
   output_id_list(add);
 
   add = coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
@@ -1482,25 +1483,20 @@ TEST_F(Crud, get_ids)
              " \"name\": \"bar\", \"age\": 2 }");
 
   Result res;
-  res = coll.add(doc2).execute();
+  res = coll.add(doc1).execute();
 
-  EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(res.getDocumentId()));
+  std::vector<std::string> ids= res.getGeneratedIds();
+  ASSERT_EQ(1, ids.size());
 
   res = coll.remove("true").execute();
 
   // This functions can only be used on add() operations
-  EXPECT_THROW(res.getDocumentId(), Error);
-  EXPECT_THROW(res.getDocumentIds(), Error);
+  ids= res.getGeneratedIds();
+  EXPECT_EQ(0, ids.size());
 
   res = coll.add(doc1).add(doc2).execute();
-
-  EXPECT_ANY_THROW(res.getDocumentId());
-
-  std::vector<mysqlx::GUID> list = res.getDocumentIds();
-
-  EXPECT_EQ(2, list.size());
-  EXPECT_NE(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[0]));
-  EXPECT_EQ(string("ABCDEFGHIJKLMNOPQRTSUVWXYZ012345"), string(list[1]));
+  ids= res.getGeneratedIds();
+  EXPECT_EQ(1, ids.size());
 
 }
 
@@ -1859,20 +1855,6 @@ TEST_F(Crud, add_empty)
                mysqlx::Error);
   EXPECT_THROW(add = coll.add(static_cast<char*>(NULL)).execute(),
                mysqlx::Error);
-}
-
-
-TEST_F(Crud, doc_id)
-{
-  SKIP_IF_NO_XPLUGIN;
-
-  cout << "Creating collection..." << endl;
-
-  Schema sch = getSchema("test");
-  Collection coll = sch.createCollection("c1", true);
-
-  EXPECT_THROW(coll.add("{\"_id\": 127 }").execute(), Error);
-  EXPECT_THROW(coll.add("{\"_id\": 12.7 }").execute(), Error);
 }
 
 

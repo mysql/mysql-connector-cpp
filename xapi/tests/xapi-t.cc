@@ -1328,7 +1328,7 @@ TEST_F(xapi, doc_id_test)
                                          "{\"a\" : \"12345\"}", "{\"a\" : \"abcde\"}",
                                          PARAM_END));
 
-  while ((id = mysqlx_fetch_doc_id(res)) != NULL)
+  while ((id = mysqlx_fetch_generated_id(res)) != NULL)
   {
     /*
       We need to copythe the returned string because it will become invalid
@@ -1355,15 +1355,13 @@ TEST_F(xapi, doc_id_test)
     Test that non-string document id triggers expected error.
   */
 
-  res = mysqlx_collection_add(collection, "{\"_id\": 127}", NULL);
+  CRUD_CHECK(mysqlx_collection_add(collection, "{\"_id\": 127}", NULL), collection)
+
+  CRUD_CHECK(mysqlx_collection_add(collection, "{\"_id\": 12.7}", NULL), collection)
+
+  res = mysqlx_collection_add(collection, "{\"_id\": \"127\"}", NULL);
   EXPECT_EQ(NULL, res);
   printf("\nExpected error: %s", mysqlx_error_message(collection));
-
-  res = mysqlx_collection_add(collection, "{\"_id\": 12.7}", NULL);
-  EXPECT_EQ(NULL, res);
-  printf("\nExpected error: %s", mysqlx_error_message(collection));
-
-  CRUD_CHECK(mysqlx_collection_add(collection, "{\"_id\": \"127\"}", NULL), collection);
 }
 
 

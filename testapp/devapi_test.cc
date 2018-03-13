@@ -47,6 +47,26 @@ try {
 
   Session sess(url);
 
+  {
+  /*
+    TODO: Only working with server version 8
+  */
+
+    RowResult res = sess.sql("show variables like 'version'").execute();
+    std::stringstream version;
+
+    version << res.fetchOne().get(1).get<string>();
+    int major_version;
+    version >> major_version;
+
+    if (major_version < 8)
+    {
+      cout <<"Done!" <<endl;
+      return 0;
+    }
+  }
+
+
   cout <<"Session accepted, creating collection..." <<endl;
 
   Schema sch= sess.getSchema("test");
@@ -60,22 +80,33 @@ try {
     Result add;
 
     add= coll.add(R"({ "name": "foo", "age": 1 })").execute();
-    cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
+    std::vector<string> ids = add.getGeneratedIds();
+    cout <<"- added doc with id: " << ids[0] <<endl;
 
     add= coll.add(R"({ "name": "bar", "age": 2, "toys": [ "car", "ball" ] })")
              .execute();
-    cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
+    if (ids.size() != 0)
+      cout <<"- added doc with id: " << ids[0] <<endl;
+    else
+      cout <<"- added doc" <<endl;
 
     add= coll.add(R"({
        "name": "baz",
         "age": 3,
        "date": { "day": 20, "month": "Apr" }
     })").execute();
-    cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
+    if (ids.size() != 0)
+      cout <<"- added doc with id: " << ids[0] <<endl;
+    else
+      cout <<"- added doc" <<endl;
 
     add= coll.add(R"({ "_id": "myuuid-1", "name": "foo", "age": 7 })")
              .execute();
-    cout <<"- added doc with id: " <<add.getDocumentId() <<endl;
+    ids = add.getGeneratedIds();
+    if (ids.size() != 0)
+      cout <<"- added doc with id: " << ids[0] <<endl;
+    else
+      cout <<"- added doc" <<endl;
   }
 
   cout <<"Fetching documents..." <<endl;

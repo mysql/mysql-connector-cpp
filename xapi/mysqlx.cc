@@ -1603,10 +1603,10 @@ mysqlx_savepoint_release(mysqlx_session_t *sess, const char *name)
 
 
  const char * STDCALL
-mysqlx_fetch_doc_id(mysqlx_result_struct *result)
+mysqlx_fetch_generated_id(mysqlx_result_struct *result)
 {
   SAFE_EXCEPTION_BEGIN(result, NULL)
-  return result->get_next_doc_id();
+  return result->get_next_generated_id();
   SAFE_EXCEPTION_END(result, NULL)
 }
 

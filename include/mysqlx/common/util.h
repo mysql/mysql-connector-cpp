@@ -329,53 +329,6 @@ namespace common {
 
 namespace common {
 
-/*
-  Global unique identifiers for documents.
-
-  TODO: Windows GUID type
-*/
-
-class GUID : public Printable
-{
-  char m_data[32];
-
-  void set(const char *data)
-  {
-    // Note: Windows gives compile warnings when using strncpy
-    for (unsigned i = 0; data[i] && i < sizeof(m_data); ++i)
-      m_data[i] = data[i];
-  }
-
-  void set(const std::string &data) { set(data.c_str()); }
-
-public:
-
-  GUID()
-  {
-    memset(m_data, 0, sizeof(m_data));
-  }
-
-  template <typename T> GUID(T data) { set(data); }
-  template<typename T>  GUID& operator=(T data) { set(data); return *this; }
-
-  operator std::string() const
-  {
-    return std::string(m_data, m_data + sizeof(m_data));
-  }
-
-  void generate();
-
-  void print(std::ostream &out) const
-  {
-    out << std::string(*this);
-  }
-};
-
-}  // common
-
-
-namespace common {
-
 using std::find_if;
 
 /*
