@@ -179,6 +179,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_AUTH_METHOD "Unknown authentication method"
 #define MYSQLX_ERROR_ROW_LOCKING "Row locking is supported only for SELECT and FIND"
 #define MYSQLX_ERROR_WRONG_LOCKING_MODE "Wrong value for the row locking mode"
+#define MYSQLX_ERROR_WRONG_EXPRESSION "Expression could not be parsed"
 #define MYSQLX_ERROR_EMPTY_JSON "Empty JSON document string"
 
 
@@ -1125,6 +1126,46 @@ PUBLIC_API mysqlx_result_t *
 mysqlx_collection_modify_unset(mysqlx_collection_t *collection,
                                const char *criteria, ...);
 
+
+/**
+  Apply a given patch to documents in a collection.
+
+  @param collection collection handle
+  @param criteria criteria selecting documents to be modified; if this
+         parameter is NULL then all documents are modified
+  @param patch_spec patch specification given as a character string and
+         interpreted like a JSON documents, but values of fields are
+         interpreted as expressions
+
+  @return handle to the statement result.
+          NULL is returned only in case of an error. The error details
+          can be obtained using `mysqlx_error()` function
+
+  @ingroup xapi_coll
+*/
+
+PUBLIC_API mysqlx_result_t *
+mysqlx_collection_modify_patch(mysqlx_collection_t *collection,
+                               const char *criteria,
+                               const char *patch_spec);
+
+
+/**
+  Set a given patch for a modify statement to be applied to
+  documents in a collection after executing the statement.
+
+  @param stmt modify statement
+  @param patch_spec patch specification given as a character string and
+         interpreted like a JSON documents, but values of fields are
+         interpreted as expressions
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @ingroup xapi_coll
+*/
+
+PUBLIC_API int
+mysqlx_set_modify_patch(mysqlx_stmt_t *stmt,
+                                   const char *patch_spec);
 
 /*
   Deferred statement execution

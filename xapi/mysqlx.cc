@@ -585,7 +585,7 @@ int STDCALL mysqlx_set_modify_set(mysqlx_stmt_struct *stmt, ...)
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_unset(mysqlx_stmt_struct *stmt, ...)
+int STDCALL mysqlx_set_modify_unset(mysqlx_stmt_struct *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -602,7 +602,7 @@ int STDCALL STDCALL mysqlx_set_modify_unset(mysqlx_stmt_struct *stmt, ...)
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_struct *stmt, ...)
+int STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_struct *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -619,7 +619,7 @@ int STDCALL STDCALL mysqlx_set_modify_array_insert(mysqlx_stmt_struct *stmt, ...
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_struct *stmt, ...)
+int STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_struct *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -636,7 +636,7 @@ int STDCALL STDCALL mysqlx_set_modify_array_append(mysqlx_stmt_struct *stmt, ...
 }
 
 
-int STDCALL STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_struct *stmt, ...)
+int STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_struct *stmt, ...)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
 
@@ -650,6 +650,29 @@ int STDCALL STDCALL mysqlx_set_modify_array_delete(mysqlx_stmt_struct *stmt, ...
   return res;
 
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+}
+
+
+static int
+_mysqlx_set_modify_patch(mysqlx_stmt_struct *stmt, ...)
+{
+  int res = RESULT_OK;
+  va_list args;
+  SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
+
+  va_start(args, stmt);
+  res = stmt->add_coll_modify_values(args, MODIFY_MERGE_PATCH);
+  va_end(args);
+
+  SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
+    return res;
+}
+
+int STDCALL
+mysqlx_set_modify_patch(mysqlx_stmt_struct *stmt,
+                        const char *patch_spec)
+{
+  return _mysqlx_set_modify_patch(stmt, patch_spec);
 }
 
 
@@ -1446,10 +1469,12 @@ mysqlx_collection_modify_set(mysqlx_collection_struct *collection,
 {
   mysqlx_result_struct *res;
   va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
   va_start(args, criteria);
   res = _mysqlx_collection_modify_exec(collection, criteria, MODIFY_SET, args);
   va_end(args);
   return res;
+  SAFE_EXCEPTION_END(collection, NULL)
 }
 
 
@@ -1459,10 +1484,38 @@ mysqlx_collection_modify_unset(mysqlx_collection_struct *collection,
 {
   mysqlx_result_struct *res;
   va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
+
   va_start(args, criteria);
   res = _mysqlx_collection_modify_exec(collection, criteria, MODIFY_UNSET, args);
   va_end(args);
   return res;
+  SAFE_EXCEPTION_END(collection, NULL)
+}
+
+static mysqlx_result_t *
+_mysqlx_collection_modify_patch(mysqlx_collection_t *collection,
+                               const char *criteria, ...)
+{
+  mysqlx_result_t *res;
+  va_list args;
+  SAFE_EXCEPTION_BEGIN(collection, NULL)
+
+  va_start(args, criteria);
+  res = _mysqlx_collection_modify_exec(collection, criteria,
+                                       MODIFY_MERGE_PATCH, args);
+  va_end(args);
+  return res;
+  SAFE_EXCEPTION_END(collection, NULL)
+}
+
+mysqlx_result_t * STDCALL
+mysqlx_collection_modify_patch(mysqlx_collection_t *collection,
+                               const char *criteria,
+                               const char *patch_spec)
+{
+  return _mysqlx_collection_modify_patch(collection, criteria,
+                                         patch_spec);
 }
 
 

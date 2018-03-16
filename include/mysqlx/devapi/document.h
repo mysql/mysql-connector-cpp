@@ -82,6 +82,9 @@ public:
   Field(const char *s) : m_fld(s)
   {}
 
+  Field()
+  {}
+
   operator const string&() const { return m_fld; }
 
   bool operator <(const Field &other) const
@@ -597,7 +600,15 @@ class Expression
    set_as_expr();
  }
 
+ template <typename V>
+ Expression(const V& val)
+ : Value(val)
+ {
+   set_as_expr();
+ }
+
  friend Expression expr(string&& s);
+ friend Expression expr(const string& s);
 };
 
 
@@ -624,6 +635,12 @@ inline
 mysqlx::internal::Expression expr(string&& e)
 {
   return std::forward<string>(e);
+}
+
+inline
+mysqlx::internal::Expression expr(const string& e)
+{
+  return e;
 }
 
 }  // internal

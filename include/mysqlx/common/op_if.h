@@ -249,7 +249,8 @@ struct Collection_modify_if : public Select_if<Sort_if>
     UNSET,
     ARRAY_INSERT,
     ARRAY_APPEND,
-    ARRAY_DELETE
+    ARRAY_DELETE,
+    MERGE_PATCH
   };
 
   virtual void add_operation(Operation, const string&, const Value&) = 0;

@@ -309,6 +309,7 @@ int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op m
   case MODIFY_ARRAY_INSERT: op = MImpl::ARRAY_INSERT; break;
   case MODIFY_ARRAY_APPEND: op = MImpl::ARRAY_APPEND; break;
   case MODIFY_ARRAY_DELETE: op = MImpl::ARRAY_DELETE; break;
+  case MODIFY_MERGE_PATCH: op = MImpl::MERGE_PATCH; break;
   }
 
   int rc = RESULT_ERROR;
@@ -323,6 +324,16 @@ int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op m
     {
       impl->add_operation(op, path);
       continue;
+    }
+    else if (modify_type == MODIFY_MERGE_PATCH)
+    {
+      /*
+        Note: in this case path contains the patch to be applied, which should
+        be trated as an expression, not a literal string.
+      */
+      impl->add_operation(op, L"$", Value::Access::mk_expr(path));
+      // For merge only one item is expected
+      return RESULT_OK;
     }
 
     impl->add_operation(op, path, get_value(args));

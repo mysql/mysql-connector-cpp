@@ -2080,6 +2080,10 @@ public:
       case Impl::ARRAY_DELETE:
         prc.remove(&doc_field);
         break;
+
+      case Impl::MERGE_PATCH:
+        m_update_it->process_if(prc.patch());
+        break;
     }
   }
 

@@ -48,6 +48,74 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+TEST_F(xapi, test_merge_patch)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+  mysqlx_stmt_t *stmt;
+  const char *schema_name = "cc_crud_test";
+  const char *coll_name = "coll_test";
+  const char *json[] = {
+           "{\"name_arr\": {\"first\" : \"Bob\", \"last\" : \"Smith\"}, \"user_id\" : \"bsmith987\"}",
+           "{\"name_arr\": {\"first\" : \"Alice\", \"last\" : \"Jones\"}, \"user_id\" : \"ajones765\"}"
+  };
+  const char *patch = "{\"first_name\" : name_arr.first, \"last_name\" : name_arr.last, " \
+                       "\"full_name\" : concat(name_arr.first, ' ', name_arr.last), \"name_arr\" : NULL }";
+  const char *json_string;
+  size_t json_len = 0;
+
+  AUTHENTICATE();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 3);
+
+  mysqlx_schema_drop(get_session(), schema_name);
+  EXPECT_EQ(RESULT_OK, mysqlx_schema_create(get_session(), schema_name));
+  schema = mysqlx_get_schema(get_session(), schema_name, 0);
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
+  collection = mysqlx_get_collection(schema, coll_name, 0);
+
+  stmt = mysqlx_collection_add_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json[0]));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json[1]));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  // Execute short version of _modify_patch()
+  CRUD_CHECK(
+    res = mysqlx_collection_modify_patch(collection,
+                                         "user_id='ajones765'",
+                                         patch),
+    collection);
+
+  CRUD_CHECK(res = mysqlx_collection_find(collection, "first_name='Alice'"), collection);
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    EXPECT_TRUE(json_string != NULL);
+    printf("\n[json: %s]", json_string);
+    EXPECT_TRUE(strstr(json_string, "\"full_name\": \"Alice Jones\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "\"first_name\": \"Alice\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "\"last_name\": \"Jones\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "name_arr") == NULL);
+  }
+
+  // Execute _set_modify_patch()
+  stmt = mysqlx_collection_modify_new(collection);
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_patch(stmt, patch));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_modify_criteria(stmt, "user_id='bsmith987'"));
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  CRUD_CHECK(res = mysqlx_collection_find(collection, "first_name='Bob'"), collection);
+  while ((json_string = mysqlx_json_fetch_one(res, &json_len)) != NULL)
+  {
+    EXPECT_TRUE(json_string != NULL);
+    printf("\n[json: %s]", json_string);
+    EXPECT_TRUE(strstr(json_string, "\"full_name\": \"Bob Smith\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "\"first_name\": \"Bob\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "\"last_name\": \"Smith\"") != NULL);
+    EXPECT_TRUE(strstr(json_string, "name_arr") == NULL);
+  }
+}
 
 TEST_F(xapi, test_create_collection_index)
 {

@@ -554,6 +554,35 @@ public:
     CATCH_AND_WRAP
   }
 
+  /**
+    Apply JSON Patch to a target JSON document.
+
+    The JSON Patch format is defined by
+    <a href=https://tools.ietf.org/html/rfc7386>RFC7386</a>.
+
+    A document patch is similar to a JSON object, with the key difference that
+    document field values can be nested expressions in addition to literal
+    values.
+
+    The patch contains instructions of how the source document is to be modified
+    producing a derived document. By default, all fields from the source
+    document are copied to the resulting document. If patch sets a field to NULL,
+    the field of that name in the source is skipped from the result, identifiers
+    and function calls are evaluated against the original source document.
+
+  */
+
+  CollectionModify& patch(const string &val)
+  {
+    try {
+      get_impl()->add_operation(
+        Impl::MERGE_PATCH, L"$", (const common::Value&)expr(val)
+      );
+      return *this;
+    }
+    CATCH_AND_WRAP
+  }
+
 protected:
 
   using Impl = common::Collection_modify_if;
