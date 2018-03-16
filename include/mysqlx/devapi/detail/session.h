@@ -209,6 +209,8 @@ public:
   using TableList      = List_initializer<List_source<Table_src>>;
   using StringList     = List_initializer<List_source<Name_src>>;
 
+protected:
+
   void  create_collection(const string &name, bool reuse);
   void  drop_collection(const string &name);
 

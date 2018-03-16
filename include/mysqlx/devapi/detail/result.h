@@ -74,6 +74,10 @@ class PUBLIC_API Result_detail
   Result_detail(const Result_detail&) = delete;
   Result_detail& operator=(const Result_detail&) = delete;
 
+public:
+
+  struct INTERNAL Impl;
+
 protected:
 
   Result_detail(common::Result_init&);
@@ -87,12 +91,8 @@ protected:
 
   Result_detail& operator=(Result_detail&&);
 
-public:
-
   Result_detail() = default;
   virtual ~Result_detail();
-
-  struct INTERNAL Impl;
 
   Impl& get_impl();
 
@@ -115,7 +115,7 @@ public:
   bool has_data() const;
   bool next_result();
 
-private:
+protected:
 
   Impl  *m_impl = nullptr;
   bool m_owns_impl = false;
@@ -149,6 +149,8 @@ public:
 
   using WarningList = internal::List_initializer<Array_source<Warning_src>>;
 
+protected:
+
   unsigned    get_warning_count() const;
   Warning     get_warning(size_t pos);
 
@@ -181,7 +183,7 @@ public:
 class PUBLIC_API Column_detail
   : virtual common::Printable
 {
-public:
+protected:
 
   using Impl = common::Column_info<string>;
 
