@@ -57,6 +57,16 @@ namespace mysqlx {
 
 struct Value::Access
 {
+
+  /*
+    Check if Value is an expression
+  */
+
+  static bool is_expr(const Value &val)
+  {
+    return val.is_expr();
+  }
+
   /*
     Build document value from a JSON string which is
     assumed to describe a document.
