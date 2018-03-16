@@ -142,6 +142,177 @@ struct Upsert_cmd : public Executable<Result, Upsert_cmd>
 };
 
 
+struct Value_expr_check_id
+  : cdk::Expression
+    , cdk::Expression::Processor
+    , cdk::Expression::Processor::Doc_prc
+{
+  Value_expr &m_expr;
+  bool m_is_expr;
+
+  Processor *m_prc;
+  Doc_prc *m_doc_prc;
+
+  struct Any_processor_check
+      : cdk::Expression::Processor::Doc_prc::Any_prc
+      , cdk::Expression::Processor::Doc_prc::Any_prc::Scalar_prc
+      , cdk::Expression::Processor::Doc_prc::Any_prc::Scalar_prc::Value_prc
+  {
+    Any_prc *m_id_prc;
+    Scalar_prc *m_scalar_prc;
+    Value_prc *m_value_prc;
+    const string& m_id;
+
+    Any_processor_check(const string& id)
+      : m_id(id)
+    {}
+
+    // Any processor implementation
+
+    Scalar_prc* scalar() override
+    {
+      m_scalar_prc = m_id_prc->scalar();
+      return m_scalar_prc ? this : nullptr;
+    }
+
+    List_prc* arr() override
+    {
+      return m_id_prc->arr();
+    }
+
+    Doc_prc* doc() override
+    {
+      return m_id_prc->doc();
+    }
+
+    //Scalar processor implementation
+
+    Value_prc* val() override
+    {
+      m_value_prc = m_scalar_prc->val();
+      return m_value_prc ? this : nullptr;
+    }
+
+    Args_prc* op(const char *name) override
+    {
+      return m_scalar_prc->op(name);
+    }
+    Args_prc* call(const Object_ref&obj) override
+    {
+      return m_scalar_prc->call(obj);
+    }
+
+    void ref(const Column_ref &col, const Doc_path *path) override
+    {
+      return m_scalar_prc->ref(col, path);
+    }
+    void ref(const Doc_path &path) override
+    {
+      return m_scalar_prc->ref(path);
+    }
+
+    void param(const string &val) override
+    {
+      return m_scalar_prc->param(val);
+    }
+
+    void param(uint16_t val) override
+    {
+      return m_scalar_prc->param(val);
+    }
+
+    void var(const string &name) override
+    {
+      m_scalar_prc->var(name);
+    }
+
+    // Value processor implementation
+    void null() override { m_value_prc->null();}
+
+    void value(cdk::Type_info type,
+                       const cdk::Format_info &format,
+                       cdk::foundation::bytes val) override
+    {
+      m_value_prc->value(type, format, val);
+    }
+
+    void str(const string &val) override
+    {
+      if (m_id != val)
+        throw Error(R"(Document "_id" and replace id are different!)");
+      m_value_prc->str(val);
+    }
+    void num(int64_t  val) override { m_value_prc->num(val); }
+    void num(uint64_t val) override { m_value_prc->num(val); }
+    void num(float    val) override { m_value_prc->num(val); }
+    void num(double   val) override { m_value_prc->num(val); }
+    void yesno(bool   val) override { m_value_prc->yesno(val); }
+
+  };
+
+  Any_processor_check m_any_prc;
+
+  Value_expr_check_id(Value_expr &expr, bool is_expr, const string& id)
+    : m_expr(expr)
+    , m_is_expr(is_expr)
+    , m_any_prc(id)
+  {}
+
+  // Expression implementation
+
+  void process(Processor& prc) const override
+  {
+    auto self = const_cast<Value_expr_check_id*>(this);
+    self->m_prc = &prc;
+    m_expr.process(*self);
+  }
+
+  // Expression processor implementation
+
+  Scalar_prc* scalar() override
+  {
+    return m_prc->scalar();
+  }
+
+  List_prc* arr() override
+  {
+    return m_prc->arr();
+  }
+
+  Doc_prc* doc() override
+  {
+    m_doc_prc = m_prc->doc();
+    return m_doc_prc ? this : nullptr;
+  }
+
+  // Doc_prc implementation
+
+  void doc_begin() override
+  {
+    m_doc_prc->doc_begin();
+  }
+
+  void doc_end() override
+  {
+    m_doc_prc->doc_end();
+  }
+
+  Any_prc* key_val(const string &key) override
+  {
+    if (string("_id") == key )
+    {
+      if (m_is_expr)
+        throw Error(R"(Document "_id" will be replaced by expression "_id")");
+
+      m_any_prc.m_id_prc = m_doc_prc->key_val(key);
+      return m_any_prc.m_id_prc ? &m_any_prc : nullptr;
+    }
+    return m_doc_prc->key_val(key);
+  }
+
+};
+
+
 Result
 internal::Collection_detail::add_or_replace_one(
   const string &id, Value &&doc, bool replace
@@ -149,7 +320,9 @@ internal::Collection_detail::add_or_replace_one(
 {
   Object_ref coll(get_schema().m_name, m_name);
 
-  if (doc.getType() == Value::STRING)
+
+  if (!Value::Access::is_expr(doc) &&
+      doc.getType() == Value::STRING)
   {
     doc = DbDoc(doc.get<string>());
   }
@@ -158,22 +331,9 @@ internal::Collection_detail::add_or_replace_one(
 
   if (replace)
   {
-    string doc_id;
-    bool has_id = true;
+    Value_expr_check_id check_id(expr, Value::Access::is_expr(doc), id);
 
-    try {
-      doc_id = doc.get<DbDoc>()["_id"];
-    } catch (std::out_of_range)
-    {
-      has_id = false;
-    }
-
-    if (has_id && (doc_id != id))
-    {
-      throw Error(R"(Document "_id" and replace id are different!)");
-    }
-
-    Replace_cmd cmd(m_sess, coll, std::string(id), expr);
+    Replace_cmd cmd(m_sess, coll, std::string(id), check_id);
     return cmd.execute();
   }
   else

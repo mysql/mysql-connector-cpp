@@ -2251,9 +2251,9 @@ TEST_F(Crud, single_document)
 
   coll.remove("true").execute();
 
-  coll.add("{\"_id\":\"id1\", \"name\":\"foo\" }" )
-      .add("{\"_id\":\"id2\", \"name\":\"bar\" }" )
-      .add("{\"_id\":\"id3\", \"name\":\"baz\" }" )
+  coll.add(R"({"_id":"id1", "name":"foo", "age": 1 })" )
+      .add(R"({"_id":"id2", "name":"bar", "age": 2 })" )
+      .add(R"({"_id":"id3", "name":"baz", "age": 3 })" )
       .execute();
 
   EXPECT_EQ(string("foo"), coll.getOne("id1")["name"].get<string>());
@@ -2266,9 +2266,12 @@ TEST_F(Crud, single_document)
   EXPECT_TRUE(coll.getOne("id1").isNull());
 
   // Replace existing document
-  EXPECT_EQ(1, coll.replaceOne("id3", expr("{\"name\": \"qux\" }"))
-                   .getAffectedItemsCount());
+  EXPECT_EQ(1, coll.replaceOne(
+              "id3", expr(R"({"name": "qux",
+                          "age": cast(age+1 AS UNSIGNED INT) })"))
+            .getAffectedItemsCount());
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
+  EXPECT_EQ(4, coll.getOne("id3")["age"].get<int>());
 
   // Setting a different _id on document should throw error
   // Document passed as string
@@ -2290,7 +2293,7 @@ TEST_F(Crud, single_document)
 
   // should affect none
   EXPECT_EQ(0,
-    coll.replaceOne("id4", expr("{\"_id\":\"id4\", \"name\": \"baz\" }"))
+    coll.replaceOne("id4", expr(R"({"name": "baz" })"))
         .getAffectedItemsCount());
 }
 
