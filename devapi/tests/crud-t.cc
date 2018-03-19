@@ -2267,8 +2267,8 @@ TEST_F(Crud, single_document)
 
   // Replace existing document
   EXPECT_EQ(1, coll.replaceOne(
-              "id3", expr(R"({"name": "qux",
-                          "age": cast(age+1 AS UNSIGNED INT) })"))
+              "id3",
+              expr(R"({"name": "qux", "age": cast(age+1 AS UNSIGNED INT) })"))
             .getAffectedItemsCount());
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(4, coll.getOne("id3")["age"].get<int>());
@@ -2353,12 +2353,9 @@ TEST_F(Crud, merge_patch)
 
   add_data(coll);
 
-  coll.modify("true").patch(R"(
-                        {
-                          "age" : null,
-                          "birth" : { "year": year(CURDATE())-age }
-                        }
-                        )").execute();
+  coll.modify("true")
+      .patch(R"({"age" : null,"birth" : { "year": year(CURDATE())-age }})")
+      .execute();
 
   auto res = coll.find().execute();
   for (auto row : res)
@@ -2368,12 +2365,7 @@ TEST_F(Crud, merge_patch)
   }
 
   coll.modify("true")
-      .patch(R"(
-             {
-             "food":["Falcoaria"],
-             "fullname": concat("Silva", ', ', name)
-             }
-             )")
+      .patch(R"({"food":["Falcoaria"], "fullname": concat("Silva", ', ', name)})")
       .execute();
 
   res = coll.find().execute();
