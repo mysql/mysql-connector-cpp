@@ -107,7 +107,7 @@ int main(int argc, const char* argv[])
 
     row = mysqlx_row_fetch_one(res);
     size_t len=1024;
-    char buffer[len];
+    char buffer[1024];
 
 
     if (RESULT_OK != mysqlx_get_bytes(row, 1, 0, buffer, &len))
