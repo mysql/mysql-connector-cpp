@@ -120,8 +120,8 @@ endif()
 # Licenses for binary packages
 # ======================================================================
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/COPYING.txt")
-  set(LIC_FILE "COPYING")       # Without ".txt" extension
+if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
+  set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
 else()
   set(LIC_FILE "LICENSE") # Without ".txt" extension
 endif()
