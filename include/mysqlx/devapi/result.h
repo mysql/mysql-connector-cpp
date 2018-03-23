@@ -705,7 +705,7 @@ public:
   bool nextResult()
   {
     try {
-      return Result_detail::next_result();
+      return Row_result_detail::next_result();
     }
     CATCH_AND_WRAP
   }

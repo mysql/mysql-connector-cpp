@@ -140,3 +140,121 @@ TEST_F(Bugs, bug_26962725_double_bind)
 
   EXPECT_EQ(0, myColl.find().execute().count());
 }
+
+TEST_F(Bugs, bug_27727505_multiple_results)
+{
+  mysqlx::Session &sess = get_sess();
+  sess.dropSchema("bug_27727505_multiple_results");
+  sess.createSchema("bug_27727505_multiple_results");
+
+  /* ddl */
+  std::string strValue = "";
+  sess.sql("use bug_27727505_multiple_results").execute();
+  sess.sql("drop table if exists bug_27727505_multiple_results").execute();
+  sess.sql("create table newtable(f0 int, f1 varchar(1024))").execute();
+  for(int i=0;i<100;i++)
+  {
+    strValue.resize(1024, 'a');
+    sess.sql("insert into newtable values(?,?)")
+        .bind(i)
+        .bind(strValue.c_str())
+        .execute();
+  }
+  sess.sql("drop procedure if exists test").execute();
+  sess.sql("CREATE PROCEDURE test() BEGIN select f0, f1 from newtable where"
+           " f0 <= 33; select f0, f1 from newtable where f0 <= 10; END")
+      .execute();
+  SqlResult res = sess.sql("call test").execute();
+
+  Row row;
+  int setNo = 0;
+  do
+  {
+    std::vector<Row> rowAll = res.fetchAll();
+    unsigned int j=0;
+    for(j = 0;j < rowAll.size();j++)
+    {
+      string data = (string)rowAll[j][1];
+      int num = rowAll[j][0];
+      if((unsigned int)num!=j || strValue.compare(data))
+      {
+        std::stringstream ss;
+        ss << "Fetch fail in set : "<<setNo<<" row : "<<num ;
+        throw ss.str();
+      }
+      else
+      {
+        cout << "Fetch pass in set : "<<setNo<<" row : "<<num << endl;
+      }
+    }
+    if((setNo == 0 && j != 34) || (setNo == 1 && j != 11))
+    {
+      throw "Not all results fetched";
+    }
+    std::vector<Type> expcType;
+    expcType.push_back (Type::INT);
+    expcType.push_back (Type::STRING);
+    std::vector<string> expcName;
+    expcName.push_back ("f0");
+    expcName.push_back ("f1");
+
+    const Columns &cc = res.getColumns();
+    for(unsigned int i=0;i < res.getColumnCount();i++)
+    {
+      if(expcName[i].compare(cc[i].getColumnName()))
+      {
+        throw "Column Name mismatch";
+      }
+      if(expcType[i] != cc[i].getType())
+      {
+        throw "Column Type mismatch";
+      }
+      if(0 != cc[i].getFractionalDigits())
+      {
+        throw "getFractionalDigits is not zero";
+      }
+      cout << cc[i].getColumnName() << endl;
+      cout << cc[i].getType() << endl;
+      cout << cc[i].isNumberSigned() << endl;
+      cout << cc[i].getFractionalDigits() << endl;
+    }
+
+    setNo++;
+  }
+  while(res.nextResult());
+  sess.sql("drop procedure if exists test").execute();
+  sess.sql("CREATE PROCEDURE test() BEGIN select f0, f1 from newtable "
+           "where f0 > 1000; select f0, f1  from newtable where f0 <= 10;"
+           " END").execute();
+  res = sess.sql("call test").execute();
+  setNo = 0;
+  do
+  {
+    unsigned int j=0;
+    std::vector<Row> rowAll = res.fetchAll();
+    for(j = 0;j < rowAll.size();j++)
+    {
+      string data = (string)rowAll[j][1];
+      int num = rowAll[j][0];
+      if((unsigned int)num!=j || strValue.compare(data))
+      {
+        std::stringstream ss;
+        ss << "Fetch fail in set : "<<setNo<<" row : "<<num ;
+        throw ss.str();
+      }
+      else
+      {
+        cout << "Fetch pass in set : "<<setNo<<" row : "<<num << endl;
+      }
+    }
+    if((setNo == 0 && j != 0) || (setNo == 1 && j != 11))
+    {
+      throw "Not all results fetched";
+    }
+
+    setNo++;
+  }
+  while(res.nextResult());
+}
+
+

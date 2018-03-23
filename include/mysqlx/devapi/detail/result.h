@@ -382,6 +382,14 @@ protected:
   const Column&   get_column(col_count_t) const;
   const Columns&  get_columns() const;
 
+  bool next_result()
+  {
+    bool rc = Result_detail::next_result();
+    if (rc)
+      m_cols.init(get_impl());
+    return rc;
+  }
+
   friend iterator;
   friend RowResult;
   friend Columns;

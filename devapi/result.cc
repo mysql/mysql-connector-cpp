@@ -574,9 +574,7 @@ template<>
 internal::Row_result_detail<Columns>::Row_result_detail(common::Result_init &init)
   : internal::Result_detail(init)
 {
-  auto &impl = get_impl();
-  if (impl.next_result())
-    m_cols.init(impl);
+  next_result();
 }
 
 
@@ -600,6 +598,7 @@ void internal::Columns_detail<Column>::init(
   const internal::Result_detail::Impl &impl
 )
 {
+  clear();
   for (col_count_t pos = 0; pos < impl.get_col_count(); ++pos)
   {
     emplace_back(impl.get_column(pos));
