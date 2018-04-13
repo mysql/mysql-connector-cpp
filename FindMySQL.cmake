@@ -1,6 +1,3 @@
-# -*- indent-tabs-mode:nil; -*-
-# vim: set expandtab:
-#
 # Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +13,7 @@
 # MySQL.
 #
 # Without limiting anything contained in the foregoing, this file,
-# which is part of MySQL Connector/ODBC, is also subject to the
+# which is part of MySQL Connector/C++, is also subject to the
 # Universal FOSS Exception, version 1.0, a copy of which can be found at
 # http://oss.oracle.com/licenses/universal-foss-exception.
 #
@@ -27,7 +24,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 ##########################################################################
 
