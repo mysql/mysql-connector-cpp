@@ -211,6 +211,12 @@ DIAGNOSTIC_PUSH
       case EAI_FAIL: return errc::address_not_available;
       case EAI_FAMILY: return errc::address_family_not_supported;
       case EAI_MEMORY: return errc::not_enough_memory;
+
+      // Note: On Windows EAI_NODATA == EAI_NONAME
+
+#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME
+      case EAI_NODATA:
+#endif
       case EAI_NONAME: return errc::address_not_available;
 
       case EAI_SERVICE:

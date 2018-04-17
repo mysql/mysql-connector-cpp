@@ -190,7 +190,18 @@ inline
 std::error_condition
 error_category_base::default_error_condition(int code) const NOEXCEPT
 {
-  return do_default_error_condition(code);
+  try {
+    return do_default_error_condition(code);
+  }
+  catch (...)
+  {
+    /*
+      If do_default_error_condition() failed for whatever reason, map to
+      error condition within this category with code as given.
+    */
+
+    return { code, *this };
+  }
 }
 
 inline
