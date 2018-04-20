@@ -55,12 +55,7 @@ macro(ADD_COVERAGE target)
     # variant. Generator expression is used instead.
 
     set_property(TARGET ${target} APPEND
-      PROPERTY COMPILE_OPTIONS
-        $<$<CONFIG:Debug>:-O0;-fprofile-arcs;-ftest-coverage>
-    )
-
-    set_property(TARGET ${target} APPEND
-      PROPERTY LINK_FLAGS_DEBUG -fprofile-arcs -ftest-coverage
+      PROPERTY COMPILE_OPTIONS -O0;-fprofile-arcs;-ftest-coverage
     )
 
     set_property(TARGET ${target} APPEND
