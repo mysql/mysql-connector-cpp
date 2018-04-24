@@ -88,7 +88,7 @@ After a successful build, the build location should contain
 the Connector/C++ shared library:
 
 - `libmysqlcppconn8.so.1` on Unix
-- `libmysqlcppconn8.1.dylib` on OS X
+- `libmysqlcppconn8.1.dylib` on macOS
 - `CCC/mysqlcppconn8-1-vsXX.dll` on Windows, where `-vs12` or `-vs14` prefix
   depends on the MSVC version used to build the connector
 
@@ -96,13 +96,13 @@ The number 1 in the library name is the major ABI version of the library. It
 is part of the library name so that different versions of the library can
 be used at the same time on a single system.
 
-On Unix and OS X also appropriate symbolic links are created. On Windows the
+On Unix and macOS also appropriate symbolic links are created. On Windows the
 import library for the DLL is created at `CCC/mysqlcppconn8.lib` (the `CCC/`
 subdirectory is named the same as the build configuration used).
 
 In the case of a static library build, the output library names are:
 
-- `libmysqlcppconn8-static.a` on Unix and OS X
+- `libmysqlcppconn8-static.a` on Unix and macOS
 - `CCC/mysqlcppconn8-static.lib` or `CCC/mysqlcppconn8-static-mt.lib`
   on Windows (see [Windows Notes] (@ref win_notes)).
 
@@ -143,7 +143,7 @@ pass the `-DBUILD_STATIC=ON` option when configuring test applications.
 
 @note
   On Windows, if the connector was built with the static runtime by specifying
-  the `-DSTATC_MSVCRT=yes` configuration option (see below), the same option
+  the `-DSTATIC_MSVCRT=yes` configuration option (see below), the same option
   must be added to the build configuration of test programs.
 
 @note
@@ -247,12 +247,12 @@ If everything goes well, after building the connector the build location
 should contain an additional legacy connector library:
 
 - `libmysqlcppconn.so.7` on Unix
-- `libmysqlcppconn.7.dylib` on OS X
+- `libmysqlcppconn.7.dylib` on macOS
 - `CCC/mysqlcppconn-7-vsXX.dll` on Windows
 
 If building static libraries, the static legacy library has name:
 
-- `libmysqlcppconn-static.a` on Unix and OS X
+- `libmysqlcppconn-static.a` on Unix and macOS
 - `CCC/mysqlcppconn-static.lib` or `CCC/mysqlcppconn-static-mt.lib`
   on Windows
 
@@ -295,9 +295,9 @@ subdirectory of the build location. Thus, when building an application
 that uses the connector library, one has to point the linker at the location
 containing a compatible build of the connector.
 
-OS X Notes
-----------
-On OS X, Connector/C++ is built using the `clang` compiler with the `libc++`
+macOS Notes
+-----------
+On macOS, Connector/C++ is built using the `clang` compiler with the `libc++`
 C++ runtime library. The same runtime library should be used by applications
 that link against Connector/C++. To arrange this, pass `-stdlib=libc++` to
 the compiler and the linker invocations. Another option is to set the required
