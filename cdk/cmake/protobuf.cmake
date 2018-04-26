@@ -44,11 +44,31 @@ message("Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR}")
 file(REMOVE ${PROJECT_BINARY_DIR}/protobuf/CMakeCache.txt)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf)
 
-# If specified, use the same build type for Protobuf
+#
+# Pick build configuration for the protobuf build. Normally we build using the
+# same build configuration that is used for building CDK (Release/Debug/etc.).
+# But we also support building CDK under non-standard build configuration
+# named 'Static' (this is a dirty trick we use to simplify building our MSIs).
+# Since protobuf does not know 'Static' build configuration, we build protobuf
+# under 'Release' configuration in that case.
+#
+# We need to handle two cases. For some build systems, like Makefiles, the build
+# configuration is specified at cmake time using CMAKE_BUILD_TYPE variable. In
+# that case we also set it during protobuf build configuration. Another case is
+# a multi-configuration build system like MSVC. In this case we use generator
+# expression to pick correct  configuration when the build command is invoked
+# below.
+#
 
 if(CMAKE_BUILD_TYPE)
-  set(set_build_type -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  if(CMAKE_BUILD_TYPE MATCHES "[Ss][Tt][Aa][Tt][Ii][Cc]")
+    set(set_build_type -DCMAKE_BUILD_TYPE=Release)
+  else()
+    set(set_build_type -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  endif()
 endif()
+
+set(CONFIG_EXPR $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIG>>)
 
 execute_process(
   COMMAND ${CMAKE_COMMAND}
@@ -76,8 +96,11 @@ include(${PROJECT_BINARY_DIR}/protobuf/exports.cmake)
 # a sub-project of a parent project, because the parent project
 # must have access to these targets.
 #
-# For that reason blow we create global protobuf/protobuf-lite targets
-# and copy their loactions from the imported targets.
+# For that reason below we create global protobuf/protobuf-lite targets
+# and copy their locations from the imported targets.
+#
+# Note: we can't use ALIAS library because it does not work with imported
+# targets
 #
 
 add_library(protobuf STATIC IMPORTED GLOBAL)
@@ -91,40 +114,32 @@ foreach(lib protobuf protobuf-lite)
 
     get_target_property(LOC pb_${lib} IMPORTED_LOCATION_${CONF})
     if(LOC)
-      #message("- settig imported location to: ${LOC}")
-      set(location "${LOC}")
+      #message("- setting imported location to: ${LOC}")
       set_target_properties(${lib} PROPERTIES
         IMPORTED_LOCATION_${CONF} "${LOC}"
       )
       set_property(TARGET ${lib} APPEND PROPERTY
-        IMPORTED_CONFIGURATIONS ${CONF})
+        IMPORTED_CONFIGURATIONS ${CONF}
+      )
     endif()
 
   endforeach(CONF)
 
-  # For multi-configuration builders like MSVC, set a generic
-  # location of the form <prefix>/$(Configuration)/<name> which will
-  # work with any configuration choosen at build time.
-  # It is constructed from one of per-configurartion locations
-  # determined above and saved in ${location}. The logic assumes
-  # that the per-configration location is of the form
-  # <prefix>/<config>/<name>
-
-  if(CMAKE_CONFIGURATION_TYPES)
-
-    get_filename_component(name "${location}" NAME)
-    get_filename_component(LOC "${location}" PATH)
-    get_filename_component(LOC "${LOC}" PATH)
-    set(LOC "${LOC}/$(Configuration)/${name}")
-
-    message("- setting generic location to: ${LOC}")
-    set_target_properties(${lib} PROPERTIES
-      IMPORTED_LOCATION "${LOC}"
-    )
-
-  endif()
-
 endforeach(lib)
+
+#
+# To support 'Static' build configuration the targets imported from the
+# Protobuf project need to have IMPORTED_LOCATION_STATIC defined. We use
+# 'Release' locations as Protobuf is built using 'Release' configuration in
+# that case.
+#
+
+foreach(tgt protobuf protobuf-lite pb_protoc)
+
+  get_target_property(LOC ${tgt} IMPORTED_LOCATION_RELEASE)
+  set_property(TARGET ${tgt} PROPERTY IMPORTED_LOCATION_STATIC ${LOC})
+
+endforeach(tgt)
 
 
 # protobuf depends on protobuf-lite
@@ -151,17 +166,18 @@ if(NOT DEFINED PROTOBUF_BUILD_STAMP)
   message(FATAL_ERROR "Protobuf build stamp file not defined")
 endif()
 
+
 if(CMAKE_VERSION VERSION_LESS 3.0)
   add_custom_command(OUTPUT ${PROTOBUF_BUILD_STAMP}
     COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
-    COMMENT "Building protobuf using configuration: $<CONFIGURATION>"
+    COMMENT "Building protobuf using configuration: $(Configuration)"
   )
 else()
   add_custom_command(OUTPUT ${PROTOBUF_BUILD_STAMP}
-    COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+    COMMAND ${CMAKE_COMMAND} --build . --config ${CONFIG_EXPR}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
-    COMMENT "Building protobuf using configuration: $<CONFIG>"
+    COMMENT "Building protobuf using configuration: $(Configuration)"
   )
 endif()
 
