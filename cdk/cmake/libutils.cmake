@@ -133,6 +133,13 @@ function(add_library_ex TARGET)
     list(REMOVE_AT ARGN 0)
   endif()
 
+  unset(exclude)
+  if(arg STREQUAL "EXCLUDE_FROM_ALL")
+    set(exclude "EXCLUDE_FROM_ALL")
+    list(GET ARGN 0 arg)
+    list(REMOVE_AT ARGN 0)
+  endif()
+
   #
   #  Collect library sources, up to first OBJECTS or LIBS word
   #
@@ -243,7 +250,7 @@ function(add_library_ex TARGET)
     endforeach()
   endif()
 
-  add_library(${TARGET} ${type} ${srcs})
+  add_library(${TARGET} ${type} ${exclude} ${srcs})
   #message("- added ${type} library: ${TARGET}")
 
   if(mangle_paths)
