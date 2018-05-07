@@ -670,10 +670,9 @@ Value::Type Value::getType() const
     case common::Value::RAW:      return RAW;
     case common::Value::EXPR:     return STRING;
     case common::Value::JSON:     return DOCUMENT;
-    default: break;
     }
-  default: assert(false); return VNULL; // quiet compiler warning
   }
+  return VNULL; // quiet compiler warning
 }
 
 

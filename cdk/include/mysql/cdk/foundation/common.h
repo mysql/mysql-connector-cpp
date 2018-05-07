@@ -198,3 +198,30 @@ POP_SYS_WARNINGS
 
 
 #endif
+
+/*
+  Macro to be used to disable "implicit fallthrough" gcc warning
+  <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
+*/
+
+#ifndef FALLTHROUGH
+# if (defined( __GNUC__ ) || defined (__clang__))
+#  if defined(__GNUC__) && __GNUC__ < 7
+#    define FALLTHROUGH // FALLTHROUGH
+#  else
+#    if __cplusplus >= 201703L
+#      define FALLTHROUGH [[fallthrough]] // FALLTHROUGH C++17
+#    elif __cplusplus >= 201103L
+#      if defined (__clang__)
+#        define FALLTHROUGH [[gnu::fallthrough]] // FALLTHROUGH C++11 and C++14
+#      else
+#        define FALLTHROUGH [[clang::fallthrough]] // FALLTHROUGH C++11 and C++14
+#      endif
+#    else
+#      define FALLTHROUGH __attribute__((fallthrough))
+#    endif
+#  endif
+# else
+#   define FALLTHROUGH  // FALLTHROUGH
+# endif
+#endif //FALLTHROUGH

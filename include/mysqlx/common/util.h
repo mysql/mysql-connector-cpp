@@ -49,16 +49,23 @@
   <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
 */
 
-#ifdef __GNUC__
-# if __GNUC__ < 7
-#   define FALLTHROUGH // fallthrough
+#ifndef FALLTHROUGH
+# ifdef __GNUC__
+#  if __GNUC__ < 7
+#    define FALLTHROUGH // fallthrough
+#  else
+#    if __cplusplus >= 201703L
+#      define FALLTHROUGH [[fallthrough]] // C++17
+#    elif __cplusplus >= 201103L
+#      define FALLTHROUGH [[gnu::fallthrough]] // C++11 and C++14
+#    else
+#      define FALLTHROUGH __attribute__((fallthrough))
+#    endif
+#  endif
 # else
-  #define FALLTHROUGH __attribute__((fallthrough))
+#   define FALLTHROUGH  // fallthrough
 # endif
-#else
-#define FALLTHROUGH  // fallthrough
-#endif
-
+#endif //FALLTHROUGH
 
 /*
   Note: we add throw statement to the definition of THROW() so that compiler won't

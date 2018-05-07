@@ -235,6 +235,7 @@ class Col_metadata
       default: break;
       }
 
+      FALLTHROUGH;
     case protocol::mysqlx::col_type::ENUM:
     default:
       return TYPE_BYTES == type || TYPE_STRING == type;
