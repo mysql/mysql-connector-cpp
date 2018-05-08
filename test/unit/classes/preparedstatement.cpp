@@ -1144,6 +1144,9 @@ void preparedstatement::callSPWithPS()
     msg2 << "... val = '" << res->getString(1) << "'";
     logMsg(msg2.str());
 
+    while(pstmt->getMoreResults())
+    {}
+
     try
     {
       pstmt.reset(con->prepareStatement("CALL p(?)"));
