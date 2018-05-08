@@ -34,6 +34,31 @@ already installed." />
       <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom>
       <RemoveExistingProducts After="InstallInitialize"/>
     </InstallExecuteSequence>
+    <?if "@CONNECTOR_PLATFORM_SUFFIX@"="winx64"?>
+      <Property Id="VS14REDISTX64">
+        <RegistrySearch Id="FindRedistVS14"
+          Win64="no"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+          Name="Version"
+          Type="raw" />
+      </Property>
+      <Condition Message="This application requires Visual Studio 2015 x64 Redistributable. Please install the Redistributable then run this installer again.">
+        Installed OR VS14REDISTX64
+      </Condition>
+    <?elseif "@CONNECTOR_PLATFORM_SUFFIX@"="win32" ?>
+      <Property Id="VS12REDISTX86">
+        <RegistrySearch Id="FindRedistVS14"
+          Win64="no"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86"
+          Name="Version"
+          Type="raw" />
+      </Property>
+      <Condition Message="This application requires Visual Studio 2015 x86 Redistributable. Please install the Redistributable then run this installer again.">
+        Installed OR VS14REDISTX86
+      </Condition>
+    <?endif?>
 
 <!-- File definitions -->
     <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
@@ -53,7 +78,7 @@ already installed." />
                 <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
                   <File Id="file0031" Name="README.TXT" LongName="README.txt" Source="..\README" />
                   <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="@LICENSE_FILE@" />
-                  <File Id="file0033" Name="LIC_3RDP.TXT" LongName="Licenses_for_Third-Party_Components.txt" Source="..\Licenses_for_Third-Party_Components.txt" />
+                  <File Id="file0033" Name="BUILDIN~.txt" LongName="BUILDINFO.txt" Source="..\BUILDINFO" />
                 </Component>
 
               <!-- *****************************************************************************************
@@ -101,7 +126,7 @@ already installed." />
                     <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.pdb" />
                     <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.lib" />
                     <File Id="file0104" Name="mycpstat.pdb" LongName="mysqlcppconn-static.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.pdb" />
-		          </Component>
+              </Component>
                 </Directory>
 -->
                 <Directory Id="opt" Name="opt">

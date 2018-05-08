@@ -71,11 +71,11 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/version_info.h.cmake
                ${CMAKE_BINARY_DIR}/driver/version_info.h @ONLY)
 
 # This is needed by windows installer and fro CPACK
-IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
-  SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/COPYING")
-ELSE(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+IF(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
   SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
-ENDIF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+ELSE(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
+  SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/LICENSE")
+ENDIF(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
 
 # Creating file with version info that will be used for installer
 # We have to do this trick because of license filename that is looked in this CMAKE_SOURCE_DIR (installer's cmake is run separately)
@@ -459,7 +459,6 @@ INSTALL(FILES
   ${CPACK_RESOURCE_FILE_README}
   ${CPACK_RESOURCE_FILE_INSTALL}
   ${CPACK_RESOURCE_FILE_LICENSE}
-  "${CMAKE_SOURCE_DIR}/Licenses_for_Third-Party_Components.txt"
   "${CMAKE_SOURCE_DIR}/ANNOUNCEMENT"
   DESTINATION ${DOC_DESTINATION} OPTIONAL COMPONENT Readme)
 
