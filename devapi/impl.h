@@ -282,7 +282,7 @@ class DbDoc::Impl
     out << "<document>";  // TODO
   }
 
-  virtual void prepare() {}
+  virtual void prepare() {} // GCOV_EXCL_LINE
 
   // Data storage
 

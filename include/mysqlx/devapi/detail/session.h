@@ -76,6 +76,9 @@ protected:
   Db_obj_base(const Shared_session_impl& sess, const string& name)
     : m_sess(sess), m_name(name)
   {}
+
+  virtual ~Db_obj_base()
+  {}
 };
 
 
@@ -307,8 +310,6 @@ protected:
 
   DLL_WARNINGS_PUSH
   Shared_session_impl  m_impl = NULL;
-  Session_detail *m_parent_session = NULL;
-  std::set<Session_detail*>  m_child_sessions;
   DLL_WARNINGS_POP
 
   Session_detail(common::Settings_impl&);
@@ -343,31 +344,6 @@ protected:
   INTERNAL cdk::Session& get_cdk_session();
 
   void close();
-
-  /*
-    TODO: Do we still need these?
-  */
-
-  void add_child(Session_detail *child)
-  {
-    assert(child);
-    child->m_parent_session = this;
-    m_child_sessions.insert(child);
-  }
-
-  void remove_child(Session_detail *child)
-  {
-    m_child_sessions.erase(child);
-  }
-
-  /*
-    This notification is sent from parent session when it is closed.
-  */
-  void parent_close_notify()
-  {
-    if (m_parent_session)
-      m_impl = NULL;
-  }
 
   /*
     Do necessary cleanups before sending new command to the server.

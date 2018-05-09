@@ -126,22 +126,7 @@ void internal::Session_detail::prepare_for_cmd()
 
 void internal::Session_detail::close()
 {
-  if (m_parent_session)
-  {
-    m_parent_session->remove_child(this);
-  }
-  else
-  {
-    // This is master session, notify child session that it is being
-    // closed.
-
-    for (auto sess : m_child_sessions)
-    {
-      sess->parent_close_notify();
-    }
-
-    get_cdk_session().rollback();
-  }
+  get_cdk_session().rollback();
 
   m_impl.reset();
 }

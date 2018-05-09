@@ -556,7 +556,7 @@ protected:
   */
 
   virtual void process_msg(msg_type_t, Message&);
-  virtual void do_process_msg(msg_type_t, Message&) {}
+  virtual void do_process_msg(msg_type_t, Message&) {} // GCOV_EXCL_LINE
 
   /**
     This method is called after processing each message to determine

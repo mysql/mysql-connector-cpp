@@ -54,6 +54,8 @@ class URI_processor
 {
 public:
 
+  // LCOV_EXCL_START
+
   /*
     Callbacks for the main components of the URI:
 
@@ -66,6 +68,7 @@ public:
   virtual void user(const std::string&) {}
   virtual void password(const std::string&) {}
   virtual void schema(const std::string&) {}
+
 
   /*
     Callbacks host(), socket() and pipe() can be called several times to
@@ -100,6 +103,8 @@ public:
   virtual void key_val(const std::string&) {}
   virtual void key_val(const std::string&, const std::string&) {}
   virtual void key_val(const std::string&, const std::list<std::string>&) {}
+
+  // LCOV_EXCL_STOP
 };
 
 

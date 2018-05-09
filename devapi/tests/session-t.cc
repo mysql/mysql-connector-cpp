@@ -326,6 +326,8 @@ TEST_F(Sess, auth_method)
     check_user(sess);
   }
 
+
+
   {
     // This will throw because of plain auth without SSL
     EXPECT_THROW(mysqlx::Session sess(SessionOption::PORT, get_port(),
@@ -334,6 +336,16 @@ TEST_F(Sess, auth_method)
                          SessionOption::SSL_MODE, SSLMode::DISABLED,
                          SessionOption::AUTH, AuthMethod::PLAIN),
                  Error);
+  }
+
+  {
+    // BAD PASSWORD
+    EXPECT_THROW(
+          mysqlx::Session(SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, "notworkingpassword",
+                          SessionOption::AUTH, AuthMethod::MYSQL41
+                          ), Error);
   }
 
   {
@@ -505,6 +517,19 @@ TEST_F(Sess, ssl_session)
 
   }
 
+  //with ssl-ca and SSLMode < VERIFY_CA
+  {
+    EXPECT_THROW(
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER,get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr ,
+                         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+                         SessionOption::SSL_CA, "unknown")
+          , mysqlx::Error);
+
+
+  }
+
   //using wrong ssl-ca and ssl-ca-path on URI
   {
     std::stringstream bad_uri;
@@ -527,6 +552,18 @@ TEST_F(Sess, ssl_session)
                       ).execute();
 
     ssl_ca = res.fetchOne().get(0);
+  }
+
+  //without ssl-ca as SessionSettings
+  {
+    EXPECT_THROW(
+    mysqlx::Session sess(SessionOption::PORT, get_port(),
+                         SessionOption::USER,get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : nullptr ,
+                         SessionOption::SSL_MODE, SSLMode::VERIFY_CA);
+          , mysqlx::Error);
+
+
   }
 
   std::cout << "ssl-ca:" << ssl_ca << std::endl;
@@ -798,7 +835,7 @@ TEST_F(Sess, failover)
     uri << "@["
            "localhost6,"
            "127.0.1.250:33060,"
-           "[::2]:1,";
+           "[::1]:1,";
     uri << "127.0.0.1";
     if (get_port() != 0)
       uri << ":" <<get_port();
@@ -902,6 +939,16 @@ TEST_F(Sess, failover)
     mysqlx::Session s(settings);
 
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
+
+    settings.erase(SessionOption::HOST);
+    settings.erase(SessionOption::PORT);
+    settings.erase(SessionOption::PRIORITY);
+    settings.erase(SessionOption::SOCKET);
+    settings.erase(SessionOption::SSL_CA);
+    settings.erase(SessionOption::SSL_MODE);
+    settings.erase(SessionOption::AUTH);
+
+    EXPECT_THROW(mysqlx::Session(std::move(settings)), Error);
   }
 
   cout << "SessionOption::set() tests without Port and Priority" << endl;
@@ -912,7 +959,7 @@ TEST_F(Sess, failover)
                                get_password() :
                                nullptr);
 
-    settings.set(SessionOption::HOST, "192.0.2.11",
+    settings.set(SessionOption::HOST, "192.168.1.254",
                  SessionOption::DB, "test"
                  );
 
@@ -1001,6 +1048,8 @@ TEST_F(Sess, unix_socket)
   EXPECT_EQ(settings.find(SessionOption::SOCKET).get<string>(), string(get_socket()));
 
   EXPECT_EQ(settings.find(SessionOption::HOST).get<string>(), string("localhost"));
+
+  EXPECT_TRUE(settings.find(SessionOption::SSL_MODE).isNull());
 
   EXPECT_THROW(mysqlx::Session(SessionOption::SOCKET, "c:\\mtsqlx.socket")
                ,Error);

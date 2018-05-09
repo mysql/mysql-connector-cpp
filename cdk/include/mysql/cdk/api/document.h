@@ -143,10 +143,12 @@ public:
   typedef Any_processor<PRC>       Any_prc;
 
   /// This is called before any key_val() or key_doc() callback.
+  // LCOV_EXCL_START
   virtual void doc_begin() {}
 
   /// This is called after last key_val() or key_doc() callback.
   virtual void doc_end() {}
+  // LCOV_EXCL_STOP
 
   /**
     Called to report key value which can be either simple expression,

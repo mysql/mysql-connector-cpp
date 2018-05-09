@@ -797,7 +797,7 @@ public:
     being constructed from a Result_init instance.
   */
 
-  virtual void init_result(Result_impl_base&) {}
+  virtual void init_result(Result_impl_base&) {} // GCOV_EXCL_LINE
 };
 
 

@@ -247,12 +247,13 @@ protected:
     TODO: Currently these hooks are not called when executing asynchronously.
   */
 
+  // LCOV_EXCL_START
   virtual void execute_prepare()
   {}
 
   virtual void execute_cleanup()
   {}
-
+  // LCOV_EXCL_STOP
 
 
   /*

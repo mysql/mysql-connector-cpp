@@ -339,8 +339,10 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       ++it;
     }
   }
-
-  assert(0 < src.size());
+  if (0 == src.size())
+  {
+    throw_error("No sources to connect");
+  }
 }
 
 

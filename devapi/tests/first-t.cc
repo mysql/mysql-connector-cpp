@@ -181,7 +181,52 @@ TEST_F(First, value)
     EXPECT_EQ(val.get<mysqlx::string>(), L"foo");
   }
 
-  // TODO: test other types
+  {
+    Value val;
+    EXPECT_EQ(Value::VNULL, val.getType());
+    val = std::numeric_limits<uint64_t>::max();
+    EXPECT_THROW(val.get<int32_t>(),Error);
+    EXPECT_THROW(val.get<int64_t>(),Error);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), val.get<uint64_t>());
+  }
+
+  {
+    Value val = std::numeric_limits<float>::max();
+    EXPECT_EQ(Value::FLOAT, val.getType());
+    EXPECT_THROW(val.get<uint64_t>(),Error);
+    EXPECT_THROW(val.get<int64_t>(),Error);
+    EXPECT_THROW(val.get<string>(),Error);
+    EXPECT_THROW(val["dumb"],Error);
+    EXPECT_EQ(std::numeric_limits<float>::max(), val.get<float>());
+    EXPECT_EQ(std::numeric_limits<float>::max(), val.get<double>());
+  }
+
+  {
+    Value val = std::numeric_limits<double>::max();
+    EXPECT_EQ(Value::DOUBLE, val.getType());
+    EXPECT_THROW(val.get<float>(),Error);
+    EXPECT_THROW(val["dumb"],Error);
+    EXPECT_EQ(std::numeric_limits<double>::max(), val.get<double>());
+  }
+
+  {
+    Value val;
+    val = DbDoc(R"({"arr" : [1,2,3,4], "doc" : {"arr2":[{"val1":1}]}})");
+    EXPECT_EQ(Value::DOCUMENT, val.getType());
+    Value arr = val["arr"];
+    EXPECT_EQ(Value::ARRAY, arr.getType());
+    int i = 0;
+    for (auto el : arr)
+    {
+      ++i;
+      EXPECT_EQ(i, el.get<int>());
+    }
+    Value doc = val["doc"];
+    EXPECT_EQ(Value::DOCUMENT, doc.getType());
+    Value arr2 = doc["arr2"];
+    EXPECT_EQ(1 ,arr2[0]["val1"].get<int>());
+  }
+
 }
 
 

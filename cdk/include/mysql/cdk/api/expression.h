@@ -127,8 +127,10 @@ public:
 
   typedef PRC Element_prc;
 
+  // LCOV_EXCL_START
   virtual void list_begin() {}
   virtual void list_end()   {}
+  // LCOV_EXCL_STOP
   virtual Element_prc* list_el() =0;
 
   virtual ~List_processor() {}

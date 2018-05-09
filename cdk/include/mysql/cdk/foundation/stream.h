@@ -197,10 +197,12 @@ protected:
 
   // Async_op interface (trivial implementation)
 
+  // LCOV_EXCL_START
   bool is_completed() const { return true; }
   bool do_cont() { return true; }
   void do_cancel() { THROW("not implemented"); }
   void do_wait() {}
+  // LCOV_EXCL_STOP
 
   const api::Event_info* get_event_info() const { return  NULL; }
 };

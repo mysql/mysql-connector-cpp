@@ -841,6 +841,8 @@ public:
   typedef protocol::mysqlx::string      string;
   typedef protocol::mysqlx::msg_type_t  msg_type_t;
 
+  // LCOV_EXCL_START
+
   /*
     Called when message header is received. The type of the message stored
     in the header is passed to the method. Argument ``flag`` informs if
@@ -920,6 +922,8 @@ public:
 
   virtual bool message_end() { return true; }
 
+  // LCOV_EXCL_STOP
+
 protected:
 
   size_t message_begin_internal(msg_type_t type, bool &flag);
@@ -942,7 +946,7 @@ class Error_processor : public Processor_base
 public:
 
   typedef protocol::mysqlx::sql_state_t sql_state_t;
-
+// LCOV_EXCL_START
   virtual void error(unsigned int /*code*/, short int /*severity*/,
                      sql_state_t /*sql_state*/, const string &/*msg*/)
   {}
@@ -951,6 +955,7 @@ public:
                       short int /*scope*/,
                       bytes /*payload*/)
   {}
+// LCOV_EXCL_STOP
 };
 
 
@@ -966,16 +971,20 @@ public:
 class Reply_processor : public Error_processor
 {
 public:
+// LCOV_EXCL_START
   virtual void ok(string /*msg*/) {}
+// LCOV_EXCL_STOP
 };
 
 class Stmt_processor : public Error_processor
 {
 public:
+// LCOV_EXCL_START
   virtual void prepare_ok() {}
   virtual void execute_ok() {}
   virtual void cursor_close_ok() {}
   virtual void stmt_close_ok() {}
+// LCOV_EXCL_STOP
 };
 
 class Row_processor : public Error_processor
@@ -985,6 +994,7 @@ public:
   typedef protocol::mysqlx::row_count_t row_count_t;
   typedef protocol::mysqlx::col_count_t col_count_t;
 
+// LCOV_EXCL_START
   virtual bool row_begin(row_count_t /*row*/) { return true; }
   virtual void row_end(row_count_t /*row*/) {}
 
@@ -993,6 +1003,7 @@ public:
   virtual size_t col_begin(col_count_t /*pos*/, size_t /*data_len*/) { return 0; }
   virtual size_t col_data(col_count_t /*pos*/, bytes /*data*/) { return 0;}
   virtual void col_end(col_count_t /*pos*/, size_t /*data_len*/) {}
+// LCOV_EXCL_STOP
 
   /*
     Note:
@@ -1012,6 +1023,7 @@ public:
   typedef protocol::mysqlx::col_count_t     col_count_t;
   typedef protocol::mysqlx::collation_id_t  collation_id_t;
 
+// LCOV_EXCL_START
   virtual void col_count(col_count_t) {}
   virtual void col_type(col_count_t /*pos*/, unsigned short /*type*/) {}
   virtual void col_name(col_count_t /*pos*/,
@@ -1025,6 +1037,7 @@ public:
   virtual void col_decimals(col_count_t /*pos*/, unsigned short /*decimals*/) {}
   virtual void col_content_type(col_count_t /*pos*/, unsigned short /*type*/) {}
   virtual void col_flags(col_count_t /*pos*/, uint32_t /*flags*/) {}
+// LCOV_EXCL_STOP
 
   size_t message_begin(msg_type_t type, bool &flag)
   {
@@ -1052,7 +1065,9 @@ class Result_processor
   , public Row_processor
 {
 public:
+  // LCOV_EXCL_START
   virtual void execute_ok() {}
+  // LCOV_EXCL_STOP
 };
 
 
@@ -1066,6 +1081,7 @@ public:
   enum row_stats_t { ROWS_AFFECTED, ROWS_FOUND, ROWS_MATCHED };
   enum trx_event_t { COMMIT, ROLLBACK };
 
+// LCOV_EXCL_START
   virtual void client_id(unsigned long) {}
   virtual void account_expired() {}
   virtual void current_schema(const string&) {}
@@ -1073,6 +1089,7 @@ public:
   virtual void last_insert_id(insert_id_t) {}
   virtual void trx_event(trx_event_t) {}
   virtual void generated_document_id(const std::string&) {}
+// LCOV_EXCL_STOP
 };
 
 template<>
@@ -1147,7 +1164,7 @@ public:
 class Cmd_processor : public Processor_base
 {
 public:
-  virtual void close() {}
+  virtual void close() {} // GCOV_EXCL_LINE
 };
 
 /*
