@@ -272,7 +272,13 @@ option(BUILD_STATIC "Build static version of connector library" OFF)
 if(BUILD_STATIC)
   message("Building static connector library")
   set(LIB_TYPE STATIC)
-  add_definitions(-DCONCPP_BUILD_STATIC)
+
+  set_property(
+    DIRECTORY .
+    APPEND PROPERTY COMPILE_DEFINITIONS
+    $<$<NOT:$<CONFIG:Static>>:CONCPP_BUILD_STATIC>
+  )
+
 else()
   message("Building shared connector library")
 
@@ -281,7 +287,15 @@ else()
   endif()
 
   set(LIB_TYPE SHARED)
-  add_definitions(-DCONCPP_BUILD_SHARED)
+
+  set_property(
+    DIRECTORY .
+    APPEND PROPERTY COMPILE_DEFINITIONS
+    $<$<NOT:$<CONFIG:Static>>:CONCPP_BUILD_SHARED>
+  )
+
+  #TODO: do not set options below when building Static configuration?
+
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
   # Hide all symbols that are not explicitly exported.
@@ -293,6 +307,23 @@ else()
   elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fvisibility=hidden)
   endif()
+
+endif()
+
+if(MAINTAINER_MODE)
+
+  list(APPEND CMAKE_CONFIGURATION_TYPES Static)
+
+  set(CMAKE_CXX_FLAGS_STATIC ${CMAKE_CXX_FLAGS_RELEASE})
+  set(CMAKE_C_FLAGS_STATIC ${CMAKE_C_FLAGS_RELEASE})
+  set(CMAKE_SHARED_LINKER_FLAGS_STATIC ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
+  set(CMAKE_EXE_LINKER_FLAGS_STATIC ${CMAKE_EXE_LINKER_FLAGS_RELEASE})
+
+  set_property(
+    DIRECTORY .
+    APPEND PROPERTY COMPILE_DEFINITIONS
+    $<$<CONFIG:Static>:CONCPP_BUILD_STATIC>
+  )
 
 endif()
 
@@ -434,6 +465,19 @@ add_library_ex(connector ${LIB_TYPE}
 
 target_include_directories(connector PRIVATE "${WITH_UUID}/include")
 
+
+if(MAINTAINER_MODE)
+
+add_library_ex(connector-static STATIC EXCLUDE_FROM_ALL
+    ${WITH_UUID}/src/uuid_gen.cc
+    OBJECTS xapi devapi common
+    LIBS    cdk
+)
+
+target_include_directories(connector-static PRIVATE "${WITH_UUID}/include")
+
+endif()
+
 # Disable warnings in code which is not ours.
 
 if(MSVC)
@@ -495,12 +539,14 @@ endif()
 # static runtime.
 #
 
+set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
+if(WIN32 AND STATIC_MSVCRT)
+  set(LIB_NAME_STATIC "${LIB_NAME}-mt")
+endif()
+
 if(BUILD_STATIC)
 
-  set(LIB_NAME "${LIB_NAME_BASE}-static")
-  if(WIN32 AND STATIC_MSVCRT)
-    set(LIB_NAME "${LIB_NAME}-mt")
-  endif()
+  set(LIB_NAME ${LIB_NAME_STATIC})
 
 else()
 
@@ -542,21 +588,45 @@ install(TARGETS connector
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}/debug"
 )
 
+if(MAINTAINER_MODE)
+
+  set_property(TARGET connector-static PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
+
+  set_target_properties(connector-static PROPERTIES
+    VERSION "${ABI_VERSION_MAJOR}.${CONCPP_VERSION}"
+    SOVERSION "${ABI_VERSION_MAJOR}"
+  )
+
+  install(TARGETS connector-static
+    CONFIGURATIONS Static
+    ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}"
+    RUNTIME DESTINATION "${INSTALL_LIB_DIR}"
+    LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+  )
+
+endif()
 
 #
 # Tests
 # =====
 #
 
-remove_definitions(-DCONCPP_BUILD_STATIC)
-remove_definitions(-DCONCPP_BUILD_SHARED)
+#
+# Note: We must clear compile flags - the ones used to build the connector
+# are not good for building client code that uses the connector.
+#
+
+set_property(
+  DIRECTORY .
+  PROPERTY COMPILE_DEFINITIONS ""
+)
 
 if(BUILD_STATIC)
   add_definitions(-DSTATIC_CONCPP)
 endif()
 
-# Auto-generated test targets
 
+# Auto-generated test targets
 
 IF (WITH_TESTS)
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)

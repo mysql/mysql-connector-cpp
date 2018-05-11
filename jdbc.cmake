@@ -20,20 +20,28 @@ file(MAKE_DIRECTORY "${JDBC_DIR}")
 # Configure legacy connector build environment in ${JDBC_DIR}
 #
 
-list(APPEND jdbc_cmake_opts -DMYSQLCLIENT_STATIC_LINKING=ON)
-
-if(CMAKE_BUILD_TYPE)
-  list(APPEND jdbc_cmake_opts -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-endif()
-
 if(BUILD_STATIC)
   list(APPEND jdbc_cmake_opts -DENABLE_BUILD_STATIC=ON)
 else()
   list(APPEND jdbc_cmake_opts -DENABLE_BUILD_DYNAMIC=ON)
 endif()
 
+if(MAINTAINER_MODE)
+  list(APPEND jdbc_cmake_opts -DENABLE_BUILD_STATIC=ON)
+endif()
+
 if(MYSQL_DIR)
   list(APPEND jdbc_cmake_opts -DMYSQL_DIR=${MYSQL_DIR})
+endif()
+
+list(APPEND jdbc_cmake_opts -DMYSQLCLIENT_STATIC_LINKING=ON)
+
+if(CMAKE_BUILD_TYPE)
+  if(CMAKE_BUILD_TYPE MATCHES "[Ss][Tt][Aa][Tt][Ii][Cc]")
+    list(APPEND jdbc_cmake_opts -DCMAKE_BUILD_TYPE=Release)
+  else()
+    list(APPEND jdbc_cmake_opts -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  endif()
 endif()
 
 if(DEFINED STATIC_MSVCRT)
@@ -102,11 +110,15 @@ set(JDBC_BUILD_STAMP "${PROJECT_BINARY_DIR}/jdbc.buildstamp")
 file(REMOVE "${JDBC_BUILD_STAMP}")
 #message("JDBC_BUILD_STAMP: ${JDBC_BUILD_STAMP}")
 
+set(CONFIG_EXPR
+  $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIGURATION>>
+)
+
 add_custom_command(OUTPUT ${JDBC_BUILD_STAMP}
 
   COMMAND ${CMAKE_COMMAND} -E remove_directory install
   COMMAND ${CMAKE_COMMAND}
-    --build . --target install --config $<CONFIGURATION> --clean-first
+    --build . --target install --config ${CONFIG_EXPR} --clean-first
 
   # Move installed headers from include/ to include/jdbc and rename lib/
   # to lib64/ for 64-bit platform
@@ -120,7 +132,7 @@ add_custom_command(OUTPUT ${JDBC_BUILD_STAMP}
   COMMAND ${CMAKE_COMMAND} -E touch ${JDBC_BUILD_STAMP}
 
   WORKING_DIRECTORY ${JDBC_DIR}
-  COMMENT "Building legacy connector library using configuration: $<CONFIGURATION>"
+  COMMENT "Building legacy connector library using configuration: $(Configuration)"
 )
 
 # Collect sources of legacy connector and specify them in the build
@@ -260,6 +272,26 @@ install(
   DIRECTORY ${JDBC_DIR}/install/include/jdbc
   DESTINATION ${INSTALL_INCLUDE_DIR}
 )
+
+#
+# In maintainer mode add specifications for installing the static library
+# which is always built in this mode.
+#
+
+if(MAINTAINER_MODE)
+
+  add_dependencies(mysqlcppconn-static build_jdbc)
+  get_target_property(location mysqlcppconn-static IMPORTED_LOCATION_RELEASE)
+  message("jdbc installing: ${location} (MAINTAINER_MODE)")
+
+  install(
+    FILES ${location}
+    CONFIGURATIONS Static
+    DESTINATION "${INSTALL_LIB_DIR_STATIC}"
+    COMPONENT JDBCDev
+  )
+
+endif()
 
 
 #

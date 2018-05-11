@@ -27,12 +27,14 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 #
-# Undefine macros which indicate building of the connector library
-# (as opposed to using it from test code). This is used by public headers.
+# Note: We must clear compile flags - the ones used to build the connector
+# are not good for building client code that uses the connector.
 #
 
-remove_definitions(-DCONCPP_BUILD_STATIC)
-remove_definitions(-DCONCPP_BUILD_SHARED)
+set_property(
+  DIRECTORY .
+  PROPERTY COMPILE_DEFINITIONS ""
+)
 
 if(WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)

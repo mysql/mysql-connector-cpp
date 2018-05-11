@@ -26,8 +26,16 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-remove_definitions(-DCONCPP_BUILD_STATIC)
-remove_definitions(-DCONCPP_BUILD_SHARED)
+#
+# Note: We must clear compile flags - the ones used to build the connector
+# are not good for building client code that uses the connector.
+#
+
+set_property(
+  DIRECTORY .
+  PROPERTY COMPILE_DEFINITIONS ""
+)
+
 if(BUILD_STATIC)
   add_definitions(-DSTATIC_CONCPP)
 endif()
