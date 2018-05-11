@@ -571,14 +571,14 @@ ENDIF (WITH_TESTS)
 # Sample code to try things out
 #
 
-ADD_EXECUTABLE(try try.cc)
+ADD_EXECUTABLE(try EXCLUDE_FROM_ALL try.cc)
 TARGET_LINK_LIBRARIES(try connector)
 SET_INTERFACE_OPTIONS(try devapi)
 #  ADD_GCOV(try)
 
 if(WITH_JDBC)
 
-  add_executable(try_jdbc try_jdbc.cc)
+  add_executable(try_jdbc EXCLUDE_FROM_ALL try_jdbc.cc)
   target_link_libraries(try_jdbc ${JDBC_LIBS})
   add_dependencies(try_jdbc build_jdbc)
   target_include_directories(try_jdbc PRIVATE ${JDBC_INCLUDES})
