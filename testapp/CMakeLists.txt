@@ -87,7 +87,7 @@ endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(IS64BIT 1)
-  message("Generationg 64bit code")
+  message("Generating 64bit code")
 else()
   message("Generating 32bit code")
 endif()
@@ -127,7 +127,7 @@ endif()
 #  name mysqlcppconn8 and the legacy library mysqlcppconn which is backward
 #  compatible with Connector/C++ 1.1.
 #
-#  Static versions of connecotr library have -static suffix. Additionally,
+#  Static versions of connector library have -static suffix. Additionally,
 #  on Windows they have -mt suffix if the library was built using static
 #  runtime libs (/MT compiler setting).
 #
@@ -210,7 +210,7 @@ if(CONCPP_JDBC OR CONCPP_JDBC_DEBUG)
 elseif(WITH_JDBC)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 legacy library"
-    " ${libconcpp_jdbc_name} at spcified location ${LIB_PATH_STATIC}"
+    " ${libconcpp_jdbc_name} at specified location ${LIB_PATH_STATIC}"
   )
 endif()
 
@@ -256,7 +256,7 @@ ENDIF()
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   list(APPEND CONCPP_LIBS socket nsl)
-  # TODO: Could be couple more libs reqired..
+  # TODO: Could be couple more libs required..
   # MYSQL_LIBRARIES: stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
   list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
 endif()
