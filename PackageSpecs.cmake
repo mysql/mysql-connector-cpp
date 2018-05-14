@@ -148,7 +148,7 @@ foreach(file ${info_files})
   set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
 
   configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
-  install(FILES "${file_bin}" DESTINATION .)
+  install(FILES "${file_bin}" DESTINATION . COMPONENT Readme)
 
 endforeach()
 

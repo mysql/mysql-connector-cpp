@@ -32,4 +32,4 @@ check_headers(${headers})
 
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
-INSTALL(FILES ${headers} DESTINATION include/mysqlx/common)
+INSTALL(FILES ${headers} DESTINATION include/mysqlx/common COMPONENT XDevAPIDev)

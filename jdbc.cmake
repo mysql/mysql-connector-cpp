@@ -216,13 +216,14 @@ foreach(config ${configurations})
       FILES ${location}
       CONFIGURATIONS ${config}
       DESTINATION ${loc_static}
+      COMPONENT JDBCDev
     )
 
   else()
 
     if(WIN32)
 
-      install(FILES ${location} CONFIGURATIONS ${config} DESTINATION ${loc})
+      install(FILES ${location} CONFIGURATIONS ${config} DESTINATION ${loc} COMPONENT JDBCDll)
 
       # install import library for the DLL
 
@@ -232,6 +233,7 @@ foreach(config ${configurations})
         FILES ${imp_location}
         CONFIGURATIONS ${config}
         DESTINATION ${loc_static}
+        COMPONENT JDBCDev
       )
 
     else()
@@ -271,6 +273,7 @@ endforeach()
 install(
   DIRECTORY ${JDBC_DIR}/install/include/jdbc
   DESTINATION ${INSTALL_INCLUDE_DIR}
+  COMPONENT JDBCDev
 )
 
 #
@@ -309,6 +312,7 @@ if(BUNDLE_DEPENDENCIES AND WITH_SSL STREQUAL "bundled")
 
   install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION lib64
     FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    COMPONENT JDBCDev
   )
 
 endif()

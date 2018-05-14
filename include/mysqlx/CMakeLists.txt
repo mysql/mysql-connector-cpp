@@ -36,5 +36,5 @@ ADD_HEADERS_DIR(devapi)
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
 
-INSTALL(FILES ${headers} DESTINATION include/mysqlx)
+INSTALL(FILES ${headers} DESTINATION include/mysqlx COMPONENT XDevAPIDev)
 
