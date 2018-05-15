@@ -412,11 +412,11 @@ function(bundle_ssl_libs)
         #message("result: ${lib_dll}")
 
         message("bundling: ${lib}")
-        install(FILES "${lib}" DESTINATION "${INSTALL_LIB_DIR_STATIC}")
+        install(FILES "${lib}" DESTINATION "${INSTALL_LIB_DIR_STATIC}" COMPONENT OpenSSL)
 
         if(lib_dll)
           message("bundling: ${lib_dll}")
-          install(FILES "${lib_dll}" DESTINATION "${INSTALL_LIB_DIR}")
+          install(FILES "${lib_dll}" DESTINATION "${INSTALL_LIB_DIR}" COMPONENT OpenSSL)
         else()
 
           message(WARNING "Could not find DLL library for openSSL library ${lib_name} at ${lib_path}. OpenSSL libraries can not be bundled with the connector.")
@@ -434,7 +434,7 @@ function(bundle_ssl_libs)
         else()
 
           message("bundling: ${lib_file}")
-          install(FILES "${lib_file}" DESTINATION "${INSTALL_LIB_DIR_STATIC}")
+          install(FILES "${lib_file}" DESTINATION "${INSTALL_LIB_DIR_STATIC}" COMPONENT OpenSSL)
           get_filename_component(lib_dir "${lib_file}" DIRECTORY)
           get_filename_component(lib_name "${lib_file}" NAME)
 

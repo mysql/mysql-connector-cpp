@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 SET(CPACK_COMPONENTS_USED 
-    "XDevAPIDll;JDBCDll;XDevAPIDev;JDBCDev;Readme")
+    "XDevAPIDll;JDBCDll;XDevAPIDev;JDBCDev;OpenSSL;Readme")
 
 # Some components are optional
 # We will build MSI without optional components that are not selected for build
@@ -44,6 +44,7 @@ SET(CPACK_COMPONENTS_ALL ${CPACK_ALL})
 # Always install (hidden), includes Readme files
 SET(CPACK_COMPONENT_GROUP_ALWAYSINSTALL_HIDDEN 1)
 SET(CPACK_COMPONENT_README_GROUP "AlwaysInstall")
+SET(CPACK_COMPONENT_OPENSSL_GROUP "AlwaysInstall")
 
 # Feature Connector C++
 SET(CPACK_COMPONENT_GROUP_CONNECTORCPP_DISPLAY_NAME "Connector C++")
