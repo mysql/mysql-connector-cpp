@@ -165,7 +165,65 @@
     </Directory>
 
     <!-- CPACK_WIX_FEATURES -->
-    @CPACK_WIX_FEATURES@
+    <Feature  Id='XDEVAPI'
+     Title='New XDevAPI/XAPI'
+     Description='New XDevAPI/XAPI connector'
+     ConfigurableDirectory='INSTALLDIR'
+     Level='1'  > 
+    <Feature Id='XDevAPIDll' 
+       Title='Dll Libraries'
+       Description='Connector C++ dll libraries and depdnencies'
+       ConfigurableDirectory='INSTALLDIR'
+       Level='1'>
+       <ComponentGroupRef Id='componentgroup.XDevAPIDll'/>
+       <ComponentGroupRef Id='componentgroup.OpenSSLDll'/>
+    </Feature> 
+    <Feature Id='XDevAPIDev' 
+       Title='Development Components'
+       Description='Connector C++ headers, static libraries and import libraries'
+       ConfigurableDirectory='INSTALLDIR'
+       Level='4'>
+       <ComponentGroupRef Id='componentgroup.XDevAPIDev'/>
+       <ComponentGroupRef Id='componentgroup.OpenSSLDev'/>
+    </Feature>
+   </Feature>
+   
+   <Feature  Id='JDBC'
+     Title='Legacy JDBC API'
+     Description='Legacy JDBC API connector'
+     ConfigurableDirectory='INSTALLDIR'
+     Level='1'  > 
+    <Feature Id='JDBCDll' 
+       Title='Dll Libraries'
+       Description='Installs legacy JDBC API connector dlls'
+       ConfigurableDirectory='INSTALLDIR'
+       Level='1'>
+       <ComponentGroupRef Id='componentgroup.JDBCDll'/>
+       <ComponentGroupRef Id='componentgroup.OpenSSLDll'/>
+    </Feature> 
+    <Feature Id='JDBCDev' 
+       Title='Development Components'
+       Description='Installs legacy JDBC API connector dev files'
+       ConfigurableDirectory='INSTALLDIR'
+       Level='4'>
+       <ComponentGroupRef Id='componentgroup.JDBCDev'/>
+       <ComponentGroupRef Id='componentgroup.OpenSSLDev'/>
+    </Feature>
+   </Feature>
+   
+   <Feature  Id='ALWAYSINSTALL'
+     Title='ALWAYSINSTALL'
+     Description='ALWAYSINSTALL'
+     ConfigurableDirectory='INSTALLDIR'
+     Level='1' Display='hidden' > 
+    <Feature Id='Readme' 
+       Title='CPACK_COMPONENT_README_DISPLAY_NAME'
+       Description='CPACK_COMPONENT_README_DESCRIPTION'
+       ConfigurableDirectory='INSTALLDIR'
+       Level='1'>
+       <ComponentGroupRef Id='componentgroup.Readme'/>
+    </Feature>
+   </Feature>
     
     <!-- CPACK_WIX_DIRECTORIES -->
     @CPACK_WIX_DIRECTORIES@

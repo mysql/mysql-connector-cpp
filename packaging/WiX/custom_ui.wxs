@@ -69,6 +69,14 @@
       <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
     </Dialog>
 
+    <Dialog Id="DevDllWarningDlg" Width="284" Height="73" Title="Warning" NoMinimize="yes">
+      <Control Id="Text" Type="Text" X="38" Y="8" Width="240" Height="40" TabSkip="no">
+        <Text>You've selected the developement and not the dll components</Text>
+      </Control>
+      <Control Id="OK" Type="PushButton" X="84" Y="52" Width="56" Height="17" Default="yes"  Cancel="yes" Text="OK"/>
+      <Control Id="Back" Type="PushButton" X="144" Y="52" Width="56" Height="17" Cancel="yes" Text="Back"/>
+    </Dialog>
+
     <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
     <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
     <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
@@ -97,7 +105,11 @@
 
     <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1">WixUI_InstallMode = "Change"</Publish>
     <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="SetupTypeDlg" Order="2">WixUI_InstallMode = "InstallCustom"</Publish>
-    <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+    <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="DevDllWarningDlg">((&amp;JDBCDev=3) AND NOT(&amp;JDBCDll=3)) OR ((&amp;XDevAPIDev=3) AND NOT(&amp;XDevAPIDll=3))</Publish>
+    <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">(NOT(&amp;JDBCDev=3) OR (&amp;JDBCDll=3)) AND (NOT(&amp;XDevAPIDev=3) OR (&amp;XDevAPIDll=3))</Publish>
+
+    <Publish Dialog="DevDllWarningDlg" Control="OK" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+    <Publish Dialog="DevDllWarningDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg">1</Publish>
 
     <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg" Order="1">WixUI_InstallMode = "InstallCustom"</Publish>
     <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="SetupTypeDlg" Order="2">WixUI_InstallMode = "InstallTypical" OR WixUI_InstallMode = "InstallComplete"</Publish>
@@ -119,4 +131,5 @@
   </UI>
 
   <UIRef Id="WixUI_Common" />
+
 </Include>
