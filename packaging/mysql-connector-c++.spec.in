@@ -40,7 +40,7 @@ Release:        1%{?commercial:.1}%{?dist}
 License:        %{license_type}
 URL:            https://dev.mysql.com/doc/connector-cpp/en/
 Source0:        https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++%{?product_suffix}-%{version}-src.tar.gz
-BuildRequires:  boost-devel
+#BuildRequires:  boost-devel
 BuildRequires:  cmake
 %if 0%{?fedora}
 BuildRequires:  gcc
