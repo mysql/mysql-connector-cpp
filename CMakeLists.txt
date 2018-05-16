@@ -449,6 +449,10 @@ ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(xapi)
 ADD_SUBDIRECTORY(devapi)
 
+#
+# Packaging
+#
+ADD_SUBDIRECTORY(packaging)
 
 #
 #  Target which builds the final connector library
