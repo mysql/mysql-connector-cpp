@@ -111,18 +111,15 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %postun jdbc -p /sbin/ldconfig
 
 %files
-%license LICENSE.txt
-%doc README.txt
+%doc README.txt LICENSE.txt
 %{_libdir}/libmysqlcppconn8.so.1*
 
 %files jdbc
-%license LICENSE.txt
-%doc README.txt
+%doc README.txt LICENSE.txt
 %{_libdir}/libmysqlcppconn.so.7*
 
 %files devel
-%license LICENSE.txt
-%doc README.txt build/BUILDINFO.txt
+%doc README.txt build/BUILDINFO.txt LICENSE.txt
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so
