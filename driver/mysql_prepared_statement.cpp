@@ -36,11 +36,13 @@
 #include <iostream>
 #include <sstream>
 #include "mysql_util.h"
+#if defined __GNUC__ && __GNUC__ >= 8
 DIAGNOSTIC_PUSH
 DISABLE_WARNING(-Wparentheses)
 #include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
 DIAGNOSTIC_POP
+#endif
 #include <cppconn/exception.h>
 #include "mysql_connection.h"
 #include "mysql_statement.h"
