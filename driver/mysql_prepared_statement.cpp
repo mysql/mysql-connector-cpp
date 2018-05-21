@@ -35,11 +35,13 @@
 
 #include <iostream>
 #include <sstream>
+#include "mysql_util.h"
+DIAGNOSTIC_PUSH
+DISABLE_WARNING(-Wparentheses)
 #include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
-
+DIAGNOSTIC_POP
 #include <cppconn/exception.h>
-#include "mysql_util.h"
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
