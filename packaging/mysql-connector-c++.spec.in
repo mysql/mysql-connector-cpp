@@ -34,6 +34,10 @@
 %{!?commercial:  %global product_suffix %{nil}}
 %{!?_licensedir: %global license %doc}
 
+%if 0%{?rhel}
+%undefine __brp_strip_static_archive
+%endif
+
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
 Version:        @CONCPP_VERSION@
