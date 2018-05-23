@@ -34,7 +34,7 @@
 %{!?commercial:  %global product_suffix %{nil}}
 %{!?_licensedir: %global license %doc}
 
-%{?el6:%global __strip /opt/rh/devtoolset-7/root/bin/strip}
+%{?el6:%global __strip /opt/rh/devtoolset-7/root/usr/bin/strip}
 
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
