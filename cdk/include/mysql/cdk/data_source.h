@@ -141,7 +141,8 @@ class Protocol_options
     DEFAULT,
     PLAIN,
     MYSQL41,
-    EXTERNAL
+    EXTERNAL,
+    SHA256_MEMORY
   };
 
   virtual auth_method_t auth_method() const = 0;

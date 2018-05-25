@@ -180,7 +180,7 @@ void prepare_options(
   else
   {
     opts.set_auth_method(
-      socket ? TCPIP_options::PLAIN : TCPIP_options::MYSQL41
+      socket ? TCPIP_options::PLAIN : TCPIP_options::DEFAULT
     );
   }
 

@@ -36,16 +36,20 @@ ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LO
 # TODO: Fix compile warnings in auth_mysql41.cc
 
 if(WIN32)
-  set_property(SOURCE auth_mysql41.cc
+  set_property(SOURCE auth_hash.cc
     PROPERTY COMPILE_FLAGS "/W3"
   )
 endif()
 
 
-ADD_LIBRARY(${target_mysqlx} OBJECT session.cc result.cc auth_mysql41.cc)
+ADD_LIBRARY(${target_mysqlx} OBJECT
+  session.cc
+  result.cc
+  auth_hash.cc
+  )
 ADD_COVERAGE(${target_mysqlx})
 
-# Note: File auth_mysql41.cc uses SSL code.
+# Note: File auth_mysql41.cc and auth_sha256.cc uses SSL code.
 
 add_ssl(${target_mysqlx})
 

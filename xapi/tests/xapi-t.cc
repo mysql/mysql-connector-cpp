@@ -1545,3 +1545,111 @@ TEST_F(xapi, unix_socket)
   std::cout << "Done" << std::endl;
 }
 #endif //_WIN32
+
+TEST_F(xapi, sha256_memory)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  authenticate();
+
+  exec_sql("DROP USER 'doomuser'@'%';");
+
+  if(!exec_sql(
+       "CREATE USER 'doomuser'@'%' IDENTIFIED WITH caching_sha2_password "
+       "BY '!sha2user_pass';"
+       ))
+  {
+    SKIP_TEST("No caching_sha2_password support");
+    return;
+  }
+
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+
+
+  {
+
+    auto sha_256_cleartext = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(sha_256_cleartext,
+                         OPT_HOST(m_xplugin_host),
+                         OPT_PORT(m_port),
+                         OPT_AUTH(MYSQLX_AUTH_SHA256_MEMORY),
+                         OPT_SSL_MODE(SSL_MODE_DISABLED),
+                         OPT_USER("doomuser"),
+                         OPT_PWD("!sha2user_pass"),
+                         PARAM_END));
+
+    auto default_cleartext = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(default_cleartext,
+                         OPT_HOST(m_xplugin_host),
+                         OPT_PORT(m_port),
+                         OPT_SSL_MODE(SSL_MODE_DISABLED),
+                         OPT_USER("doomuser"),
+                         OPT_PWD("!sha2user_pass"),
+                         PARAM_END));
+
+    //First authentication... should fail!
+    auto local_sess = mysqlx_get_session_from_options(sha_256_cleartext,
+                                                      conn_error, &conn_err_code);
+    if (local_sess)
+      FAIL() << "First authentication... should fail!";
+
+    //Auth using normal logic
+    auto default_opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(default_opt,
+                         OPT_HOST(m_xplugin_host),
+                         OPT_PORT(m_port),
+                         OPT_USER("doomuser"),
+                         OPT_PWD("!sha2user_pass"),
+                         PARAM_END));
+    local_sess = mysqlx_get_session_from_options(default_opt,
+                                                 conn_error, &conn_err_code);
+    if (!local_sess)
+      FAIL() << "Fail auth against caching_sha2_password";
+
+    mysqlx_session_close(local_sess);
+
+    //Second authentication... should work!
+    local_sess = mysqlx_get_session_from_options(sha_256_cleartext,
+                                                 conn_error, &conn_err_code);
+    if (!local_sess)
+      FAIL() << "Fail auth against cached user using cleartext connection";
+
+    mysqlx_session_close(local_sess);
+
+    //Connect using default (will use MYSQL41 and SHA256_MEMORY)
+    local_sess = mysqlx_get_session_from_options(default_cleartext,
+                                                 conn_error, &conn_err_code);
+    if (!local_sess)
+      FAIL() << "Fail auth against cached user using cleartext connection";
+
+    mysqlx_session_close(local_sess);
+
+    //FAIL auth (bad password)
+
+    auto default_cleartext_fail = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(default_cleartext_fail,
+                         OPT_HOST(m_xplugin_host),
+                         OPT_PORT(m_port),
+                         OPT_SSL_MODE(SSL_MODE_DISABLED),
+                         OPT_USER("doomuser"),
+                         OPT_PWD("!sha2user_pass_fail"),
+                         PARAM_END));
+
+
+    local_sess = mysqlx_get_session_from_options(default_cleartext_fail,
+                                                      conn_error,
+                                                      &conn_err_code);
+    if (local_sess)
+      FAIL() << "First authentication... should fail!";
+
+
+    mysqlx_free_options(sha_256_cleartext);
+    mysqlx_free_options(default_cleartext);
+    mysqlx_free_options(default_cleartext_fail);
+
+  }
+}

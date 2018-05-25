@@ -640,6 +640,7 @@ private:
 
   // Authentication (cdk::protocol::mysqlx::Auth_processor)
   void authenticate(const Options &options, bool secure = false);
+  void do_authenticate(const Options &options, int auth_method, bool secure);
   void auth_ok(bytes data);
   void auth_continue(bytes data);
   void auth_fail(bytes data);

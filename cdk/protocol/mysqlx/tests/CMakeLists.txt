@@ -48,7 +48,7 @@ target_include_directories(proto_mysqlx-t PRIVATE
   "${CMAKE_CURRENT_BINARY_DIR}/.."
 )
 
-# For the auth_mysql41.h header
+# For the auth_mysql41.h and auth_sha256.h header
 target_include_directories(proto_mysqlx-t PRIVATE
     ${PROJECT_SOURCE_DIR}/mysqlx
 )

@@ -116,11 +116,15 @@
                       default in encrypted connections. */ \
   x(MYSQL41,2)     /*!< Authentication method supported by MySQL 4.1 and newer.
                       The password is hashed before being sent to the server.
-                      This method is used by default in unencrypted
+                      This authentication method works over unencrypted
                       connections */ \
   x(EXTERNAL,3)    /*!< External authentication when the server establishes
                       the user authenticity by other means such as SSL/x509
                       certificates. Currently not supported by X Plugin */ \
+  x(SHA256_MEMORY,4)  /*!< Authentication using SHA256 password hashes stored in
+                         server-side cache. This authentication method works
+                         over unencrypted connections.
+                      */ \
   END_LIST
 
 /*

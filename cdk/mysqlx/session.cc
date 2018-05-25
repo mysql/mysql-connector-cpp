@@ -34,7 +34,7 @@
 
 PUSH_SYS_WARNINGS
 #include <iostream>
-#include "auth_mysql41.h"
+#include "auth_hash.h"
 POP_SYS_WARNINGS
 
 #include "delayed_op.h"
@@ -296,20 +296,68 @@ public:
   }
 };
 
+
+class AuthSha256Memory
+    : public SessionAuthInterface
+{
+
+protected:
+
+  std::string m_user;
+  std::string m_pass;
+  std::string m_db;
+
+  std::string m_cont_data;
+
+public:
+  AuthSha256Memory(const Session::Options &options)
+    : m_user(options.user())
+  {
+    if (options.password())
+      m_pass = *options.password();
+    if (options.database())
+      m_db = *options.database();
+  }
+
+  const char* auth_method() { return "SHA256_MEMORY";}
+
+  virtual bytes auth_data()
+  {
+    return bytes((byte*)NULL, (byte*)NULL);
+  }
+
+  virtual bytes auth_response()
+  {
+    return bytes((byte*)NULL, (byte*)NULL);
+  }
+
+  virtual bytes auth_continue(bytes data)
+  {
+    m_cont_data = ::mysqlx::build_sha256_authentication_response(std::string(data.begin(), data.end()),
+                                                                  m_user, m_pass, m_db);
+
+    return bytes((byte*)m_cont_data.c_str(), m_cont_data.size());
+  }
+
+private:
+
+};
+
 /*
    Class Session
 */
 
 
-void Session::authenticate(const Session::Options &options,
-                           bool  secure_conn)
+void Session::do_authenticate(const Options &options,
+                              int original_am,
+                              bool  secure_conn)
 {
 
   m_auth_interface.reset();
 
   using cdk::ds::mysqlx::Protocol_options;
-  auto am = options.auth_method();
 
+  auto am = original_am;
   if (Protocol_options::DEFAULT == am)
     am = secure_conn ? Protocol_options::PLAIN : Protocol_options::MYSQL41;
 
@@ -324,6 +372,9 @@ void Session::authenticate(const Session::Options &options,
     case Protocol_options::EXTERNAL:
       m_auth_interface.reset(new AuthExternal(options));
     break;
+  case Protocol_options::SHA256_MEMORY:
+    m_auth_interface.reset(new AuthSha256Memory(options));
+  break;
     case Protocol_options::DEFAULT:
       assert(false);  // should not happen
     default:
@@ -336,6 +387,37 @@ void Session::authenticate(const Session::Options &options,
                        m_auth_interface->auth_response());
 
   start_reading_auth_reply();
+
+  wait();
+
+  if (!m_isvalid)
+  {
+    if (Protocol_options::DEFAULT == original_am && !secure_conn)
+    {
+      //Cleanup Diagnostic_area
+      clear_errors();
+
+      /*
+        Second attempt does not throw errors. If auth fails, it will always
+        throw below error
+      */
+      try{
+      do_authenticate(options, Protocol_options::SHA256_MEMORY, secure_conn);
+      } catch(...)
+      {}
+
+      if (!m_isvalid)
+      {
+        throw_error("Authentication failed using MYSQL41 and SHA256_MEMORY, "
+                      "check username and password or try a secure connection");
+      }
+    }
+  }
+}
+
+void Session::authenticate(const Options &options, bool  secure_conn)
+{
+  do_authenticate(options, options.auth_method(),secure_conn);
 }
 
 

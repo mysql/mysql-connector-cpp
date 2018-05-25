@@ -36,10 +36,17 @@
 
 namespace mysqlx
 {
-  std::string build_mysql41_authentication_response(const std::string &salt_data,
-                                            const std::string &user,
-                                            const std::string &password,
-                                            const std::string &schema);
+  std::string build_mysql41_authentication_response(
+      const std::string &salt_data,
+      const std::string &user,
+      const std::string &password,
+      const std::string &schema);
+
+  std::string build_sha256_authentication_response(
+      const std::string &salt_data,
+      const std::string &user,
+      const std::string &password,
+      const std::string &schema);
 }
 
 #endif

@@ -95,7 +95,7 @@ protected:
       op = start();
 
     if (op)
-      op->wait();
+       op->wait();
     else
       THROW("Invalid delayed operation.");
   }

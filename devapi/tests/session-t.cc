@@ -1088,6 +1088,119 @@ TEST_F(Sess, unix_socket)
 }
 #endif //_WIN32
 
+TEST_F(Sess, sha256_memory)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  try{
+    sql("DROP USER 'doomuser'@'%';");
+  }
+  catch(...) {}
+
+  try{
+    sql("DROP USER 'doomuserdefault'@'%';");
+  }
+  catch(...) {}
+
+
+  // DEFAULT AUTH: MYSQL41 on 5.7 and SHA256_MEMORY on 8.0
+  sql("CREATE USER 'doomuserdefault'@'%' IDENTIFIED  WITH sha256_password BY '!doomuserdefault_pass';");
+
+  SessionSettings mysqldefault_cleartext(
+        SessionOption::SSL_MODE, SSLMode::DISABLED,
+        SessionOption::USER, "doomuserdefault",
+        SessionOption::PWD, "!doomuserdefault_pass",
+        SessionOption::HOST, "localhost",
+        SessionOption::PORT, get_port());
+
+  SessionSettings mysqldefault_ssl(
+        SessionOption::USER, "doomuserdefault",
+        SessionOption::PWD, "!doomuserdefault_pass",
+        SessionOption::HOST, "localhost",
+        SessionOption::PORT, get_port());
+
+  try {
+    mysqlx::Session s(mysqldefault_cleartext);
+    FAIL() << "Should have thrown!";
+  } catch (Error) {
+    SUCCEED() << "Expected throw!";
+  }
+
+  mysqlx::Session s_mysqldefault_ssl(mysqldefault_ssl);
+
+  mysqlx::Session s_mysqldefault_cleartext(mysqldefault_cleartext);
+
+  try{
+    mysqlx::Session(          SessionOption::SSL_MODE, SSLMode::DISABLED,
+                              SessionOption::USER, "noone",
+                              SessionOption::PWD, "!no_pass",
+                              SessionOption::HOST, "localhost",
+                              SessionOption::PORT, get_port());
+    FAIL() << "No exception sent on bad login";
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected error: " << e << std::endl;
+  }
+
+
+  try{
+    sql("CREATE USER 'doomuser'@'%' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
+  }catch(...)
+  {
+    SKIP_TEST("No caching_sha2_password support");
+    return;
+  }
+
+
+
+
+  {
+
+    SessionSettings sha_256_cleartext(
+          SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
+          SessionOption::SSL_MODE, SSLMode::DISABLED,
+          SessionOption::USER, "doomuser",
+          SessionOption::PWD, "!sha2user_pass",
+          SessionOption::HOST, "localhost",
+          SessionOption::PORT, get_port());
+
+    SessionSettings default_cleartext(
+          SessionOption::SSL_MODE, SSLMode::DISABLED,
+          SessionOption::USER, "doomuser",
+          SessionOption::PWD, "!sha2user_pass",
+          SessionOption::HOST, "localhost",
+          SessionOption::PORT, get_port());
+
+    //First authentication... should fail!
+    EXPECT_THROW( mysqlx::Session s_sha256(sha_256_cleartext), Error);
+
+    //Auth using normal logic
+    SessionSettings default_opt(
+          SessionOption::USER, "doomuser",
+          SessionOption::PWD, "!sha2user_pass",
+          SessionOption::HOST, "localhost",
+          SessionOption::PORT, get_port());
+    mysqlx::Session s_plain(default_opt);
+
+    //Second authentication... should work!
+    mysqlx::Session s_sha256_works(sha_256_cleartext);
+
+    mysqlx::Session default_works(default_cleartext);
+
+    SessionSettings default_cleartext_fail(
+                            SessionOption::SSL_MODE, SSLMode::DISABLED,
+                            SessionOption::USER, "doomuser",
+                            SessionOption::PWD, "!sha2user_pass_fail",
+                            SessionOption::HOST, "localhost",
+                            SessionOption::PORT, get_port());
+    EXPECT_THROW( mysqlx::Session s_sha256_fail(default_cleartext_fail),Error);
+
+
+
+  }
+
+}
 
 TEST_F(Sess, bugs)
 {
