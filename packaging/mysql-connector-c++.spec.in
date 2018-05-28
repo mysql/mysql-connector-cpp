@@ -90,7 +90,9 @@ to develop MySQL client applications in C++.
 export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
 export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
 %endif
+%if 0%{?fedora} || 0%{?rhel}
 mkdir build && pushd build
+%endif
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt}
 make %{?_smp_mflags} VERBOSE=1
 popd
