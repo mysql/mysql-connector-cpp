@@ -95,7 +95,9 @@ mkdir build && pushd build
 %endif
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt}
 make %{?_smp_mflags} VERBOSE=1
+%if 0%{?fedora} || 0%{?rhel}
 popd
+%endif
 mkdir static && pushd static
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
   -DBUILD_STATIC=ON
