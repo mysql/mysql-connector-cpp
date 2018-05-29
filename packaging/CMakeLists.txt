@@ -1,4 +1,5 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+#
+# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,30 +27,4 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-#
-# Note: We must clear compile flags - the ones used to build the connector
-# are not good for building client code that uses the connector.
-#
-
-set_property(
-  DIRECTORY .
-  PROPERTY COMPILE_DEFINITIONS ""
-)
-
-if(WIN32)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
-
-#
-# If linking with connector statically, define macro that indicates this
-# to the public headers.
-#
-
-if(BUILD_STATIC)
-  add_definitions(-DSTATIC_CONCPP)
-endif()
-
-ADD_NG_TEST(devapi-t
-  first-t.cc crud-t.cc types-t.cc batch-t.cc ddl-t.cc session-t.cc
-  bugs-t.cc
-)
+CONFIGURE_FILE(mysql-connector-c++.spec.in ${CMAKE_CURRENT_BINARY_DIR}/mysql-connector-c++.spec @ONLY)

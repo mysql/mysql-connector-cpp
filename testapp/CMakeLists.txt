@@ -33,25 +33,54 @@ PROJECT(MySQL_CONCPP_TEST)
 #
 # Settings using by this project:
 #
-# WITH_CONCPP (required)  location of Connector/C++ 8.0 installation
+# WITH_CONCPP             location of Connector/C++ 8.0 installation
+# CONCPP_INCLUDE_DIR      location of Connector/C++ 8.0 headers
+# CONCPP_LIB_DIR          location of Connector/C++ 8.0 libraries
+#
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
-# WITH_BOOST  (optional)  where to look for Boost (required only when building
+# WITH_BOOST              where to look for Boost (required only when building
 #                         JDBC API application)
 #
 # WITH_JDBC               build JDBC API test application
 #
+# Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
+# set.
+#
 
-option(WITH_JDBC "Also build the JDBC API test application" OFF)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(IS64BIT 1)
+  message("Generating 64bit code")
+else()
+  message("Generating 32bit code")
+endif()
+
 
 set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 8.0 install location")
 
-if(NOT WITH_CONCPP)
+if(WITH_CONCPP)
+  if(NOT DEFINED CONCPP_INCLUDE_DIR)
+     set(CONCPP_INCLUDE_DIR "${WITH_CONCPP}/include")
+  endif()
+  if(NOT DEFINED CONCPP_LIB_DIR)
+    if(IS64BIT)
+      set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib64")
+    else()
+      set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib")
+    endif()
+  endif()
+endif()
+
+if(NOT DEFINED CONCPP_INCLUDE_DIR OR NOT DEFINED CONCPP_LIB_DIR)
   message(FATAL_ERROR
     "This project requires MySQL Connector/C++ 8.0, please specify install location"
-    " using WITH_CONCPP setting"
+    " using WITH_CONCPP setting or set header/library paths with CONCPP_INCLUDE_DIR"
+    " and CONCPP_LIB_DIR settings."
   )
 endif()
+
+option(WITH_JDBC "Also build the JDBC API test application" OFF)
 
 option(BUILD_STATIC "Link statically with the connector library" OFF)
 
@@ -85,13 +114,6 @@ if(NOT DEFINED WITH_SSL)
 endif()
 
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(IS64BIT 1)
-  message("Generating 64bit code")
-else()
-  message("Generating 32bit code")
-endif()
-
 if(WIN32)
   set(VS "vs14")
 endif()
@@ -101,25 +123,18 @@ endif()
 # Find MySQL Connector/C++ at specified location.
 #
 
-set(CONCPP_INCLUDES "${WITH_CONCPP}/include")
 
-if(NOT EXISTS "${CONCPP_INCLUDES}/mysqlx/xdevapi.h")
+if(NOT EXISTS "${CONCPP_INCLUDE_DIR}/mysqlx/xdevapi.h")
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 headers at specified"
-    " location: ${CONCPP_INCLUDES}"
+    " location: ${CONCPP_INCLUDE_DIR}"
   )
 endif()
 
 
-if(IS64BIT)
-  set(LIB_PATH "${WITH_CONCPP}/lib64")
-else()
-  set(LIB_PATH "${WITH_CONCPP}/lib")
-endif()
-
-set(LIB_PATH_STATIC "${LIB_PATH}")
+set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}")
 if(VS)
-   set(LIB_PATH_STATIC "${LIB_PATH_STATIC}/${VS}")
+   set(CONCPP_STATIC_LIB_DIR "${CONCPP_STATIC_LIB_DIR}/${VS}")
 endif()
 
 #
@@ -147,24 +162,24 @@ endif()
 endforeach()
 
 
-message("Looking for connector libraries here: ${LIB_PATH_STATIC}")
+message("Looking for connector libraries here: ${CONCPP_STATIC_LIB_DIR}")
 
 message("Looking for the main library  ${libconcpp_name}")
 
 find_library(CONCPP_LIB NAMES ${libconcpp_name}
-  PATHS "${LIB_PATH_STATIC}"
+  PATHS "${CONCPP_STATIC_LIB_DIR}"
   NO_DEFAULT_PATH
 )
 
 find_library(CONCPP_LIB_DEBUG NAMES ${libconcpp_name}
-  PATHS "${LIB_PATH_STATIC}/debug"
+  PATHS "${CONCPP_STATIC_LIB_DIR}/debug"
   NO_DEFAULT_PATH
 )
 
 if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 library ${libconcpp_name} at specified"
-    " location: ${LIB_PATH_STATIC}"
+    " location: ${CONCPP_STATIC_LIB_DIR}"
   )
 endif()
 
@@ -196,12 +211,12 @@ message("Using Connector/C++ 8.0 libraries: ${CONCPP_LIBS}")
 message("Looking for the legacy library  ${libconcpp_jdbc_name}")
 
 find_library(CONCPP_JDBC NAMES ${libconcpp_jdbc_name}
-  PATHS "${LIB_PATH_STATIC}"
+  PATHS "${CONCPP_STATIC_LIB_DIR}"
   NO_DEFAULT_PATH
 )
 
 find_library(CONCPP_JDBC_DEBUG NAMES ${libconcpp_jdbc_name}
-  PATHS "${LIB_PATH_STATIC}/debug"
+  PATHS "${CONCPP_STATIC_LIB_DIR}/debug"
   NO_DEFAULT_PATH
 )
 
@@ -210,7 +225,7 @@ if(CONCPP_JDBC OR CONCPP_JDBC_DEBUG)
 elseif(WITH_JDBC)
   message(FATAL_ERROR
     "Could not find MySQL Connector/C++ 8.0 legacy library"
-    " ${libconcpp_jdbc_name} at specified location ${LIB_PATH_STATIC}"
+    " ${libconcpp_jdbc_name} at specified location ${CONCPP_STATIC_LIB_DIR}"
   )
 endif()
 
@@ -375,14 +390,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 # Test programs that use MySQL Connector/C++.
 #
 
-include_directories(${CONCPP_INCLUDES})
+include_directories(${CONCPP_INCLUDE_DIR})
 
 #
 # Note: Adding this so that bundled libraries such as openSSL can be found
 # at link time in case they are not installed on the system.
 #
 
-link_directories(${LIB_PATH_STATIC})
+link_directories(${CONCPP_STATIC_LIB_DIR})
 
 
 add_executable(xapi_test xapi_test.c)
@@ -433,7 +448,7 @@ endif()
 
 message("Installing shared library dependencies.")
 
-file(GLOB libs "${LIB_PATH}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+file(GLOB libs "${CONCPP_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 file(INSTALL ${libs} DESTINATION run)
 
 #
@@ -450,7 +465,7 @@ endif()
 # Overwrite libs in run/debug with debug versions if present.
 #
 
-file(GLOB debug_libs "${LIB_PATH}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+file(GLOB debug_libs "${CONCPP_LIB_DIR}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 file(INSTALL ${debug_libs} DESTINATION run/debug)
 
 #
@@ -459,6 +474,6 @@ file(INSTALL ${debug_libs} DESTINATION run/debug)
 #
 
 if (NOT WIN32 AND NOT libs)
-  file(INSTALL ${debug_libs} DESTINATAION run)
+  file(INSTALL ${debug_libs} DESTINATION run)
 endif()
 
