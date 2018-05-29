@@ -86,21 +86,30 @@ to develop MySQL client applications in C++.
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
 
 %build
-%if 0%{?rhel}
-export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
-export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
-%endif
-%if 0%{?fedora} || 0%{?rhel}
 mkdir build && pushd build
-%endif
-%cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt}
-make %{?_smp_mflags} VERBOSE=1
+%{?rhel:export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc}
+%{?rhel:export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++}
 %if 0%{?fedora} || 0%{?rhel}
-popd
+%cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt}
+%else
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    -DCMAKE_INSTALL_PREFIX="%_prefix" \
+    -DCMAKE_C_FLAGS:STRING="%optflags" \
+    -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
+make %{?_smp_mflags} VERBOSE=1
+popd
 mkdir static && pushd static
+%if 0%{?fedora} || 0%{?rhel}
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
   -DBUILD_STATIC=ON
+%else
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    -DBUILD_STATIC=ON \
+    -DCMAKE_INSTALL_PREFIX="%_prefix" \
+    -DCMAKE_C_FLAGS:STRING="%optflags" \
+    -DCMAKE_CXX_FLAGS:STRING="%optflags"
+%endif
 make %{?_smp_mflags} VERBOSE=1
 
 %install
