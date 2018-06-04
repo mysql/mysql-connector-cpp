@@ -1324,7 +1324,7 @@ TEST_F(Crud, doc_path)
   EXPECT_EQ(string("February"), static_cast<string>(doc["date"]["monthName"]));
   EXPECT_EQ(4, static_cast<int>(doc["date"]["days"][0]));
 
-  coll.modify("true").arrayDelete("date.days[0]").execute();
+  coll.modify("true").unset("date.days[0]").execute();
   docs = coll.find().execute();
   doc = docs.fetchOne();
   EXPECT_EQ(2, static_cast<int>(doc["date"]["days"][0]));
@@ -1788,11 +1788,11 @@ TEST_F(Crud, diagnostic)
     cout << w << endl;
   }
 
-  EXPECT_EQ(2U, res.getWarningCount());
+  EXPECT_EQ(2U, res.getWarningsCount());
 
   std::vector<Warning> warnings = res.getWarnings();
 
-  for (unsigned i = 0; i < res.getWarningCount(); ++i)
+  for (unsigned i = 0; i < res.getWarningsCount(); ++i)
   {
     EXPECT_EQ(warnings[i].getCode(), res.getWarning(i).getCode());
   }

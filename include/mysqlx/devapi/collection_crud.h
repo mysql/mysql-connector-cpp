@@ -538,23 +538,6 @@ public:
   }
 
   /**
-    Delete an element from an array field of a document.
-
-    The `field` parameter should be a document path pointing at a location
-    inside an array field. The element at the indicated location is removed from
-    the array.
-  */
-
-  CollectionModify& arrayDelete(const Field &field)
-  {
-    try {
-      get_impl()->add_operation(Impl::ARRAY_DELETE, std::wstring(field));
-      return *this;
-    }
-    CATCH_AND_WRAP
-  }
-
-  /**
     Apply JSON Patch to a target JSON document.
 
     The JSON Patch format is defined by

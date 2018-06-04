@@ -586,7 +586,7 @@ TEST_F(First, warnings_multi_rset)
     when during result transfer the warnings will be reported.
   */
 
-  EXPECT_NO_THROW(res.getWarningCount());
+  EXPECT_NO_THROW(res.getWarningsCount());
   EXPECT_NO_THROW(res.getWarnings());
 
   res.nextResult();
@@ -601,7 +601,7 @@ TEST_F(First, warnings_multi_rset)
   std::vector<Warning> warnings = res.getWarnings();
 
   EXPECT_EQ(1, warnings.size());
-  EXPECT_EQ(1, res.getWarningCount());
+  EXPECT_EQ(1, res.getWarningsCount());
 
   for(auto warn : warnings)
   {
@@ -733,7 +733,7 @@ TEST_F(First, sqlresult)
                                     .bind(L"baz")
                                     .execute();
 
-    EXPECT_EQ(3, res.getAffectedRowsCount());
+    EXPECT_EQ(3, res.getAffectedItemsCount());
     EXPECT_EQ(1, res.getAutoIncrementValue());
   }
 
@@ -747,7 +747,7 @@ TEST_F(First, sqlresult)
                                     .bind(L"baz")
                                     .execute();
 
-    EXPECT_EQ(3, res.getAffectedRowsCount());
+    EXPECT_EQ(3, res.getAffectedItemsCount());
     EXPECT_EQ(4, res.getAutoIncrementValue());
   }
 
@@ -755,12 +755,12 @@ TEST_F(First, sqlresult)
     SqlResult res =  get_sess().sql(L"SELECT * from test.t")
                      .execute();
 
-    EXPECT_THROW(res.getAffectedRowsCount(), mysqlx::Error);
+    EXPECT_THROW(res.getAffectedItemsCount(), mysqlx::Error);
     EXPECT_THROW(res.getAutoIncrementValue(), mysqlx::Error);
 
     while (res.nextResult());
 
-    EXPECT_EQ(0, res.getAffectedRowsCount());
+    EXPECT_EQ(0, res.getAffectedItemsCount());
     EXPECT_EQ(0, res.getAutoIncrementValue());
   }
 
