@@ -41,11 +41,7 @@
 #pragma warning (push)
 #endif
 
-#if defined(WITH_SSL_YASSL)
-#include <sha.hpp>
-#else
 #include <openssl/sha.h>
-#endif
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -59,11 +55,6 @@
 #define SCRAMBLE_LENGTH 20
 #define SHA1_HASH_SIZE 20
 #define SHA256_HASH_SIZE 32
-
-#if defined( WITH_SSL_YASSL)
-using namespace TaoCrypt;
-typedef TaoCrypt::word32  length_t;
-#elif defined (WITH_SSL)
 
 typedef unsigned char byte;
 typedef size_t length_t;
@@ -88,7 +79,11 @@ class SHA
 
   void Update(byte* data, length_t length)
   {
-    SHA1_Update(&m_sha, data, length);
+    SHA1_Update(&m_sha, data,
+#ifdef WITH_SSL_WOLFSSL
+                (unsigned long)
+#endif
+                length);
   }
 
   void Final(byte* hash)
@@ -131,7 +126,6 @@ class SHA256
 
   size_t getDigestSize() const {return SHA256_HASH_SIZE; }
 };
-#endif
 
 
 static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t len)

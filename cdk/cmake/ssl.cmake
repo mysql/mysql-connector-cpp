@@ -27,14 +27,15 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 # We support different versions of SSL:
-# - "bundled" uses source code in <source dir>/extra/yassl
 # - "system"  (typically) uses headers/libraries in /usr/lib and /usr/lib64
 # - a custom installation of openssl can be used like this
 #     - cmake -DCMAKE_PREFIX_PATH=</path/to/custom/openssl> -DWITH_SSL="system"
 #   or
 #     - cmake -DWITH_SSL=</path/to/custom/openssl>
+#   or
+#     - cmake -DWITH_SSL=</path/to/custom/wolfssl>
 #
-# The default value for WITH_SSL is "bundled"
+# The default value for WITH_SSL is "system"
 #
 # WITH_SSL="system" means: use the SSL library that comes with the operating
 # system. This typically means you have to do 'yum install openssl-devel'
@@ -51,14 +52,9 @@
 # invoked with  -DWITH_SSL=</path/to/custom/openssl>
 
 
-SET(WITH_SSL_DOC "bundled (use yassl)")
+SET(WITH_SSL_DOC "system (use the OS openssl library)")
 SET(WITH_SSL_DOC
-  "${WITH_SSL_DOC}, yes (prefer os library if present, otherwise use bundled)")
-SET(WITH_SSL_DOC
-  "${WITH_SSL_DOC}, system (use os library)")
-SET(WITH_SSL_DOC
-  "${WITH_SSL_DOC}, </path/to/custom/installation>")
-
+  "${WITH_SSL_DOC}, </path/to/ssl/installation> (Can be OpenSSL or WolfSSL)")
 
 if(NOT WIN32)
   find_program(READLINK readlink)
@@ -124,46 +120,8 @@ endfunction(set_ssl_includes)
 unset(SSL_INCLUDES CACHE)
 
 
-#
-# Configure build to use the bundled YaSSL library instead of openSSL.
-#
-
-function(MYSQL_USE_BUNDLED_SSL BIG_ENDIAN)
-
-  set(WITH_SSL "${PROJECT_SOURCE_DIR}/extra/yassl")
-
-  if(NOT EXISTS "${WITH_SSL}")
-    message(FATAL_ERROR
-      "Bundled SSL implementation could not be found at: ${WITH_SSL}"
-    )
-  endif()
-
-  set_ssl_includes(
-    "${WITH_SSL}/include"
-    "${WITH_SSL}/taocrypt/include"
-    "${WITH_SSL}/taocrypt/mySTL"
-  )
-  set_ssl_libraries(yassl taocrypt)
-
-  set(ssl_defines -DYASSL_PREFIX -DMULTI_THREADED)
-  if(${BIG_ENDIAN})
-    list(APPEND ssl_defines -DWORDS_BIGENDIAN)
-  endif()
-
-  set_ssl_defines(${ssl_defines})
-
-  # Note: must be included after setting SSL_DEFINES etc.
-
-  add_subdirectory("${WITH_SSL}" yassl)
-
-  change_ssl_settings("bundled")
-  set(WITH_SSL_YASSL ON CACHE INTERNAL "Tells whether bundled SSL implementation is used")
-
-endfunction()
-
 
 MACRO(RESET_SSL_VARIABLES)
-  unset(WITH_SSL_YASSL CACHE)
   UNSET(WITH_SSL_PATH)
   UNSET(WITH_SSL_PATH CACHE)
   UNSET(OPENSSL_ROOT_DIR)
@@ -178,6 +136,36 @@ MACRO(RESET_SSL_VARIABLES)
   UNSET(CRYPTO_LIBRARY CACHE)
   UNSET(HAVE_SHA512_DIGEST_LENGTH)
   UNSET(HAVE_SHA512_DIGEST_LENGTH CACHE)
+ENDMACRO()
+
+MACRO (MYSQL_USE_WOLFSSL)
+  SET(WOLFSSL_SOURCE_DIR "${WITH_SSL_PATH}")
+  MESSAGE(STATUS "WOLFSSL_SOURCE_DIR = ${WOLFSSL_SOURCE_DIR}")
+
+  set_ssl_includes(
+    "${WOLFSSL_SOURCE_DIR}/include"
+    "${WOLFSSL_SOURCE_DIR}"
+    "${WOLFSSL_SOURCE_DIR}/wolfssl"
+  )
+
+
+  SET(SSL_LIBRARIES  wolfssl wolfcrypt)
+  set_ssl_libraries(wolfssl wolfcrypt)
+  IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    SET(SSL_LIBRARIES ${SSL_LIBRARIES} ${LIBSOCKET})
+  ENDIF()
+  SET(SSL_INTERNAL_INCLUDE_DIRS ${WOLFSSL_SOURCE_DIR})
+  ADD_DEFINITIONS(
+    -DHAVE_ECC
+    -DKEEP_OUR_CERT
+    -DOPENSSL_EXTRA
+    -DWC_NO_HARDEN
+    -DWOLFSSL_MYSQL_COMPATIBLE
+    )
+  CHANGE_SSL_SETTINGS("${WOLFSSL_SOURCE_DIR}")
+  ADD_SUBDIRECTORY("${PROJECT_SOURCE_DIR}/extra/wolfssl")
+  SET(SSL_SOURCES ${WOLFSSL_SOURCES} ${WOLFCRYPT_SOURCES})
+  SET(WITH_SSL_WOLFSSL ON CACHE INTERNAL "Tells whether WolfSSL implementation is used")
 ENDMACRO()
 
 
@@ -203,18 +191,15 @@ function(MYSQL_CHECK_SSL)
     set(SSL_BIG_ENDIAN ${ARGV0})
   endif()
 
-  if(WITH_SSL STREQUAL "bundled")
-
-    MYSQL_USE_BUNDLED_SSL(${SSL_BIG_ENDIAN})
-    message(STATUS "Using bundled YaSSL implementation of SSL")
+  # See if WITH_SSL is of the form </path/to/custom/installation>)
+  IF(EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h)
+    SET(WITH_SSL_PATH ${WITH_SSL} CACHE PATH "path to custom SSL installation")
+    MYSQL_USE_WOLFSSL()
+    message(STATUS "Using WolfSSL implementation of SSL")
     return()
+  ENDIF()
 
-  endif()
-
-  # See if WITH_SSL is of the form </path/to/custom/installation>
-
-  FILE(GLOB WITH_SSL_HEADER ${WITH_SSL}/include/openssl/ssl.h)
-  IF (WITH_SSL_HEADER)
+  IF (EXISTS ${WITH_SSL}/include/openssl/ssl.h)
     SET(WITH_SSL_PATH ${WITH_SSL} CACHE PATH "path to custom SSL installation")
   ENDIF()
 
@@ -326,8 +311,11 @@ function(MYSQL_CHECK_SSL)
   ELSE()
 
     MESSAGE(SEND_ERROR
-      "Wrong option or path for WITH_SSL. "
-      "Valid options are : ${WITH_SSL_DOC}")
+      "Could not find OpenSSL at a default location. "
+      "Ensure that OpenSSL is installed on your system "
+      "and/or set WITH_SSL to the location where it is installed. "
+      "You can also build connector with WolfSSL, in that case "
+      "set WITH_SSL to the location of WolfSSL sources.")
 
   ENDIF()
 

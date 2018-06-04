@@ -103,16 +103,17 @@ endif()
 # (see below).
 #
 
-set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
- "\"no\" = connector built without SSL support,"
- "\"bundled\" = connector with built-in SSL support,"
- " any other value or not set implies that connector is using shared OpenSSL libraries."
-)
-
-if(NOT DEFINED WITH_SSL)
- set(WITH_SSL "system")
+if($ENV{WITH_SSL})
+  # Environment variable takes the priority
+  set(WITH_SSL $ENV{WITH_SSL})
+elseif(NOT DEFINED WITH_SSL)
+  # Set to the default if WITH_SSL is not defined
+  set(WITH_SSL "system")
 endif()
 
+set(WITH_SSL ${WITH_SSL} CACHE STRING
+   "Use the same setting as used when building connector"
+)
 
 if(WIN32)
   set(VS "vs14")
@@ -281,9 +282,29 @@ endif()
 # link to them too (however, no need to do it on Windows).
 #
 
-if(NOT WIN32 AND BUILD_STATIC AND WITH_SSL AND NOT (WITH_SSL STREQUAL "bundled"))
-  list(APPEND CONCPP_LIBS ssl crypto)
-  list(APPEND CONCPP_JDBC_LIBS ssl crypto)
+if(NOT WIN32)
+  message("@@@ NOT WIN32")
+endif()
+
+if(BUILD_STATIC)
+  message("@@@ BUILD_STATIC")
+endif()
+
+if(NOT WITH_SSL)
+  message("@@@ NOT WITH_SSL")
+endif()
+
+message("@@@ FILE ${WITH_SSL}/wolfssl/openssl/ssl.h")
+
+if(NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h)
+  message("@@@ NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h")
+endif()
+
+
+if(NOT WIN32 AND BUILD_STATIC AND (NOT WITH_SSL OR
+   NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h))
+    list(APPEND CONCPP_LIBS ssl crypto)
+    list(APPEND CONCPP_JDBC_LIBS ssl crypto)
 endif()
 
 #

@@ -32,11 +32,14 @@
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_tcpip.h>
 PUSH_SYS_WARNINGS
-#ifdef WITH_SSL_YASSL
-#include "../extra/yassl/include/openssl/ssl.h"
-#else
 #include "openssl/ssl.h"
+
+// Wolfssl redefines close, which causes compiler errors in VS.
+// Therefore, we have to undef it.
+#if defined(WITH_SSL_WOLFSSL) && defined(_WIN32)
+#undef close
 #endif
+
 #include <cstdio>
 #include <limits>
 #ifndef _WIN32
@@ -46,7 +49,6 @@ PUSH_SYS_WARNINGS
 #endif
 POP_SYS_WARNINGS
 
-
 namespace cdk {
 namespace foundation {
 namespace connection {
@@ -54,7 +56,6 @@ namespace detail {
 
 
 #ifdef _WIN32
-
 
 /*
   error_category_winsock class
@@ -354,10 +355,6 @@ void initialize_socket_system()
 
   if (::WSAStartup(version_requested, &wsa_data) != 0)
     throw_error("Winsock initialization failed.");
-#endif
-
-#ifdef WITH_SSL_YASSL
-  using namespace yaSSL;
 #endif
 
 #ifdef WITH_SSL

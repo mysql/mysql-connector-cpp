@@ -33,10 +33,16 @@
 //which must be included before winsock.h
 #include "socket_detail.h"
 PUSH_SYS_WARNINGS
-#ifdef WITH_SSL_YASSL
-#include "../extra/yassl/include/openssl/ssl.h"
-#else
 #include <openssl/ssl.h>
+#ifdef WITH_SSL_WOLFSSL
+
+// Wolfssl redefines close, which causes compiler errors in VS.
+// Therefore, we have to undef it.
+#ifdef _WIN32
+#undef close
+#endif
+
+#else
 #include <openssl/err.h>
 #endif
 POP_SYS_WARNINGS
@@ -45,16 +51,64 @@ POP_SYS_WARNINGS
 #include <mysql/cdk/foundation/opaque_impl.i>
 #include "connection_tcpip_base.h"
 
-#ifdef WITH_SSL_YASSL
-static const char* tls_ciphers_list="DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
-                                    "AES128-RMD:DES-CBC3-RMD:DHE-RSA-AES256-RMD:"
-                                    "DHE-RSA-AES128-RMD:DHE-RSA-DES-CBC3-RMD:"
-                                    "AES256-SHA:RC4-SHA:RC4-MD5:DES-CBC3-SHA:"
-                                    "DES-CBC-SHA:EDH-RSA-DES-CBC3-SHA:"
-                                    "EDH-RSA-DES-CBC-SHA:AES128-SHA:AES256-RMD:";
-static const char* tls_cipher_blocked= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:!SSLv3:";
 
-using namespace yaSSL;
+#ifdef WITH_SSL_WOLFSSL
+static const char* tls_ciphers_list="RC4-SHA:RC4-MD5:DES-CBC3-SHA:AES128-SHA:AES256-SHA:"
+                                    "NULL-SHA:NULL-SHA256:"
+                                    "DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:"
+                                    "DHE-PSK-AES256-GCM-SHA384:DHE-PSK-AES128-GCM-SHA256:"
+                                    "DHE-PSK-AES256-CBC-SHA384:DHE-PSK-AES128-CBC-SHA256:"
+                                    "DHE-PSK-AES128-CCM:DHE-PSK-AES256-CCM:"
+                                    "DHE-PSK-NULL-SHA384:DHE-PSK-NULL-SHA256:"
+                                    "DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:"
+                                    "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:"
+                                    "DHE-RSA-CAMELLIA128-SHA:DHE-RSA-CAMELLIA256-SHA:"
+                                    "DHE-RSA-CAMELLIA128-SHA256:DHE-RSA-CAMELLIA256-SHA256:"
+                                    "DHE-RSA-CHACHA20-POLY1305:DHE-RSA-CHACHA20-POLY1305-OLD:"
+                                    "DHE-PSK-CHACHA20-POLY1305:"
+                                    "PSK-AES256-GCM-SHA384:PSK-AES128-GCM-SHA256:"
+                                    "PSK-AES256-CBC-SHA384:PSK-AES128-CBC-SHA256:"
+                                    "PSK-AES128-CBC-SHA:PSK-AES256-CBC-SHA:"
+                                    "PSK-AES128-CCM:PSK-AES256-CCM:"
+                                    "PSK-AES128-CCM-8:PSK-AES256-CCM-8:"
+                                    "PSK-NULL-SHA384:PSK-NULL-SHA256:PSK-NULL-SHA:"
+                                    "PSK-CHACHA20-POLY1305:"
+                                    "HC128-MD5:HC128-SHA:HC128-B2B256:"
+                                    "AES128-B2B256:AES256-B2B256:AES128-SHA256:AES256-SHA256:"
+                                    "AES128-CCM-8:AES256-CCM-8:AES128-GCM-SHA256:AES256-GCM-SHA384:"
+                                    "ADH-AES128-SHA:"
+                                    "RABBIT-SHA:"
+                                    "NTRU-RC4-SHA:NTRU-DES-CBC3-SHA:"
+                                    "NTRU-AES128-SHA:NTRU-AES256-SHA:"
+                                    "ECDHE-ECDSA-AES128-CCM:ECDHE-ECDSA-AES128-CCM-8:ECDHE-ECDSA-AES256-CCM-8:"
+                                    "ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:"
+                                    "ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-RC4-SHA:ECDHE-RSA-DES-CBC3-SHA:"
+                                    "ECDHE-ECDSA-RC4-SHA:ECDHE-ECDSA-DES-CBC3-SHA:"
+                                    "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:"
+                                    "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:"
+                                    "ECDHE-ECDSA-NULL-SHA:ECDHE-PSK-NULL-SHA256:ECDHE-PSK-AES128-CBC-SHA256:"
+                                    "ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:"
+                                    "ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:"
+                                    "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:"
+                                    "ECDHE-RSA-CHACHA20-POLY1305-OLD:ECDHE-ECDSA-CHACHA20-POLY1305-OLD:"
+                                    "ECDHE-PSK-CHACHA20-POLY1305:"
+                                    "ECDH-RSA-AES128-SHA:ECDH-RSA-AES256-SHA:ECDH-ECDSA-AES128-SHA:"
+                                    "ECDH-ECDSA-AES256-SHA:ECDH-RSA-RC4-SHA:ECDH-RSA-DES-CBC3-SHA:"
+                                    "ECDH-ECDSA-RC4-SHA:ECDH-ECDSA-DES-CBC3-SHA:"
+                                    "ECDH-RSA-AES128-GCM-SHA256:ECDH-RSA-AES256-GCM-SHA384:"
+                                    "ECDH-ECDSA-AES128-GCM-SHA256:ECDH-ECDSA-AES256-GCM-SHA384:"
+                                    "ECDH-RSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256:"
+                                    "ECDH-RSA-AES256-SHA384:ECDH-ECDSA-AES256-SHA384:"
+                                    "EDH-RSA-DES-CBC3-SHA:"
+                                    "CAMELLIA128-SHA:CAMELLIA256-SHA:CAMELLIA128-SHA256:CAMELLIA256-SHA256:"
+                                    "QSH:RENEGOTIATION-INFO:IDEA-CBC-SHA:"
+                                    "TLS13-AES128-GCM-SHA256:TLS13-AES256-GCM-SHA384:"
+                                    "TLS13-CHACHA20-POLY1305-SHA256:"
+                                    "TLS13-AES128-CCM-SHA256:TLS13-AES128-CCM-8-SHA256:"
+                                    "WDM-NULL-SHA256:"
+
+;
+
 #else
 static const char tls_ciphers_list[]="ECDHE-ECDSA-AES128-GCM-SHA256:"
                                      "ECDHE-ECDSA-AES256-GCM-SHA384:"
@@ -92,17 +146,18 @@ static const char tls_ciphers_list[]="ECDHE-ECDSA-AES128-GCM-SHA256:"
                                      "AES128-SHA:DH-DSS-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES256-SHA:"
                                      "DH-DSS-AES256-SHA:ECDH-ECDSA-AES256-SHA:DH-RSA-AES128-SHA:"
                                      "ECDH-RSA-AES128-SHA:DH-RSA-AES256-SHA:ECDH-RSA-AES256-SHA:DES-CBC3-SHA";
+#endif
+
 static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:"
                                         "!DHE-DSS-DES-CBC3-SHA:!DHE-RSA-DES-CBC3-SHA:"
                                         "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
                                         "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
-#endif
 
 static void throw_openssl_error_msg(const char* msg)
 {
   throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
-                             #ifdef WITH_SSL_YASSL
-                               std::string("YaSSL: ")
+                             #ifdef WITH_SSL_WOLFSSL
+                               std::string("WolfSSL: ")
                              #else
                                std::string("OpenSSL: ")
                              #endif
@@ -217,11 +272,10 @@ void connection_TLS_impl::do_connect()
 
   try
   {
-#ifdef WITH_SSL_YASSL
-    SSL_METHOD* method = TLSv1_1_client_method();
-#else
-    const SSL_METHOD* method = SSLv23_client_method();
+#ifndef WITH_SSL_WOLFSSL
+    const
 #endif
+    SSL_METHOD* method = SSLv23_client_method();
 
     if (!method)
       throw_openssl_error();
@@ -244,34 +298,12 @@ void connection_TLS_impl::do_connect()
     {
       SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_PEER , NULL);
 
-#ifdef WITH_SSL_YASSL
-      int errNr = SSL_CTX_load_verify_locations(
-                    m_tls_ctx,
-                    m_options.get_ca().c_str(),
-                    m_options.get_ca_path().empty()
-                    ? NULL : m_options.get_ca_path().c_str());
-
-      switch(errNr)
-      {
-        case yaSSL::SSL_BAD_FILE:
-          throw_openssl_error_msg("error opening ca file");
-        case yaSSL::SSL_BAD_PATH:
-          throw_openssl_error_msg("bad ca_path");
-        case yaSSL::SSL_BAD_STAT:
-          throw_openssl_error_msg("bad file permissions inside ca_path");
-        default:
-          break;
-      }
-#else
-
       if (SSL_CTX_load_verify_locations(
             m_tls_ctx,
             m_options.get_ca().c_str(),
             m_options.get_ca_path().empty()
             ? NULL : m_options.get_ca_path().c_str()) == 0)
         throw_openssl_error();
-#endif
-
     }
     else
     {
@@ -286,11 +318,7 @@ void connection_TLS_impl::do_connect()
 
     cdk::foundation::connection::detail::set_nonblocking(fd, false);
 
-#ifdef WITH_SSL_YASSL
     SSL_set_fd(m_tls, static_cast<int>(fd));
-#else
-    SSL_set_fd(m_tls, static_cast<int>(fd));
-#endif
 
     if(SSL_connect(m_tls) != 1)
       throw_openssl_error();

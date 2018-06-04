@@ -16,6 +16,8 @@ To build Connector/C++, the following tools and libraries are required:
   when building the legacy connector (see below).
 
 - OpenSSL version 1.0.x if connector is built with OpenSSL.
+  Instead of OpenSSL the Connector/C++ can be build using
+  WolfSSL 3.14.0 or newer.
 
 - MySQL 8.0 client library if building the legacy connector (see below).
 
@@ -51,19 +53,29 @@ Configuring SSL libraries
 Connector/C++ can be built with different SSL libraries.
 Use `-DWITH_SSL=<Option value>` to specify the desired SSL build type:
 
-- `bundled`   - build with bundled YaSSL code (the default)
 - `system`    - build with external openSSL library installed on the system, the
               library location is detected by cmake.
-- `<path>`    - build with external openSSL library installed at specified
-              location.
+- `<path>`    - build with external openSSL or WolfSSL library installed at
+              specified location.
 
-@note when Connector/C++ is configured to be built to use OpenSSL it will make
-      the connector library dependent on shared OpenSSL libraries.
-      When linking Connector/C++ dynamically, this dependency is relevant
-      only at run time. However, when linking statically to the connector
-      library the OpenSSL libraries should be explicitly linked too. In Linux
-      it means adding -lssl -lcrypto to the compile/link command.
+@note OpenSSL notes: when Connector/C++ is configured to be built to use
+      OpenSSL it will make the connector library dependent on shared OpenSSL
+      libraries. When linking Connector/C++ dynamically, this dependency is
+      relevant only at run time. However, when linking statically to
+      the connector library the OpenSSL libraries should be explicitly
+      linked too. In Linux it means adding -lssl -lcrypto to the
+      compile/link command.
       In Windows this is handled automatically.
+
+@note WolfSSL notes: Building Connector/C++ with WolfSSL library requires
+      downloading the WolfSSL source package verion 3.14.0 or newer from here:
+      `https://www.wolfssl.com/download/`
+
+      `-DWITH_SSL` has to point to the directory where source files were
+      unpacked. Connector/C++ will build WolfSSL libraries and link them
+      statically, so no extra dependencies will be required at run time.
+      Static is the only supported method of linking WolfSSL to Connector/C++.
+      Dynamic linking (as with OpenSSL) is not supported.
 
 
 Building and testing

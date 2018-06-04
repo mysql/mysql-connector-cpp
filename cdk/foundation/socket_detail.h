@@ -30,7 +30,6 @@
 
 #ifndef CDK_FOUNDATION_SOCKET_DETAIL_H
 #define CDK_FOUNDATION_SOCKET_DETAIL_H
-
 #include <mysql/cdk/foundation/types.h>
 
 PUSH_SYS_WARNINGS

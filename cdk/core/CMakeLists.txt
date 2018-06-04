@@ -42,6 +42,9 @@ if(NOT PROTOBUF_LITE)
   list(APPEND cdk_libs protobuf)
 endif()
 
+if(${WITH_SSL_WOLFSSL})
+  list(APPEND cdk_libs wolfssl wolfcrypt)
+endif()
 
 SET(cdk_sources
   session.cc

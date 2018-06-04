@@ -157,10 +157,12 @@ endif()
 
 message("WITH_SSL: ${WITH_SSL}")
 
+include(install_macros)
 include(ssl)
 MYSQL_CHECK_SSL(${CDK_BIG_ENDIAN})
 add_config(WITH_SSL)
-add_config(WITH_SSL_YASSL)
+add_config(WITH_SSL_WOLFSSL)
+
 
 #
 # Enable C++11
