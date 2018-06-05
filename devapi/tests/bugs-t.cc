@@ -118,6 +118,8 @@ TEST_F(Bugs, bug26130226_crash_update)
 
 TEST_F(Bugs, bug_26962725_double_bind)
 {
+  SKIP_IF_NO_XPLUGIN;
+
   get_sess().dropSchema("bug_26962725_double_bind");
   Schema db = get_sess().createSchema("bug_26962725_double_bind");
   /// Collection.find() function with fixed values
@@ -257,4 +259,32 @@ TEST_F(Bugs, bug_27727505_multiple_results)
   while(res.nextResult());
 }
 
+
+TEST_F(Bugs, bug_hang_send_maxpacket)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto schema = get_sess().createSchema("bug_hang_maxpacket",true);
+  schema.dropCollection("test");
+  auto coll = schema.createCollection("max_packet",true);
+
+  auto query_max_packet = sql("show variables like '%mysqlx_max_allowed_packet%'");
+
+  size_t maxpacket = std::stoul(query_max_packet.fetchOne()[1].get<std::string>());
+
+  std::string name(maxpacket,L'A');
+
+  std::stringstream buffer;
+  buffer << R"({ "name": ")" << name << R"("})";
+
+  try{
+    coll.add(buffer.str()).execute();
+    FAIL() << "Should have thrown error!";
+  }
+  catch (Error &e)
+  {
+    std::cout << "Expected: " << e << std::endl;
+  }
+
+}
 

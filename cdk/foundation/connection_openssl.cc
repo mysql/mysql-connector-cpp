@@ -118,6 +118,43 @@ static void throw_openssl_error()
   throw_openssl_error_msg(buffer);
 }
 
+/*
+  Function should be called after SSL_read/SSL_write returns error (<=0).
+  It will get ssl error and throw it if needed.
+  Will return normally if the error can be continued.
+*/
+static void throw_ssl_error(SSL* tls, int err)
+{
+  switch(SSL_get_error(tls, err))
+  {
+  case SSL_ERROR_WANT_READ:
+  case SSL_ERROR_WANT_WRITE:
+#ifndef WITH_SSL_YASSL
+  case SSL_ERROR_WANT_CONNECT:
+  case SSL_ERROR_WANT_ACCEPT:
+  case SSL_ERROR_WANT_X509_LOOKUP:
+# if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  case SSL_ERROR_WANT_ASYNC:
+  case SSL_ERROR_WANT_ASYNC_JOB:
+# endif
+#endif
+    //Will not throw anything, so function that calls this, will continue.
+    break;
+  case SSL_ERROR_ZERO_RETURN:
+    throw cdk::foundation::connection::Error_eos();
+  case SSL_ERROR_SYSCALL:
+    cdk::foundation::throw_posix_error();
+  case SSL_ERROR_SSL:
+    throw_openssl_error();
+  default:
+    {
+      char buffer[512];
+      ERR_error_string_n(static_cast<unsigned long>(SSL_get_error(tls, err)), buffer, sizeof(buffer));
+      throw_openssl_error_msg(buffer);
+    }
+  }
+}
+
 
 /*
   Implementation of TLS connection class.
@@ -467,8 +504,10 @@ bool TLS::Read_op::common_read()
 
   int result = SSL_read(impl.m_tls, data, buffer_size);
 
-  if (result == -1)
-    throw IO_error(SSL_get_error(impl.m_tls,0));
+  if (result <= 0)
+  {
+    throw_ssl_error(impl.m_tls, result);
+  }
 
   if (result > 0)
   {
@@ -525,6 +564,11 @@ bool TLS::Read_some_op::common_read()
 
   int result = SSL_read(impl.m_tls, buffer.begin(), (int)buffer.size());
 
+  if (result <= 0)
+  {
+    throw_ssl_error(impl.m_tls, result);
+  }
+
   if (result > 0)
   {
     set_completed(static_cast<size_t>(result));
@@ -573,6 +617,11 @@ bool TLS::Write_op::common_write()
   int buffer_size = static_cast<int>(buffer.size() - m_currentBufferOffset);
 
   int result = SSL_write(impl.m_tls, data, buffer_size);
+
+  if (result <= 0)
+  {
+    throw_ssl_error(impl.m_tls, result);
+  }
 
   if (result > 0)
   {
@@ -628,6 +677,11 @@ bool TLS::Write_some_op::common_write()
   const bytes& buffer = m_bufs.get_buffer(0);
 
   int result = SSL_write(impl.m_tls, buffer.begin(), (int)buffer.size());
+
+  if (result <= 0)
+  {
+    throw_ssl_error(impl.m_tls, result);
+  }
 
   if (result > 0)
   {
