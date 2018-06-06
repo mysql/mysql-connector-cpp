@@ -34,6 +34,10 @@ if(MYSQL_DIR)
   list(APPEND jdbc_cmake_opts -DMYSQL_DIR=${MYSQL_DIR})
 endif()
 
+if(MYSQL_CONFIG_EXECUTABLE)
+  list(APPEND jdbc_cmake_opts -DMYSQL_CONFIG_EXECUTABLE=${MYSQL_CONFIG_EXECUTABLE})
+endif()
+
 list(APPEND jdbc_cmake_opts -DMYSQLCLIENT_STATIC_LINKING=ON)
 
 if(CMAKE_BUILD_TYPE)

@@ -229,8 +229,8 @@ configuration step. This option is disabled by default. If specified, additional
 build dependencies must be satisfied:
 
 - The MySQL 8.0 client library is needed. If `cmake` cannot find it at
-  the default locations, pass the `-DMYSQL_DIR=<path_to_mysql_server_dir>`
-  option.
+  the default locations, pass the `-DMYSQL_DIR=<path_to_mysql_server_dir>` or
+  the `-DMYSQL_CONFIG_EXECUTABLE=<path_to_mysql_config_executable` option.
 
 - Boost libraries are always required in this case. As explained above, use
   the `WITH_BOOST` option if `cmake` cannot find Boost at the default locations.
@@ -259,8 +259,9 @@ If building static libraries, the static legacy library has name:
 
 It is possible to build an additional test application `jdbc_test` for testing
 the legacy connector library. To do this, pass the `-DWITH_JDBC=ON` cmake option
-when configuring the build of test applications. Also, `MYSQL_DIR`
-and `WITH_BOOST` must be set if cmake cannot find the required dependencies.
+when configuring the build of test applications. Also, `MYSQL_DIR` or
+`MYSQL_CONFIG_EXECUTABLE` and `WITH_BOOST` must be set if cmake cannot find the
+required dependencies.
 
 The connection-string argument that the `jdbc_test` application accepts must
 be in the form specified by the JDBC API. The user name is passed as the second
