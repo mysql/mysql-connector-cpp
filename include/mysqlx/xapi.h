@@ -29,9 +29,9 @@
  */
 
 /**
-  @defgroup xapi XAPI Functions
+  @defgroup xapi X DevAPI for C
 
-  XAPI functions and types. See @ref xapi_ref for introduction.
+  Functions and types defined by X DevAPI for C. See @ref xapi_ref for introduction.
 
   @{
   @defgroup xapi_sess     Session operations
@@ -59,10 +59,10 @@
 
 /**
   @file
-  The main header for MySQL Connector/C++ XAPI.
+  The main header for MySQL Connector/C++ X DevAPI for C.
 
-  This header should be included by C and C++ code which uses the XAPI
-  implemented by MySQL Connector/C++
+  This header should be included by C and C++ code which uses the X DevAPI
+  for C implemented by MySQL Connector/C++
 
   @ingroup xapi
 */
@@ -249,7 +249,7 @@ typedef struct mysqlx_table_struct mysqlx_table_t;
 /**
   Type of statement handles.
 
-  Some XAPI functions create statements without executing them. These
+  Some X DevAPI for C functions create statements without executing them. These
   functions return a statement handle which can be used to define statement
   properties and then execute it.
 
@@ -851,7 +851,7 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
            the value along with and all sequential types and values are most
            likely to be corrupted.
            Allowed types are listed in `mysqlx_opt_type_t` enum.
-           The XAPI defines the convenience macros that help to specify
+           The X DevAPI for C defines the convenience macros that help to specify
            the types and values: See `OPT_HOST()`, `OPT_PORT()`, `OPT_USER()`,
            `OPT_PWD()`, `OPT_DB()`, `OPT_SSL_MODE()`, `OPT_SSL_CA()`,
            `OPT_PRIORITY()`.
@@ -943,7 +943,7 @@ PUBLIC_API mysqlx_result_t * mysqlx_sql(mysqlx_session_t *sess,
            the value along with and all sequential types and values are most
            likely to be corrupted.
            Allowed types are listed in `mysqlx_data_type_t` enum.
-           The XAPI defines the convenience macros that help to specify
+           The X DevAPI for C defines the convenience macros that help to specify
            the types and values: See `PARAM_SINT()`, `PARAM_UINT()`,
            `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
            `PARAM_STRING()`.
@@ -1085,7 +1085,7 @@ mysqlx_collection_remove(mysqlx_collection_t *collection, const char*criteria);
         For `MYSQLX_TYPE_BYTES` there will be one extra parameter specifying
         the length of the binary data:
         <field_path, MYSQLX_TYPE_BYTES, value, length>
-        The XAPI defines the convenience macros that help to specify
+        The X DevAPI for C defines the convenience macros that help to specify
         the types and values: See `PARAM_SINT()`, `PARAM_UINT()`,
         `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
         `PARAM_STRING()`, `PARAM_EXPR()`:
@@ -1579,9 +1579,9 @@ mysqlx_table_select_limit(mysqlx_table_t *table, const char *criteria,
              <column_name, value_type, value> triplets. The list
              should be terminated using `PARAM_END`.
              Allowed value types are listed in `mysqlx_data_type_t` enum.
-             The XAPI defines the convenience macros that help to specify
-             the types and values: See `PARAM_SINT()`, `PARAM_UINT()`,
-             `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
+             The X DevAPI for C defines the convenience macros that help
+             to specify the types and values: See `PARAM_SINT()`,
+             `PARAM_UINT()`, `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
              `PARAM_STRING()`:
 
              ..., "col_uint", PARAM_UINT(uint_val),
@@ -1627,9 +1627,9 @@ mysqlx_table_delete(mysqlx_table_t *table, const char *criteria);
              <column_name, value_type, value> triplets. The list
              should be terminated using `PARAM_END`.
              Allowed value types are listed in `mysqlx_data_type_t` enum.
-             The XAPI defines the convenience macros that help to specify
-             the types and values: See `PARAM_SINT()`, `PARAM_UINT()`,
-             `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
+             The X DevAPI for C defines the convenience macros that help
+             to specify the types and values: See `PARAM_SINT()`,
+             `PARAM_UINT()`, `PARAM_FLOAT()`, `PARAM_DOUBLE()`, `PARAM_BYTES()`,
              `PARAM_STRING()`, `PARAM_EXPR()`:
 
              ..., "col_uint", PARAM_EXPR("col_uint * 100"),

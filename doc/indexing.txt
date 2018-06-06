@@ -4,14 +4,13 @@ Indexing Document Collections {#indexing}
 Similar to indexes on relational tables, it is possible to define indexes
 on document collections to improve efficiency of accessing documents
 in the collection. To define such an index call X DevAPI method
-`Collection::createIndex()` or XAPI function `mysqlx_collection_create_index()`
-and pass a JSON document which specifies the index. The format of the index
-specification document is described below. The index can include one or more
-fields within indexed documents and it is possible to specify whether indexed
-fields are required to always exist. For indexing to work, values inside
-documents must be converted to SQL values. For that reason you must specify
-an SQL type to be used for each indexed field.
-
+`Collection::createIndex()` or X DevAPI for C function
+`mysqlx_collection_create_index()` and pass a JSON document which specifies
+the index. The format of the index specification document is described below.
+The index can include one or more fields within indexed documents and it
+is possible to specify whether indexed fields are required to always exist.
+For indexing to work, values inside documents must be converted to SQL values.
+For that reason you must specify an SQL type to be used for each indexed field. 
 
 Index Specification
 -------------------

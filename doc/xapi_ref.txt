@@ -1,13 +1,12 @@
-Connector/C++ 8.0 XAPI Reference {#xapi_ref}
+Connector/C++ 8.0 X DevAPI for C Reference {#xapi_ref}
 ================================
 
-Connector/C++ implements a plain C interface, called XAPI, which offers
-functionality similar to that of X DevAPI and which can be used by applications
-written in plain C. XAPI allows one to work with MySQL Servers implementing
-a document store via the X Plugin. One can also execute plain SQL queries using
-this API.
+Connector/C++ implements a variant of X DevAPI that can be used by applications
+written in plain C - the X DevAPI for C. It allows one to work with MySQL
+Servers implementing a document store via the X Plugin. One can also execute
+plain SQL queries using this API.
 
-To get started, check out some of the main XAPI functions:
+To get started, check out some of the main X DevAPI for C functions:
 
 - To access data first create a session using one of @link mysqlx_get_session
   `mysqlx_get_session_xxx()`@endlink functions. These functions return a pointer
@@ -50,11 +49,11 @@ To get started, check out some of the main XAPI functions:
   result in memory. It is however possible to buffer a complete result with
   the `mysqlx_store_result()` function.
 
-Many functions in XAPI have a variable parameters list allowing passing
-arguments in a flexible way. A good illustration of this approach is binding
-values to `?` placeholders in an SQL query. The function `mysqlx_stmt_bind()`
-can bind the corresponding values to all parameters in just one call.
-For example:
+Many functions in X DevAPI for C have a variable parameters list allowing
+passing arguments in a flexible way. A good illustration of this approach
+is binding values to `?` placeholders in an SQL query. The function
+`mysqlx_stmt_bind()` can bind the corresponding values to all parameters
+in just one call. For example:
 
 ~~~~~~
 mysqlx_stmt_bind(stmt, PARAM_SINT(v_sint),
@@ -81,16 +80,17 @@ There are several things to keep in mind:
   so cannot be detected at the build time, but it will most likely result
   in an abnormal program termination.
 
-A more complete example of code that access MySQL Database using the XAPI
-is presented below. See also [the list of XAPI Functions] (@ref xapi).
+A more complete example of code that access MySQL Database using the X DevAPI
+for C is presented below. See also
+[the list of X DevAPI for C Functions] (@ref xapi).
 
 
-### Sample code which uses Connector/C++ with XAPI ###
+### Sample code which uses Connector/C++ with X DevAPI for C ###
 
-The following plain C application uses XAPI to connect to a MySQL Server with
-X Plugin, create a table, add a few rows into it using different ways such
-as plain SQL with parameters and table INSERT statements. Next, the code reads
-the table rows and displays the result.
+The following plain C application uses X DevAPI for C to connect to a MySQL
+Server with X Plugin, create a table, add a few rows into it using different
+ways such as plain SQL with parameters and table INSERT statements. Next,
+the code reads the table rows and displays the result.
 
 The sample code can be found in file `testapp/xapi_test.cc` in the source
 distribution of Connector/C++ 8.0. See @ref usage for instructions on how
@@ -98,13 +98,14 @@ to build the sample code.
 
 @dontinclude xapi_test.c
 
-Code which uses the Connector/C++ XAPI should include the `mysql_xapi.h` header.
+Code which uses the Connector/C++ X DevAPI for C should include
+the `mysqlx/xapi.h` header.
 
-@skipline mysql_xapi.h
+@skipline mysqlx/xapi.h
 
-Checking for errors is an essential part of any program, but in this sample code
-it can take too much space, therefore we introduce the convenience macros that
-check for statement errors, result errors and general errors:
+Checking for errors is an essential part of any program, but in this sample
+code it can take too much space, therefore we introduce the convenience macros
+that check for statement errors, result errors and general errors:
 
 @skipline Error processing
 @until _WIN32

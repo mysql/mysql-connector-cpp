@@ -4,7 +4,7 @@
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
     <tab type="user" url="@ref devapi" title="X DevAPI"/>
-    <tab type="user" url="@ref xapi" title="XAPI"/>
+    <tab type="user" url="@ref xapi" title="X DevAPI for C"/>
     <tab type="modules" visible="no" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>

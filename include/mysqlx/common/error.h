@@ -32,8 +32,8 @@
 #define MYSQLX_COMMON_ERROR_H
 
 /*
-  TODO: Error handling infrastructure for XDevAPI and XAPI still needs to
-  be done. Current code is just a temporary hack.
+  TODO: Error handling infrastructure for XDevAPI and X DevAPI for C still
+  needs to be done. Current code is just a temporary hack.
 */
 
 #include <string>

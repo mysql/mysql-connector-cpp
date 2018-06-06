@@ -220,9 +220,9 @@ Building legacy C++ JDBC4 library                            @anchor build_jdbc
 ---------------------------------
 
 Apart from the new APIs introduced in version 8.0 of the connector (X DevAPI
-and XAPI), Connector/C++ also supports the legacy API based on JDBC4. This
-legacy API is implemented as a separate library with base name `mysqlcppconn`
-as opposed to `mysqlcppconn8` library implementing the new APIs.
+and X DevAPI for C), Connector/C++ also supports the legacy API based on JDBC4.
+This legacy API is implemented as a separate library with base name
+`mysqlcppconn` as opposed to `mysqlcppconn8` library implementing the new APIs.
 
 To build the legacy library specify the `-DWITH_JDBC=ON` option during the cmake
 configuration step. This option is disabled by default. If specified, additional

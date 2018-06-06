@@ -2,8 +2,8 @@ Using Connector/C++ 8.0  {#usage}
 =======================
 
 Connector/C++ 8.0 implements new APIs for accessing document store of
-MySQL Server 8: X DevAPI for applications written in C++11 and XAPI for
-applications written in plain C. The same APIs can be also used to execute
+MySQL Server 8: X DevAPI for applications written in C++11 and X DevAPI for C
+for applications written in plain C. The same APIs can be also used to execute
 traditional SQL queries. Connector/C++ 8.0 also implements the legacy C++ API
 based on JDBC4 which is backward compatible with version 1.1 of the connector.
 
@@ -12,7 +12,7 @@ For X DevAPI include:
 ~~~~~~
   #include <mysqlx/xdevapi.h>
 ~~~~~~
-For XAPI include:
+For X DevAPI for C include:
 ~~~~~~
   #include <mysqlx/xapi.h>
 ~~~~~~
@@ -40,8 +40,8 @@ To build such code with Connector/C++ 8 without modifying it, add
 
 The X DevAPI uses C++11 language features. For that reason enable C++11 support
 in the compiler using the `-std=c++11` option when building code that uses X DevAPI.
-This is not needed for XAPI (which is a plain C API) nor for the legacy JDBC API
-which is based on plain C++.
+This is not needed for X DevAPI for C (which is a plain C API) nor for
+the legacy JDBC API which is based on plain C++.
 
 
 @note The legacy API requires Boost headers. The location of these headers needs
@@ -59,8 +59,8 @@ Depending on the platform, the shared Connector/C++ library is named:
 - `mysqlcppconn8-1-vsXX.dll` on Windows platforms
   (with import library vsXX/mysqlcppconn8.lib, see [Windows Notes](@ref usage_win) for more details)
 
-This library implements the new X DevAPI and XAPI. Connector/C++ 8.0 also
-includes the legacy connector library `libmsysqlcppconn(.so/.dylib/.dll)`
+This library implements the new X DevAPI and X DevAPI for C. Connector/C++ 8.0
+also includes the legacy connector library `libmsysqlcppconn(.so/.dylib/.dll)`
 which implements the legacy JDBC4 API.
 
 To build code that uses new APIs, add `-lmysqlcppconn8` to the linker options
@@ -100,7 +100,7 @@ g++ -std=c++11 -I .../include -L .../lib64  app.cc  -lmysqlcppconn8 -o app
 `-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
 code utilizes C++11.
 
-The connector can be also used with plain C code written against XAPI.
+The connector can be also used with plain C code written against X DevAPI for C.
 An example `Makefile` to build a plain C application from sources in `app.c`
 might look like this:
 
