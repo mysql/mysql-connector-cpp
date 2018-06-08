@@ -138,7 +138,9 @@ MACRO(RESET_SSL_VARIABLES)
   UNSET(HAVE_SHA512_DIGEST_LENGTH CACHE)
 ENDMACRO()
 
+
 MACRO (MYSQL_USE_WOLFSSL)
+
   SET(WOLFSSL_SOURCE_DIR "${WITH_SSL_PATH}")
   MESSAGE(STATUS "WOLFSSL_SOURCE_DIR = ${WOLFSSL_SOURCE_DIR}")
 
@@ -148,12 +150,12 @@ MACRO (MYSQL_USE_WOLFSSL)
     "${WOLFSSL_SOURCE_DIR}/wolfssl"
   )
 
-
-  SET(SSL_LIBRARIES  wolfssl wolfcrypt)
-  set_ssl_libraries(wolfssl wolfcrypt)
+  set(SSL_LIBRARIES wolfssl wolfcrypt)
   IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-    SET(SSL_LIBRARIES ${SSL_LIBRARIES} ${LIBSOCKET})
+    list(APPEND SSL_LIBRARIES ${LIBSOCKET})
   ENDIF()
+  set_ssl_libraries(${SSL_LIBRARIES})  # to put it in the cache
+
   SET(SSL_INTERNAL_INCLUDE_DIRS ${WOLFSSL_SOURCE_DIR})
   ADD_DEFINITIONS(
     -DHAVE_ECC
@@ -166,13 +168,14 @@ MACRO (MYSQL_USE_WOLFSSL)
   ADD_SUBDIRECTORY("${PROJECT_SOURCE_DIR}/extra/wolfssl")
   SET(SSL_SOURCES ${WOLFSSL_SOURCES} ${WOLFCRYPT_SOURCES})
   SET(WITH_SSL_WOLFSSL ON CACHE INTERNAL "Tells whether WolfSSL implementation is used")
+
 ENDMACRO()
 
 
 # MYSQL_CHECK_SSL
 #
 # Configure build system to use SSL libraries based on WITH_SSL option which
-# can have values: yes|bundled|system|<path/to/custom/installation>
+# can have values: system|<path/to/custom/installation>
 #
 # Optional Boolean argument tells whether we are building on a big-endian
 # platform. If not given, little-endian is assumed.
@@ -183,7 +186,7 @@ function(MYSQL_CHECK_SSL)
   reset_ssl_variables()
 
   IF(NOT WITH_SSL)
-    CHANGE_SSL_SETTINGS("bundled")
+    CHANGE_SSL_SETTINGS("system")
   ENDIF()
 
   set(SSL_BIG_ENDIAN 0)
