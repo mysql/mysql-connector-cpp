@@ -56,6 +56,12 @@ enum Lock_mode
   LOCK_MODE_LIST(LOCK_MODE)
 };
 
+#define LOCK_CONTENTION(X,N)  X = N,
+enum class Lock_contention
+{
+  LOCK_CONTENTION_LIST(LOCK_CONTENTION)
+};
+
 
 class Result_init;
 
@@ -199,7 +205,7 @@ struct Select_if : public Base
 
   // Define lock mode for rows/documents returned by the query.
 
-  virtual void set_lock_mode(Lock_mode) = 0;
+  virtual void set_lock_mode(Lock_mode, Lock_contention) = 0;
   virtual void clear_lock_mode() = 0;
 };
 

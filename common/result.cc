@@ -202,7 +202,6 @@ bool Result_impl_base::next_result()
   m_mdata.reset();
   clear_cache();
   m_pending_rows = false;
-  clear_diagnostics();
   m_inited = true;
 
 
@@ -241,8 +240,12 @@ const Row_data* Result_impl_base::get_row()
 {
   // TODO: Session parameter for cache prefetch size
 
-  if (!load_cache(1024))
+  if (!load_cache(16))
+  {
+    if (m_reply->entry_count() > 0)
+      m_reply->get_error().rethrow();
     return nullptr;
+  }
 
   assert(!m_row_cache.empty());
 
@@ -295,11 +298,11 @@ bool Result_impl_base::load_cache(row_count_t prefetch_size)
     Cleanup after reading all rows.
   */
 
-  if (!m_pending_rows)
+  if (!m_pending_rows || m_reply->entry_count() > 0)
   {
     m_cursor->close();
     m_sess->deregister_result(this);
-    load_diagnostics();
+    m_pending_rows = false;
   }
 
   return !m_row_cache.empty();
@@ -336,44 +339,4 @@ void Result_impl_base::row_end(row_count_t)
 void Result_impl_base::end_of_data()
 {
   m_pending_rows = false;
-}
-
-// Handle diagnostic information.
-
-
-void Result_impl_base::load_diagnostics()
-{
-  assert(m_reply);
-
-  /*
-    Flag m_all_warnings tells if all warnings for this result have
-    been collected in m_warnings. If this is the case then there is
-    nothing to do.
-
-    Otherwise we copy currently available warnings to m_warnings and
-    check if complete reply has been processed (m_reply->has_results()
-    returns false). In that case we can set m_all_warnings to true,
-    because we know that no more warnings will be reported. Otherwise
-    the flag remains false and we will re-load warnings on a next call.
-    This way newly reported warnings (if any) will land in m_warnings
-    list.
-
-    Note: A better handling of warnings would be with asynchronous
-    notifications about new warnings which would be appended to m_warnings
-    list. But this is not yet implemented in CDK.
-  */
-
-  if (m_diag_ready)
-    return;
-
-  if (!m_reply->has_results())
-    m_diag_ready = true;
-
-  Diagnostic_arena::clear();
-
-  for (auto &it = m_reply->get_entries(cdk::api::Severity::WARNING); it.next();)
-  {
-    auto &entry = it.entry();
-    add_entry(entry.severity(), entry.get_error().clone());
-  }
 }

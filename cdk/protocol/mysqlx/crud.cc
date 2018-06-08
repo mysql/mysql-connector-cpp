@@ -486,6 +486,19 @@ void set_find(Mysqlx::Crud::Find &msg,
     break;
   }
 
+  switch (fs.contention())
+  {
+    case api::Lock_contention_value::NOWAIT:
+      msg.set_locking_options(Mysqlx::Crud::Find_RowLockOptions_NOWAIT);
+    break;
+    case api::Lock_contention_value::SKIP_LOCKED:
+      msg.set_locking_options(Mysqlx::Crud::Find_RowLockOptions_SKIP_LOCKED);
+    break;
+    case api::Lock_contention_value::DEFAULT:
+    default: // do nothing
+    break;
+  }
+
 }
 
 

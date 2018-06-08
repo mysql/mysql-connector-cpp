@@ -1353,9 +1353,7 @@ TEST_F(Crud, row_error)
   Schema sch = getSchema("test");
   Table tbl = sch.getTable("row_error");
 
-
   //Insert values on table
-
 
   auto insert = tbl.insert("_id", "age");
   insert.values("ID#1", (int64_t)-9223372036854775807LL);
@@ -1364,27 +1362,26 @@ TEST_F(Crud, row_error)
   insert.execute();
 
   //Overflow on second line
-
   {
     auto op_select = tbl.select("100000+age AS newAge");
     RowResult result =  op_select.execute();
 
+    std::vector<Row> rows;
     try {
 
-      Row r = result.fetchOne();
+      for(rows.push_back(result.fetchOne());
+          !rows.back().isNull();
+          rows.push_back(result.fetchOne()))
+      {}
 
-      for ( ;
-            !r.isNull();
-            r = result.fetchOne())
-      {
-        std::cout << (int64_t)r.get(0) << std::endl;
-      }
-
+      FAIL() << "Should stop after first row";
     }
     catch (mysqlx::Error& e)
     {
-      FAIL() << e;
+      cout << "Expected error " << e << endl;
     }
+    EXPECT_EQ(1, rows.size());
+    std::cout << rows[0][0] << std::endl;
   }
 
   //Everything should work as expected if dropped
@@ -2229,6 +2226,156 @@ TEST_F(Crud, row_locking)
   EXPECT_TRUE((int)lock_check.execute().fetchOne()[0] == 0);
 
   sess.dropSchema(db_name);
+}
+
+
+TEST_F(Crud, lock_contention)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto &sess = get_sess();
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+  Table tbl = sch.getCollectionAsTable("c1", true);
+
+  coll.remove("true").execute();
+
+
+  for(int i = 0; i < 10; ++i)
+  {
+    std::stringstream doc;
+    doc << R"({"name":"Luis", "_id":)" << i+1 << "}";
+    coll.add(DbDoc(doc.str())).execute();
+  }
+
+  /*
+    First session lock the rows, second one, tries to read/write values
+  */
+  Session s_nolock(this);
+  Schema sch_nolock = s_nolock.getSchema("test");
+  Collection coll_nolock = sch_nolock.getCollection("c1", true);
+  Table tbl_nolock = sch_nolock.getCollectionAsTable("c1");
+
+  sess.startTransaction();
+  s_nolock.startTransaction();
+
+  auto res_id2 =tbl.select().where("_id like '2'").lockExclusive()
+      .execute();
+
+  EXPECT_EQ(1, res_id2.count());
+
+  EXPECT_EQ(9,
+            tbl_nolock.select()
+            .lockExclusive(mysqlx::LockContention::SKIP_LOCKED)
+            .execute()
+            .count());
+
+  EXPECT_EQ(9,
+            coll_nolock.find()
+            .lockExclusive(mysqlx::LockContention::SKIP_LOCKED)
+            .execute()
+            .count());
+
+  auto select_error = tbl_nolock.select().lockExclusive(mysqlx::LockContention::NOWAIT);
+
+  EXPECT_THROW(select_error.execute().count(), Error);
+  try
+  {
+    std::vector<Row> rows = select_error.execute().fetchAll();
+    FAIL() << "Should throw error!";
+  }
+  catch (Error &e)
+  {
+    cout << "Expected: " << e << endl;
+  }
+
+  auto find_error = coll_nolock.find().lockExclusive(mysqlx::LockContention::NOWAIT);
+
+  EXPECT_THROW(find_error.execute().count(), Error);
+  try
+  {
+    std::vector<DbDoc> rows = find_error.execute().fetchAll();
+    FAIL() << "Should throw error!";
+  }
+  catch (Error &e)
+  {
+    cout << "Expected: " << e << endl;
+  }
+
+  auto res_error = select_error.execute();
+
+  try{
+    for (Row row : res_error)
+    {
+      std::cout << row << std::endl;
+    }
+    FAIL() << "Should throw error";
+  }
+  catch(mysqlx::Error)
+  {}
+
+  auto coll_res_error = find_error.execute();
+
+  try{
+    for (auto doc : coll_res_error)
+    {
+      std::cout << doc << std::endl;
+    }
+    FAIL() << "Should throw error";
+  }
+  catch(mysqlx::Error)
+  {}
+
+  sess.rollback();
+
+  s_nolock.rollback();
+
+  /*
+    Shared lock tests
+  */
+
+  //decrease the lock wait time (default = 50s)
+  sql("set innodb_lock_wait_timeout = 10");
+
+  sess.startTransaction();
+  s_nolock.startTransaction();
+
+  auto res_id3 =tbl.select().where("_id like '3'").lockShared()
+      .execute();
+
+
+  EXPECT_EQ(10,
+            tbl_nolock.select().lockShared(mysqlx::LockContention::SKIP_LOCKED)
+            .execute().count());
+
+  EXPECT_EQ(10,
+            coll_nolock.find().lockShared(mysqlx::LockContention::SKIP_LOCKED)
+            .execute().count());
+
+  EXPECT_EQ(10,
+            tbl_nolock.select().lockShared(mysqlx::LockContention::NOWAIT)
+            .execute().count());
+
+  EXPECT_EQ(10,
+            coll_nolock.find().lockShared(mysqlx::LockContention::NOWAIT)
+            .execute().count());
+
+  //Should timeout!
+  EXPECT_THROW(coll_nolock.modify("true").set("name",L"Rafał").execute(), Error);
+
+  std::thread thread_modify([&] {
+   coll_nolock.modify("true").set("name",L"Rafał").execute();
+  });
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  sess.rollback();
+
+  thread_modify.join();
+
+  s_nolock.rollback();
+
 }
 
 

@@ -419,7 +419,8 @@ int mysqlx_stmt_struct::set_where(const char *where_expr)
 template <mysqlx_op_t OP>
 void set_row_locking_helper(
   typename stmt_traits<OP>::Impl *impl,
-  mysqlx_row_locking_enum  row_locking
+  mysqlx_row_locking_enum  row_locking,
+    mysqlx_lock_contention_t locking_contention
 )
 {
   assert(impl);
@@ -427,19 +428,24 @@ void set_row_locking_helper(
   if (ROW_LOCK_NONE == row_locking)
     return impl->clear_lock_mode();
 
-  impl->set_lock_mode(common::Lock_mode(unsigned(row_locking)));
+  impl->set_lock_mode(common::Lock_mode(unsigned(row_locking)),
+                      common::Lock_contention(unsigned(locking_contention)));
 }
 
 
-void mysqlx_stmt_struct::set_row_locking(mysqlx_row_locking_t row_locking)
+void mysqlx_stmt_struct::set_row_locking(
+    mysqlx_row_locking_t row_locking,
+    mysqlx_lock_contention_t lock_contention)
 {
   switch (m_op_type)
   {
   case OP_SELECT:
-    set_row_locking_helper<OP_SELECT>(get_impl<OP_SELECT>(this), row_locking);
+    set_row_locking_helper<OP_SELECT>(get_impl<OP_SELECT>(this),
+                                      row_locking, lock_contention);
     break;
   case OP_FIND:
-    set_row_locking_helper<OP_FIND>(get_impl<OP_FIND>(this), row_locking);
+    set_row_locking_helper<OP_FIND>(get_impl<OP_FIND>(this),
+                                    row_locking, lock_contention);
     break;
   default:
     throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);

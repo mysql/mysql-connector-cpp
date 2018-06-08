@@ -868,7 +868,10 @@ protected:
   string m_where_expr;
   bool   m_where_set = false;
   std::unique_ptr<parser::Expression_parser> m_expr;
-  cdk::Lock_mode_value  m_lock_mode = cdk::api::Lock_mode::NONE;
+  cdk::Lock_mode_value        m_lock_mode = cdk::api::Lock_mode::NONE;
+  cdk::Lock_contention_value
+    m_lock_contention = cdk::api::Lock_contention::DEFAULT;
+
 
   // Note: we do not copy m_expr to avoid invoking copy ctor
   // for Expression_parser
@@ -877,6 +880,8 @@ protected:
     : Base(other)
     , m_where_expr(other.m_where_expr)
     , m_where_set(other.m_where_set)
+    , m_lock_mode(other.m_lock_mode)
+    , m_lock_contention(other.m_lock_contention)
   {}
 
 public:
@@ -890,16 +895,18 @@ public:
     m_where_set = true;
   }
 
-  void set_lock_mode(Lock_mode lm) override
+  void set_lock_mode(Lock_mode lm, Lock_contention contention) override
   {
     // Note: assumes the cdk::Lock_mode enum uses the same values as
     // common::Select_if::Lock_mode.
     m_lock_mode = cdk::Lock_mode_value(lm);
+    m_lock_contention = cdk::Lock_contention_value(int(contention));
   }
 
   void clear_lock_mode() override
   {
     m_lock_mode = cdk::api::Lock_mode::NONE;
+    m_lock_contention = cdk::api::Lock_contention::DEFAULT;
   }
 
   cdk::Expression* get_where() const
@@ -1852,7 +1859,8 @@ public:
                           get_having(),
                           get_limit(),
                           get_params(),
-                          m_lock_mode
+                          m_lock_mode,
+                          m_lock_contention
                     ));
   }
 
@@ -2180,16 +2188,17 @@ class Op_table_select
   {
     return
         new cdk::Reply(get_cdk_session().table_select(
-                          m_table,
-                          m_view,           // view spec
-                          get_where(),
-                          get_tbl_proj(),
-                          get_order_by(),
-                          get_group_by(),
-                          get_having(),
-                          get_limit(),
-                          get_params(),
-                          m_lock_mode
+                         m_table,
+                         m_view,           // view spec
+                         get_where(),
+                         get_tbl_proj(),
+                         get_order_by(),
+                         get_group_by(),
+                         get_having(),
+                         get_limit(),
+                         get_params(),
+                         m_lock_mode,
+                         m_lock_contention
                        ));
   }
 

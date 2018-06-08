@@ -621,7 +621,8 @@ Reply_init& Session::coll_find(const Table_ref &coll,
                                const Expression *having,
                                const Limit *lim,
                                const Param_source *param,
-                               const Lock_mode_value lock_mode)
+                               const Lock_mode_value lock_mode,
+                               const Lock_contention_value lock_contention)
 {
   if (lock_mode != Lock_mode_value::NONE &&
       !(m_proto_fields & Protocol_fields::ROW_LOCKING))
@@ -630,7 +631,7 @@ Reply_init& Session::coll_find(const Table_ref &coll,
   SndFind<protocol::mysqlx::DOCUMENT> *find
     = new SndFind<protocol::mysqlx::DOCUMENT>(
             m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param, lock_mode
+            group_by, having, lim, param, lock_mode, lock_contention
           );
 
   if (view)
@@ -683,7 +684,8 @@ Reply_init& Session::table_select(const Table_ref &coll,
                                   const Expression *having,
                                   const Limit *lim,
                                   const Param_source *param,
-                                  const Lock_mode_value lock_mode)
+                                  const Lock_mode_value lock_mode,
+                                  const Lock_contention_value lock_contention)
 {
   if (lock_mode != Lock_mode_value::NONE &&
       !(m_proto_fields & Protocol_fields::ROW_LOCKING))
@@ -692,7 +694,7 @@ Reply_init& Session::table_select(const Table_ref &coll,
   SndFind<protocol::mysqlx::TABLE> *find
     = new SndFind<protocol::mysqlx::TABLE>(
             m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param, lock_mode
+            group_by, having, lim, param, lock_mode, lock_contention
           );
 
   if (view)

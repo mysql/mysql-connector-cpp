@@ -187,9 +187,28 @@
 
 
 #define LOCK_MODE_LIST(X) \
-  X(SHARED,1)    \
-  X(EXCLUSIVE,2) \
+  X(SHARED,1)    /*!< Sets a shared mode lock on any rows that
+                      are read. Other sessions can read the rows,
+                      but cannot modify them until your transaction
+                      commits. If any of these rows were changed by
+                      another transaction that has not yet committed,
+                      your query waits until that transaction ends
+                      and then uses the latest values. */ \
+  X(EXCLUSIVE,2) /*!< For index records the search encounters,
+                      locks the rows and any associated index entries, the same
+                      as if you issued an UPDATE statement for those rows. Other
+                      transactions are blocked from updating those rows,
+                      from doing locking in LOCK_SHARED, or from reading
+                      the data in certain transaction isolation levels. */ \
   END_LIST
+
+#define LOCK_CONTENTION_LIST(X) \
+  X(DEFAULT,0) /*!< Block query until existing row locks are released.  */ \
+  X(NOWAIT,1) /*!< Return error if lock could not be obtained immediately.  */ \
+  X(SKIP_LOCKED,2) /*!< Execute query immediately, excluding items that are
+                        locked from the query results.  */ \
+  END_LIST
+
 
 // ----------------------------------------------------------------------------
 

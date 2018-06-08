@@ -409,7 +409,7 @@ mysqlx_auth_method_t;
 /**
   Constants for defining the row locking options for
   mysqlx_set_row_locking() function.
-  @see https://dev.mysql.com/doc/refman/5.7/en/innodb-locking-reads.html
+  @see https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html
 */
 typedef enum mysqlx_row_locking_enum
 {
@@ -419,6 +419,19 @@ typedef enum mysqlx_row_locking_enum
   LOCK_MODE_LIST(XAPI_ROW_LOCK_ENUM)
 }
 mysqlx_row_locking_t;
+
+/**
+  Constants for defining the row locking options for
+  mysqlx_set_row_locking() function.
+  @see https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html#innodb-locking-reads-nowait-skip-locked
+*/
+typedef enum mysqlx_lock_contention_enum
+{
+#define XAPI_LOCK_CONTENTION_ENUM(X,N)  LOCK_CONTENTION_##X = N,
+
+  LOCK_CONTENTION_LIST(XAPI_LOCK_CONTENTION_ENUM)
+}
+mysqlx_lock_contention_t;
 
 /*
   ====================================================================
@@ -2236,25 +2249,9 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
   will result in an error.
 
   @param stmt statement handle
-  @param locking the integer mode identifier (see `mysqlx_row_locking_t`).
-         Possible values:
-
-           LOCK_NONE - Sets no row locking
-
-           LOCK_SHARED - Sets a shared mode lock on any rows that
-              are read. Other sessions can read the rows,
-              but cannot modify them until your transaction
-              commits. If any of these rows were changed by
-              another transaction that has not yet committed,
-              your query waits until that transaction ends
-              and then uses the latest values.
-
-           LOCK_EXCLUSIVE - For index records the search encounters,
-              locks the rows and any associated index entries, the same
-              as if you issued an UPDATE statement for those rows. Other
-              transactions are blocked from updating those rows,
-              from doing locking in LOCK_SHARED, or from reading
-              the data in certain transaction isolation levels.
+  @param locking the integer mode identifier (see ::mysqlx_row_locking_t).
+  @param contention the integer locking contention
+         (see ::mysqlx_lock_contention_t).
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
 
@@ -2270,7 +2267,7 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
   @ingroup xapi_stmt
 */
 PUBLIC_API int
-mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking);
+mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking, int contention);
 
 /**
   Free the statement handle explicitly.

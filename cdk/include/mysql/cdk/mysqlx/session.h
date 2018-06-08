@@ -572,7 +572,9 @@ public:
                         const Expression *having = NULL,
                         const Limit *lim = NULL,
                         const Param_source *param = NULL,
-                        const Lock_mode_value lock_mode = Lock_mode_value::NONE);
+                        const Lock_mode_value lock_mode = Lock_mode_value::NONE,
+                        const Lock_contention_value lock_contention
+                          = Lock_contention_value::DEFAULT);
   Reply_init &coll_update(const api::Table_ref&,
                           const Expression*,
                           const Update_spec&,
@@ -594,7 +596,8 @@ public:
                            const Expression *having = NULL,
                            const Limit *lim = NULL,
                            const Param_source *param = NULL,
-                           const Lock_mode_value lock_mode = Lock_mode_value::NONE);
+                           const Lock_mode_value lock_mode = Lock_mode_value::NONE,
+                           const Lock_contention_value lock_contention = Lock_contention_value::DEFAULT);
   Reply_init &table_insert(const Table_ref&,
                            Row_source&,
                            const api::Columns *cols,

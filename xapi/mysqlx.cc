@@ -435,10 +435,11 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_struct *stmt, uint64_t row_count,
 }
 
 
-int mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking)
+int mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking, int contention)
 {
   SAFE_EXCEPTION_BEGIN(stmt, RESULT_ERROR)
-  stmt->set_row_locking((mysqlx_row_locking_t)locking);
+  stmt->set_row_locking((mysqlx_row_locking_t)locking,
+                        (mysqlx_lock_contention_t)contention);
   return RESULT_OK;
   SAFE_EXCEPTION_END(stmt, RESULT_ERROR)
 }

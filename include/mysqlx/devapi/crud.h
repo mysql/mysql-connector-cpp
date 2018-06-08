@@ -106,6 +106,19 @@ struct PUBLIC_API Crud_factory
 
 
 namespace mysqlx {
+
+/**
+  @brief The LockContention  enum defines constants for defining the row locking contention for `Set_lock::lockExclusive()` and `Set_lock::lockShared()` methods.
+  @see https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html#innodb-locking-reads-nowait-skip-locked
+*/
+
+enum_class LockContention
+{
+#define DEVAPI_LOCK_CONTENTION_ENUM(X,N)  X = N,
+
+  LOCK_CONTENTION_LIST(DEVAPI_LOCK_CONTENTION_ENUM)
+};
+
 namespace internal {
 
 /**
@@ -448,9 +461,11 @@ public:
     Other sessions can read, but not modify locked rows/documents.
   */
 
-  Operation& lockShared()
+  Operation&
+  lockShared(LockContention contention= LockContention::DEFAULT)
   {
-    get_impl()->set_lock_mode(common::Lock_mode::SHARED);
+    get_impl()->set_lock_mode(common::Lock_mode::SHARED,
+                              common::Lock_contention(contention));
     return *this;
   }
 
@@ -462,9 +477,11 @@ public:
     when the transaction is committed or rolled back.
   */
 
-  Operation& lockExclusive()
+  Operation&
+  lockExclusive(LockContention contention = LockContention::DEFAULT)
   {
-    get_impl()->set_lock_mode(common::Lock_mode::EXCLUSIVE);
+    get_impl()->set_lock_mode(common::Lock_mode::EXCLUSIVE,
+                              common::Lock_contention(contention));
     return *this;
   }
 

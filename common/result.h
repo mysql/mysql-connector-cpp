@@ -811,7 +811,7 @@ public:
 
 class Result_impl_base
   : public cdk::Row_processor
-  , public cdk::Diagnostic_arena
+  , public cdk::api::Diagnostics
 {
 public:
 
@@ -975,29 +975,40 @@ protected:
     m_row_cache_size = 0;
   }
 
-  // -- Diagnostic information
-
-  /*
-    TODO: Perhaps a better idea for handling diagnostic data is to directly
-    refer to diagnostic info inside m_reply object instead of copying it here.
-  */
-
-  bool m_diag_ready = false;
-
 public:
 
-  void clear_diagnostics()
+  // -- Diagnostic information
+
+  // Return number of diagnostic entries with given error level (defaults to ERROR).
+  unsigned int entry_count(Severity::value level=Severity::ERROR) override
   {
-    Diagnostic_arena::clear();
-    m_diag_ready = false;
+    if (!m_reply)
+      THROW("Attempt to get warning count for empty result");
+
+    return m_reply->entry_count(level);
   }
 
-  /*
-    Copy diagnostic entries from CDK reply object to this object (which is
-    an instance of Diagnostic_arena)
-  */
+  // Get an iterator to iterate over diagnostic entries with level above or equal to given one
+  // (for example, if level is WARNING then iterates over all warnings and errors).
+  // By default returns iterator over errors only. The Error_iterator interface extends
+  // Iterator interface with single Error_iterator::error() method that returns the current error entry from the sequence.
+  Iterator& get_entries(Severity::value level=Severity::ERROR) override
+  {
+    if (!m_reply)
+      THROW("Attempt to get warning count for empty result");
 
-  void load_diagnostics();
+    return m_reply->get_entries(level);
+  }
+
+  // Convenience method to return first error entry (if any).
+  // Equivalent to get_erros().error(). Note that this method can throw exception if there is no error available.
+  const cdk::Error& get_error() override
+  {
+    if (!m_reply)
+      THROW("Attempt to get warning count for empty result");
+
+    return m_reply->get_error();
+  }
 
 private:
 
@@ -1005,19 +1016,19 @@ private:
 
   Row_data    m_row;
 
-  bool row_begin(row_count_t)
+  bool row_begin(row_count_t) override
   {
     m_row.clear();
     return true;
   }
 
-  void row_end(row_count_t);
+  void row_end(row_count_t) override;
 
-  size_t field_begin(col_count_t pos, size_t);
-  void   field_end(col_count_t) {}
-  void   field_null(col_count_t) {}
-  size_t field_data(col_count_t pos, bytes);
-  void   end_of_data();
+  size_t field_begin(col_count_t pos, size_t) override;
+  void   field_end(col_count_t) override {}
+  void   field_null(col_count_t) override {}
+  size_t field_data(col_count_t pos, bytes) override;
+  void   end_of_data() override;
 
 };
 
@@ -1049,10 +1060,8 @@ cdk::row_count_t Result_impl_base::get_auto_increment() const
 inline
 unsigned Result_impl_base::get_warning_count() const
 {
-  if (!m_reply)
-    THROW("Attempt to get warning count for empty result");
-  const_cast<Result_impl_base*>(this)->load_diagnostics();
-  return m_reply->entry_count(cdk::api::Severity::WARNING);
+  auto self = const_cast<Result_impl_base*>(this);
+  return self->entry_count(cdk::api::Severity::WARNING);
 }
 
 inline
@@ -1087,6 +1096,8 @@ inline
 row_count_t Result_impl_base::count()
 {
   store();
+  if (entry_count() > 0)
+    get_error().rethrow();
   return m_row_cache_size;
 }
 

@@ -426,10 +426,10 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
       the following messages:
 
       - Row - next row from the row-set, we continue reading rows until we
-              see <more>;
+        see <more>;
 
       - FetchDoneXXX - these messages start <more> sequence; they are consumed
-                       as part of this stage and the next stage starts.
+        as part of this stage and the next stage starts.
     */
 
     switch (type)
@@ -440,6 +440,9 @@ Op_rcv::Next_msg Rcv_result_base::do_next_msg(msg_type_t type)
       break;
     case msg_type::FetchDoneMoreResultsets:
       m_next_state = MDATA;  // proceed to next result-set
+
+
+
       break;
     default: return UNEXPECTED;
     };

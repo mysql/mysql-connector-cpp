@@ -574,10 +574,11 @@ protected:
   typedef typename Find_traits<DM>::Projection Projection;
   typedef typename Find_traits<DM>::Projection_converter Projection_converter;
 
-  Projection_converter m_proj_conv;
-  Expr_list_converter  m_group_by_conv;
-  Expr_converter       m_having_conv;
-  Lock_mode_value      m_lock_mode;
+  Projection_converter  m_proj_conv;
+  Expr_list_converter   m_group_by_conv;
+  Expr_converter        m_having_conv;
+  Lock_mode_value       m_lock_mode;
+  Lock_contention_value m_lock_contention;
 
   Proto_op* start()
   {
@@ -595,12 +596,14 @@ public:
     const cdk::Expression *having = NULL,
     const cdk::Limit *lim = NULL,
     const cdk::Param_source *param = NULL,
-    const Lock_mode_value locking = Lock_mode_value::NONE
+    const Lock_mode_value locking = Lock_mode_value::NONE,
+    const Lock_contention_value contention = Lock_contention_value::DEFAULT
   )
     : Select_op_base(protocol, coll, expr, order_by, lim, param)
     , m_proj_conv(proj)
     , m_group_by_conv(group_by), m_having_conv(having)
     , m_lock_mode(locking)
+    , m_lock_contention(contention)
   {}
 
 private:
@@ -623,6 +626,11 @@ private:
   Lock_mode_value locking() const
   {
     return m_lock_mode;
+  }
+
+  Lock_contention_value contention() const
+  {
+    return m_lock_contention;
   }
 
   friend class SndViewCrud<DM>;

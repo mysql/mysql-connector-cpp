@@ -479,23 +479,23 @@ internal::Result_detail::get_warning_count() const
 
 Warning internal::Result_detail::get_warning(size_t pos)
 {
-  /*
-    TODO: get_warning_count() does not take into account INFO entries, but
-    here we look at all entries, including INFO ones.
-  */
-
   if (!common::check_num_limits<unsigned>(pos))
     throw std::out_of_range("No diagnostic entry at position ...");
 
   auto &impl = get_impl();
-  impl.load_diagnostics();
-  auto *entry = impl.get_entry((unsigned)pos);
-  if (!entry)
+  auto &it = impl.get_entries(cdk::api::Severity::WARNING);
+  size_t curr = SIZE_MAX;
+  while( curr != pos && it.next())
+  {
+    curr++;
+  }
+
+  if (curr != pos || pos >= get_warning_count() )
     throw std::out_of_range("No diagnostic entry at position ...");
 
   byte level = Warning::LEVEL_ERROR;
 
-  switch (entry->severity())
+  switch (it.entry().severity())
   {
   case cdk::api::Severity::ERROR:   level = Warning::LEVEL_ERROR; break;
   case cdk::api::Severity::WARNING: level = Warning::LEVEL_WARNING; break;
@@ -505,9 +505,9 @@ Warning internal::Result_detail::get_warning(size_t pos)
   // TODO: handle error category
 
   return Warning_detail(
-    level,
-    (uint16_t)entry->code().value(),
-    std::wstring(entry->description())
+      level,
+      (uint16_t)it.entry().code().value(),
+      std::wstring(it.entry().description())
   );
 }
 
@@ -623,7 +623,11 @@ row_count_t internal::Row_result_detail<Columns>::row_count()
 
 bool internal::Doc_result_detail::iterator_next()
 {
-  const common::Row_data *row = get_impl().get_row();
+  auto &impl = get_impl();
+  const common::Row_data *row = impl.get_row();
+
+  if (impl.entry_count())
+    impl.get_error().rethrow();
 
   if (!row)
     return false;
@@ -637,6 +641,8 @@ bool internal::Doc_result_detail::iterator_next()
 
 uint64_t internal::Doc_result_detail::count()
 {
-  return get_impl().count();
+  auto cnt = get_impl().count();
+  if (get_impl().entry_count() > 0)
+    get_impl().get_error().rethrow();
+  return cnt;
 }
-

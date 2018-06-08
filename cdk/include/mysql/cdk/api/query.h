@@ -138,6 +138,11 @@ struct Lock_mode
   enum value { NONE, SHARED, EXCLUSIVE };
 };
 
+struct Lock_contention
+{
+  enum value { DEFAULT, NOWAIT, SKIP_LOCKED };
+};
+
 
 /*
   View specifications.

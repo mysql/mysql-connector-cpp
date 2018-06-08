@@ -420,6 +420,7 @@ typedef cdk::api::Sort_direction Sort_direction;
 typedef cdk::api::Projection<Expression> Projection;
 typedef cdk::api::Columns Columns;
 typedef cdk::api::Lock_mode::value Lock_mode_value;
+typedef cdk::api::Lock_contention::value Lock_contention_value;
 
 typedef cdk::api::View_options  View_options;
 
@@ -484,11 +485,13 @@ public:
   typedef api::Projection  Projection;
   typedef api::Expr_list   Expr_list;
   typedef api::Lock_mode_value Lock_mode_value;
+  typedef api::Lock_contention_value Lock_contention_value;
 
   virtual const Projection* project() const = 0;
   virtual const Expr_list*  group_by() const = 0;
   virtual const Expression* having() const = 0;
   virtual Lock_mode_value locking() const = 0;
+  virtual Lock_contention_value contention() const = 0;
 };
 
 

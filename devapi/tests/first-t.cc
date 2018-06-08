@@ -600,6 +600,9 @@ TEST_F(First, warnings_multi_rset)
 
   std::vector<Warning> warnings = res.getWarnings();
 
+  // Bug #28047970
+  SKIP_TEST("Bug #28047970");
+
   EXPECT_EQ(1, warnings.size());
   EXPECT_EQ(1, res.getWarningsCount());
 

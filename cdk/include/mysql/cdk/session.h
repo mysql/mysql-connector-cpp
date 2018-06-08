@@ -311,11 +311,13 @@ public:
                        const Expression *having = NULL,
                        const Limit *lim = NULL,
                        const Param_source *param = NULL,
-                       const Lock_mode_value lock_mode = Lock_mode_value::NONE
+                       const Lock_mode_value lock_mode = Lock_mode_value::NONE,
+                       const Lock_contention_value lock_contention = Lock_contention_value::DEFAULT
                        )
   {
     return m_session->coll_find(coll, view, expr, proj, order_by,
-                                group_by, having, lim, param, lock_mode);
+                                group_by, having, lim, param,
+                                lock_mode, lock_contention);
   }
 
   /**
@@ -365,10 +367,12 @@ public:
                           const Expression *having = NULL,
                           const Limit* lim = NULL,
                           const Param_source *param = NULL,
-                          const Lock_mode_value lock_mode = Lock_mode_value::NONE)
+                          const Lock_mode_value lock_mode = Lock_mode_value::NONE,
+                          const Lock_contention_value lock_contention = Lock_contention_value::DEFAULT)
   {
     return m_session->table_select(tab, view, expr, proj, order_by,
-                                   group_by, having, lim, param, lock_mode);
+                                   group_by, having, lim, param,
+                                   lock_mode, lock_contention);
   }
 
   /**

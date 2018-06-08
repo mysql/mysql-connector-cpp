@@ -248,8 +248,9 @@ private:
     m_session.error(code, severity, sql_state, msg);
   }
 
-  void notice(unsigned int /*type*/, short int /*scope*/, bytes /*payload*/)
-  { //TODO: Finish notice here
+  void notice(unsigned int type, short int scope, bytes payload)
+  {
+    m_session.notice(type, scope, payload);
   }
 
 };

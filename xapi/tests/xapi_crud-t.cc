@@ -30,7 +30,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <thread>
 #include "test.h"
+
 
   const char *queries[5] = {
      "DROP DATABASE IF EXISTS cc_crud_test",
@@ -226,7 +228,9 @@ TEST_F(xapi, test_row_locking)
 
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_begin(get_session()));
   stmt = mysqlx_table_select_new(table);
-  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt, ROW_LOCK_EXCLUSIVE));
+  EXPECT_EQ(RESULT_OK, mysqlx_set_select_row_locking(stmt,
+                                                     ROW_LOCK_EXCLUSIVE,
+                                                     LOCK_CONTENTION_DEFAULT));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   printf("\nRows data:");
@@ -252,6 +256,183 @@ TEST_F(xapi, test_row_locking)
   EXPECT_EQ(4, rownum);
   EXPECT_EQ(RESULT_OK, mysqlx_transaction_commit(get_session()));
   mysqlx_schema_drop(get_session(), "cc_crud_test");
+}
+
+TEST_F(xapi, lock_contention)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  mysqlx_result_t *res;
+  mysqlx_schema_t *sch;
+  mysqlx_schema_t *sch_nolock;
+  mysqlx_table_t *tbl;
+  mysqlx_table_t *tbl_nolock;
+  mysqlx_collection_t *coll;
+  mysqlx_collection_t *coll_nolock;
+  mysqlx_stmt_t *stmt;
+  mysqlx_stmt_t *stmt2;
+  size_t res_num;
+
+  AUTHENTICATE();
+
+  EXPECT_TRUE((sch = mysqlx_get_schema(get_session(), "test", 1)) != NULL);
+
+  mysqlx_collection_drop(sch, "c1");
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(sch, "c1"));
+
+  tbl = mysqlx_get_table(sch, "c1" , false);
+  coll = mysqlx_get_collection(sch, "c1", true);
+
+  mysqlx_collection_remove(coll, "true)");
+
+  stmt = mysqlx_collection_add_new(coll);
+  for(int i = 0; i < 10; ++i)
+  {
+    std::stringstream doc;
+    doc << R"({"name":"Luis", "_id":)" << i+1 << "}";
+    mysqlx_set_add_document(stmt, doc.str().c_str());
+  }
+  mysqlx_execute(stmt);
+  mysqlx_free(stmt);
+
+  /*
+    First session lock the rows, second one, tries to read/write values
+  */
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code;
+
+  auto s_nolock = mysqlx_get_session(m_xplugin_host,
+                              m_port,
+                              m_xplugin_usr,
+                              m_xplugin_pwd,
+                              NULL,
+                              conn_error,
+                              &conn_err_code);
+
+  EXPECT_TRUE((sch_nolock = mysqlx_get_schema(s_nolock, "test", 1)) != NULL);
+
+  coll_nolock = mysqlx_get_collection(sch_nolock,"c1", true);
+  tbl_nolock = mysqlx_get_table(sch_nolock,"c1", false);
+
+  mysqlx_transaction_begin(get_session());
+  mysqlx_transaction_begin(s_nolock);
+
+  stmt = mysqlx_table_select_new(tbl);
+  mysqlx_set_where(stmt, "_id like '2'");
+  mysqlx_set_row_locking(stmt, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_DEFAULT);
+  res = mysqlx_execute(stmt);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(1, res_num);
+  mysqlx_result_free(res);
+//  mysqlx_free(stmt);
+
+  stmt2 = mysqlx_table_select_new(tbl_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_SKIP_LOCKED);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(9, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_collection_find_new(coll_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_SKIP_LOCKED);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(9, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_table_select_new(tbl_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_NOWAIT);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_ERROR,mysqlx_store_result(res, &res_num));
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_collection_find_new(coll_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_NOWAIT);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_ERROR,mysqlx_store_result(res, &res_num));
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  mysqlx_free(stmt);
+
+  mysqlx_transaction_rollback(get_session());
+  mysqlx_transaction_rollback(s_nolock);
+
+  /*
+    Shared lock tests
+  */
+
+  mysqlx_transaction_begin(get_session());
+  mysqlx_transaction_begin(s_nolock);
+
+
+  stmt = mysqlx_table_select_new(tbl);
+  mysqlx_set_where(stmt, "_id like '3'");
+  mysqlx_set_row_locking(stmt, ROW_LOCK_SHARED, LOCK_CONTENTION_DEFAULT);
+  res = mysqlx_execute(stmt);
+  EXPECT_TRUE(NULL != res);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(1, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt);
+
+  stmt2 = mysqlx_table_select_new(tbl_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_SKIP_LOCKED);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(10, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_collection_find_new(coll_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_SKIP_LOCKED);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(10, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_table_select_new(tbl_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_NOWAIT);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(10, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  stmt2 = mysqlx_collection_find_new(coll_nolock);
+  mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_NOWAIT);
+  res = mysqlx_execute(stmt2);
+  EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
+  EXPECT_EQ(10, res_num);
+  mysqlx_result_free(res);
+  mysqlx_free(stmt2);
+
+  //Should timeout!
+  stmt2 = mysqlx_collection_modify_new(coll_nolock);
+  mysqlx_set_modify_set(stmt2, "name",PARAM_STRING("Bogdan"),PARAM_END);
+  EXPECT_EQ(NULL, mysqlx_execute(stmt2));
+
+  std::thread thread_modify([&] {
+   stmt2 = mysqlx_collection_modify_new(coll_nolock);
+   mysqlx_set_modify_set(stmt2, "name",PARAM_STRING("Bogdan"),PARAM_END);
+   res = mysqlx_execute(stmt2);
+   EXPECT_TRUE(NULL != res);
+  });
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  mysqlx_transaction_rollback(get_session());
+
+  thread_modify.join();
+
+  mysqlx_free(stmt2);
+
+  mysqlx_transaction_rollback(s_nolock);
+
 }
 
 
@@ -2830,5 +3011,33 @@ TEST_F(xapi_bugs, session_invalid_password_deadlock)
                               &conn_err_code);
 
   EXPECT_EQ(NULL, sess);
+}
+
+TEST_F(xapi_bugs, crash_empty_reply)
+{
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+  mysqlx_stmt_t *stmt;
+
+  AUTHENTICATE();
+
+  SKIP_IF_SERVER_VERSION_LESS(8,0,2);
+
+  mysqlx_schema_drop(get_session(), "crash_empty_reply");
+
+  mysqlx_schema_create(get_session(), "crash_empty_reply");
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session(), "crash_empty_reply", 1)) != NULL);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "c1"));
+
+  EXPECT_TRUE((collection = mysqlx_get_collection(schema, "c1", 1)) != NULL);
+
+  stmt = mysqlx_collection_find_new(collection);
+  res = mysqlx_execute(stmt);
+
+  stmt = mysqlx_collection_modify_new(collection);
+  res = mysqlx_execute(stmt);
 }
 

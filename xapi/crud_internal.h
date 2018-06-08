@@ -73,9 +73,11 @@ public:
   void check_errors()
   {
     // TODO: this iterator will iterate also over errors - is that ok?
-    m_warn_it = get_entries(cdk::api::Severity::WARNING);
-    if ( 0 < entry_count())
-      set_diagnostic(mysqlx_error_struct(Impl::get_error()));
+    if (!m_reply)
+      return;
+    m_warn_it = m_reply->get_entries(cdk::api::Severity::WARNING);
+    if ( 0 < m_reply->entry_count())
+      set_diagnostic(mysqlx_error_struct(m_reply->get_error()));
   }
 
 
@@ -185,7 +187,8 @@ public:
   // Return the session validity state
   bool session_valid();
 
-  void set_row_locking(mysqlx_row_locking_t row_locking);
+  void set_row_locking(mysqlx_row_locking_t row_locking,
+                       mysqlx_lock_contention_t lock_contention);
 
   friend class Group_by_list;
 };
