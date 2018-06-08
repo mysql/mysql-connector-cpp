@@ -166,8 +166,8 @@
 
     <!-- CPACK_WIX_FEATURES -->
     <Feature  Id='XDEVAPI'
-     Title='New XDevAPI/XAPI'
-     Description='New XDevAPI/XAPI connector'
+     Title='New X DevAPI connector'
+     Description='New X DevAPI connector'
      ConfigurableDirectory='INSTALLDIR'
      Level='1'  > 
     <Feature Id='XDevAPIDll' 
