@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -32,6 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cppconn/connection.h>
 #include <driver/mysql_connection.h>
 #include <cppconn/exception.h>
+#include <cppconn/version_info.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <list>
@@ -2111,26 +2118,26 @@ void connection::setTransactionIsolation()
   {
     con->setTransactionIsolation(sql::TRANSACTION_READ_COMMITTED);
     ASSERT_EQUALS(sql::TRANSACTION_READ_COMMITTED, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     checkResultSetScrolling(res);
     res->next();
     ASSERT_EQUALS("READ-COMMITTED", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_READ_UNCOMMITTED);
     ASSERT_EQUALS(sql::TRANSACTION_READ_UNCOMMITTED, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("READ-UNCOMMITTED", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
     ASSERT_EQUALS(sql::TRANSACTION_REPEATABLE_READ, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("REPEATABLE-READ", res->getString("Value"));
 
     con->setTransactionIsolation(sql::TRANSACTION_SERIALIZABLE);
     ASSERT_EQUALS(sql::TRANSACTION_SERIALIZABLE, con->getTransactionIsolation());
-    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'tx_isolation'"));
+    res.reset(stmt->executeQuery("SHOW VARIABLES LIKE 'transaction_isolation'"));
     res->next();
     ASSERT_EQUALS("SERIALIZABLE", res->getString("Value"));
   }
@@ -3128,6 +3135,67 @@ void connection::tls_version()
     ASSERT_EQUALS(*version, res->getString(2));
   }
 
+}
+
+void connection::cached_sha2_auth()
+{
+
+  logMsg("connection::auth - MYSQL_OPT_GET_SERVER_PUBLIC_KEY");
+
+  if (getMySQLVersion(con) < 80000)
+  {
+    SKIP("Server doesn't support caching_sha2_password");
+    return;
+  }
+
+  try {
+    stmt->execute("DROP USER 'doomuser'@'%';");
+  } catch (...) {}
+
+
+  stmt->execute("CREATE USER 'doomuser'@'%' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
+
+  sql::ConnectOptionsMap opts;
+  opts["hostName"] = url;
+  opts["userName"] = "doomuser";
+  opts["password"] = "!sha2user_pass";
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = false;
+  opts["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+
+  try {
+
+    // Should fail using unencrypted connection, since we don't have server
+    // public key
+    created_objects.clear();
+    //need to close connection, otherwise will use fast auth!
+    con->close();
+    con.reset(driver->connect(opts));
+    FAIL("caching_sha2_password can't be used on unexcrypted connection");
+    throw "caching_sha2_password can't be used on unexcrypted connection";
+  }
+  catch(std::exception &e)
+  {
+    std::stringstream err;
+    err << "Expected error: ";
+    err << e.what();
+    logMsg(err.str());
+  }
+
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = true;
+
+  // Now we can connect using unencrypted connection, since we now can ask for
+  // the server public key
+  con.reset(driver->connect(opts));
+
+  //Now using fast auth!
+  con->close();
+  opts["OPT_GET_SERVER_PUBLIC_KEY"] = false;
+  con.reset(driver->connect(opts));
+
+  // Cleanup
+  con.reset(getConnection());
+  stmt.reset(con->createStatement());
+  stmt->execute("DROP USER 'doomuser'@'%';");
 }
 
 

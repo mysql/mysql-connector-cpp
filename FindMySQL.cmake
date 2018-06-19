@@ -1,27 +1,30 @@
-# -*- indent-tabs-mode:nil; -*-
-# vim: set expandtab:
+# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 #
-#   Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 2.0, as
+# published by the Free Software Foundation.
 #
-#   The MySQL Connector/C++ is licensed under the terms of the GPLv2
-#   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-#   MySQL Connectors. There are special exceptions to the terms and
-#   conditions of the GPLv2 as it is applied to this software, see the
-#   FLOSS License Exception
-#   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+# This program is also distributed with certain software (including
+# but not limited to OpenSSL) that is licensed under separate terms,
+# as designated in a particular file or component or in included license
+# documentation. The authors of MySQL hereby grant you an
+# additional permission to link the program and your derivative works
+# with the separately licensed software that they have included with
+# MySQL.
 #
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published
-#   by the Free Software Foundation; version 2 of the License.
+# Without limiting anything contained in the foregoing, this file,
+# which is part of MySQL Connector/C++, is also subject to the
+# Universal FOSS Exception, version 1.0, a copy of which can be found at
+# http://oss.oracle.com/licenses/universal-foss-exception.
 #
-#   This program is distributed in the hope that it will be useful, but
-#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-#   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-#   for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License, version 2.0, for more details.
 #
-#   You should have received a copy of the GNU General Public License along
-#   with this program; if not, write to the Free Software Foundation, Inc.,
-#   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 ##########################################################################
 
@@ -112,6 +115,7 @@ set(ENV_OR_OPT_VARS
   MYSQL_DIR
   MYSQL_INCLUDE_DIR
   MYSQL_LIB_DIR
+  MYSQL_LIB_DIR_LIST
   MYSQL_CFLAGS
   MYSQL_CXXFLAGS
   MYSQL_CONFIG_EXECUTABLE
@@ -145,7 +149,7 @@ foreach(_xvar ${ENV_OR_OPT_VARS})
     set(${_xvar} $ENV{${_xvar}})
   endif()
 
-  # Notmalize the path if the variable is set and is a path 
+  # Notmalize the path if the variable is set and is a path
   if(${_xvar})
     list(FIND ENV_OR_OPT_PATH_VARS ${_xvar} _index)
     if (${_index} GREATER -1)
@@ -343,10 +347,10 @@ macro(_mysql_config _var _regex _opt)
   _mysql_conf(_mysql_config_output ${_opt})
   string(REGEX MATCHALL "${_regex}([^ ]+)" _mysql_config_output "${_mysql_config_output}")
   string(REGEX REPLACE "^[ \t]+" "" _mysql_config_output "${_mysql_config_output}")
-  string(REGEX REPLACE "${_regex}" "" _mysql_config_output "${_mysql_config_output}")
   IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
     string(REGEX REPLACE " -latomic" "" _mysql_config_output "${_mysql_config_output}")
   ENDIF()
+  string(REGEX REPLACE "${_regex}" "" _mysql_config_output "${_mysql_config_output}")
   separate_arguments(_mysql_config_output)
   set(${_var} ${_mysql_config_output})
 endmacro()
@@ -371,11 +375,11 @@ macro(_mysql_config_replace _var _regex1 _replace _regex2 _opt)
   _mysql_conf(_mysql_config_output ${_opt})
   string(REGEX MATCHALL "${_regex2}([^ ]+)" _mysql_config_output "${_mysql_config_output}")
   string(REGEX REPLACE "^[ \t]+" "" _mysql_config_output "${_mysql_config_output}")
-  string(REGEX REPLACE "${_regex2}" "" _mysql_config_output "${_mysql_config_output}")
-  string(REGEX REPLACE "${_regex1}" "${_replace}" _mysql_config_output "${_mysql_config_output}")
   IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
     string(REGEX REPLACE " -latomic" "" _mysql_config_output "${_mysql_config_output}")
   ENDIF()
+  string(REGEX REPLACE "${_regex2}" "" _mysql_config_output "${_mysql_config_output}")
+  string(REGEX REPLACE "${_regex1}" "${_replace}" _mysql_config_output "${_mysql_config_output}")
   separate_arguments(_mysql_config_output)
   set(${_var} ${_mysql_config_output})
 endmacro()
@@ -501,20 +505,9 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
-  set(_found_mysql_h)
-  foreach(_incdir ${MYSQL_INCLUDE_DIR})
-    if(NOT EXISTS "${_incdir}")
-      message(FATAL_ERROR "Could not find the directory \"${_incdir}\" "
-                          "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
-    endif()
-    if(EXISTS "${_incdir}/mysql.h")
-      set(_found_mysql_h 1)
-    endif()
-  endforeach()
-
-  if(NOT _found_mysql_h)
+  if(NOT EXISTS "${MYSQL_INCLUDE_DIR}/mysql.h")
     message(FATAL_ERROR "Could not find \"mysql.h\" in \"${MYSQL_INCLUDE_DIR}\" "
-                        "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
+                        "found from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
 else()
@@ -565,7 +558,7 @@ if(MYSQL_LIB_DIR)
   set(MYSQL_LIBRARIES ${MYSQL_LIB})
 
 elseif(MYSQL_DIR AND
-       (NOT _mysql_config_in_mysql_dir) AND 
+       (NOT _mysql_config_in_mysql_dir) AND
        (NOT _mysql_config_set_by_user))
 
   if(FINDMYSQL_DEBUG)
@@ -595,17 +588,31 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   # This code assumes there is just one "-L...." and that
   # no space between "-L" and the path
   _mysql_config(MYSQL_LIB_DIR "(^| )-L" "--libs")
+
+  IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    # This is needed to make Solaris binaries using the default runtime lib path
+    _mysql_config(DEV_STUDIO_RUNTIME_DIR "(^| )-R" "--libs")
+  ENDIF()
+
+
+  # In case mysql_config returns several paths: libmysqlclient is last
+  LIST(LENGTH MYSQL_LIB_DIR n)
+  IF( ${n} GREATER 1)
+    #copy list of directories
+    SET(MYSQL_LIB_DIR_LIST ${MYSQL_LIB_DIR})
+
+    MATH(EXPR ind "${n}-1")
+    LIST(GET MYSQL_LIB_DIR ${ind} MYSQL_LIB_DIR)
+  ENDIF()
   if(NOT MYSQL_LIB_DIR)
     message(FATAL_ERROR "Could not find the library dir from running "
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
   endif()
 
-  foreach(_libdir ${MYSQL_LIB_DIR})
-    if(NOT EXISTS "${_libdir}")
-      message(FATAL_ERROR "Could not find the directory \"${_libdir}\" "
-                          "from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
-    endif()
-  endforeach()
+  if(NOT EXISTS "${MYSQL_LIB_DIR}")
+    message(FATAL_ERROR "Could not find the directory \"${MYSQL_LIB_DIR}\" "
+                        "found from running \"${MYSQL_CONFIG_EXECUTABLE}\"")
+  endif()
 
   # We have the assumed MYSQL_LIB_DIR. The output from "mysql_config"
   # might not be correct for static libraries, so we might need to
@@ -636,9 +643,14 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   else()
 
     _mysql_config(MYSQL_LIBRARIES "(^| )-l" "--libs")
-
+    FOREACH(__lib IN LISTS MYSQL_LIBRARIES)
+      string(REGEX MATCH "mysqlclient([^ ]*)" _matched_lib __lib)
+      IF(_matched_lib)
+        set(_search_libs ${matched_lib})
+      ENDIF()
+    ENDFOREACH()
     # First library is assumed to be the client library
-    list(GET MYSQL_LIBRARIES 0 _search_libs)
+    # list(GET MYSQL_LIBRARIES 0 _search_libs)
     find_library(MYSQL_LIB
       NAMES
         ${_search_libs}
@@ -684,6 +696,19 @@ if(MYSQLCLIENT_STATIC_LINKING AND
    NOT WIN32 AND
    NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND MYSQL_LIBRARIES "rt")
+endif()
+
+# For dynamic linking use the built-in sys and strings
+if(NOT MYSQLCLIENT_STATIC_LINKING)
+   list(APPEND SYS_LIBRARIES "mysql_sys")
+   list(APPEND SYS_LIBRARIES "mysql_strings")
+   list(APPEND SYS_LIBRARIES ${MYSQL_LIBRARIES})
+   SET(MYSQL_LIBRARIES ${SYS_LIBRARIES})
+
+#if(NOT MYSQLCLIENT_STATIC_LINKING AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#  list(REVERSE MYSQL_LIBRARIES)
+#endif()
+
 endif()
 
 if(MYSQL_EXTRA_LIBRARIES)
@@ -800,6 +825,15 @@ endif()
 
 include_directories("${MYSQL_INCLUDE_DIR}")
 link_directories("${MYSQL_LIB_DIR}")
+
+MESSAGE(STATUS "MYSQL_LIB_DIR_LIST = ${MYSQL_LIB_DIR_LIST}")
+IF(MYSQL_LIB_DIR_LIST)
+  FOREACH(__libpath IN LISTS MYSQL_LIB_DIR_LIST)
+    link_directories("${__libpath}")
+  ENDFOREACH()
+ENDIF()
+
+
 
 ##########################################################################
 #

@@ -1,26 +1,30 @@
-#
-# Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
-#
-# The MySQL Connector/C++ is licensed under the terms of the GPLv2
-# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-# MySQL Connectors. There are special exceptions to the terms and
-# conditions of the GPLv2 as it is applied to this software, see the
-# FLOSS License Exception
-# <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published
-# by the Free Software Foundation; version 2 of the License.
+# it under the terms of the GNU General Public License, version 2.0, as
+# published by the Free Software Foundation.
+#
+# This program is also distributed with certain software (including
+# but not limited to OpenSSL) that is licensed under separate terms,
+# as designated in a particular file or component or in included license
+# documentation.  The authors of MySQL hereby grant you an
+# additional permission to link the program and your derivative works
+# with the separately licensed software that they have included with
+# MySQL.
+#
+# Without limiting anything contained in the foregoing, this file,
+# which is part of MySQL Connector/C++, is also subject to the
+# Universal FOSS Exception, version 1.0, a copy of which can be found at
+# http://oss.oracle.com/licenses/universal-foss-exception.
 #
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# for more details.
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License, version 2.0, for more details.
 #
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-#
 
 
 PROJECT(MYSQLCPPCONN)
@@ -35,6 +39,9 @@ INCLUDE(VersionInfo.cmake)
 
 OPTION(TAR_LAYOUT "Use directory layout for an unpacked TAR install")
 OPTION(RPM_LAYOUT "Use directory layout for an RPM install")
+OPTION(BUNDLE_DEPENDENCIES
+  "Package external libraries used by the connector, such as openSSL, together
+   with the connector library." FALSE)
 
 IF(TAR_LAYOUT OR NOT CMAKE_VERSION OR CMAKE_VERSION VERSION_LESS "2.8.5")
   SET(INSTALL_LIBDIR lib)
@@ -50,11 +57,11 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/version_info.h.cmake
                ${CMAKE_BINARY_DIR}/driver/version_info.h @ONLY)
 
 # This is needed by windows installer and fro CPACK
-IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
-  SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/COPYING")
-ELSE(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+IF(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
   SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
-ENDIF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+ELSE(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
+  SET(LICENSE_FILENAME "${CMAKE_SOURCE_DIR}/LICENSE")
+ENDIF(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql")
 
 # Creating file with version info that will be used for installer
 # We have to do this trick because of license filename that is looked in this CMAKE_SOURCE_DIR (installer's cmake is run separately)
@@ -62,6 +69,58 @@ IF(WIN32)
   FILE(WRITE "${CMAKE_BINARY_DIR}/win/config.cmake" "SET(CONNECTOR_PRODUCT_VERSION ${CONNECTOR_VERSION})\n"
                                                     "SET(LICENSE_FILENAME \"${LICENSE_FILENAME}\")\n")
 ENDIF(WIN32)
+
+
+# On Linux el6/el7 the default gcc is too old, see if devtoolset is installed.
+# We need to look for gcc before calling PROJECT below.
+OPTION(FORCE_UNSUPPORTED_COMPILER "Disable compiler version checks" OFF)
+MARK_AS_ADVANCED(FORCE_UNSUPPORTED_COMPILER)
+
+IF(UNIX)
+  FIND_PROGRAM(MY_UNAME uname /bin /usr/bin /usr/local/bin /sbin)
+ENDIF()
+
+IF(CMAKE_HOST_UNIX AND NOT FORCE_UNSUPPORTED_COMPILER
+    AND NOT CMAKE_C_COMPILER AND NOT CMAKE_CXX_COMPILER)
+  # Cannot INCLUDE(CMakeDetermineSystem) prior to PROJECT initialization below.
+  SET (ENV_CC "$ENV{CC}")
+  SET (ENV_CXX "$ENV{CXX}")
+  IF (ENV_CC STREQUAL "" AND ENV_CXX STREQUAL "")
+    IF(MY_UNAME)
+      EXEC_PROGRAM(uname ARGS -r OUTPUT_VARIABLE MY_HOST_SYSTEM_VERSION)
+      IF(MY_HOST_SYSTEM_NAME MATCHES "Linux" AND
+          MY_HOST_SYSTEM_VERSION MATCHES "\\.el[67](uek)?\\.")
+        MESSAGE(STATUS
+          "This is ${MY_HOST_SYSTEM_NAME} version ${MY_HOST_SYSTEM_VERSION}")
+        FIND_PROGRAM(MY_GCC_COMPILER gcc)
+        IF (MY_GCC_COMPILER)
+          MESSAGE(STATUS "gcc is ${MY_GCC_COMPILER}")
+          MESSAGE(STATUS
+            "We probably need /opt/rh/devtoolset-6/root/usr/bin/gcc")
+          EXECUTE_PROCESS(COMMAND ${MY_GCC_COMPILER} -dumpversion
+            OUTPUT_VARIABLE MY_GCC_VERSION)
+          IF(MY_GCC_VERSION VERSION_LESS 5.0)
+            MESSAGE(STATUS "${MY_GCC_COMPILER} is version ${MY_GCC_VERSION}")
+            FIND_PROGRAM(ALTERNATIVE_GCC gcc
+              NO_DEFAULT_PATH
+              PATHS "/opt/rh/devtoolset-6/root/usr/bin")
+            FIND_PROGRAM(ALTERNATIVE_GPP g++
+              NO_DEFAULT_PATH
+              PATHS "/opt/rh/devtoolset-6/root/usr/bin")
+            IF(ALTERNATIVE_GCC AND ALTERNATIVE_GPP)
+              SET(CMAKE_C_COMPILER ${ALTERNATIVE_GCC})
+              SET(CMAKE_CXX_COMPILER ${ALTERNATIVE_GPP})
+              MESSAGE(STATUS "Using ${ALTERNATIVE_GCC}")
+              MESSAGE(STATUS "Using ${ALTERNATIVE_GPP}")
+            ELSE()
+              MESSAGE(WARNING "Could not find devtoolset gcc")
+            ENDIF()
+          ENDIF()
+        ENDIF()
+      ENDIF()
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 #-----------------
 # CPPFLAGS, CXXFLAGS and LDFLAGS from the environment
@@ -268,8 +327,18 @@ IF(MYSQLCLIENT_STATIC_BINDING AND EXISTS "${CMAKE_SOURCE_DIR}/cmake/mysql_versio
   ENDIF(LIBMYSQL_CPP_VERSION_ID)
 ENDIF()
 
+IF(MYSQLCLIENT_STATIC_BINDING AND
+  (NOT CMAKE_CXX_COMPILER_ID STREQUAL MYSQL_COMPILER_ID OR
+    NOT CMAKE_CXX_COMPILER_VERSION STREQUAL MYSQL_COMPILER_VERSION
+    )
+  )
+  MESSAGE (WARNING "libmysqlclient and connector compilers mismatch:\n"
+                   "libmysqlclient: ${MYSQL_COMPILER_ID} ${MYSQL_COMPILER_VERSION}\n"
+                   "connector: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}.")
+ENDIF()
 
-OPTION(USE_SERVER_CXXFLAGS "USE MYSQL_CXXFLAGS on connector build" 0)
+
+OPTION(USE_SERVER_CXXFLAGS "USE MYSQL_CXXFLAGS on connector build" TRUE)
 
 message(STATUS "USE_SERVER_FLAGS : ${USE_SERVER_CXXFLAGS}")
 if (USE_SERVER_CXXFLAGS)
@@ -357,7 +426,6 @@ ENDIF()
 INSTALL(FILES
   ${CPACK_RESOURCE_FILE_README}
   ${CPACK_RESOURCE_FILE_LICENSE}
-  "${CMAKE_SOURCE_DIR}/Licenses_for_Third-Party_Components.txt"
   DESTINATION ${DOC_DESTINATION} OPTIONAL)
 
 SET(COMMON_IGNORE_FILES
@@ -402,6 +470,8 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     ADD_DEFINITIONS("-fprofile-arcs -ftest-coverage")
   ENDIF (MYSQLCPPCONN_GCOV_ENABLE)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
+
 
 # SET(CPACK_*) before the INCLUDE(CPack)
 INCLUDE(CPack)
@@ -457,4 +527,64 @@ IF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
   ENDIF(${CMAKE_C_COMPILER} MATCHES "gcc$")
 ENDIF(DEFINED CMAKE_SYSTEM_NAME AND ${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-INSTALL(FILES "BUILDINFO" DESTINATION . OPTIONAL)
+
+#
+# Get locations of the openSSL libraries (resolving links on Unix) and
+# store them in OPENSSL_FILES global variable.
+#
+
+function(bundle_ssl_libs)
+  MESSAGE(STATUS "Finding SSL libraries on ${MYSQL_LIB_DIR}")
+  if(WIN32)
+
+    install(DIRECTORY "${MYSQL_DIR}/bin/" DESTINATION ${INSTALL_LIBDIR}
+     FILES_MATCHING REGEX "(.*eay.*)")
+
+  else()
+
+    find_library(_lib_ssl
+      NAMES
+        libssl ssl
+      PATHS
+        "${MYSQL_LIB_DIR}/"
+      NO_DEFAULT_PATH
+      NO_CMAKE_ENVIRONMENT_PATH
+    )
+
+    find_library(_lib_crypto
+      NAMES
+        libcrypto crypto
+      PATHS
+        "${MYSQL_LIB_DIR}/"
+      NO_DEFAULT_PATH
+      NO_CMAKE_ENVIRONMENT_PATH
+    )
+    set(SSL_LIBS_PACKAGE "")
+    list(APPEND SSL_LIBS_PACKAGE "${_lib_ssl}" "${_lib_crypto}" )
+
+  foreach(lib ${SSL_LIBS_PACKAGE})
+
+    MESSAGE(STATUS "Packaging ${lib}")
+
+    get_filename_component(lib_realpath "${lib}"  REALPATH)
+
+    install(FILES ${lib} ${lib_realpath} DESTINATION ${INSTALL_LIBDIR} OPTIONAL)
+
+  endforeach()
+
+    #install(DIRECTORY "${MYSQL_LIB_DIR}" DESTINATION ${INSTALL_LIBDIR}
+    # FILES_MATCHING REGEX "(.*crypt.*)|(.*ssl.*)" EXCLUDE )
+
+  endif()
+
+endfunction()
+
+if(BUNDLE_DEPENDENCIES)
+  message(STATUS "Bundling OpenSSL libraries")
+  bundle_ssl_libs()
+endif()
+
+# Create the BUILDINFO file
+# =========================
+#
+include(buildinfo.cmake)

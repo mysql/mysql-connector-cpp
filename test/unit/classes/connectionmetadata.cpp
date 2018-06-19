@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -261,6 +267,7 @@ void connectionmetadata::getBestRowIdentifier()
 void connectionmetadata::getColumnPrivileges()
 {
   logMsg("connectionmetadata::getColumnPrivileges() - MySQL_ConnectionMetaData::getColumnPrivileges");
+
   int rows=0;
   bool got_warning=false;
   std::stringstream msg;
@@ -343,6 +350,13 @@ void connectionmetadata::getColumnPrivileges()
 void connectionmetadata::getColumns()
 {
   logMsg("connectionmetadata::getColumn() - MySQL_ConnectionMetaData::getColumns");
+
+  if (getMySQLVersion(con) < 80000)
+  {
+    SKIP("Due to changes on the VARBINARY, this test is disabled.");
+    return;
+  }
+
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   bool got_warning=false;
@@ -446,6 +460,14 @@ void connectionmetadata::getColumns()
       ASSERT_EQUALS(res->getInt(11), res->getInt("NULLABLE"));
       ASSERT_EQUALS(it->remarks, res->getString(12));
       ASSERT_EQUALS(res->getString(12), res->getString("REMARKS"));
+      if(it->column_def != res->getString(13))
+      {
+        msg.str("");
+        msg << "... \t\tWARNING - check COLUMN_def for " << it->sqldef;
+        msg << " - expecting COLUMN_def = " << it->column_def << " got " << res->getString(13);
+        logMsg(msg.str());
+        got_warning=true;
+      }
       ASSERT_EQUALS(it->column_def, res->getString(13));
       ASSERT_EQUALS(res->getString(13), res->getString("COLUMN_DEF"));
       ASSERT_EQUALS(res->getInt(14), res->getInt("SQL_DATA_TYPE"));
@@ -587,7 +609,7 @@ void connectionmetadata::getDatabaseVersions()
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
-    ASSERT_LT(7, dbmeta->getDatabaseMajorVersion());
+    ASSERT_LT(8, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
 
@@ -1092,24 +1114,28 @@ void connectionmetadata::getIndexInfo()
     ASSERT_EQUALS(DatabaseMetaData::tableIndexOther, res->getInt(7));
     ASSERT(!res->next());
 
-    stmt->execute("DROP TABLE IF EXISTS test");
-    stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
-    stmt->execute("CREATE INDEX idx_col4_col5 ON test(col5 DESC, col4 ASC)");
-    res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
-    ASSERT(res->next());
-    ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
-    ASSERT(res->next());
-    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
-    ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
-    ASSERT(res->next());
-    ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
-    ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
-    ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
-    ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
-    ASSERT(!res->next());
+    //Was wrong on previous versions....
+    if (getMySQLVersion(con) >= 80000)
+    {
+      stmt->execute("DROP TABLE IF EXISTS test");
+      stmt->execute("CREATE TABLE test(col1 INT NOT NULL, col2 INT NOT NULL, col3 INT NOT NULL, col4 INT, col5 INT, PRIMARY KEY(col1))");
+      stmt->execute("CREATE INDEX idx_col4_col5 ON test(col5 DESC, col4 ASC)");
+      res.reset(dbmeta->getIndexInfo(con->getCatalog(), con->getSchema(), "test", false, false));
+      ASSERT(res->next());
+      ASSERT_EQUALS("PRIMARY", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS(false, res->getBoolean("NON_UNIQUE"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS("D", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("col5", res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+      ASSERT(res->next());
+      ASSERT_EQUALS("idx_col4_col5", res->getString("INDEX_NAME"));
+      ASSERT_EQUALS("A", res->getString("ASC_OR_DESC"));
+      ASSERT_EQUALS("col4", res->getString("COLUMN_NAME"));
+      ASSERT_EQUALS(true, res->getBoolean("NON_UNIQUE"));
+      ASSERT(!res->next());
+    }
 
     try
     {

@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,28 +26,54 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+# Try find out information about the build environment that
+# might be useful to the user of the C/C++ libraries
 
-SET(example_sources
-  ../unit_fixture.cpp
-  ../main.cpp
-  example.cpp)
+set(buildinfo_in  "${PROJECT_SOURCE_DIR}/BUILDINFO.in")
+set(buildinfo_out "${PROJECT_BINARY_DIR}/BUILDINFO")
 
-IF(WIN32)
-  SET(example_sources
-        ${example_sources}
-  ../unit_fixture.h
-  example.h)
-ENDIF(WIN32)
+configure_file(
+  "${buildinfo_in}"
+  "${buildinfo_out}"
+  @ONLY
+)
 
-ADD_EXECUTABLE(example ${example_sources})
-SET_TARGET_PROPERTIES(example PROPERTIES
-          OUTPUT_NAME "example"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+# TODO: OpenSSL information
 
-#
-# End of the instructions for building binary example from example.cpp|h
-#
+if(WIN32)
 
-MESSAGE(STATUS "Configuring unit tests - examples")
+  if(STATIC_MSVCRT)
+    file(APPEND ${buildinfo_out}
+      "MSVC runtime   : linked statically (/MT)\n"
+    )
+  else()
+    file(APPEND ${buildinfo_out}
+      "MSVC runtime   : linked dynamically (/MD)\n"
+    )
+  endif()
+
+else()
+
+  execute_process(
+    COMMAND ldd --version
+    COMMAND head -1
+    ERROR_QUIET
+    OUTPUT_VARIABLE _glibc_version
+    RESULT_VARIABLE _result_code
+  )
+
+  if (_result_code STREQUAL "0")
+    string(REGEX REPLACE "ldd *" "" _glibc_version "${_glibc_version}")
+    file(APPEND ${buildinfo_out}
+      "GLIBC version   : ${_glibc_version}\n"
+    )
+  endif()
+
+endif()
+
+file(APPEND ${buildinfo_out} "MySQL version  : ${MYSQL_VERSION}\n"
+)
+  # TODO: Boost version
+
+install(FILES "${buildinfo_out}" DESTINATION ${DOC_DESTINATION})
+

@@ -1,26 +1,32 @@
 /*
-Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
-
-The MySQL Connector/C++ is licensed under the terms of the GPLv2
-<http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-MySQL Connectors. There are special exceptions to the terms and
-conditions of the GPLv2 as it is applied to this software, see the
-FLOSS License Exception
-<http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
 
 
 
@@ -100,11 +106,11 @@ static inline void remove_from_active_list(safe_mutex_t *mp)
 
 
 int safe_mutex_init(safe_mutex_t *mp,
-		    const pthread_mutexattr_t *attr __attribute__((unused)),
+        const pthread_mutexattr_t *attr __attribute__((unused)),
                     const char *name,
                     myf my_flags,
-		    const char *file,
-		    uint line)
+        const char *file,
+        uint line)
 {
   DBUG_ENTER("safe_mutex_init");
   DBUG_PRINT("enter",("mutex: 0x%lx  name: %s", (ulong) mp, name));
@@ -184,8 +190,8 @@ int safe_mutex_lock(safe_mutex_t *mp, myf my_flags, const char *file,
   if (!mp->file)
   {
     fprintf(stderr,
-	    "safe_mutex: Trying to lock unitialized mutex at %s, line %d\n",
-	    file, line);
+      "safe_mutex: Trying to lock unitialized mutex at %s, line %d\n",
+      file, line);
     fflush(stderr);
     abort();
   }
@@ -239,7 +245,7 @@ int safe_mutex_lock(safe_mutex_t *mp, myf my_flags, const char *file,
   if (error || (error=pthread_mutex_lock(&mp->global)))
   {
     fprintf(stderr,"Got error %d when trying to lock mutex %s at %s, line %d\n",
-	    error, mp->name, file, line);
+      error, mp->name, file, line);
     fflush(stderr);
     abort();
   }
@@ -356,7 +362,7 @@ int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line)
             "safe_mutex: Trying to unlock mutex %s that wasn't locked at "
             "%s, line %d\n"
             "Last used at %s, line: %d\n",
-	    mp->name ? mp->name : "Null", file, line,
+      mp->name ? mp->name : "Null", file, line,
             mp->file ? mp->file : "Null", mp->line);
     fflush(stderr);
     abort();
@@ -367,7 +373,7 @@ int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line)
             "safe_mutex: Trying to unlock mutex %s at %s, line %d that was "
             "locked by "
             "another thread at: %s, line: %d\n",
-	    mp->name, file, line, mp->file, mp->line);
+      mp->name, file, line, mp->file, mp->line);
     fflush(stderr);
     abort();
   }
@@ -396,7 +402,7 @@ int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line)
 
 
 int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
-		   uint line)
+       uint line)
 {
   int error;
   safe_mutex_t save_state;
@@ -416,7 +422,7 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
     fprintf(stderr,
             "safe_mutex: Trying to cond_wait on a mutex %s at %s, line %d "
             "that was locked by another thread at: %s, line: %d\n",
-	    mp->name, file, line, mp->file, mp->line);
+      mp->name, file, line, mp->file, mp->line);
     fflush(stderr);
     abort();
   }
@@ -425,7 +431,7 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
   {
     fprintf(stderr,
             "safe_mutex:  Count was %d on locked mutex %s at %s, line %d\n",
-	    mp->count+1, mp->name, file, line);
+      mp->count+1, mp->name, file, line);
     fflush(stderr);
     abort();
   }
@@ -452,9 +458,9 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
   if (mp->count++)
   {
     fprintf(stderr,
-	    "safe_mutex:  Count was %d in thread 0x%lx when locking mutex %s "
+      "safe_mutex:  Count was %d in thread 0x%lx when locking mutex %s "
             "at %s, line %d\n",
-	    mp->count-1, my_thread_dbug_id(), mp->name, file, line);
+      mp->count-1, my_thread_dbug_id(), mp->name, file, line);
     fflush(stderr);
     abort();
   }
@@ -466,8 +472,8 @@ int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp, const char *file,
 
 
 int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
-			struct timespec *abstime,
-			const char *file, uint line)
+      struct timespec *abstime,
+      const char *file, uint line)
 {
   int error;
   safe_mutex_t save_state;
@@ -506,9 +512,9 @@ int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
   if (mp->count++)
   {
     fprintf(stderr,
-	    "safe_mutex:  Count was %d in thread 0x%lx when locking mutex "
+      "safe_mutex:  Count was %d in thread 0x%lx when locking mutex "
             "%s at %s, line %d (error: %d (%d))\n",
-	    mp->count-1, my_thread_dbug_id(), mp->name, file, line,
+      mp->count-1, my_thread_dbug_id(), mp->name, file, line,
             error, error);
     fflush(stderr);
     abort();
@@ -528,8 +534,8 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint line)
   if (!mp->file)
   {
     fprintf(stderr,
-	    "safe_mutex: Trying to destroy unitialized mutex at %s, line %d\n",
-	    file, line);
+      "safe_mutex: Trying to destroy unitialized mutex at %s, line %d\n",
+      file, line);
     fflush(stderr);
     abort();
   }
@@ -538,7 +544,7 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint line)
     fprintf(stderr,
             "safe_mutex: Trying to destroy a mutex %s that was locked at %s, "
             "line %d at %s, line %d\n",
-	    mp->name, mp->file, mp->line, file, line);
+      mp->name, mp->file, mp->line, file, line);
     fflush(stderr);
     abort();
   }
@@ -643,7 +649,7 @@ void safe_mutex_end(FILE *file __attribute__((unused)))
     for (ptr= safe_mutex_create_root ; ptr ; ptr= ptr->next)
     {
       fprintf(file, "\tMutex %s initiated at line %4u in '%s'\n",
-	      ptr->name, ptr->init_line, ptr->init_file);
+        ptr->name, ptr->init_line, ptr->init_file);
       (void) fflush(file);
     }
   }
