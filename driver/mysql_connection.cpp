@@ -258,8 +258,10 @@ static const String2IntMap intOptions[]=
     {"OPT_READ_TIMEOUT",        MYSQL_OPT_READ_TIMEOUT, false},
     {"OPT_WRITE_TIMEOUT",       MYSQL_OPT_WRITE_TIMEOUT, false},
     {"OPT_LOCAL_INFILE",        MYSQL_OPT_LOCAL_INFILE, false},
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
     {"OPT_MAX_ALLOWED_PACKET",  MYSQL_OPT_MAX_ALLOWED_PACKET, false},
     {"OPT_NET_BUFFER_LENGTH",   MYSQL_OPT_NET_BUFFER_LENGTH, false},
+#endif
     {"OPT_SSL_MODE",            MYSQL_OPT_SSL_MODE    , false},
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 80000
     {"OPT_RETRY_COUNT",         MYSQL_OPT_RETRY_COUNT, false},
@@ -284,7 +286,9 @@ static const String2IntMap stringOptions[]=
     {"readDefaultGroup", MYSQL_READ_DEFAULT_GROUP, false},
     {"readDefaultFile",  MYSQL_READ_DEFAULT_FILE, false},
     {"OPT_CHARSET_NAME", MYSQL_SET_CHARSET_NAME, true},
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
     {"OPT_TLS_VERSION",  MYSQL_OPT_TLS_VERSION, false},
+#endif
   };
 
 template<class T>
