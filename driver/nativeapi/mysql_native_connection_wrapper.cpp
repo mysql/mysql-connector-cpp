@@ -93,10 +93,12 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
   case sql::mysql::MYSQL_SERVER_PUBLIC_KEY: return ::MYSQL_SERVER_PUBLIC_KEY;
   case sql::mysql::MYSQL_ENABLE_CLEARTEXT_PLUGIN: return ::MYSQL_ENABLE_CLEARTEXT_PLUGIN;
   case sql::mysql::MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS: return ::MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS;
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
   case sql::mysql::MYSQL_OPT_MAX_ALLOWED_PACKET: return ::MYSQL_OPT_MAX_ALLOWED_PACKET;
   case sql::mysql::MYSQL_OPT_NET_BUFFER_LENGTH: return ::MYSQL_OPT_NET_BUFFER_LENGTH;
   case sql::mysql::MYSQL_OPT_TLS_VERSION: return ::MYSQL_OPT_TLS_VERSION;
   case sql::mysql::MYSQL_OPT_SSL_MODE: return ::MYSQL_OPT_SSL_MODE;
+#endif
 
 
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 80000
@@ -110,6 +112,8 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
   case sql::mysql::MYSQL_OPT_GUESS_CONNECTION: return ::MYSQL_OPT_GUESS_CONNECTION;
   case sql::mysql::MYSQL_SET_CLIENT_IP: return ::MYSQL_SET_CLIENT_IP;
   case sql::mysql::MYSQL_SECURE_AUTH: return ::MYSQL_SECURE_AUTH;
+#endif
+#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
   case sql::mysql::MYSQL_OPT_SSL_ENFORCE: return ::MYSQL_OPT_SSL_ENFORCE;
 #endif
 
