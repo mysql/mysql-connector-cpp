@@ -626,18 +626,21 @@ protected:
     return &m_scalar_builder;
   }
 
-  Args_prc* op(const char *name);
-  Args_prc* call(const api::Db_obj& db_obj);
+  Mysqlx::Expr::Operator &set_op(const char *name);
+  Args_prc* op(const char *name) override;
 
-  void var(const string &name);
-  void id(const string &name, const api::Db_obj *coll);
+  Mysqlx::Expr::FunctionCall &set_call(const api::Db_obj& db_obj);
+  Args_prc* call(const api::Db_obj& db_obj) override;
+
+  void var(const string &name)override;
+  void id(const string &name, const api::Db_obj *coll) override;
   void id(const string &name, const api::Db_obj *coll,
-                  const api::Doc_path &path);
-  void id(const api::Doc_path &path);
+                  const api::Doc_path &path) override;
+  void id(const api::Doc_path &path) override;
 
-  void placeholder();
-  void placeholder(const string &name);
-  void placeholder(unsigned pos);
+  void placeholder() override;
+  void placeholder(const string &name) override;
+  void placeholder(unsigned pos) override;
 
 };
 
@@ -662,11 +665,59 @@ protected:
 
 
 /*
-  Builder used to store operator or function call arguments inside
-  a sub-message of Expr message.
+  Builder for base expressions on having statments. Below it is extended to full
+  having expressions using Any_builder_base<> template.
 */
 
-template <class MSG>
+class Having_builder_base
+  : public Expr_builder_base
+{
+
+  bool m_first_id = true;
+
+protected:
+
+  template <class MSG>
+  Args_prc* get_args_builder(MSG&);
+
+  Args_prc* op(const char *name) override;
+  Args_prc* call(const api::Db_obj& db_obj) override;
+
+//  void id(const string &name, const api::Db_obj *coll) override;
+  void id(const string &name, const api::Db_obj *coll,
+                  const api::Doc_path &path) override;
+  void id(const api::Doc_path &path) override;
+
+};
+
+
+class Having_builder
+  : public Any_builder_base<Having_builder_base, Mysqlx::Expr::Expr>
+{
+
+public:
+
+  Having_builder()
+  {}
+
+  Having_builder(Mysqlx::Expr::Expr &msg, Args_conv *conv = NULL)
+  {
+    reset(msg, conv);
+  }
+
+protected:
+
+};
+
+
+/*
+  Builder used to store operator or function call arguments inside
+  a sub-message of Expr message.
+  BUILDER is a builder class to be used to construct individual arguments in the
+  list, for example Expr_builder.
+*/
+
+template <class MSG, class BUILDER>
 struct Args_builder
   : public Builder_base<MSG, api::Expr_list::Processor>
 {
@@ -676,7 +727,7 @@ struct Args_builder
   using Base::m_args_conv;
   using Base::reset;
 
-  Expr_builder m_arg_builder;
+  BUILDER m_arg_builder;
 
   Args_builder(MSG &msg, Args_conv *conv = NULL)
   {
@@ -698,7 +749,8 @@ inline
 Expr_builder_base::Args_prc*
 Expr_builder_base::get_args_builder(MSG &msg)
 {
-  m_args_builder.reset(new Args_builder<MSG>(msg, this->m_args_conv));
+
+  m_args_builder.reset(new Args_builder<MSG,Expr_builder>(msg, this->m_args_conv));
   return m_args_builder.get();
 }
 
@@ -790,22 +842,30 @@ void Scalar_builder_base<MSG>::octets(bytes val, Octets_content_type type)
 */
 
 inline
-Expr_builder_base::Args_prc*
-Expr_builder_base::op(const char *name)
+Mysqlx::Expr::Operator&
+Expr_builder_base::set_op(const char *name)
 {
   m_msg->set_type(Expr::OPERATOR);
   Mysqlx::Expr::Operator *op = m_msg->mutable_operator_();
   op->set_name(name);
-  return get_args_builder(*op);
+  return *op;
+}
+
+inline
+Expr_builder_base::Args_prc*
+Expr_builder_base::op(const char *name)
+{
+  return get_args_builder(set_op(name));
 }
 
 
 /*
   Callback for FUNC_CALL expression type
 */
+
 inline
-Expr_builder_base::Args_prc*
-Expr_builder_base::call(const api::Db_obj& db_obj)
+Mysqlx::Expr::FunctionCall &
+Expr_builder_base::set_call(const api::Db_obj& db_obj)
 {
   m_msg->set_type(Expr::FUNC_CALL);
   Mysqlx::Expr::FunctionCall *fc = m_msg->mutable_function_call();
@@ -815,8 +875,14 @@ Expr_builder_base::call(const api::Db_obj& db_obj)
   const string *schema = db_obj.get_schema();
   if (schema)
     id->set_schema_name(*schema);
+  return *fc;
+}
 
-  return get_args_builder(*fc);
+inline
+Expr_builder_base::Args_prc*
+Expr_builder_base::call(const api::Db_obj& db_obj)
+{
+  return get_args_builder(set_call(db_obj));
 }
 
 
@@ -950,6 +1016,126 @@ void Expr_builder_base::placeholder(unsigned pos)
   m_msg->set_position(pos);
 }
 
+/*
+  Having_builder implementation
+ */
+
+inline
+Expr_builder_base::Args_prc*
+Having_builder_base::op(const char *name)
+{
+  return get_args_builder(set_op(name));
+}
+
+inline
+Expr_builder_base::Args_prc*
+Having_builder_base::call(const api::Db_obj& db_obj)
+{
+  return get_args_builder(set_call(db_obj));
+}
+
+
+/*
+  On table mode, having is reported as alias->$.path so no need to change
+  anything
+*/
+
+inline
+void Having_builder_base::id(const string &name, const api::Db_obj *coll,
+                             const api::Doc_path &path)
+{
+  Expr_builder_base::id(name, coll);
+  Expr_builder_base::id(path);
+}
+
+/*
+  On document mode, having is reported as alias.path so we need to
+  report to protocol as alias->$.path[1].
+  This means that the first path position has to be a member and the rest
+  of path is reported as it used to be.
+*/
+inline
+void Having_builder_base::id(const api::Doc_path &path)
+{
+  if (!m_first_id)
+  {
+    Expr_builder_base::id(path);
+    m_first_id = true;
+    return;
+  }
+
+  m_first_id = false;
+
+  if (path.is_whole_document() || path.get_type(0) != api::Doc_path::MEMBER)
+    throw_error("Having expression should point to fields alias");
+
+
+  /*
+    Wrapper around Doc_path object which shifts all path elements by one, so
+    that a path like "foo.bar.baz" becomes "bar.baz". The first path element is
+    returned by projection_alias().
+  */
+
+  struct Doc_path_to_table : public api::Doc_path
+  {
+    Doc_path_to_table(const api::Doc_path &path)
+      : m_path(path)
+    {}
+
+    const api::Doc_path &m_path;
+
+    string projection_alias()
+    {
+      if (m_path.length() == 0 || m_path.get_type(0) != MEMBER)
+        throw_error("Having should refer to projection alias");
+      return *m_path.get_name(0);
+    }
+
+    bool is_whole_document() const override
+    {
+      return m_path.is_whole_document();
+    }
+
+    unsigned length() const override
+    {
+      auto len = m_path.length();
+      if (len > 0)
+        --len;
+      return len;
+    }
+
+    Type get_type(unsigned pos) const override
+    {
+      return m_path.get_type(pos+1);
+    }
+
+    const string* get_name(unsigned pos) const override
+    {
+      return m_path.get_name(pos+1);
+    }
+
+    const uint32_t* get_index(unsigned pos) const override
+    {
+      return m_path.get_index(pos+1);
+    }
+
+  };
+
+  Doc_path_to_table dp(path);
+
+  Expr_builder_base::id(dp.projection_alias(), nullptr, dp);
+  m_first_id = true;
+}
+
+template <class MSG>
+inline
+Having_builder_base::Args_prc*
+Having_builder_base::get_args_builder(MSG &msg)
+{
+
+  m_args_builder.reset(new Args_builder<MSG,Having_builder>(msg, this->m_args_conv));
+  return m_args_builder.get();
+}
 
 }}} // cdk::protocol::mysqlx
 

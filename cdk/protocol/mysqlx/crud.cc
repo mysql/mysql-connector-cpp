@@ -468,7 +468,7 @@ void set_find(Mysqlx::Crud::Find &msg,
 
   if (fs.having())
   {
-    Expr_builder expr_builder;
+    Having_builder expr_builder;
     expr_builder.reset(*msg.mutable_grouping_criteria());
     fs.having()->process(expr_builder);
   }
