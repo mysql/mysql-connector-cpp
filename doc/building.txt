@@ -6,8 +6,8 @@ Prerequisites
 To build Connector/C++, the following tools and libraries are required:
 
 - A C++ compiler that supports C++11. In case of gcc it must be at least
-  version 4.8. These compilers have been tested: gcc 4.8.4, 4.8.5, 4.9.2, 5.4.0,
-  6.3.0, 6.3.1, 7.1.1, 7.2.0, 7.2.1, clang 9.0.0, MS Visual Studio 2015.
+  version 4.8. These compilers have been tested: gcc 4.8.5, 5.4.0, 6.3.0, 6.3.1,
+  7.2.1, 7.3.0, 8.1.1, clang 9.0.0, MS Visual Studio 2015.
 
 - CMake 2.8.12 or later.
 
@@ -31,6 +31,16 @@ Only out-of-source builds are supported. To configure a build, execute
 $ cmake <Connector/C++ source location>
 ~~~~~~~
 
+By default Connector/C++ is configured to build using OpenSSL libraries that
+should be installed on the build system. To build connector with OpenSSL
+installed in a non-standard location or to build it with WolfSSL,
+use the option
+
+- `-DWITH_SSL=<path>`
+
+where `<path>` is the location of OpenSSL or WolfSSL installation
+(see [Building with WolfSSL](@ref wolfssl) for more information).
+
 If Boost libraries are required and `cmake` cannot find them, specify the
 correct location using the option:
 
@@ -48,34 +58,25 @@ To change this default install location use the option:
 - `-DCMAKE_INSTALL_PREFIX=<Install location>`
 
 
-Configuring SSL libraries
--------------------------
-Connector/C++ can be built with different SSL libraries.
-Use `-DWITH_SSL=<Option value>` to specify the desired SSL build type:
+### Building Connector/C++ with WolfSSL                         @anchor wolfssl
 
-- `system`    - build with external openSSL library installed on the system, the
-              library location is detected by cmake.
-- `<path>`    - build with external openSSL or WolfSSL library installed at
-              specified location.
+Connector/C++ can be built with WolfSSL instead of the default OpenSSL
+libraries. If built that way, the WolfSSL code is statically linked in and there
+are no external dependencies on WolfSSL libraries.
+This is in contrast to the default build with OpenSSL libraries which are
+linked dynamically and become an external dependency of the connector library
+(see @ref usage)
 
-@note OpenSSL notes: when Connector/C++ is configured to be built to use
-      OpenSSL it will make the connector library dependent on shared OpenSSL
-      libraries. When linking Connector/C++ dynamically, this dependency is
-      relevant only at run time. However, when linking statically to
-      the connector library the OpenSSL libraries should be explicitly
-      linked too. In Linux it means adding -lssl -lcrypto to the
-      compile/link command.
-      In Windows this is handled automatically.
+Building Connector/C++ with WolfSSL library requires downloading the WolfSSL
+source package version 3.14.0 or newer from here:
+`https://www.wolfssl.com/download/`.
+After setting `-DWITH_SSL=<path to WolfSSL sources>` Connector/C++ will build
+WolfSSL libraries and use them instead of OpenSSL.
 
-@note WolfSSL notes: Building Connector/C++ with WolfSSL library requires
-      downloading the WolfSSL source package verion 3.14.0 or newer from here:
-      `https://www.wolfssl.com/download/`
-
-      `-DWITH_SSL` has to point to the directory where source files were
-      unpacked. Connector/C++ will build WolfSSL libraries and link them
-      statically, so no extra dependencies will be required at run time.
-      Static is the only supported method of linking WolfSSL to Connector/C++.
-      Dynamic linking (as with OpenSSL) is not supported.
+@note Option `WITH_SSL` can be also used to point to a non-standard location
+where OpenSSL libraries are installed. `Cmake` detects whether `WITH_SSL`
+points to WolfSSL sources. If this is not the case, it will assume that OpenSSL
+should be used and that `WITH_SSL` points to OpenSSL install location.
 
 
 Building and testing
