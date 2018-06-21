@@ -86,7 +86,6 @@ option(BUILD_STATIC "Link statically with the connector library" OFF)
 
 if(BUILD_STATIC)
   message("Linking statically")
-  add_definitions(-DSTATIC_CONCPP)
 endif()
 
 option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
@@ -167,6 +166,9 @@ message("Looking for connector libraries here: ${CONCPP_STATIC_LIB_DIR}")
 
 message("Looking for the main library  ${libconcpp_name}")
 
+unset(CONCPP_LIB CACHE)
+unset(CONCPP_LIB_DEBUG CACHE)
+
 find_library(CONCPP_LIB NAMES ${libconcpp_name}
   PATHS "${CONCPP_STATIC_LIB_DIR}"
   NO_DEFAULT_PATH
@@ -188,28 +190,36 @@ endif()
 
 if(CONCPP_LIB)
   list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
-  if(NOT CONCPP_LIB_DEBUG AND NOT WIN32)
-    message(WARNING "Using generic library also for debug builds")
-    list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
-  else()
-    message(WARNING "Could not find debug libraries, building in debug mode will not work")
+  if(NOT CONCPP_LIB_DEBUG)
+    if(WIN32 AND BUILD_STATIC)
+      message(WARNING "Could not find debug libraries, building in debug mode will not work")
+    else()
+      message(WARNING "Using generic library also for debug builds")
+      list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
+    endif()
   endif()
 endif()
 
 if(CONCPP_LIB_DEBUG)
   list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
-  if(NOT CONCPP_LIB AND NOT WIN32)
-    message(WARNING "Using debug library also for non-debug builds")
-    list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
-  else()
-    message(WARNING "Only debug libraries found, building in release mode will not work")
+  if(NOT CONCPP_LIB)
+    if(WIN32 AND BUILD_STATIC)
+      message(WARNING "Only debug libraries found, building in release mode will not work")
+    else()
+      message(WARNING "Using debug library also for non-debug builds")
+      list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
+    endif()
   endif()
 endif()
 
 message("Using Connector/C++ 8.0 libraries: ${CONCPP_LIBS}")
 
+if(WITH_JDBC)
 
 message("Looking for the legacy library  ${libconcpp_jdbc_name}")
+
+unset(CONCPP_JDBC CACHE)
+unset(CONCPP_JDBC_DEBUG CACHE)
 
 find_library(CONCPP_JDBC NAMES ${libconcpp_jdbc_name}
   PATHS "${CONCPP_STATIC_LIB_DIR}"
@@ -233,25 +243,31 @@ endif()
 
 if(CONCPP_JDBC)
   list(APPEND CONCPP_JDBC_LIBS optimized "${CONCPP_JDBC}")
-  if(NOT CONCPP_JDBC_DEBUG AND NOT WIN32)
-    message(WARNING "Using generic library also for debug builds")
-    list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC}")
-  else()
-    message(WARNING "Could not find debug libraries, building in debug mode will not work")
+  if(NOT CONCPP_JDBC_DEBUG)
+    if(WIN32 AND BUILD_STATIC)
+      message(WARNING "Could not find debug libraries, building in debug mode will not work")
+    else()
+      message(WARNING "Using generic library also for debug builds")
+      list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC}")
+    endif()
   endif()
 endif()
 
 if(CONCPP_JDBC_DEBUG)
   list(APPEND CONCPP_JDBC_LIBS debug "${CONCPP_JDBC_DEBUG}")
-  if(NOT CONCPP_JDBC AND NOT WIN32)
-    message(WARNING "Using debug library also for non-debug builds")
-    list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC_DEBUG}")
-  else()
-    message(WARNING "Only debug libraries found, building in release mode will not work")
+  if(NOT CONCPP_JDBC)
+    if(WIN32 AND BUILD_STATIC)
+      message(WARNING "Only debug libraries found, building in release mode will not work")
+    else()
+      message(WARNING "Using debug library also for non-debug builds")
+      list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC_DEBUG}")
+    endif()
   endif()
 endif()
 
 message("Using Connector/C++ 8.0 legacy libraries: ${CONCPP_JDBC_LIBS}")
+
+endif(WITH_JDBC)
 
 
 #
@@ -281,25 +297,6 @@ endif()
 # If building statically and connector uses OpenSSL libraries, we need to
 # link to them too (however, no need to do it on Windows).
 #
-
-if(NOT WIN32)
-  message("@@@ NOT WIN32")
-endif()
-
-if(BUILD_STATIC)
-  message("@@@ BUILD_STATIC")
-endif()
-
-if(NOT WITH_SSL)
-  message("@@@ NOT WITH_SSL")
-endif()
-
-message("@@@ FILE ${WITH_SSL}/wolfssl/openssl/ssl.h")
-
-if(NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h)
-  message("@@@ NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h")
-endif()
-
 
 if(NOT WIN32 AND BUILD_STATIC AND (NOT WITH_SSL OR
    NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h))
@@ -412,6 +409,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 #
 
 include_directories(${CONCPP_INCLUDE_DIR})
+
+if(BUILD_STATIC)
+  add_definitions(-DSTATIC_CONCPP)
+endif()
 
 #
 # Note: Adding this so that bundled libraries such as openSSL can be found
