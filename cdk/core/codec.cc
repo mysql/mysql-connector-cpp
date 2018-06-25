@@ -108,9 +108,14 @@ foundation::api::String_codec* Format<TYPE_STRING>::codec() const
   static foundation::String_codec<foundation::codecvt_utf8>  utf8;
   static foundation::String_codec<foundation::codecvt_ascii> ascii;
 
-  return Charset::utf8 == charset() ?
-      (foundation::api::String_codec*)&utf8
-    : (foundation::api::String_codec*)&ascii;
+  switch (charset())
+  {
+  case Charset::utf8:
+  case Charset::utf8mb4:
+    return (foundation::api::String_codec*)&utf8;
+  default:
+    return (foundation::api::String_codec*)&ascii;
+  }
 }
 
 
