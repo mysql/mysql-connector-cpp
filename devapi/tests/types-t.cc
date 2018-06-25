@@ -408,7 +408,9 @@ TEST_F(Types, string)
     "CREATE TABLE test.types("
     "  c0 VARCHAR(10) COLLATE latin2_general_ci,"
     "  c1 VARCHAR(32) COLLATE utf8_swedish_ci,"
-    "  c2 VARCHAR(32) CHARACTER SET latin2"
+    "  c2 VARCHAR(32) CHARACTER SET latin2,"
+    "  c3 VARCHAR(32) CHARACTER SET utf8mb4,"
+    "  c4 VARCHAR(32)"  // use default collation
     ")"
   );
 
@@ -417,11 +419,12 @@ TEST_F(Types, string)
   string str0(L"Foobar");
   string str1(L"Mog\u0119 je\u015B\u0107 szk\u0142o");
 
-  types.insert().values(str0, str1, str1).execute();
+  types.insert().values(str0, str1, str1, str1, str1).execute();
 
   cout << "Table prepared, querying it..." << endl;
 
   RowResult res = getSchema("test").getTable("types").select().execute();
+
 
   const Column &c0 = res.getColumn(0);
   EXPECT_EQ(Type::STRING, c0.getType());
@@ -456,10 +459,26 @@ TEST_F(Types, string)
 
   EXPECT_EQ(CharacterSet::latin2, c2.getCharacterSet());
 
+  const Column &c3 = res.getColumn(3);
+  EXPECT_EQ(Type::STRING, c3.getType());
+  cout << "column #3 length: " << c3.getLength() << endl;
+  cout << "column #3 charset: " << c3.getCharacterSetName() << endl;
+  cout << "column #3 collation: " << c3.getCollationName() << endl;
+
+  EXPECT_EQ(CharacterSet::utf8mb4, c3.getCharacterSet());
+
+  const Column &c4 = res.getColumn(4);
+  EXPECT_EQ(Type::STRING, c4.getType());
+  cout << "column #4 length: " << c4.getLength() << endl;
+  cout << "column #4 charset: " << c4.getCharacterSetName() << endl;
+  cout << "column #4 collation: " << c4.getCollationName() << endl;
+
   Row row = res.fetchOne();
 
   EXPECT_EQ(str0, (string)row[0]);
   EXPECT_EQ(str1, (string)row[1]);
+  EXPECT_EQ(str1, (string)row[3]);
+  EXPECT_EQ(str1, (string)row[4]);
 
   /*
     FIXME: the third colum contains non-utf8 string which uses non-ascii
@@ -469,7 +488,7 @@ TEST_F(Types, string)
     Replace with EXPECT_EQ() once we handle all MySQL charsets.
   */
 
-  EXPECT_THROW((string)row[2], Error);
+  //EXPECT_THROW((string)row[2], Error);
 }
 
 
