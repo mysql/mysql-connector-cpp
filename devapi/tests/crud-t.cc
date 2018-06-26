@@ -1857,7 +1857,6 @@ TEST_F(Crud, add_empty)
 
 TEST_F(Crud, group_by_having)
 {
-  SKIP_TEST("bug#26310713");
   SKIP_IF_NO_XPLUGIN;
   SKIP_IF_SERVER_VERSION_LESS(5,7,19);
 
@@ -1876,7 +1875,8 @@ TEST_F(Crud, group_by_having)
   for (auto name : names)
   {
     std::stringstream json;
-    json <<"{ \"_id\":\""<< i << "\", \"user\":\"" << name << "\", \"age\":" << 20+i << "}";
+    json <<"{ \"_id\":\""<< i << "\", \"user\":\"" << name
+        << "\", \"birthday\": { \"day\":" << 20+i << "}}";
     coll.add(json.str()).execute();
     ++i;
   }
@@ -1906,22 +1906,22 @@ TEST_F(Crud, group_by_having)
     EXPECT_TRUE(tset.empty());
   };
 
-  auto coll_res = coll.find().fields("user AS user", "age as age").execute();
-  auto tbl_res = tbl.select("doc->$.user as user","doc->$.age as age").execute();
+  auto coll_res = coll.find().fields("user AS user", "birthday.day as bday").execute();
+  auto tbl_res = tbl.select("doc->$.user as user","doc->$.birthday.day as bday").execute();
 
   check_results(coll_res, tbl_res);
 
   cout << "Check with groupBy" << endl;
 
-  std::vector<string> fields = {"user", "age" };
+  std::vector<string> fields = {"user", "bday" };
   coll_res = coll.find()
-             .fields("user AS user", "age as age")
+             .fields("user AS user", "birthday.day as bday")
              .groupBy(fields)
              .execute();
 
   cout << "and on table" << endl;
-  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
-               .groupBy("user", "age")
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.birthday.day as bday")
+               .groupBy("user", "bday")
                .execute();
 
 
@@ -1932,15 +1932,15 @@ TEST_F(Crud, group_by_having)
   names.pop_back();
 
   coll_res = coll.find()
-             .fields("user AS user", "age as age")
-             .groupBy("user", "age")
-             .having(L"age > 20")
+             .fields(expr(R"({"user": user, "bday": { "date": birthday}})"))
+             .groupBy("user", "birthday")
+             .having(L"bday.date.day > 20")
              .execute();
 
   //and on table
-  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.birthday as bday")
             .groupBy(fields)
-            .having(L"age > 20")
+            .having(L"bday->$.day > 20")
             .execute();
 
   check_results(coll_res, tbl_res);
@@ -1948,15 +1948,15 @@ TEST_F(Crud, group_by_having)
   cout << "Same test but passing std::string to groupBy" << endl;
 
   coll_res = coll.find()
-             .fields("user AS user", "age as age")
-             .groupBy(std::string("user"), std::string("age"))
-             .having(std::string("age > 20"))
+             .fields("user AS user", "birthday.day as bday")
+             .groupBy(std::string("user"), std::string("bday"))
+             .having(std::string("bday > 20"))
              .execute();
 
   cout << "and on table" << endl;
-  tbl_res = tbl.select("doc->$.user as user", "doc->$.age as age")
+  tbl_res = tbl.select("doc->$.user as user", "doc->$.birthday.day as bday")
             .groupBy(fields)
-            .having(std::string("age > 20"))
+            .having(std::string("bday > 20"))
             .orderBy("user")
             .execute();
 
