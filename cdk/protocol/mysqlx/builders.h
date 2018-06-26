@@ -620,7 +620,7 @@ protected:
   template <class MSG>
   Args_prc* get_args_builder(MSG&);
 
-  Value_prc* val()
+  Value_prc* val() override
   {
     m_scalar_builder.reset(Expr_msg_traits::get_scalar(*m_msg), this->m_args_conv);
     return &m_scalar_builder;
