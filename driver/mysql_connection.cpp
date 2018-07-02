@@ -425,8 +425,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   sql::SQLString userName;
   sql::SQLString password;
-  sql::SQLString defaultCharset("utf8");
-  sql::SQLString characterSetResults("utf8");
+  sql::SQLString defaultCharset("utf8mb4");
+  sql::SQLString characterSetResults("utf8mb4");
 
   sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher, postInit;
   bool ssl_used = false;

@@ -493,9 +493,6 @@ void bugs::bug71606()
 {
   logMsg("bugs::bug71606");
 
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
-
   if (getMySQLVersion(con) < 56000)
   {
     SKIP("The server does not support tested functionality(utf8mb4 charset)");
@@ -1093,5 +1090,22 @@ void bugs::bug17227390()
   }
 }
 
+/* Bug #28204677 - The driver defaults to utf8mb4 */
+void bugs::bug28204677()
+{
+  logMsg("bugs::bug71606");
+
+  if (getMySQLVersion(con) < 57000)
+  {
+    SKIP("The server does not support tested functionality(default utf8mb4 charset)");
+  }
+
+  res.reset(stmt->executeQuery("SHOW VARIABLES like 'character_set_client'"));
+  res->next();
+
+  ASSERT_EQUALS(res->getString(2),"utf8mb4");
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
+
