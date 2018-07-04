@@ -112,9 +112,9 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
   case sql::mysql::MYSQL_OPT_GUESS_CONNECTION: return ::MYSQL_OPT_GUESS_CONNECTION;
   case sql::mysql::MYSQL_SET_CLIENT_IP: return ::MYSQL_SET_CLIENT_IP;
   case sql::mysql::MYSQL_SECURE_AUTH: return ::MYSQL_SECURE_AUTH;
-#endif
-#if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
+# if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
   case sql::mysql::MYSQL_OPT_SSL_ENFORCE: return ::MYSQL_OPT_SSL_ENFORCE;
+# endif
 #endif
 
   }
