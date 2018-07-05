@@ -508,7 +508,7 @@ void preparedstatement::assortedSetType()
         pstmt->setString(0, "overflow");
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -518,7 +518,7 @@ void preparedstatement::assortedSetType()
         pstmt->setString(2, "invalid");
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -532,7 +532,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBigInt(0, it->value);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -542,7 +542,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBigInt(2, it->value);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -556,7 +556,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBoolean(0, false);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -566,7 +566,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBoolean(2, false);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -580,7 +580,7 @@ void preparedstatement::assortedSetType()
         pstmt->setDateTime(0, it->value);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -590,7 +590,7 @@ void preparedstatement::assortedSetType()
         pstmt->setDateTime(2, it->value);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -604,7 +604,7 @@ void preparedstatement::assortedSetType()
         pstmt->setDouble(0, (double) 1.23);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -614,7 +614,7 @@ void preparedstatement::assortedSetType()
         pstmt->setDouble(2, (double) 1.23);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -628,7 +628,7 @@ void preparedstatement::assortedSetType()
         pstmt->setInt(0, (int32_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -638,7 +638,7 @@ void preparedstatement::assortedSetType()
         pstmt->setInt(2, (int32_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -652,7 +652,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt(0, (uint32_t) 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -662,7 +662,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt(2, (uint32_t) 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -682,7 +682,7 @@ void preparedstatement::assortedSetType()
           pstmt->setNull(0, it->ctype);
           FAIL("Invalid argument not detected");
         }
-        catch (sql::InvalidArgumentException)
+        catch (sql::InvalidArgumentException&)
         {
         }
 
@@ -692,7 +692,7 @@ void preparedstatement::assortedSetType()
           pstmt->setNull(2, it->ctype);
           FAIL("Invalid argument not detected");
         }
-        catch (sql::InvalidArgumentException)
+        catch (sql::InvalidArgumentException&)
         {
         }
       }
@@ -707,7 +707,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt(0, (uint32_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -717,7 +717,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt(2, (uint32_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -731,7 +731,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt64(0, (uint64_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -741,7 +741,7 @@ void preparedstatement::assortedSetType()
         pstmt->setUInt64(2, (uint64_t) - 1);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -757,7 +757,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBlob(0, &blob_input_stream);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -767,7 +767,7 @@ void preparedstatement::assortedSetType()
         pstmt->setBlob(2, &blob_input_stream);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -940,7 +940,7 @@ void preparedstatement::getMetaData()
         meta_ps->getCatalogName(0);
         FAIL("Invalid argument not detected");
       }
-      catch (sql::InvalidArgumentException)
+      catch (sql::InvalidArgumentException&)
       {
       }
 
@@ -1143,6 +1143,9 @@ void preparedstatement::callSPWithPS()
     msg2.str("");
     msg2 << "... val = '" << res->getString(1) << "'";
     logMsg(msg2.str());
+
+    while(pstmt->getMoreResults())
+    {}
 
     try
     {
@@ -1435,7 +1438,7 @@ void preparedstatement::blob()
       pstmt->setBlob(3, &blob_input_stream);
       FAIL("Invalid index not detected");
     }
-    catch (sql::SQLException)
+    catch (sql::SQLException&)
     {
     }
 

@@ -700,8 +700,6 @@ endif()
 
 # For dynamic linking use the built-in sys and strings
 if(NOT MYSQLCLIENT_STATIC_LINKING)
-   list(APPEND SYS_LIBRARIES "mysql_sys")
-   list(APPEND SYS_LIBRARIES "mysql_strings")
    list(APPEND SYS_LIBRARIES ${MYSQL_LIBRARIES})
    SET(MYSQL_LIBRARIES ${SYS_LIBRARIES})
 

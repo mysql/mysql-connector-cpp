@@ -84,7 +84,7 @@ static void driver_test_new_driver_exception()
   try {
     new sql::mysql::MySQL_Driver();
     ensure("Exception not thrown", false);
-  } catch (sql::InvalidArgumentException) { }
+  } catch (sql::InvalidArgumentException&) { }
 }
 
 /* {{{	*/

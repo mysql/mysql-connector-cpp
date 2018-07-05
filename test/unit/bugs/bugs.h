@@ -137,6 +137,8 @@ public:
 
   void bug17227390();
 
+  void bug28204677();
+
 };
 
 REGISTER_FIXTURE(bugs);

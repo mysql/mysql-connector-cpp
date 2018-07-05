@@ -68,8 +68,8 @@
 #define TEST_CASE( methodName ) \
   RegisterTestCase( new TestCase<TestSuiteClass>( *this, &TestSuiteClass::methodName, #methodName ) )
 
-#define SKIP( message ) TestsListener::setTestExecutionComment( String("SKIP ") + message );\
-  return
+#define SKIP( message ) { TestsListener::setTestExecutionComment( String("SKIP ") + message );\
+  return; }
 
 #define TODO( message ) TestsListener::setTestExecutionComment( String("TODO ") + message ); throw TestFailedException();
 

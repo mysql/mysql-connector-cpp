@@ -577,7 +577,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception I");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -591,7 +591,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception II");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -605,7 +605,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception III");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -619,7 +619,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception IV");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -632,7 +632,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception V");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -645,7 +645,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception VI");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -658,7 +658,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception VII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -671,7 +671,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception VIII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -684,7 +684,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception IX");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -697,7 +697,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception X");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -710,7 +710,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XI");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -723,7 +723,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -736,7 +736,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XIII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -751,7 +751,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XIV");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       expected
     }
@@ -765,7 +765,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XV");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -778,7 +778,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XVI");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -791,7 +791,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XVII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -804,7 +804,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XVIII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -817,7 +817,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XIX");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -830,7 +830,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XX");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -843,7 +843,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXI");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -856,7 +856,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -869,7 +869,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXIII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -882,7 +882,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXIV");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -895,7 +895,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXV");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -908,7 +908,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXVI");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -921,7 +921,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXVII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -934,7 +934,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXVIII");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -947,7 +947,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXIX");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -960,7 +960,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXX");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -974,7 +974,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXXI - sslVerify");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -988,7 +988,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXXII - sslCRL");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -1001,7 +1001,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXXIII - sslCRLPath");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -1014,7 +1014,7 @@ void connection::connectUsingMapWrongTypes()
       con.reset(driver->connect(connection_properties));
       FAIL("No exception XXXIII - rsaKey");
     }
-    catch (sql::InvalidArgumentException)
+    catch (sql::InvalidArgumentException&)
     {
       /* expected */
     }
@@ -2914,7 +2914,7 @@ void connection::reconnect()
       res.reset(stmt->executeQuery("SELECT sleep(10);"));
       FAIL("Connection didn't timed out");
     }
-    catch (sql::SQLException /*&e*/)
+    catch (sql::SQLException &/*e*/)
     {
       ASSERT(con->reconnect());
       res.reset(stmt->executeQuery("SELECT 1;"));
@@ -2952,7 +2952,7 @@ void connection::reconnect()
       res.reset(stmt->executeQuery("SELECT sleep(10);"));
       FAIL("Connection didn't timed out");
     }
-    catch (sql::SQLException /*&e*/)
+    catch (sql::SQLException &/*e*/)
     {
       ASSERT(con->reconnect());
       res.reset(stmt->executeQuery("SELECT 1;"));

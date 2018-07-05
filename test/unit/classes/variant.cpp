@@ -318,7 +318,7 @@ void variant::getUsingWrongDatatype()
 
     FAIL("No exception II");
   }
-  catch (sql::InvalidArgumentException)
+  catch (sql::InvalidArgumentException&)
   {
   /* expected */
   }

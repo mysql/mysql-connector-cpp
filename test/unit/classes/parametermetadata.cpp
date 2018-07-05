@@ -68,7 +68,7 @@ void parametermetadata::getMeta()
     pstmt->getParameterMetaData();
     FAIL("Closed connection not detected");
   }
-  catch (sql::InvalidInstanceException)
+  catch (sql::InvalidInstanceException&)
   {
   }
 
@@ -99,7 +99,7 @@ void parametermetadata::getParameterCount()
     pstmt->getParameterMetaData();
     FAIL("Closed connection not detected");
   }
-  catch (sql::InvalidInstanceException)
+  catch (sql::InvalidInstanceException&)
   {
   }
 
