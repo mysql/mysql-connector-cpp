@@ -30,6 +30,10 @@
 
 #include "json_parser.h"
 #include <mysql/cdk.h>
+#include "rapidjson/reader.h"
+#include "rapidjson/error/en.h"
+#include <stack>
+
 
 PUSH_SYS_WARNINGS
 #include <stdlib.h>
@@ -49,6 +53,302 @@ using cdk::string;
 using cdk::JSON;
 typedef  cdk::JSON::Processor Processor;
 
+void JSON_parser::process(Expr_base::Processor &prc) const
+{
+  rapidjson::Reader m_parser;
+  rapidjson::InsituStringStream ss(const_cast<char*>(m_json.data()));
+
+  /*
+    struck to be used has handler on rapidjson parser
+  */
+  struct Processor_cvt
+  {
+
+    struct processors
+    {
+      Processor *m_obj = nullptr;
+      Processor::Any_prc* m_key = nullptr;
+      Processor::Any_prc::List_prc* m_arr = nullptr;
+
+      processors(Processor *obj)
+      {
+        m_obj = obj;
+      }
+
+      processors(Processor::Any_prc* key)
+      {
+        m_key = key;
+      }
+
+      processors(Processor::Any_prc::List_prc* arr)
+      {
+        m_arr = arr;
+      }
+    };
+
+    std::stack<processors> m_stack;
+
+    Processor_cvt (Processor &prc)
+    {
+      m_stack.push(&prc);
+    }
+
+    bool Null()
+    {
+      if (m_stack.empty())
+        return false;
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->null();
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->null();
+      return true;
+    }
+
+    bool Bool(bool b)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->yesno(b);
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->yesno(b);
+      else
+        return false;
+
+      return true;
+    }
+
+    bool Int(int i)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->num(static_cast<int64_t>(i));
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->num(static_cast<int64_t>(i));
+      else
+        return false;
+
+      return true;
+    }
+
+    bool Uint(unsigned u)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->num(static_cast<uint64_t>(u));
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->num(static_cast<uint64_t>(u));
+      else
+        return false;
+
+      return true;
+    }
+
+    bool Int64(int64_t i)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->num(i);
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->num(i);
+      else
+        return false;
+
+      return true;
+    }
+
+    bool Uint64(uint64_t u)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->num(u);
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->num(u);
+      else
+        return false;
+      return true;
+    }
+
+    bool Double(double d)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->num(d);
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->num(d);
+      else
+        return false;
+      return true;
+    }
+
+    bool RawNumber(const char* /*str*/,
+                   rapidjson::SizeType /*length*/,
+                   bool /*copy*/)
+    {
+      // not needed
+        return false;
+    }
+
+    bool String(const char* str, rapidjson::SizeType length, bool /*copy*/)
+    {
+      if (m_stack.empty())
+        return false;
+
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.top().m_key->scalar()->str(std::string(str, length));
+        m_stack.pop();
+      }
+      else if (m_stack.top().m_arr)
+        m_stack.top().m_arr->list_el()->scalar()->str(std::string(str, length));
+
+      return true;
+    }
+
+    bool Key(const char* str, rapidjson::SizeType length, bool /*copy*/)
+    {
+      if (m_stack.empty())
+        return false;
+
+      if (m_stack.top().m_obj)
+        m_stack.push(m_stack.top().m_obj->key_val(std::string(str, length)));
+      else
+        return false;
+
+      return true;
+    }
+
+    bool StartObject()
+    {
+      if (m_stack.empty())
+        return false;
+
+      if(m_stack.top().m_key)
+      {
+        m_stack.push(m_stack.top().m_key->doc());
+      }
+      else if (m_stack.top().m_arr)
+      {
+        m_stack.push(m_stack.top().m_arr->list_el()->doc());
+      }
+      else if (!m_stack.top().m_obj)
+        return false;
+
+      m_stack.top().m_obj->doc_begin();
+
+      return true;
+    }
+
+
+    bool EndObject(rapidjson::SizeType )
+    {
+      if(m_stack.empty())
+        return false;
+
+      if (m_stack.top().m_obj)
+      {
+        m_stack.top().m_obj->doc_end();
+      }
+
+      m_stack.pop(); // Pop obj
+
+      if (!m_stack.empty() && m_stack.top().m_key)
+        m_stack.pop(); // Pop key
+
+      return true;
+    }
+    bool StartArray()
+    {
+      if (m_stack.empty() )
+        return false;
+
+      if (m_stack.top().m_key)
+      {
+        m_stack.push(m_stack.top().m_key->arr());
+      }
+      else if (m_stack.top().m_arr)
+      {
+        m_stack.push(m_stack.top().m_arr->list_el()->arr());
+      }
+      else return false;
+
+      m_stack.top().m_arr->list_begin();
+
+      return true;
+    }
+
+    bool EndArray(rapidjson::SizeType )
+    {
+      if (m_stack.empty() )
+        return false;
+
+      if (!m_stack.top().m_arr)
+        return false;
+
+      m_stack.top().m_arr->list_end();
+      m_stack.pop();// Pop array
+      if (!m_stack.empty() && m_stack.top().m_key)
+        m_stack.pop();// pop key
+
+      return true;
+    }
+
+  };
+
+  Processor_cvt cvt(prc);
+
+  /*
+     kParseInsituFlag is used to reduce memory usage and increase speed.
+  */
+
+  auto error = m_parser.Parse<rapidjson::kParseInsituFlag>(ss, cvt);
+  if (error.IsError())
+  {
+    throw JSON_parser::Error(m_json,
+                             error.Offset(),
+                             rapidjson::GetParseError_En(error.Code()));
+  }
+}
 
 void json_parse(const string &json, Processor &dp)
 {

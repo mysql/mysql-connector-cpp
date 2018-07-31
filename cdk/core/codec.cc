@@ -515,7 +515,7 @@ size_t Codec<TYPE_FLOAT>::to_bytes(double val, bytes buf)
 size_t Codec<TYPE_DOCUMENT>::from_bytes(bytes data, JSON::Processor &jp)
 {
   std::string json_string(data.begin(), data.end());
-  JSON_parser parser(json_string);
+  JSON_parser parser(std::move(json_string));
   parser.process(jp);
   return 0; // FIXME
 }

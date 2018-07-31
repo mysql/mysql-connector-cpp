@@ -60,6 +60,14 @@ DbDoc::DbDoc(const std::string &json)
   CATCH_AND_WRAP
 }
 
+DbDoc::DbDoc(std::string &&json)
+{
+  try {
+    m_impl = std::make_shared<Impl::JSONDoc>(std::move(json));
+  }
+  CATCH_AND_WRAP
+}
+
 
 DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
   : m_impl(impl)

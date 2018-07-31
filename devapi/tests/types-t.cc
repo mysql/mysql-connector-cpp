@@ -587,7 +587,7 @@ TEST_F(Types, json)
     EXPECT_TRUE(doc.hasField("arr"));
     EXPECT_TRUE(doc.hasField("sub"));
 
-    EXPECT_EQ(Value::INT64, doc["foo"].getType());
+    EXPECT_EQ(Value::UINT64, doc["foo"].getType());
     EXPECT_EQ(Value::ARRAY, doc["arr"].getType());
     EXPECT_EQ(Value::DOCUMENT, doc["sub"].getType());
 
@@ -647,6 +647,64 @@ TEST_F(Types, json)
     }
   }
 
+  //JSON Error reporting
+  {
+    {
+      const string not_ending_double_quote[]=
+      {{LR"({"This is a wrong:"JSON Key"})"},
+       {LR"({"This is a wrong":"Value string})"},
+       {LR"({"This is a wrong":{"document":1})"},
+      };
+
+      for (auto &json : not_ending_double_quote)
+      {
+        try{
+          DbDoc doc(json);
+          for (auto field: doc)
+          {
+            std::cout << field << std::endl;
+          }
+        } catch(Error &e)
+        {
+          std::cout << e.what() << std::endl;
+        }
+      }
+    }
+
+    //stack overflow test
+    {
+      const int deep = 1000;
+      std::string stack_overflow("{");
+      for (int i=0; i < deep; ++i)
+      {
+        if (i == 0)
+        {
+          stack_overflow+=R"("overflow_doc":{ "overflow_arr":)";
+          stack_overflow.append(deep, '[');
+          stack_overflow+="1";
+          stack_overflow.append(deep, ']');
+          stack_overflow+=",";
+        }
+        else
+        {
+          stack_overflow+=R"("overflow_doc":{)";
+        }
+      }
+      stack_overflow.append(deep, '}');
+      stack_overflow += "}";
+      try{
+        DbDoc doc(stack_overflow);
+        doc.begin();
+        for (auto field: doc)
+        {
+          std::cout << field << std::endl;
+        }
+      } catch(Error &e)
+      {
+        FAIL() << e.what();
+      }
+    }
+  }
 }
 
 
