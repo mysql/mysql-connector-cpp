@@ -30,8 +30,10 @@
 
 #include "json_parser.h"
 #include <mysql/cdk.h>
+PUSH_SYS_WARNINGS
 #include "rapidjson/reader.h"
 #include "rapidjson/error/en.h"
+POP_SYS_WARNINGS
 #include <stack>
 
 
