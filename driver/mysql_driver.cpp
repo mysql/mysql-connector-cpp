@@ -70,8 +70,7 @@ namespace mysql
 {
 
 static const ::sql::SQLString emptyStr("");
-/* Mapping by client name is probably not enough here */
-static std::map< sql::SQLString, boost::shared_ptr<MySQL_Driver> > driver;
+
 
 CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
 {
@@ -82,6 +81,9 @@ CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
 CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance_by_name(const char * const clientlib)
 {
   ::sql::SQLString dummy(clientlib);
+
+  /* Mapping by client name is probably not enough here */
+  static std::map< sql::SQLString, boost::shared_ptr<MySQL_Driver> > driver;
 
   std::map< sql::SQLString, boost::shared_ptr< MySQL_Driver > >::const_iterator cit;
 
