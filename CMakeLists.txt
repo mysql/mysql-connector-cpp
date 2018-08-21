@@ -32,6 +32,20 @@ CMAKE_POLICY(VERSION 2.8.12)
 cmake_policy(SET CMP0022 NEW)
 cmake_policy(SET CMP0023 OLD)
 
+SET(BUILDTYPE_DOCSTRING
+ "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or
+ CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel")
+
+#
+# If cmake is invoked with -DCMAKE_BUILD_TYPE,
+# respect user wishes and do not (re)define CMAKE_BUILD_TYPE. Otherwise,
+# use Relwithdebinfo.
+#
+IF(NOT DEFINED CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE "Debug" CACHE STRING
+  ${BUILDTYPE_DOCSTRING} FORCE)
+ENDIF()
+
 #
 # Prevent cmake from setting its default value of CMAKE_INSTALL_PREFIX
 # inside PROJECT() command.

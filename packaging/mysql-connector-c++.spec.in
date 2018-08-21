@@ -40,6 +40,10 @@
 %global dist            .sles12
 %endif
 
+%if 0%{?suse_version} == 1500
+%global dist            .sles15
+%endif
+
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
 Version:        @CONCPP_VERSION@
