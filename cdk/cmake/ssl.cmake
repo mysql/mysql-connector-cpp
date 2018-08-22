@@ -257,16 +257,53 @@ function(MYSQL_CHECK_SSL)
       message(STATUS "Using OpenSSL version: ${OPENSSL_VERSION}")
     endif()
 
-    #
-    # We assume that FindOpenSSL finds  2 libraries in this order.
-    #
+    #message("OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+    #message("SSL_LIB: ${OPENSSL_SSL_LIBRARY}")
+    #message("CRYPTO: ${OPENSSL_CRYPTO_LIBRARY}")
 
-    list(GET OPENSSL_LIBRARIES 0 OPENSSL_LIBRARY)
-    list(GET OPENSSL_LIBRARIES 1 CRYPTO_LIBRARY)
+
+    # We extract paths to the main and the crypto library from locations
+    # reported by FindOpenSSL. We take core of the case wehre OPENSSL_LIBRARIES
+    # contains debug/optimized variants - in this case we ignore debug libs.
+    #
+    # Note: Later versions of cmake report the main and crypto libraries
+    # separately, which would make this a bit easier. But we need to support
+    # cmake 2.8 which reports them only in a single OPENSSL_LIBRARIES list.
+
+    while(OPENSSL_LIBRARIES)
+
+      list(GET OPENSSL_LIBRARIES 0 entry)
+      list(REMOVE_AT OPENSSL_LIBRARIES 0)
+
+      if(entry STREQUAL "debug")
+        list(REMOVE_AT OPENSSL_LIBRARIES 0)
+      else()
+
+        if(entry MATCHES "optimized|general")
+          list(GET OPENSSL_LIBRARIES 0 path)
+          list(REMOVE_AT OPENSSL_LIBRARIES 0)
+        else()
+          set(path "${entry}")
+        endif()
+
+        get_filename_component(name "${path}" NAME_WE)
+
+        if(name MATCHES "ssl")
+          set(OPENSSL_LIBRARY "${path}")
+        else()
+          set(CRYPTO_LIBRARY "${path}")
+        endif()
+
+      endif()
+
+    endwhile()
+
 
     MESSAGE(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
     MESSAGE(STATUS "OPENSSL_LIBRARY: ${OPENSSL_LIBRARY}")
     MESSAGE(STATUS "CRYPTO_LIBRARY: ${CRYPTO_LIBRARY}")
+
+    set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARY}" "${CRYPTO_LIBRARY}")
 
     IF (WIN32)
       FIND_FILE(OPENSSL_APPLINK_C
