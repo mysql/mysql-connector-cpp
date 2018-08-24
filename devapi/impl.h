@@ -343,6 +343,11 @@ public:
     , m_parsed(false)
   {}
 
+  JSONDoc(std::string &&json)
+    : m_json(std::move(json))
+    , m_parsed(false)
+  {}
+
   void prepare();
 
   void print(std::ostream &out) const

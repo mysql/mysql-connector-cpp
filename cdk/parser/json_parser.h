@@ -94,36 +94,45 @@ private:
 class JSON_parser
   : public JSON
 {
-  Tokenizer m_toks;
 
+  class Error;
+
+  std::string m_json;
 public:
 
-  JSON_parser(const cdk::string &json)
-    : m_toks(json)
-  {}
-
-  void process(Processor &prc) const
+  JSON_parser(const std::string &json)
+    : m_json(json.begin(), json.end())
   {
-    It first = m_toks.begin();
-    It last  = m_toks.end();
-
-    if (m_toks.empty())
-      throw JSON_token_base::Error(first, L"Expectiong JSON document string");
-
-    /*
-      Note: passing m_toks.end() directly as constructor argument results
-      in "incompatible iterators" exception when comparing iterators (at
-      least on win, VS2010). Problem with passing temporary object?
-    */
-
-    Doc_parser<JSON_scalar_parser> parser(first, last);
-    if (!parser.parse(prc) || first != last)
-      throw JSON_token_base::Error(
-              first,
-              L"Unexpected characters after parsing JSON string"
-            );
+    m_json.push_back('\0');
   }
 
+  JSON_parser(std::string &&json)
+    : m_json(std::move(json))
+  {
+    m_json.push_back('\0');
+  }
+
+  void process(Processor &prc) const;
+};
+
+
+
+/*
+  Error class for JSON_parse
+
+  It is a specialization of the generic parser::Error_base which defines
+  convenience constructors.
+*/
+
+class JSON_parser::Error
+    : public parser::Error_base<std::string>
+{
+public:
+  Error(const std::string& parsed_text,
+        size_t pos,
+        const string& desc = string())
+    : parser::Error_base<std::string>(parsed_text, pos, desc)
+  {}
 };
 
 }  // parser

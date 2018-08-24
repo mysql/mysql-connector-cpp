@@ -157,6 +157,7 @@ public:
   */
 
   explicit DbDoc(const std::string&);
+  explicit DbDoc(std::string&&);
 
 
   /**
