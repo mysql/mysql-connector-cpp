@@ -39,10 +39,18 @@ PROJECT(MySQL_CONCPP_TEST)
 #
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
+#
+# WITH_SSL                tells if connector uses built-in SSL implementation
+#                         or relies on external OpenSSL libraries (*)
+#
+# WITH_JDBC               also build JDBC API test application
+#
 # WITH_BOOST              where to look for Boost (required only when building
 #                         JDBC API application)
 #
-# WITH_JDBC               build JDBC API test application
+# *) If WITH_SSL is set to "builtin" or if it points at WoflSSL sources then
+#    it is assumed that connector has SSL support built-in. In all other cases
+#    it is assumed that connector uses OpenSSL libraries.
 #
 # Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
 # set.
@@ -56,14 +64,30 @@ else()
   message("Generating 32bit code")
 endif()
 
+#
+# ========================================================================
+# Build configuration options
+#
 
-set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH "MySQL Connector/C++ 8.0 install location")
+set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH
+  "MySQL Connector/C++ 8.0 install location"
+)
+
+set(CONCPP_INCLUDE_DIR $ENV{CONCPP_INCLUDE_DIR} CACHE PATH
+  "Location of Connector/C++ 8.0 headers"
+)
+
+set(CONCPP_LIB_DIR $ENV{CONCPP_LIB_DIR} CACHE PATH
+  "Location of Connector/C++ 8.0 libraries"
+)
+
+# Set include and library paths if not given
 
 if(WITH_CONCPP)
-  if(NOT DEFINED CONCPP_INCLUDE_DIR)
+  if(NOT CONCPP_INCLUDE_DIR)
      set(CONCPP_INCLUDE_DIR "${WITH_CONCPP}/include")
   endif()
-  if(NOT DEFINED CONCPP_LIB_DIR)
+  if(NOT CONCPP_LIB_DIR)
     if(IS64BIT)
       set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib64")
     else()
@@ -72,13 +96,42 @@ if(WITH_CONCPP)
   endif()
 endif()
 
-if(NOT DEFINED CONCPP_INCLUDE_DIR OR NOT DEFINED CONCPP_LIB_DIR)
+# Location for static libraries (differs from base location on Windows)
+
+set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}")
+if(WIN32)
+  set(VS "vs14")
+  set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}/vs14")
+endif()
+
+
+if(NOT CONCPP_INCLUDE_DIR OR NOT CONCPP_LIB_DIR)
   message(FATAL_ERROR
     "This project requires MySQL Connector/C++ 8.0, please specify install location"
     " using WITH_CONCPP setting or set header/library paths with CONCPP_INCLUDE_DIR"
     " and CONCPP_LIB_DIR settings."
   )
 endif()
+
+if(NOT EXISTS "${CONCPP_INCLUDE_DIR}/mysqlx/xdevapi.h")
+  message(FATAL_ERROR
+    "Could not find MySQL Connector/C++ 8.0 headers at specified"
+    " location: ${CONCPP_INCLUDE_DIR}"
+  )
+endif()
+
+
+set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
+  "Set to 'builtin' if connector was built with built-in SSL support"
+)
+
+if(NOT WITH_SSL)
+  # Set to the default if WITH_SSL is not defined
+  set(WITH_SSL "system")
+elseif(EXISTS "${WITH_SSL}/wolfssl/openssl/ssl.h")
+  set(WITH_SSL "builtin")
+endif()
+
 
 option(WITH_JDBC "Also build the JDBC API test application" OFF)
 
@@ -96,254 +149,19 @@ else()
   message("Using dynamic runtime library.")
 endif()
 
-#
-# If connector was built with OpenSSL then WITH_SSL should be set accordingly
-# and we need to take care of the dependency on the OpenSSL libraries
-# (see below).
-#
-
-if($ENV{WITH_SSL})
-  # Environment variable takes the priority
-  set(WITH_SSL $ENV{WITH_SSL})
-elseif(NOT DEFINED WITH_SSL)
-  # Set to the default if WITH_SSL is not defined
-  set(WITH_SSL "system")
-endif()
-
-set(WITH_SSL ${WITH_SSL} CACHE STRING
-   "Use the same setting as used when building connector"
-)
-
-if(WIN32)
-  set(VS "vs14")
-endif()
-
 
 #
-# Find MySQL Connector/C++ at specified location.
+# ========================================================================
+# Compiler settings
 #
 
-
-if(NOT EXISTS "${CONCPP_INCLUDE_DIR}/mysqlx/xdevapi.h")
-  message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 8.0 headers at specified"
-    " location: ${CONCPP_INCLUDE_DIR}"
-  )
-endif()
-
-
-set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}")
-if(VS)
-   set(CONCPP_STATIC_LIB_DIR "${CONCPP_STATIC_LIB_DIR}/${VS}")
-endif()
-
-#
-#  There are 2 libraries for Connector/C++ 8.0. The new library with base
-#  name mysqlcppconn8 and the legacy library mysqlcppconn which is backward
-#  compatible with Connector/C++ 1.1.
-#
-#  Static versions of connector library have -static suffix. Additionally,
-#  on Windows they have -mt suffix if the library was built using static
-#  runtime libs (/MT compiler setting).
-#
-
-set(libconcpp_name mysqlcppconn8)
-set(libconcpp_jdbc_name mysqlcppconn)
-
-foreach(name libconcpp_name libconcpp_jdbc_name)
-
-if(BUILD_STATIC)
-  set(${name} "${${name}}-static")
-  if(WIN32 AND STATIC_MSVCRT)
-    set(${name} "${${name}}-mt")
-  endif()
-endif()
-
-endforeach()
-
-
-message("Looking for connector libraries here: ${CONCPP_STATIC_LIB_DIR}")
-
-message("Looking for the main library  ${libconcpp_name}")
-
-unset(CONCPP_LIB CACHE)
-unset(CONCPP_LIB_DEBUG CACHE)
-
-find_library(CONCPP_LIB NAMES ${libconcpp_name}
-  PATHS "${CONCPP_STATIC_LIB_DIR}"
-  NO_DEFAULT_PATH
-)
-
-find_library(CONCPP_LIB_DEBUG NAMES ${libconcpp_name}
-  PATHS "${CONCPP_STATIC_LIB_DIR}/debug"
-  NO_DEFAULT_PATH
-)
-
-if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
-  message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 8.0 library ${libconcpp_name} at specified"
-    " location: ${CONCPP_STATIC_LIB_DIR}"
-  )
-endif()
-
-# Set CONCPP_LIBS
-
-if(CONCPP_LIB)
-  list(APPEND CONCPP_LIBS optimized "${CONCPP_LIB}")
-  if(NOT CONCPP_LIB_DEBUG)
-    if(WIN32 AND BUILD_STATIC)
-      message(WARNING "Could not find debug libraries, building in debug mode will not work")
-    else()
-      message(WARNING "Using generic library also for debug builds")
-      list(APPEND CONCPP_LIBS general "${CONCPP_LIB}")
-    endif()
-  endif()
-endif()
-
-if(CONCPP_LIB_DEBUG)
-  list(APPEND CONCPP_LIBS debug "${CONCPP_LIB_DEBUG}")
-  if(NOT CONCPP_LIB)
-    if(WIN32 AND BUILD_STATIC)
-      message(WARNING "Only debug libraries found, building in release mode will not work")
-    else()
-      message(WARNING "Using debug library also for non-debug builds")
-      list(APPEND CONCPP_LIBS general "${CONCPP_LIB_DEBUG}")
-    endif()
-  endif()
-endif()
-
-message("Using Connector/C++ 8.0 libraries: ${CONCPP_LIBS}")
+include_directories("${CONCPP_INCLUDE_DIR}")
 
 if(WITH_JDBC)
 
-message("Looking for the legacy library  ${libconcpp_jdbc_name}")
-
-unset(CONCPP_JDBC CACHE)
-unset(CONCPP_JDBC_DEBUG CACHE)
-
-find_library(CONCPP_JDBC NAMES ${libconcpp_jdbc_name}
-  PATHS "${CONCPP_STATIC_LIB_DIR}"
-  NO_DEFAULT_PATH
-)
-
-find_library(CONCPP_JDBC_DEBUG NAMES ${libconcpp_jdbc_name}
-  PATHS "${CONCPP_STATIC_LIB_DIR}/debug"
-  NO_DEFAULT_PATH
-)
-
-if(CONCPP_JDBC OR CONCPP_JDBC_DEBUG)
-  set(HAS_JDBC ON)
-elseif(WITH_JDBC)
-  message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 8.0 legacy library"
-    " ${libconcpp_jdbc_name} at specified location ${CONCPP_STATIC_LIB_DIR}"
-  )
-endif()
-
-
-if(CONCPP_JDBC)
-  list(APPEND CONCPP_JDBC_LIBS optimized "${CONCPP_JDBC}")
-  if(NOT CONCPP_JDBC_DEBUG)
-    if(WIN32 AND BUILD_STATIC)
-      message(WARNING "Could not find debug libraries, building in debug mode will not work")
-    else()
-      message(WARNING "Using generic library also for debug builds")
-      list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC}")
-    endif()
-  endif()
-endif()
-
-if(CONCPP_JDBC_DEBUG)
-  list(APPEND CONCPP_JDBC_LIBS debug "${CONCPP_JDBC_DEBUG}")
-  if(NOT CONCPP_JDBC)
-    if(WIN32 AND BUILD_STATIC)
-      message(WARNING "Only debug libraries found, building in release mode will not work")
-    else()
-      message(WARNING "Using debug library also for non-debug builds")
-      list(APPEND CONCPP_JDBC_LIBS general "${CONCPP_JDBC_DEBUG}")
-    endif()
-  endif()
-endif()
-
-message("Using Connector/C++ 8.0 legacy libraries: ${CONCPP_JDBC_LIBS}")
-
-endif(WITH_JDBC)
-
-
-#
-# Connector/C++ requires pthread library on Unix. Legacy connector needs
-# even more.
-#
-
-IF(CMAKE_HOST_UNIX)
-  list(APPEND CONCPP_LIBS pthread)
-  if(NOT APPLE)
-    list(APPEND CONCPP_JDBC_LIBS pthread rt dl)
-  endif()
-ENDIF()
-
-#
-# On Solaris we additionally need socket and nsl libraries.
-#
-
-if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  list(APPEND CONCPP_LIBS socket nsl)
-  # TODO: Could be couple more libs required..
-  # MYSQL_LIBRARIES: stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
-  list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
-endif()
-
-#
-# If building statically and connector uses OpenSSL libraries, we need to
-# link to them too (however, no need to do it on Windows).
-#
-
-if(NOT WIN32 AND BUILD_STATIC AND (NOT WITH_SSL OR
-   NOT EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h))
-    list(APPEND CONCPP_LIBS ssl crypto)
-    list(APPEND CONCPP_JDBC_LIBS ssl crypto)
-endif()
-
-#
-# Use clang's native C++ runtime library to match the one used
-# by Connector/C++.
-#
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
-#
-# On Windows, in case of static linking, if MySQL Connector/C++ was built
-# with the static runtime then we must do the same here. Option STATIC_MSVCRT
-# selects the static runtime.
-#
-
-IF(WIN32)
-
-  set(runtime "dynamic")
-
-  IF(STATIC_MSVCRT)
-
-  set(runtime "static")
-
-  foreach(LANG C CXX)
-    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-    foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-      set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-    endforeach()
-    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-  endforeach(LANG)
-
-  ENDIF()
-
-ENDIF()
-
-#
-# Look for Boost which is required when building JDBC API application.
-#
-
-if(HAS_JDBC)
+  #
+  # Look for Boost which is required when building JDBC API application.
+  #
 
   if(DEFINED WITH_BOOST)
     set(BOOST_ROOT "${WITH_BOOST}")
@@ -384,8 +202,171 @@ if(HAS_JDBC)
 
   endif()
 
+  include_directories(${BOOST_INCLUDES})
+
 endif()
 
+
+#
+# To use DevAPI or JDBC API we must enable C++11
+#
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+#
+# Use clang's native C++ runtime library to match the one used
+# by Connector/C++.
+#
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
+
+#
+# Use static MSVC runtime on Windows if requested. If linking with static
+# connector library, a -mt variant of the library is needed in this case.
+#
+
+IF(WIN32 AND STATIC_MSVCRT)
+
+  foreach(LANG C CXX)
+    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
+    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
+  endforeach(LANG)
+
+ENDIF()
+
+
+#
+# ========================================================================
+# Set CONCPP_LIBS and CONCPP_JDBC_LIBS.
+#
+
+if(NOT BUILD_STATIC)
+
+  #
+  # Using dynamic connector library (that is easier).
+  #
+
+  if(WIN32)
+    # On Windows we link with the import library which is in the static
+    # library folder.
+    link_directories("${CONCPP_STATIC_LIB_DIR}")
+  else()
+    link_directories("${CONCPP_LIB_DIR}")
+  endif()
+
+  # Debug libraries, if present, are in the debug/ sub-folder of the main
+  # library folder. If debug libraries are not present, we use the same
+  # library for optimized and debug builds (debug_prefix is empty).
+
+  if(EXISTS "${CONCPP_LIB_DIR}/debug")
+    set(debug_prefix "debug/")
+  else()
+    set(debug_prefix)
+  endif()
+
+  set(CONCPP_LIBS
+    optimized mysqlcppconn8
+    debug     ${debug_prefix}mysqlcppconn8
+  )
+
+  set(CONCPP_JDBC_LIBS
+    optimized mysqlcppconn
+    debug     ${debug_prefix}mysqlcppconn8
+  )
+
+
+else(NOT BUILD_STATIC)
+
+  #
+  # Linking with static connector library
+  #
+
+  link_directories("${CONCPP_STATIC_LIB_DIR}")
+
+  if(EXISTS "${CONCPP_STATIC_LIB_DIR}/debug")
+    set(debug_prefix "debug/")
+  else()
+    set(debug_prefix)
+  endif()
+
+  #
+  #  Static versions of connector library have -static suffix. Additionally,
+  #  on Windows they have -mt suffix if the library was built using static
+  #  runtime libs (/MT compiler setting).
+  #
+
+  if(WIN32 AND STATIC_MSVCRT)
+    set(mt_suffix "-mt")
+  else()
+    set(mt_suffix)
+  endif()
+
+
+  set(CONCPP_LIBS
+    optimized mysqlcppconn8-static${mt_suffix}
+    debug     ${debug_prefix}mysqlcppconn8-static${mt_suffix}
+  )
+
+  set(CONCPP_JDBC_LIBS
+    optimized mysqlcppconn-static${mt_suffix}
+    debug     ${debug_prefix}mysqlcppconn-static${mt_suffix}
+  )
+
+  #
+  # These macros must be defined to correctly adjust declarations
+  # in connector public headers for linking with static library.
+  #
+
+  add_definitions(-DSTATIC_CONCPP)
+
+  if(WITH_JDBC)
+      add_definitions(-DCPPCONN_PUBLIC_FUNC=)
+  endif()
+
+  #
+  # Connector/C++ requires pthread library on Unix. Legacy connector needs
+  # even more.
+  #
+
+  IF(CMAKE_HOST_UNIX)
+    list(APPEND CONCPP_LIBS pthread)
+    if(NOT APPLE)
+      list(APPEND CONCPP_JDBC_LIBS pthread rt dl)
+    endif()
+  ENDIF()
+
+  #
+  # On Solaris we additionally need socket and nsl libraries.
+  #
+
+  if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    list(APPEND CONCPP_LIBS socket nsl)
+    # TODO: Could be couple more libs required..
+    # MYSQL_LIBRARIES: stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
+    list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
+  endif()
+
+  #
+  # If connector uses OpenSSL libraries, we need to
+  # link to them too (however, no need to do it on Windows).
+  #
+
+  if(NOT WIN32 AND NOT WITH_SSL STREQUAL "builtin")
+      list(APPEND CONCPP_LIBS ssl crypto)
+      list(APPEND CONCPP_JDBC_LIBS ssl crypto)
+  endif()
+
+
+endif(NOT BUILD_STATIC)
+
+
+#
+# ========================================================================
 #
 # Arrange for executables to be built in either "run" or "run/debug" location,
 # depending on the build type. This is to simplify dependencies management
@@ -396,7 +377,6 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run/debug)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
-
 foreach(config ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER "${config}" CONFIG)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG} run)
@@ -405,25 +385,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 
 
 #
-# Test programs that use MySQL Connector/C++.
+# Targets to build test applications.
 #
 
-include_directories(${CONCPP_INCLUDE_DIR})
-
-if(BUILD_STATIC)
-  add_definitions(-DSTATIC_CONCPP)
-endif()
-
-#
-# Note: Adding this so that bundled libraries such as openSSL can be found
-# at link time in case they are not installed on the system.
-#
-
-link_directories(${CONCPP_STATIC_LIB_DIR})
-
+add_executable(devapi_test devapi_test.cc)
+target_link_libraries(devapi_test ${CONCPP_LIBS})
 
 add_executable(xapi_test xapi_test.c)
 target_link_libraries(xapi_test ${CONCPP_LIBS})
+
+if(WITH_JDBC)
+
+  add_executable(jdbc_test jdbc_test.cc)
+  target_link_libraries(jdbc_test ${CONCPP_JDBC_LIBS})
+
+endif()
+
 
 #
 # Note: Connector/C++ library depends on C++ runtime library.
@@ -437,30 +414,9 @@ target_link_libraries(xapi_test ${CONCPP_LIBS})
 set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
 
 
-# To use DevAPI or JDBC API we must enable C++11
 
-if(NOT MSVC)
-  add_compile_options("-std=c++11")
-endif()
-
-
-add_executable(devapi_test devapi_test.cc)
-target_link_libraries(devapi_test ${CONCPP_LIBS})
-
-
-if(WITH_JDBC)
-
-  if(BUILD_STATIC)
-    add_definitions(-DCPPCONN_PUBLIC_FUNC=)
-  endif()
-
-  include_directories(${BOOST_INCLUDES})
-  add_executable(jdbc_test jdbc_test.cc)
-  target_link_libraries(jdbc_test ${CONCPP_JDBC_LIBS})
-
-endif()
-
-
+#
+# ========================================================================
 #
 # Copy shared libraries to the location where the executable is built.
 # This is necessary for Windows to find the required DLLs when running
@@ -498,4 +454,5 @@ file(INSTALL ${debug_libs} DESTINATION run/debug)
 if (NOT WIN32 AND NOT libs)
   file(INSTALL ${debug_libs} DESTINATION run)
 endif()
+
 
