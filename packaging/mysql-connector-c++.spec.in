@@ -86,42 +86,103 @@ Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
 This package contains the development header files and libraries necessary
 to develop MySQL client applications in C++.
 
+%package        test
+Summary:        Regression tests for MySQL Connector/C++
+%if 0%{?commercial}
+Requires:       mysql-connector-c++-commercial =  %{version}-%{release}
+Requires:       mysql-connector-c++-commercial-jdbc =  %{version}-%{release}
+Obsoletes:      mysql-connector-c++-test < %{version}-%{release}
+%else
+Requires:       mysql-connector-c++ =  %{version}-%{release}
+Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
+%endif
+%description    test
+This package contains the test files necessary to run regression
+test suite for MySQL Connector/C++
+
 %prep
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
 
 %build
-mkdir build && pushd build
 %{?rhel:export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc}
 %{?rhel:export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++}
+
+%if 0%{?with_tests:1} && 0%{?with_gtest:1}
+TEST_OPTS="-DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}"
+%else
+TEST_OPTS=
+%endif
+
+mkdir build-dynamic && pushd build-dynamic
 %if 0%{?fedora} || 0%{?rhel}
-%cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt}
+%cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    ${TEST_OPTS}
 %else
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    ${TEST_OPTS} \
     -DCMAKE_INSTALL_PREFIX="%_prefix" \
     -DCMAKE_C_FLAGS:STRING="%optflags" \
     -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
 make %{?_smp_mflags} VERBOSE=1
 popd
-mkdir static && pushd static
+
+mkdir build-static && pushd build-static
 %if 0%{?fedora} || 0%{?rhel}
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+  ${TEST_OPTS} \
   -DBUILD_STATIC=ON
 %else
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    ${TEST_OPTS} \
     -DBUILD_STATIC=ON \
     -DCMAKE_INSTALL_PREFIX="%_prefix" \
     -DCMAKE_C_FLAGS:STRING="%optflags" \
     -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
 make %{?_smp_mflags} VERBOSE=1
+popd
 
 %install
-pushd build
+pushd build-dynamic
 make DESTDIR=%{buildroot} install
+
+%if 0%{?with_tests:1} && 0%{?with_gtest:1}
+# Generating the test groups and run CMake again
+# to process the generated TestGroups.cmake file
+LD_LIBRARY_PATH=. ./run_unit_tests --generate_test_groups=TestGroups.cmake
+%if 0%{?fedora} || 0%{?rhel}
+%cmake ..
+%else
+cmake ..
+%endif
+# Move the test executable and test definition to private libdir
+install -d -m0755 %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic
+mv CTestTestfile.cmake %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic/
+mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic/
+%endif
 popd
-pushd static
+
+pushd build-static
 make DESTDIR=%{buildroot} install
+
+%if 0%{?with_tests:1} && 0%{?with_gtest:1}
+# Generating the test groups and run CMake again
+# to process the generated TestGroups.cmake file
+./run_unit_tests --generate_test_groups=TestGroups.cmake
+%if 0%{?fedora} || 0%{?rhel}
+%cmake ..
+%else
+cmake ..
+%endif
+# Move the test executable and test definition to private libdir
+install -d -m0755 %{buildroot}%{_libdir}/mysql-cppconn-8/static
+mv CTestTestfile.cmake %{buildroot}%{_libdir}/mysql-cppconn-8/static/
+mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/static/
+%endif
+popd
+
+# Adjust the directory structure for header files
 install -d -m0755 %{buildroot}%{_includedir}/mysql-cppconn-8
 mv %{buildroot}%{_includedir}/{jdbc,mysqlx} %{buildroot}%{_includedir}/mysql-cppconn-8
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
@@ -142,7 +203,7 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %{_libdir}/libmysqlcppconn.so.7*
 
 %files devel
-%doc README.txt build/BUILDINFO.txt LICENSE.txt
+%doc README.txt LICENSE.txt build-dynamic/BUILDINFO.txt
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so
@@ -152,7 +213,19 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %{_includedir}/mysql-cppconn-8/mysqlx
 %{_includedir}/mysql-cppconn-8/jdbc
 
+%files test
+%dir %{_libdir}/mysql-cppconn-8
+%dir %{_libdir}/mysql-cppconn-8/dynamic
+%dir %{_libdir}/mysql-cppconn-8/static
+%{_libdir}/mysql-cppconn-8/dynamic/run_unit_tests
+%{_libdir}/mysql-cppconn-8/dynamic/CTestTestfile.cmake
+%{_libdir}/mysql-cppconn-8/static/run_unit_tests
+%{_libdir}/mysql-cppconn-8/static/CTestTestfile.cmake
+
 %changelog
+* Fri Aug 24 2018 Kent Boortz <kent.boortz@oracle.com> - 8.0.13-1
+- Added "test" package
+
 * Wed May 16 2018 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.11-1
 - Adapt to MySQL Connector C++ 8.0
 
