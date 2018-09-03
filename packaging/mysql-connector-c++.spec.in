@@ -40,8 +40,8 @@
 %global dist            .sles12
 %endif
 
-%if 0%{?sle_version} == 150000 && 0%{?is_opensuse}
-%global dist            .lp150
+%if 0%{?suse_version} == 1500
+%global dist            .sl15
 %endif
 
 Summary:        MySQL database connector for C++
