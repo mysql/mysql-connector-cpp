@@ -306,13 +306,13 @@ Socket listen_and_accept(unsigned short port);
     If `true`, function will block. Otherwise, it will return immediately.
 
   @return
-    Same as POSIX `select` function.
+    Same as POSIX `poll` function.
 
   @throw cdk::foundation::Error
     If after testing socket is in an erroneous state, function throws.
 */
 
-int select_one(Socket socket, Select_mode mode, bool wait);
+int poll_one(Socket socket, Select_mode mode, bool wait);
 
 
 /**
