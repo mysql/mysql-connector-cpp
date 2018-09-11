@@ -51,9 +51,11 @@ SET(cdk_sources
   codec.cc
 )
 
+file(GLOB HEADERS *.h)
 
 add_library_ex(cdk STATIC
   ${cdk_sources}
+  ${HEADERS}
   OBJECTS
     ${target_mysqlx}
     ${target_proto_mysqlx}

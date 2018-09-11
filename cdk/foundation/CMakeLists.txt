@@ -111,12 +111,14 @@ IF(WITH_SSL)
 
 ENDIF()
 
+file(GLOB HEADERS *.h)
+
 #message("cdk foundation sources: ${sources}")
 
 SET(target_foundation ${cdk_target_prefix}foundation
     CACHE INTERNAL "CDK foundation target")
 
-ADD_LIBRARY(${target_foundation} OBJECT ${sources})
+ADD_LIBRARY(${target_foundation} OBJECT ${sources} ${HEADERS})
 ADD_COVERAGE(${target_foundation})
 add_ssl(${target_foundation})
 

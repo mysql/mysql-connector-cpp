@@ -58,6 +58,65 @@ ENDIF()
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #MESSAGE("added module path: ${PROJECT_SOURCE_DIR}/cmake")
 
+#
+# Basic compiler settings.
+#
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(cdk_stand_alone)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+
+    set(options
+      -m64
+      -std=c++11
+      -library=stdcpp
+      -xatomic=studio
+      -xtarget=generic     # more portable code
+      -xdebuginfo=no%decl  # faster build times
+      # optimization options
+      -xbuiltin=%all
+      -xlibmil
+    )
+
+    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+      list(APPEND options -nofstore)
+    endif()
+
+    string(REPLACE ";" " " options "${options}")
+
+    set(CMAKE_CXX_FLAGS "${options} ${CMAKE_CXX_FLAGS}")
+
+    #foreach(type EXE STATIC SHARED MODULE)
+    #  set(CMAKE_${type}_LINKER_FLAGS
+    #    "${options} ${CMAKE_${type}_LINKER_FLAGS}"
+    #  )
+    #endforeach()
+
+    set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO
+      "-g -xO2 ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
+    )
+    set(CMAKE_CXX_FLAGS_RELEASE "-g0 -xO3 ${CMAKE_CXX_FLAGS_RELEASE}")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL
+      "-g0 -xO3 -xsize ${CMAKE_CXX_FLAGS_MINSIZEREL}"
+    )
+
+    add_definitions(
+      -D_POSIX_PTHREAD_SEMANTICS
+      -D_REENTRANT
+    )
+
+  endif()
+
+endif(cdk_stand_alone)
+
+
+#
+# Library utilities (add_library_ex)
+#
+
 include(libutils)
 
 #
@@ -170,8 +229,6 @@ add_config(WITH_SSL_WOLFSSL)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 endif()
 
 set(HAVE_MOVE_SEMANTICS 1)
@@ -276,14 +333,15 @@ endif()
 endif()
 
 
+# Bundled code (with normal warning level)
+
+ADD_SUBDIRECTORY(extra)
+
+
 #
 # Set higher warning level on Windows to catch non-portable
 # code.
 #
-
-foreach(LANG C CXX)
-
-  set(SAVED_${LANG}_FLAGS ${CMAKE_${LANG}_FLAGS})
 
 IF(WIN32)
 
@@ -314,9 +372,9 @@ IF(WIN32)
   #
   # Note: 4520 only present on Visual Studio 12
 
-  set(CMAKE_${LANG}_FLAGS
-    "${CMAKE_${LANG}_FLAGS} /Wall /wd4512 /wd4127 /wd4100
-     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520"
+  add_compile_options(
+    /Wall /wd4512 /wd4127 /wd4100
+    /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520
   )
 
   # Note: We disable warnings related to C++11 language because we want this
@@ -326,7 +384,7 @@ IF(WIN32)
   # 5027 = move assignment was implicitly deleted
 
   if (MSVC_VERSION GREATER 1800)
-    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /wd5026 /wd5027")
+    add_compile_options(/wd5026 /wd5027)
   endif()
 
   # This is warning that has been fixed in later versions of MSVC:
@@ -334,16 +392,20 @@ IF(WIN32)
   # 4640 = construction of local static object is not thread-safe
 
   if (MSVC_VERSION LESS 1900)
-    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /wd4640")
+    add_compile_options(/wd4640)
   endif()
 
 ELSE()
 
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} -Wall")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+    # TODO: Enable -Wall after fixing warnings
+    add_compile_options(-errtags=yes -erroff=hidevf)
+  else()
+    add_compile_options(-Wall)
+  endif()
 
 ENDIF()
 
-endforeach(LANG)
 
 if(0)
   message("flags: ${CMAKE_C_FLAGS}")
@@ -369,14 +431,6 @@ ADD_SUBDIRECTORY(foundation)
 ADD_SUBDIRECTORY(protocol)
 ADD_SUBDIRECTORY(mysqlx)
 ADD_SUBDIRECTORY(core)
-
-# Restore default warnings level
-
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS ${SAVED_${LANG}_FLAGS})
-endforeach()
-
-ADD_SUBDIRECTORY(extra)
 
 #
 # Write configuration with detected settings.

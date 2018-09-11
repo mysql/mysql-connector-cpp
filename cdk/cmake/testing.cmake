@@ -53,7 +53,7 @@
 #
 
 IF(NOT DEFINED WITH_TESTS)
-  OPTION(WITH_TESTS "Build project's unit tests" ON)
+  OPTION(WITH_TESTS "Build project's unit tests" OFF)
 ENDIF()
 
 IF(NOT DEFINED WITH_COVERAGE)
@@ -182,6 +182,13 @@ IF(WITH_TESTS)
 
   else()
     #target_compile_options(${TEST} PRIVATE -Wno-unused-result)
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+    add_definitions(
+      -D_POSIX_PTHREAD_SEMANTICS
+      -D_REENTRANT
+    )
   endif()
 
   message(STATUS "Added test: ${TEST}")

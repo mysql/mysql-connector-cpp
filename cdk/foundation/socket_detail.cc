@@ -411,6 +411,7 @@ Socket socket(bool nonblocking, addrinfo* hints)
   else
   {
     throw_socket_error();
+    throw_error("Failed to create socket.");
   }
 
   return socket;

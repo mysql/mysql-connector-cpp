@@ -30,14 +30,27 @@
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/extra/rapidjson/include)
 
+# Note: copied from server configuration settings
+
+add_definitions(
+  -DRAPIDJSON_HAS_CXX11_NOEXCEPT=1
+  -DRAPIDJSON_HAS_CXX11_RANGE_FOR=1
+  -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=1
+  #-DRAPIDJSON_NO_SIZETYPEDEFINE   # this did not work with SunPro
+)
+
 ADD_SUBDIRECTORY(tests)
 
 SET(target_parser ${cdk_target_prefix}parser CACHE INTERNAL "CDK parser target")
+
+file(GLOB HEADERS *.h)
 
 add_library(${target_parser} OBJECT
   tokenizer.cc
   json_parser.cc
   expr_parser.cc
-  uri_parser.cc)
+  uri_parser.cc
+  ${HEADERS}
+)
 
 add_coverage(${target_parser})

@@ -46,6 +46,13 @@ PROJECT(Protobuf)
 file(WRITE ${PROJECT_BINARY_DIR}/config.h "\n")
 
 #
+# Produce position independent code.
+# Note: This is crucial on Solaris
+#
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+#
 # Do not export any symbols
 #
 # Note: The LIBPROTOBUF_EXPORTS macro should *not* be defined
@@ -53,6 +60,8 @@ file(WRITE ${PROJECT_BINARY_DIR}/config.h "\n")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-fvisibility=hidden)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+  add_compile_options(-xldscope=hidden)
 endif()
 
 
@@ -60,7 +69,7 @@ endif()
 # Solaris compile and link settings
 #
 
-if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
 
   add_definitions(-DSOLARIS_64BIT_ENABLED)
 
@@ -68,20 +77,10 @@ if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
     add_definitions(-DGOOGLE_PROTOBUF_ARCH_SPARC)
   endif()
 
-  add_compile_options(
-    -m64 -std=c++11
-    -xbuiltin=%all
-    -xlibmil
-    -xatomic=studio
+    add_definitions(
+    -D_POSIX_PTHREAD_SEMANTICS
+    -D_REENTRANT
   )
-
-  foreach(type EXE SHARED MODULE)
-
-    set(CMAKE_${type}_LINKER_FLAGS
-      "-m64 -std=c++11 -lstdc++ -xatomic=studio -lCrunG3 -lgcc_s -lc"
-    )
-
-  endforeach()
 
 endif()
 

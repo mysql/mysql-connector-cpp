@@ -41,11 +41,13 @@ if(WIN32)
   )
 endif()
 
+file(GLOB HEADERS *.h)
 
 ADD_LIBRARY(${target_mysqlx} OBJECT
   session.cc
   result.cc
   auth_hash.cc
+  ${HEADERS}
   )
 ADD_COVERAGE(${target_mysqlx})
 

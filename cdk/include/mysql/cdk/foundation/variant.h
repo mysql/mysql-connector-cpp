@@ -42,7 +42,9 @@
 PUSH_SYS_WARNINGS
 #include <type_traits> // std::aligned_storage
 #include <typeinfo>
+#include <new>
 POP_SYS_WARNINGS
+
 
 /*
   Note: MSVC 14 does not have certain C++11 constructs that are needed
