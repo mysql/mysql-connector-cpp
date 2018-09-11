@@ -46,17 +46,33 @@
   
     <Media Id='1' Cabinet='product.cab' EmbedCab='yes' />
 
-    <!-- Upgrade -->
-    <Upgrade Id="@UPGRADE_ID@">
+    <!-- Upgrade for 8.0.12 version -->
+    <?if "@Platform@"="x64"?>
+      <Upgrade Id="@UPGRADE_CODE_OLD@">
+        <?if '@PATCH_VERSION@' != '0'?>
+          <UpgradeVersion 
+            Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.12"
+            IncludeMinimum="yes"
+            Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.13"
+            IncludeMaximum="no"
+            Property="OLDERVERSIONBEINGUPGRADED_OLD"
+            MigrateFeatures="yes"
+            />
+        <?endif?>
+      </Upgrade>
+    <?endif?>
+
+    <!-- Upgrade for 8.0.13+ version -->
+    <Upgrade Id="@UPGRADE_CODE@">
       <?if '@PATCH_VERSION@' != '0'?>
-      <UpgradeVersion 
-        Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.0"
-        IncludeMinimum="yes"
-        Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
-        IncludeMaximum="yes"
-        Property="OLDERVERSIONBEINGUPGRADED"
-        MigrateFeatures="yes"
-        />
+        <UpgradeVersion 
+          Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.13"
+          IncludeMinimum="yes"
+          Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
+          IncludeMaximum="yes"
+          Property="OLDERVERSIONBEINGUPGRADED"
+          MigrateFeatures="yes"
+          />
       <?endif?>
       <UpgradeVersion 
         Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
@@ -71,18 +87,43 @@
       <RemoveExistingProducts After="InstallInitialize"/>
     </InstallExecuteSequence>
 
-
     <?if "@STATIC_MSVCRT@"="OFF" AND "@BUNDLE_RUNTIME_LIBRARIES@"="OFF" ?>
-      <Property Id="VS14REDIST">
-        <RegistrySearch Id="FindRedistVS14"
-            Root="HKLM"
-            Key="SOFTWARE\Microsoft\DevDiv\vc\Servicing\14.0\RuntimeMinimum"
-            Name="Version"
-            Type="raw" />
-      </Property>
-      <Condition Message="This application requires Visual Studio 2015 Redistributable. Please install the Redistributable then run this installer again.">
-        Installed OR VS14REDIST
-      </Condition>
+      <?if "@Platform@"="x64"?>
+        <Property Id="VS14REDISTX64"> 
+          <RegistrySearch Id="FindRedistVS14"
+              Root="HKLM"
+              Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+              Name="Version"
+              Type="raw" />
+        </Property>
+        <Property Id="VS14UPGRADE64">
+          <RegistrySearch Id="FindVS14Upgrade64"
+              Root="HKLM"
+              Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\09A86F63C932FD435BC8463B1035EC53"
+              Type="raw" />
+        </Property>
+        <Condition Message="This application requires Visual Studio 2015 x64 Redistributable. Please install the Redistributable then run this installer again.">
+          Installed OR VS14REDISTX64 OR VS14UPGRADE64
+        </Condition>
+      <?else?>
+        <Property Id="VS14REDISTX86">
+          <RegistrySearch Id="FindRedistVS14"
+              Win64="no"
+              Root="HKLM"
+              Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86"
+              Name="Version"
+              Type="raw" />
+        </Property>
+        <Property Id="VS14UPGRADE32">
+          <RegistrySearch Id="FindVS14Upgrade32"
+              Root="HKLM"
+              Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes\15E8B87C56C0E773581D82F286F95E50"
+              Type="raw" />
+        </Property>
+        <Condition Message="This application requires Visual Studio 2015 x86 Redistributable. Please install the Redistributable then run this installer again.">
+          Installed OR VS14REDISTX86 OR VS14UPGRADE32
+        </Condition> 
+       <?endif?>
     <?endif?> 
  
     <!-- Save/restore install location -->
@@ -102,23 +143,27 @@
     <Property Id="GETINSTALLDIR">
       <RegistrySearch Id="FindInstallLocation"
           Root="HKLM"
-          Win64="yes"
+          Win64="@Is64bit@"
           Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[OLDERVERSIONBEINGUPGRADED]"
           Name="InstallLocation"
           Type="raw" />
     </Property>
     <CustomAction Id="SetInstall"    Property="INSTALLDIR" Value="[GETINSTALLDIR]" />
     <InstallUISequence>
-       <Custom Action="SetInstall"    After="AppSearch">Installed</Custom>
+       <Custom Action="SetInstall"    After="AppSearch">GETINSTALLDIR</Custom>
     </InstallUISequence>
-    <Property Id="OLDERVERSION"> 
-      <RegistrySearch Id="FindOlderVersion"
-        Root="HKLM"
-        Win64="yes"
-        Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[OLDERVERSIONBEINGUPGRADED]"
-        Name="DisplayVersion"
-        Type="raw" />
+    <Property Id="GETINSTALLDIR_OLD">
+      <RegistrySearch Id="FindInstallLocationOld"
+          Root="HKLM"
+          Win64="@Is64bit@"
+          Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[OLDERVERSIONBEINGUPGRADED_OLD]"
+          Name="InstallLocation"
+          Type="raw" />
     </Property>
+    <CustomAction Id="SetInstallOld"    Property="INSTALLDIR" Value="[GETINSTALLDIR_OLD]" />
+    <InstallUISequence>
+       <Custom Action="SetInstallOld"    After="AppSearch">GETINSTALLDIR_OLD</Custom>
+    </InstallUISequence>
     <Property Id="INSTALLDIR2">
        <RegistrySearch Id="FindInstallLocation2"
           Root="HKLM"
@@ -130,7 +175,6 @@
     <InstallUISequence>
     <Custom Action="SetInstallDir2" After="AppSearch">INSTALLDIR2</Custom> 
     </InstallUISequence>
-
 
     <!-- UI -->
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"></Property>
@@ -156,7 +200,7 @@
 
     <!-- Installation root-->
     <Directory Id='TARGETDIR' Name='SourceDir'>
-      <Directory Id='ProgramFiles64Folder'>
+      <Directory Id='@PlatformProgramFilesFolder@'>
         <Directory Id='directory.MySQL' Name='MySQL'>
           <Directory Id='INSTALLDIR' Name='@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@'>
           </Directory>

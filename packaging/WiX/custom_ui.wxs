@@ -31,8 +31,9 @@
         <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
       </Control>
       <Control Id="Next" Type="PushButton" X="220" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
-        <Publish Event="NewDialog" Value="LicenseAgreementDlg">NOT OLDERVERSIONBEINGUPGRADED</Publish>
+        <Publish Event="NewDialog" Value="LicenseAgreementDlg">NOT OLDERVERSIONBEINGUPGRADED AND NOT OLDERVERSIONBEINGUPGRADED_OLD</Publish>
         <Publish Event="NewDialog" Value="UpgradeDlg">OLDERVERSIONBEINGUPGRADED</Publish>
+        <Publish Event="NewDialog" Value="UpgradeDlg">OLDERVERSIONBEINGUPGRADED_OLD</Publish>
 	  </Control>	  
       <Control Id="Back" Type="PushButton" X="156" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" Disabled="yes" />
       <Control Id="Description" Type="Text" X="135" Y="80" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeDlgDescription)" />
