@@ -67,46 +67,48 @@ SET(proto_mysqlx_defs
 
 if(NOT use_full_protobuf)
 
-#
-# Generate modified protobuf sources with LITE_RUNTIME option
-# TODO: Find a better way...
-#
+  #
+  # The custom command below invokes make_lite_pb.cmake script which modifies
+  # our pb definitions for use with protobuf-lite. Modified definitions are
+  # stored in ${LITE} location.
+  #
 
-set(LITE "${CMAKE_CURRENT_BINARY_DIR}/lite")
-file(MAKE_DIRECTORY ${LITE})
+  set(LITE "${CMAKE_CURRENT_BINARY_DIR}/lite")
+  file(MAKE_DIRECTORY "${LITE}")
 
-UNSET(proto_mysqlx_defs_lite)
+  add_custom_command(OUTPUT prepare_pb_lite
+    COMMAND ${CMAKE_COMMAND} -Dsrc="${PROTOCOL}" -Dtgt="${LITE}" -P make_lite_pb.cmake
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/prepare_pb_lite
+    DEPENDS ${proto_mysqlx_defs}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Preparing protobuf files for protobuf-lite"
+  )
 
-foreach(proto ${proto_mysqlx_defs})
-  get_filename_component(name ${proto} NAME)
-  #message("Generating lite version of protobuf source: ${name}")
-  file(READ "${proto}" CONTENTS)
-  unset(NEW_CONTENTS)
-  FOREACH(LINE ${CONTENTS})
-    STRING(REGEX REPLACE
-      "([\\t ]*)//[\\t ]*ifdef[\\t ]+(PROTOBUF_LITE)[\\t ]*:[\\t ]*(.*)" "\\1\\3"
-      LINE ${LINE}
+  #
+  # Collect paths to modified pb definition files in ${proto_mysqlx_defs_lite}.
+  #
+
+  UNSET(proto_mysqlx_defs_lite)
+
+  foreach(proto ${proto_mysqlx_defs})
+
+    get_filename_component(name ${proto} NAME)
+    list(APPEND proto_mysqlx_defs_lite "${LITE}/${name}")
+
+    # This custom command causes lite definitions to be re-generated if they
+    # do not exist or become outdated.
+
+    add_custom_command(
+      OUTPUT "${LITE}/${name}"
+      DEPENDS prepare_pb_lite
+      COMMENT ""
     )
-    LIST(APPEND NEW_CONTENTS "${LINE}")
-  ENDFOREACH()
 
-  STRING(REGEX REPLACE
-    "//[\\t ]+ifndef[\\t ]+PROTOBUF_LITE.*//[\\t ]+endif[\\t ]*" ""
-    NEW_CONTENTS "${NEW_CONTENTS}")
+  endforeach()
 
-  STRING(REGEX REPLACE
-    "(\r*\n)([^\r\n]*//[\\t ]+comment_out_if[\\t ]+PROTOBUF_LITE)" "\\1// \\2"
-    NEW_CONTENTS "${NEW_CONTENTS}")
+  set(proto_mysqlx_defs ${proto_mysqlx_defs_lite})
 
-  file(WRITE "${LITE}/${name}" "${NEW_CONTENTS}")
-  #configure_file(lite_template.in "${LITE}/${name}" @ONLY)
-
-   list(APPEND proto_mysqlx_defs_lite "${LITE}/${name}")
-endforeach()
-
-set(proto_mysqlx_defs ${proto_mysqlx_defs_lite})
-
-endif()
+endif(NOT use_full_protobuf)
 
 
 mysqlx_protobuf_generate_cpp(PB_SRCS PB_HDRS ${proto_mysqlx_defs})

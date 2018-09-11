@@ -36,58 +36,86 @@
 #  ADD_LIBRARY(target ... ${SRCS})
 #
 
-#
-# Configure Protobuf project in protobuf subfolder of build location.
-#
+if(DEFINED WITH_PROTOBUF)
 
-message("Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR}")
-file(REMOVE ${PROJECT_BINARY_DIR}/protobuf/CMakeCache.txt)
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf)
+  #
+  # If WITH_PROTOBUF is defined, it should point at external location where
+  # protobuf libraries were built using our CMakeLists.txt (so that
+  # exports.cmake was produced).
+  #
 
-#
-# Pick build configuration for the protobuf build. Normally we build using the
-# same build configuration that is used for building CDK (Release/Debug/etc.).
-# But we also support building CDK under non-standard build configuration
-# named 'Static' (this is a dirty trick we use to simplify building our MSIs).
-# Since protobuf does not know 'Static' build configuration, we build protobuf
-# under 'Release' configuration in that case.
-#
-# We need to handle two cases. For some build systems, like Makefiles, the build
-# configuration is specified at cmake time using CMAKE_BUILD_TYPE variable. In
-# that case we also set it during protobuf build configuration. Another case is
-# a multi-configuration build system like MSVC. In this case we use generator
-# expression to pick correct  configuration when the build command is invoked
-# below.
-#
-
-if(CMAKE_BUILD_TYPE)
-  if(CMAKE_BUILD_TYPE MATCHES "[Ss][Tt][Aa][Tt][Ii][Cc]")
-    set(set_build_type -DCMAKE_BUILD_TYPE=Release)
-  else()
-    set(set_build_type -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  if (NOT EXISTS "${WITH_PROTOBUF}/exports.cmake")
+    message(FATAL_ERROR
+      "Valid protobuf build not found at the given location"
+      " (could not find exports.cmake): ${WITH_PROTOBUF}"
+    )
   endif()
-endif()
 
-set(CONFIG_EXPR $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIG>>)
+  message("Using protobuf build at: ${WITH_PROTOBUF}")
 
-execute_process(
-  COMMAND ${CMAKE_COMMAND}
-          -G "${CMAKE_GENERATOR}"
-          ${set_build_type}
-          -DSTATIC_MSVCRT=${STATIC_MSVCRT}
-          -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
-          -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-          -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-          ${PROJECT_SOURCE_DIR}/protobuf
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
-  RESULT_VARIABLE protobuf_config
-)
+else(DEFINED WITH_PROTOBUF)
 
-if(protobuf_config)
-  message(FATAL_ERROR "Could not configure Protobuf build: ${protobuf_config}")
-endif()
+  #
+  # If external WITH_PROTOBUF location is not given, then we arrange for
+  # building of protbuf from bundled sources in ${PROJECT_BINARY_DIR}/protobuf.
+  #
 
-include(${PROJECT_BINARY_DIR}/protobuf/exports.cmake)
+  message("Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR}")
+  file(REMOVE "${PROJECT_BINARY_DIR}/protobuf/CMakeCache.txt")
+  file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/protobuf")
+
+  #
+  # Pick build configuration for the protobuf build. Normally we build using the
+  # same build configuration that is used for building CDK (Release/Debug/etc.).
+  # But we also support building CDK under non-standard build configuration
+  # named 'Static' (this is a dirty trick we use to simplify building our MSIs).
+  # Since protobuf does not know 'Static' build configuration, we build protobuf
+  # under 'Release' configuration in that case.
+  #
+  # We need to handle two cases. For some build systems, like Makefiles,
+  # the build configuration is specified at cmake time using CMAKE_BUILD_TYPE
+  # variable. In that case we also set it during protobuf build configuration.
+  # Another case is a multi-configuration build system like MSVC. In this case
+  # we use generator expression to pick correct  configuration when the build
+  # command is invoked below.
+  #
+
+  if(CMAKE_BUILD_TYPE)
+    if(CMAKE_BUILD_TYPE MATCHES "[Ss][Tt][Aa][Tt][Ii][Cc]")
+      set(set_build_type -DCMAKE_BUILD_TYPE=Release)
+    else()
+      set(set_build_type -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+    endif()
+  endif()
+
+  set(CONFIG_EXPR
+    $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIG>>
+  )
+
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+            -G "${CMAKE_GENERATOR}"
+            ${set_build_type}
+            -DSTATIC_MSVCRT=${STATIC_MSVCRT}
+            -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
+            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+            ${PROJECT_SOURCE_DIR}/protobuf
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
+    RESULT_VARIABLE protobuf_config
+  )
+
+  if(protobuf_config)
+    message(FATAL_ERROR "Could not configure Protobuf build: ${protobuf_config}")
+  endif()
+
+  set(WITH_PROTOBUF "${PROJECT_BINARY_DIR}/protobuf")
+
+endif(DEFINED WITH_PROTOBUF)
+
+# Import targets exported by protobuf
+
+include(${WITH_PROTOBUF}/exports.cmake)
 
 #
 # Protobuf library targets imported above (pb_protobuf
@@ -170,13 +198,13 @@ endif()
 if(CMAKE_VERSION VERSION_LESS 3.0)
   add_custom_command(OUTPUT ${PROTOBUF_BUILD_STAMP}
     COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
+    WORKING_DIRECTORY ${WITH_PROTOBUF}
     COMMENT "Building protobuf using configuration: $(Configuration)"
   )
 else()
   add_custom_command(OUTPUT ${PROTOBUF_BUILD_STAMP}
     COMMAND ${CMAKE_COMMAND} --build . --config ${CONFIG_EXPR}
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/protobuf
+    WORKING_DIRECTORY ${WITH_PROTOBUF}
     COMMENT "Building protobuf using configuration: $(Configuration)"
   )
 endif()
@@ -229,7 +257,7 @@ FUNCTION(MYSQLX_PROTOBUF_GENERATE_CPP SRCS HDRS)
       ARGS --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
            -I ${ABS_PATH} ${ABS_FIL}
            --proto_path=${PROJECT_SOURCE_DIR}/protobuf/protobuf-2.6.1/src
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
+      DEPENDS ${ABS_FIL} #${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler (${PROTOBUF_PROTOC_EXECUTABLE}) on ${FIL}"
       VERBATIM)
 
