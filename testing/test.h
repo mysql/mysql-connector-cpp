@@ -48,6 +48,7 @@ class Xplugin : public ::testing::Test
 {
 public:
 
+  class Client;
   class Session;
 
 protected:
@@ -68,6 +69,7 @@ protected:
   }
 
   const char *m_status;
+  mysqlx::Client *m_client;
   mysqlx::Session *m_sess;
   unsigned short m_port;
   const char *m_user;
@@ -84,6 +86,7 @@ protected:
     m_socket = NULL;
     m_user = NULL;
     m_password = NULL;
+    m_client = NULL;
     m_sess = NULL;
 
     const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -104,14 +107,18 @@ protected:
     m_password = getenv("XPLUGIN_PASSWORD");
 
         try {
-          m_sess = new mysqlx::Session(
+          m_client = new mysqlx::Client(
             SessionOption::PORT, m_port,
             SessionOption::USER, m_user,
             SessionOption::PWD, m_password
           );
+          m_sess = new mysqlx::Session(*m_client);
         }
         catch (const Error &e)
         {
+          delete m_client;
+          delete m_sess;
+          m_client = NULL;
           m_sess = NULL;
           m_status = e.what();
           FAIL() << "Could not connect to xplugin at " << m_port << ": " << e;
@@ -131,6 +138,7 @@ protected:
   virtual void TearDown()
   {
     delete m_sess;
+    delete m_client;
   }
 
   Schema getSchema(const string &name)
@@ -141,6 +149,14 @@ protected:
   SqlResult sql(const string &query)
   {
     return get_sess().sql(query).execute();
+  }
+
+  mysqlx::Client& get_client() const
+  {
+    // TODO: better error.
+    if (!m_client)
+      throw m_status;
+    return *m_client;
   }
 
   mysqlx::Session& get_sess() const
@@ -219,12 +235,23 @@ protected:
 };
 
 
+class Xplugin::Client : public mysqlx::Client
+{
+public:
+
+  Client(const Xplugin *test)
+    : mysqlx::Client(SessionOption::PORT, test->get_port(),
+                     SessionOption::USER, test->get_user(),
+                     SessionOption::PWD, test->get_password())
+  {}
+};
+
 class Xplugin::Session : public mysqlx::Session
 {
 public:
 
   Session(const Xplugin *test)
-    : mysqlx::Session(test->get_port(), test->get_user(), test->get_password())
+    : mysqlx::Session(test->get_client())
   {}
 };
 
@@ -239,6 +266,7 @@ public:
   Use_native_pwd(Xplugin &xplugin)
     : m_xplugin(xplugin)
   {
+    m_xplugin.sql("DROP USER If EXISTS unsecure_root ");
     m_xplugin.sql("CREATE USER unsecure_root IDENTIFIED WITH 'mysql_native_password';");
     m_xplugin.sql("grant all on *.* to unsecure_root;");
     m_user = m_xplugin.m_user;

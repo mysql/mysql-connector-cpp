@@ -126,7 +126,7 @@ public:
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
-    return m_sess->m_sess;
+    return *(m_sess->m_sess);
   }
 
   // Async execution

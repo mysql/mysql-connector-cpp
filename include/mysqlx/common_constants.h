@@ -56,6 +56,17 @@
 #define END_LIST
 
 
+#define CLIENT_OPTION_LIST(x)                                                  \
+  OPT_NUM(x,POOLING,1) /*!< disable/enable the pool. (Enabled by default)*/    \
+  OPT_NUM(x,POOL_MAX_SIZE,2) /*!< size of the pool. (Defaults to 25)*/         \
+  OPT_NUM(x,POOL_QUEUE_TIMEOUT,3) /*!< timeout for waiting for a connection in
+  the pool (ms). (No timeout by default)*/                                     \
+  OPT_NUM(x,POOL_MAX_IDLE_TIME,4)/*!< time for a connection to be in the pool
+  without being used (ms).(Will not expire by default)*/                       \
+  OPT_END(x,LAST,5) // ALWAYS POINTS TO LAST VALUE
+  END_LIST
+
+
 #define SESSION_OPTION_LIST(x)                                               \
   OPT_STR(x,URI,1)         /*!< connection URI or string */                  \
   /*! DNS name of the host, IPv4 address or IPv6 address */                  \
@@ -79,6 +90,7 @@
 #define OPT_STR(X,Y,N) X##_str(Y,N)
 #define OPT_NUM(X,Y,N) X##_num(Y,N)
 #define OPT_ANY(X,Y,N) X##_any(Y,N)
+#define OPT_END(X,Y,N) X##_end(Y,N)
 
 
 /*

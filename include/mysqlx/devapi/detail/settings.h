@@ -35,12 +35,14 @@
 #include "../document.h"
 
 #include <list>
+#include <chrono>
 
 namespace mysqlx {
 namespace internal {
 
 /*
-  Note: Options and SSLMode enumerations are given by Traits template parameter to allow defining (and documenting) them in the main settings.h header.
+  Note: Options and SSLMode enumerations are given by Traits template parameter
+  to allow defining (and documenting) them in the main settings.h header.
 */
 
 
@@ -50,16 +52,20 @@ class Settings_detail
 {
   using Value      = common::Value;
   using SOption    = typename Traits::Options;
+  using COption    = typename Traits::CliOptions;
   using SSLMode    = typename Traits::SSLMode;
   using AuthMethod = typename Traits::AuthMethod;
 
 public:
 
-  template <typename V, typename... Ty>
-  void set(SOption opt, V&& val, Ty&&... rest)
+
+
+  template <bool session_only,typename OPT,typename... Ty>
+  void set(OPT opt, Ty&&... rest)
   {
-    do_set(get_options(opt, std::forward<V>(val), std::forward<Ty>(rest)...));
+    do_set(get_options<session_only>(opt, std::forward<Ty>(rest)...));
   }
+
 
 protected:
 
@@ -75,7 +81,7 @@ protected:
   X(AUTH,AuthMethod)
 
 #define CHECK_OPT(Opt,Type) \
-  if (opt == Option::Opt) \
+  if (opt == Option_impl::Opt) \
     throw Error(#Opt "setting requires value of type " #Type);
 
   /*
@@ -83,7 +89,7 @@ protected:
     TODO: More precise type checking using per-option types.
   */
 
-  static Value opt_val(Option opt, Value &&val)
+  static Value opt_val(Option_impl opt, Value &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return val;
@@ -99,33 +105,63 @@ protected:
     typename std::enable_if<std::is_convertible<V,string>::value>::type*
     = nullptr
   >
-  static Value opt_val(Option opt, V &&val)
+  static Value opt_val(Option_impl opt, V &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return string(val);
   }
 
-  static Value opt_val(Option opt, SSLMode m)
+  static Value opt_val(Option_impl opt, SSLMode m)
   {
-    if (opt != Option::SSL_MODE)
+    if (opt != Option_impl::SSL_MODE)
       throw Error(
         "SessionSettings::SSLMode value can only be used on SSL_MODE setting."
       );
     return unsigned(m);
   }
 
-  static Value opt_val(Option opt, AuthMethod m)
+  static Value opt_val(Option_impl opt, AuthMethod m)
   {
-    if (opt != Option::AUTH)
+    if (opt != Option_impl::AUTH)
       throw Error(
         "SessionSettings::AuthMethod value can only be used on AUTH setting."
       );
     return unsigned(m);
   }
 
+  template<typename _Rep, typename _Period>
+  static Value opt_val(Client_option_impl opt,
+                       const std::chrono::duration<_Rep,_Period> &duration)
+  {
+    if (opt != Client_option_impl::POOL_QUEUE_TIMEOUT &&
+        opt != Client_option_impl::POOL_MAX_IDLE_TIME)
+    {
+      std::stringstream err_msg;
+      err_msg << "Option " << option_name(opt) << " does not accept time value";
+      throw_error(err_msg.str().c_str());
+    }
 
-  using opt_val_t = std::pair<Option, Value>;
-  using opt_list_t = std::list<opt_val_t>;
+    return Value(std::chrono::duration_cast<std::chrono::milliseconds>(duration)
+                 .count());
+  }
+
+
+  template <
+    typename V,
+    typename std::enable_if<std::is_convertible<V,int>::value>::type*
+    = nullptr
+  >
+  static Value opt_val(Client_option_impl, V &&val)
+  {
+    //ClientOptions are all bool or int, so convertible to int
+    return val;
+  }
+
+
+
+
+  using session_opt_val_t = std::pair<int, Value>;
+  using session_opt_list_t = std::list<session_opt_val_t>;
 
   /*
     Set list of options with consistency checks.
@@ -134,14 +170,44 @@ protected:
     be set without error, otherwise settings remain unchanged.
   */
 
-  void do_set(opt_list_t&&);
+  void do_set(session_opt_list_t&&);
+
+  /*
+    ClientOptions and Options are converted to int, one positive and other
+    negative
+  */
+
+  static
+  int option_to_int(Option_impl opt)
+  {
+    return static_cast<int>(opt);
+  }
+
+  static
+  int option_to_int(Client_option_impl opt)
+  {
+    return -static_cast<int>(opt);
+  }
+
+  static
+  Option_impl int_to_option(int opt)
+  {
+    return static_cast<Option_impl>(opt);
+  }
+
+  static
+  Client_option_impl int_to_client_option(int opt)
+  {
+    return static_cast<Client_option_impl>(-opt);
+  }
 
   /*
     Templates that collect varargs list of options into opt_list_t list
     that can be passed to do_set().
   */
 
-  static opt_list_t get_options()
+  template<bool session_only>
+  static session_opt_list_t get_options()
   {
     return {};
   }
@@ -151,14 +217,26 @@ protected:
     needed: get_options(Option opt, Option opt1, R&... rest).
   */
 
-  template <typename V, typename... Ty>
-  static opt_list_t get_options(SOption opt, V&& val, Ty&&... rest)
+  template <bool session_only,typename V, typename... Ty>
+  static session_opt_list_t get_options(SOption opt, V&& val, Ty&&... rest)
   {
-    Option oo = (Option)opt;
-    opt_list_t opts = get_options(std::forward<Ty>(rest)...);
-    opts.emplace_front(oo, opt_val(oo, std::forward<V>(val)));
-    return std::move(opts);
+    Option_impl oo = (Option_impl)opt;
+    session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
+    opts.emplace_front(option_to_int(oo), opt_val(oo, std::forward<V>(val)));
+    return opts;
   }
+
+  template <bool session_only,typename V, typename... Ty,
+            typename std::enable_if<!session_only,int>::type*
+            = nullptr>
+  static session_opt_list_t get_options(COption opt, V&& val, Ty&&... rest)
+  {
+    Client_option_impl oo = (Client_option_impl)opt;
+    session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
+    opts.emplace_front(option_to_int(oo), opt_val(oo, std::forward<V>(val)));
+    return opts;
+  }
+
 
   /*
     Note: Methods below rely on the fact that DevAPI SessionOption constants
@@ -167,17 +245,32 @@ protected:
 
   void erase(SOption opt)
   {
-    Settings_impl::erase((Option)opt);
+    Settings_impl::erase((Option_impl)opt);
+  }
+
+  void erase(COption opt)
+  {
+    Settings_impl::erase((Client_option_impl)opt);
   }
 
   bool has_option(SOption opt)
   {
-    return Settings_impl::has_option((Option)opt);
+    return Settings_impl::has_option((Option_impl)opt);
+  }
+
+  bool has_option(COption opt)
+  {
+    return Settings_impl::has_option((Client_option_impl)opt);
   }
 
   Value get(SOption opt)
   {
-    return Settings_impl::get((Option)opt);
+    return Settings_impl::get((Option_impl)opt);
+  }
+
+  Value get(COption opt)
+  {
+    return Settings_impl::get((Client_option_impl)opt);
   }
 };
 
@@ -186,3 +279,4 @@ protected:
 }  // mysqlx namespace
 
 #endif
+

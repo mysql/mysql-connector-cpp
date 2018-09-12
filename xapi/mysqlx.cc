@@ -71,7 +71,7 @@ using common::throw_error;
 #define SAFE_EXCEPTION_SILENT_END(ERR) } catch(...) { return ERR; }
 
 
-#define MYSQLX_HANDLE_ERROR(CODE,MSG) \
+#define MYSQLX_HANDLE_ERROR(OBJ,CODE,MSG) \
     if (out_error) \
     { \
       size_t cpy_len = strlen(MSG); \
@@ -82,18 +82,30 @@ using common::throw_error;
     } \
     if (err_code) \
       *err_code = CODE; \
-    if (sess) { delete sess; sess = NULL; } \
+    if (OBJ) { delete OBJ; OBJ = NULL; } \
 
 
 #define HANDLE_SESSION_EXCEPTIONS \
   catch(const cdk::Error &e) \
-  { MYSQLX_HANDLE_ERROR(e.code().value(), e.what()); } \
+  { MYSQLX_HANDLE_ERROR(sess, e.code().value(), e.what()); } \
   catch(const Mysqlx_exception &e) \
-  { MYSQLX_HANDLE_ERROR(e.code(), e.message().c_str()); } \
+  { MYSQLX_HANDLE_ERROR(sess, e.code(), e.message().c_str()); } \
   catch(const std::exception &e) \
-  { MYSQLX_HANDLE_ERROR(0, e.what()); } \
+  { MYSQLX_HANDLE_ERROR(sess, 0, e.what()); } \
   catch(...) \
-  { MYSQLX_HANDLE_ERROR(0, "Unknown error"); }
+  { MYSQLX_HANDLE_ERROR(sess, 0, "Unknown error"); }
+
+
+#define HANDLE_CLIENT_EXCEPTIONS \
+  catch(const cdk::Error &e) \
+  { MYSQLX_HANDLE_ERROR(cli, e.code().value(), e.what()); } \
+  catch(const Mysqlx_exception &e) \
+  { MYSQLX_HANDLE_ERROR(cli, e.code(), e.message().c_str()); } \
+  catch(const std::exception &e) \
+  { MYSQLX_HANDLE_ERROR(cli, 0, e.what()); } \
+  catch(...) \
+  { MYSQLX_HANDLE_ERROR(cli, 0, "Unknown error"); }
+
 
 #define PARAM_NULL_EMPTY_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM || !(*PARAM)) \
   { \
@@ -112,6 +124,37 @@ using common::throw_error;
   HANDLE->set_diagnostic(ERR_MSG, 0); \
   return ERR; \
   }
+
+
+static mysqlx_client_struct *
+_get_client(const char *conn_str, const char *client_opt,
+            char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+{
+  mysqlx_client_struct *cli = NULL;
+  try
+  {
+    cli = new mysqlx_client_struct(conn_str, client_opt);
+  }
+  HANDLE_CLIENT_EXCEPTIONS
+  return cli;
+}
+
+static mysqlx_client_struct *
+_get_client(mysqlx_session_options_t *opt,
+            char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+{
+  mysqlx_client_struct *cli = NULL;
+  try
+  {
+    if(!opt)
+    {
+      throw cdk::Error(0, "Client options structure not initialized");
+    }
+    cli = new mysqlx_client_struct(opt);
+  }
+  HANDLE_CLIENT_EXCEPTIONS
+  return cli;
+}
 
 static mysqlx_session_struct *
 _get_session(const char *host, unsigned short port, const char *user,
@@ -173,6 +216,65 @@ _get_session_opt(mysqlx_session_options_t *opt,
   }
   HANDLE_SESSION_EXCEPTIONS
   return sess;
+}
+
+/*
+  Get client using the connection string
+*/
+
+mysqlx_client_struct * STDCALL
+mysqlx_get_client_from_url(const char *conn_string,
+                            const char *client_opts,
+                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+{
+  return _get_client(conn_string, client_opts, out_error, err_code);
+}
+
+/*
+  Get client using options
+*/
+
+mysqlx_client_struct * STDCALL
+mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
+                               char out_error[MYSQLX_MAX_ERROR_LEN],
+                               int *err_code)
+{
+  return _get_client(opt, out_error, err_code);
+}
+
+/*
+   Get session from client pool
+*/
+
+mysqlx_session_t * STDCALL
+mysqlx_get_session_from_client(mysqlx_client_t *cli,
+                               char out_error[MYSQLX_MAX_ERROR_LEN],
+                               int *err_code)
+{
+  mysqlx_session_t *sess = nullptr;
+  try
+  {
+    if (cli)
+    {
+      sess = new mysqlx_session_t(cli);
+    }
+  }
+  HANDLE_SESSION_EXCEPTIONS
+  return sess;
+}
+
+/*
+   Close client pool
+*/
+void mysqlx_client_close(mysqlx_client_t *cli)
+{
+  try {
+    delete cli;
+  }
+  catch (...)
+  {
+    // Ignore errors that might happen during client/session destruction/close.
+  }
 }
 
 
@@ -1755,11 +1857,12 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
   va_list args;
-  mysqlx_opt_type_enum type;
+  int type;
   uint64_t  uint_data = 0;
   const char *char_data = NULL;
 
-  using Option = mysqlx_session_options_struct::Option;
+  using Option = mysqlx_session_options_struct::Option_impl;
+  using ClientOption = mysqlx_session_options_struct::Client_option_impl;
 
   mysqlx_session_options_struct::Setter set(*opt);
 
@@ -1767,9 +1870,10 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
     va_start(args, opt);
 
-    while (0 < (type = mysqlx_opt_type_enum(va_arg(args, int))))
+    while (0 != (type = mysqlx_opt_type_enum(va_arg(args, int))))
     {
-      if (type >= mysqlx_opt_type_enum::LAST)
+      if (type >= mysqlx_opt_type_enum::MYSQLX_OPT_LAST ||
+          type <= mysqlx_client_opt_type_t::MYSQLX_CLIENT_OPT_LAST)
         throw Mysqlx_exception("Unrecognized connection option");
 
       switch (type)
@@ -1795,8 +1899,17 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
         SESSION_OPTION_LIST(OPT_SET)
 
-      default:
-        throw Mysqlx_exception("Unrecognized option");
+#define CLIENT_OPT_SET_num(X,N) \
+        case -N: \
+        { uint_data = va_arg(args, uint64_t); \
+          set.key_val(ClientOption::X)->scalar()->num(uint_data); }; \
+        break;
+#define CLIENT_OPT_SET_end(X,N) //let it use default
+
+        CLIENT_OPTION_LIST(CLIENT_OPT_SET)
+
+        default:
+          throw Mysqlx_exception("Unrecognized option");
       }
     }
 
@@ -1837,7 +1950,7 @@ mysqlx_session_option_get(
   ...
 )
 {
-  using Option = mysqlx_session_options_struct::Option;
+  using Option = mysqlx_session_options_struct::Option_impl;
 
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
 

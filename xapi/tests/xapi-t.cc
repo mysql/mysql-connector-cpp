@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <climits>
+#include <chrono>
+#include <iostream>
 #include "test.h"
 
 
@@ -1655,4 +1657,141 @@ TEST_F(xapi, sha256_memory)
     mysqlx_free_options(default_cleartext_fail);
 
   }
+}
+
+
+TEST_F(xapi, pool)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  char error_buf[255]; int error_code;
+
+  const int max_connections = 80;
+
+  std::stringstream uri;
+  uri << "mysqlx://" << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    uri << ":" << m_xplugin_pwd;
+
+  uri << "@" << m_xplugin_host << ":" << m_xplugin_port;
+
+
+  mysqlx_client_t *cli = mysqlx_get_client_from_url( uri.str().c_str(),
+                                                     R"( { "pooling": {
+                                                     "enabled": true,
+                                                     "maxSize": 80,
+                                                     "queueTimeout": 10000,
+                                                     "maxIdleTime": 50000}
+                                                     })",
+                                                     error_buf, &error_code );
+
+  std::vector<mysqlx_session_t*> list_sess;
+
+  //First round, pool clean
+  std::chrono::time_point<std::chrono::system_clock> start_time
+      = std::chrono::system_clock::now();
+
+  for (int i = 0 ; i < max_connections; ++i)
+  {
+    mysqlx_session_t *sess = mysqlx_get_session_from_client(
+                               cli, error_buf, &error_code );
+    if (!sess)
+      std::cout << error_buf << std::endl;
+    EXPECT_TRUE( sess != nullptr);
+    list_sess.push_back(sess);
+  }
+
+  //Release them
+  for (auto sess : list_sess)
+  {
+    mysqlx_session_close(sess);
+  }
+  list_sess.clear();
+
+
+  auto clean_pool_duration = std::chrono::system_clock::now() - start_time;
+
+  //Second round, pool full
+  start_time = std::chrono::system_clock::now();
+
+
+
+  for (int i = 0 ; i < max_connections; ++i)
+  {
+    mysqlx_session_t *sess = mysqlx_get_session_from_client(
+                               cli, error_buf, &error_code );
+    if (!sess)
+      std::cout << error_buf << std::endl;
+    EXPECT_TRUE( sess != nullptr);
+    list_sess.push_back(sess);
+  }
+
+  //Release them
+  for (auto sess : list_sess)
+  {
+    mysqlx_session_close(sess);
+  }
+  list_sess.clear();
+
+
+  auto full_pool_duration = std::chrono::system_clock::now() - start_time;
+
+  std::cout << "Clean Pool: " <<
+               std::chrono::duration_cast<std::chrono::milliseconds>(
+                 clean_pool_duration).count() << "ms" << std::endl;
+  std::cout << "Populated Pool: " <<
+               std::chrono::duration_cast<std::chrono::milliseconds>(
+                 full_pool_duration).count() << "ms" <<std::endl;
+  EXPECT_GT(clean_pool_duration, full_pool_duration);
+
+
+  mysqlx_client_close(cli);
+
+  // using options
+
+  auto opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                 OPT_HOST(m_xplugin_host),
+                                                 OPT_PORT(m_port),
+                                                 OPT_USER(m_xplugin_usr),
+                                                 OPT_PWD(m_xplugin_pwd),
+                                                 OPT_POOLING(true),
+                                                 OPT_POOL_MAX_SIZE(20),
+                                                 OPT_POOL_QUEUE_TIMEOUT(1000),
+                                                 OPT_POOL_MAX_IDLE_TIME(1000),
+                                                 PARAM_END
+                                                 ));
+
+
+  cli = mysqlx_get_client_from_options(opt, error_buf,
+                                                              &error_code);
+
+  EXPECT_TRUE(nullptr != cli);
+
+
+  for (int i = 0 ; i < max_connections; ++i)
+  {
+    mysqlx_session_t *sess = mysqlx_get_session_from_client(
+                               cli, error_buf, &error_code );
+
+    if (!sess)
+      std::cout << error_buf << std::endl;
+    if (i >= 20)
+      EXPECT_TRUE( sess == nullptr);
+    else
+      EXPECT_TRUE( sess != nullptr);
+    list_sess.push_back(sess);
+  }
+
+  //Release them
+  for (auto sess : list_sess)
+  {
+    mysqlx_session_close(sess);
+  }
+  list_sess.clear();
+
+  mysqlx_client_close(cli);
+  mysqlx_free_options(opt);
+
 }

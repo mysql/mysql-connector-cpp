@@ -1133,9 +1133,18 @@ public:
 
   template<typename...T>
   Session(T...options)
+  try
     : Session(SessionSettings(options...))
-  {}
+  {}CATCH_AND_WRAP
 
+
+  Session(Session &&other)
+  try
+    : internal::Session_detail(std::move(other))
+  {}CATCH_AND_WRAP
+
+
+  Session(Client &client);
 
   /**
     Create a new schema.
@@ -1411,6 +1420,112 @@ public:
   ///@endcond
 };
 
+
+/**
+  Create a client using given client settings.
+
+  Client allows the creation of sessions from a session pool.
+
+  This constructor forwards arguments to a ClientSettings constructor.
+  Thus all forms of specifying client options are also directly available
+  in Client constructor. ClientOptions and SessionOptions can be mixed
+  when construction Client objects
+
+  Examples:
+  ~~~~~~
+
+    Client from_uri("mysqlx://user:pwd\@host:port/db?ssl-mode=disabled");
+
+
+    Client from_options("host", port, "user", "pwd", "db");
+
+    Client from_option_list(
+      SessionOption::USER, "user",
+      SessionOption::PWD,  "pwd",
+      SessionOption::HOST, "host",
+      SessionOption::PORT, port,
+      SessionOption::DB,   "db",
+      SessionOption::SSL_MODE, SSLMode::DISABLED
+      ClientOption::POOLING, true,
+      ClientOption::POOL_MAX_SIZE, 10,
+      ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+      ClientOption::POOL_MAX_IDLE_TIME, 500,
+    );
+  ~~~~~~
+
+  @see ClientSettings
+*/
+
+
+
+class Client : public internal::Client_detail
+{
+  public:
+
+
+  Client(ClientSettings settings)
+  try
+    : Client_detail(settings)
+  {}
+  CATCH_AND_WRAP
+
+  Client(SessionSettings &settings)
+  try
+    : Client_detail(settings)
+  {}
+  CATCH_AND_WRAP
+
+  template<typename...T>
+  Client(T...options)
+    : Client(ClientSettings(options...))
+  {}
+
+
+  Session getSession()
+  {
+    return *this;
+  }
+
+};
+
+
+/*
+  Session
+*/
+
+inline
+Session::Session(Client &client)
+try
+  : internal::Session_detail(client.get_session_pool())
+{}CATCH_AND_WRAP
+
+/**
+  @ingroup devapi
+  Function to get Session object.
+  @param p same as needed by Session constructor.
+ */
+
+template<class ...P>
+Session getSession(P...p)
+{
+  return Session(p...);
+}
+
+/**
+  @ingroup devapi
+  Function to get Client object.
+  @param p same as needed by Client constructor.
+ */
+
+template<class ...P>
+Client getClient(P...p)
+{
+  return Client(p...);
+}
+
+/*
+   Schema class implementation
+*/
 
 inline
 Schema::Schema(Session &sess, const string &name)

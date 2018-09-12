@@ -385,6 +385,18 @@ public:
 };
 
 
+/*
+  Internal implementation for Client objects.
+
+  The common::Session_pool class is used.
+*/
+
+struct internal::Client_detail::Impl
+  : public common::Session_pool
+{
+  using common::Session_pool::Session_pool;
+};
+
 
 /*
   Internal implementation for Session objects.

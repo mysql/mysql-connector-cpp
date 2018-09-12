@@ -205,6 +205,14 @@ typedef struct mysqlx_error_struct mysqlx_error_t;
 
 typedef struct mysqlx_session_struct mysqlx_session_t;
 
+/**
+  Type of client handles.
+
+  @see mysqlx_get_client()
+*/
+
+typedef struct mysqlx_client_struct mysqlx_client_t;
+
 
 /**
   Type of handles for session configuration data.
@@ -343,6 +351,29 @@ typedef enum mysqlx_sort_direction_enum
 #define PARAM_SORT_DESC(A) A, SORT_ORDER_DESC
 
 /**
+  Client options for use with `mysqlx_session_option_get()`
+  and `mysqlx_session_option_set()` functions.
+
+*/
+
+typedef enum mysqlx_client_opt_type_enum
+{
+
+#define XAPI_CLIENT_OPT_ENUM_str(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
+#define XAPI_CLIENT_OPT_ENUM_num(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
+#define XAPI_CLIENT_OPT_ENUM_any(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
+#define XAPI_CLIENT_OPT_ENUM_end(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
+
+  CLIENT_OPTION_LIST(XAPI_CLIENT_OPT_ENUM)
+}
+mysqlx_client_opt_type_t;
+
+#define OPT_POOLING(A)     MYSQLX_CLIENT_OPT_POOLING, (bool)(A)
+#define OPT_POOL_MAX_SIZE(A) MYSQLX_CLIENT_OPT_POOL_MAX_SIZE, (uint64_t)(A)
+#define OPT_POOL_QUEUE_TIMEOUT(A) MYSQLX_CLIENT_OPT_POOL_QUEUE_TIMEOUT, (uint64_t)(A)
+#define OPT_POOL_MAX_IDLE_TIME(A) MYSQLX_CLIENT_OPT_POOL_MAX_IDLE_TIME, (uint64_t)(A)
+
+/**
   Session options for use with `mysqlx_session_option_get()`
   and `mysqlx_session_option_set()` functions.
 
@@ -360,7 +391,7 @@ typedef enum mysqlx_opt_type_enum
 #define XAPI_OPT_ENUM_any(X,N)  MYSQLX_OPT_##X = N,
 
   SESSION_OPTION_LIST(XAPI_OPT_ENUM)
-  LAST
+  MYSQLX_OPT_LAST
 }
 mysqlx_opt_type_t;
 
@@ -435,9 +466,168 @@ mysqlx_lock_contention_t;
 
 /*
   ====================================================================
+  Client operations
+  ====================================================================
+*/
+
+/**
+  Create a client instance using connection string or URL and a client options
+  JSON.
+
+  Connection sting has the form `"user:pass\@host:port/?option&option"`,
+  valid URL is like a connection string with a `mysqlx://` prefix. Host is
+  specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
+  IPv6 address of the form "[nn:nn:nn:...]".
+
+  Possible connection options are:
+
+  - `ssl-enable` : use TLS connection
+  - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
+
+  Specifying `ssl-ca` option implies `ssl-enable`.
+
+  Client options are expressed in a JSON string format. Here is an example:
+  ~~~~~~
+    { "pooling": {
+        "enabled": true,
+        "maxSize": 25,
+        "queueTimeout": 1000,
+        "maxIdleTime": 5000}
+    }
+  ~~~~~~
+
+  All options are defined under a document with key vale "pooling". Inside the
+  document, the available options are these:
+  - `enabled` : boolean value that enable or disable connection pooling. If
+                disabled, session created from pool are the same as created
+                directly without client handle.
+                Enabled by default.
+  - `mazSize` : integer that defines the max pooling sessions possible. If uses
+                tries to get session from pool when maximum sessions are used,
+                it will wait for an available session untill `queueTimeout`.
+                Defaults to 25.
+  - `queueTimeout` : integer value that defines the time, in milliseconds, that
+                     client will wait to get an available session.
+                     By default it doesn't timeouts.
+  - `maxIdleTime` : integer value that defines the time, in milliseconds, that
+                    an available session will wait in the pool before it is
+                    removed.
+                    By default it doesn't cleans sessions.
+
+  @param conn_string    connection string
+  @param client_opts    client options in the form of a JSON string.
+  @param[out] out_error if error happens during connect the error message
+                        is returned through this parameter
+  @param[out] err_code  if error happens during connect the error code
+                        is returned through this parameter
+
+  @return client handle if client could be created, otherwise NULL
+  is returned and the error information is returned through
+  the out_error and err_code output parameters.
+
+  @note The client returned by the function must be properly closed using
+        `mysqlx_client_close()`.
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API mysqlx_client_t *
+mysqlx_get_client_from_url(const char *conn_string, const char *client_opts,
+                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
+
+
+/**
+  Create a client pool using session configuration data.
+
+  Client options are expressed in a JSON string format. Here is an example:
+  ~~~~~~
+    { "pooling": {
+        "enabled": true,
+        "maxSize": 25,
+        "queueTimeout": 1000,
+        "maxIdleTime": 5000}
+    }
+  ~~~~~~
+
+  All options are defined under a document with key vale "pooling". Inside the
+  document, the available options are these:
+  - `enabled` : boolean value that enable or disable connection pooling. If
+                disabled, session created from pool are the same as created
+                directly without client handle.
+                Enabled by default.
+  - `mazSize` : integer that defines the max pooling sessions possible. If uses
+                tries to get session from pool when maximum sessions are used,
+                it will wait for an available session untill `queueTimeout`.
+                Defaults to 25.
+  - `queueTimeout` : integer value that defines the time, in milliseconds, that
+                     client will wait to get an available session.
+                     By default it doesn't timeouts.
+  - `maxIdleTime` : integer value that defines the time, in milliseconds, that
+                    an available session will wait in the pool before it is
+                    removed.
+                    By default it doesn't cleans sessions.
+
+  @param opt  handle to client configuration data
+  @param client_opts    client options in the form of a JSON string.
+  @param[out] out_error if error happens during connect the error message
+                        is returned through this parameter
+  @param[out] err_code if error happens during connect the error code
+                        is returned through this parameter
+
+  @return client handle if client could be created, otherwise NULL
+  is returned and the error information is returned through
+  the out_error and err_code output parameters.
+
+  @note The client returned by the function must be properly closed using
+        `mysqlx_client_close()`.
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API mysqlx_client_t *
+mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
+                               char out_error[MYSQLX_MAX_ERROR_LEN],
+                               int *err_code);
+
+/**
+  Close the client pool and all sessions created by them.
+
+  This function must be called by the user to prevent memory leaks.
+  Closing client closes all sessions created by this client.\n
+  Sessions created by this client are closed, but their resources are not freed.
+  `mysqlx_session_close()` has to be called to prevent memory leaks.
+
+
+  @param client client handle
+
+  @ingroup xapi_sess
+*/
+
+PUBLIC_API void mysqlx_client_close(mysqlx_client_t *client);
+
+/*
+  ====================================================================
   Session operations
   ====================================================================
 */
+
+/**
+  Create a new session
+
+  @param client     client pool to get session from
+  @param[out] out_error if error happens during getting the session handle from
+                        the pool, the error message is returned through this
+                        parameter
+  @param[out] err_code if error happens during getting the session handle from
+                       the pool, the error code is returned through this
+                       parameter
+
+*/
+
+PUBLIC_API mysqlx_session_t *
+mysqlx_get_session_from_client(mysqlx_client_t *client,
+                               char out_error[MYSQLX_MAX_ERROR_LEN],
+                               int *err_code);
 
 /**
   Create a new session.

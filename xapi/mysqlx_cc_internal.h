@@ -52,13 +52,16 @@ using Db_obj_ref = mysqlx::common::Object_ref;
 class Diag_info_list;
 
 
+
+
 struct mysqlx_session_options_struct
   : public Mysqlx_diag
   , common::Settings_impl
 {
 public:
 
-  using Settings_impl::Option;
+  using Settings_impl::Option_impl;
+  using Settings_impl::Client_option_impl;
 
   mysqlx_session_options_struct() = default;
 
@@ -81,7 +84,7 @@ public:
     if (db)
       set.schema(*db);
 #ifdef WITH_SSL
-    set.key_val(Option::SSL_MODE)->scalar()->num(uint64_t(ssl_mode));
+    set.key_val(Option_impl::SSL_MODE)->scalar()->num(uint64_t(ssl_mode));
 #endif
     set.commit();
   }
@@ -97,7 +100,7 @@ public:
   bool has_option(mysqlx_opt_type_enum opt)
   {
     // Note: assumes the same enum values as used in Settings_impl::Option
-    return Settings_impl::has_option(Option(opt));
+    return Settings_impl::has_option(Option_impl(opt));
   }
 
   void clear()
@@ -146,7 +149,6 @@ handle_t* check_existence(bool check, handle_t *obj)
   return obj;
 }
 
-
 struct mysqlx_session_struct
   : public Mysqlx_diag
 {
@@ -183,6 +185,8 @@ public:
 
 public:
 
+  mysqlx_session_struct( mysqlx_client_t *cli);
+
   mysqlx_session_struct(
     const std::string &host, unsigned short port,
     const std::string &usr, const std::string *pwd,
@@ -204,12 +208,12 @@ public:
   }
 
   bool is_valid() {
-    return get_impl().m_sess.is_valid() == cdk::option_t::YES;
+    return get_impl().m_sess->is_valid() == cdk::option_t::YES;
   }
 
   const cdk::Error* get_cdk_error();
 
-  cdk::Session &get_session() { return m_impl->m_sess; }
+  cdk::Session &get_session() { return *(m_impl->m_sess); }
 
   /*
     Execute a plain SQL query (supports parameters and placeholders)
@@ -266,6 +270,26 @@ public:
   friend mysqlx_result_struct;
   friend mysqlx_stmt_struct;
 };
+
+/*
+   Client object implementation
+*/
+
+struct mysqlx_client_struct
+    : public Mysqlx_diag
+{
+  std::shared_ptr<mysqlx::common::Session_pool> m_impl;
+
+  mysqlx_client_struct(const char *conn_str, const char *client_opt);
+  mysqlx_client_struct(mysqlx_session_options_t *opt);
+
+  std::shared_ptr<mysqlx::common::Session_pool>& get_impl()
+  {
+    return m_impl;
+  }
+
+};
+
 
 
 inline

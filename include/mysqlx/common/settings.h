@@ -45,6 +45,7 @@
 #include "value.h"
 
 #include <vector>
+#include <map>
 #include <bitset>
 #include <sstream>
 
@@ -76,12 +77,26 @@ public:
 #define SETTINGS_OPT_ENUM_num(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_any(X,N)  X = N,
 
-  enum class Option {
+  enum class Option_impl {
     SESSION_OPTION_LIST(SETTINGS_OPT_ENUM)
     LAST
   };
 
-  static  const char* option_name(Option opt);
+  /*
+    Enumerations with available client options and their values.
+  */
+
+#define CLIENT_OPT_ENUM_str(X,N)  X = N,
+#define CLIENT_OPT_ENUM_num(X,N)  X = N,
+#define CLIENT_OPT_ENUM_any(X,N)  X = N,
+#define CLIENT_OPT_ENUM_end(X,N)  X = N,
+
+  enum class Client_option_impl {
+    CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
+  };
+
+  static  const char* option_name(Option_impl opt);
+  static  const char* option_name(Client_option_impl opt);
 
 
 #define SETTINGS_VAL_ENUM(X,N)  X = N,
@@ -103,10 +118,14 @@ public:
 
 protected:
 
-  using opt_val_t = std::pair<Option, Value>;
+  using Value = common::Value;
+  using opt_val_t = std::pair<Option_impl, Value>;
   // TODO: use multimap instead?
   using option_list_t = std::vector<opt_val_t>;
   using iterator = option_list_t::const_iterator;
+
+  using client_option_list_t = std::map<Client_option_impl, Value>;
+  using client_iterator = option_list_t::const_iterator;
 
 public:
 
@@ -114,8 +133,12 @@ public:
     Examine settings stored in this object.
   */
 
-  bool has_option(Option) const;
-  const Value& get(Option) const;
+  bool has_option(Option_impl) const;
+  const Value& get(Option_impl) const;
+
+  bool has_option(Client_option_impl) const;
+  const Value& get(Client_option_impl) const;
+
 
   // Iterating over options stored in this object.
 
@@ -134,7 +157,8 @@ public:
   */
 
   void clear();
-  void erase(Option);
+  void erase(Option_impl);
+  void erase(Client_option_impl);
 
   /*
     Session options include connection options that specify data source
@@ -149,6 +173,14 @@ public:
   // Set options based on URI
 
   void set_from_uri(const std::string &);
+
+  // Set Client options based on JSON object
+
+  void set_client_opts(const std::string &);
+
+  // Set Client options from othe Settings object
+
+  void set_client_opts(const Settings_impl &);
 
   /*
     Public API has no methods to directly set individual options. Instead,
@@ -169,6 +201,7 @@ protected:
   {
     DLL_WARNINGS_PUSH
     option_list_t           m_options;
+    client_option_list_t    m_client_options;
     DLL_WARNINGS_POP
     unsigned m_host_cnt = 0;
     bool m_user_priorities = false;
@@ -177,7 +210,8 @@ protected:
     bool m_tcpip = false; // set to true if TCPIP connection was specified
     bool m_sock = false;  // set to true if socket connection was specified
 
-    void erase(Option);
+    void erase(Option_impl);
+    void erase(Client_option_impl);
   };
 
   Data m_data;
@@ -190,11 +224,28 @@ protected:
 #define SETTINGS_OPT_NAME_any(X,N)  case N: return #X;
 
 inline
-const char* Settings_impl::option_name(Option opt)
+const char* Settings_impl::option_name(Option_impl opt)
 {
   switch (unsigned(opt))
   {
     SESSION_OPTION_LIST(SETTINGS_OPT_NAME)
+  default:
+    return nullptr;
+  }
+}
+
+#define CLIENT_OPT_NAME_str(X,N)  case N: return #X;
+#define CLIENT_OPT_NAME_num(X,N)  case N: return #X;
+#define CLIENT_OPT_NAME_any(X,N)  case N: return #X;
+#define CLIENT_OPT_NAME_end(X,N)  case N: throw_error("Unexpected Option"); return #X;
+
+
+inline
+const char* Settings_impl::option_name(Client_option_impl opt)
+{
+  switch (unsigned(opt))
+  {
+    CLIENT_OPTION_LIST(CLIENT_OPT_NAME)
   default:
     return nullptr;
   }
@@ -231,7 +282,7 @@ const char* Settings_impl::auth_method_name(Auth_method method)
 */
 
 inline
-const Value& Settings_impl::get(Option opt) const
+const common::Value& Settings_impl::get(Option_impl opt) const
 {
   using std::find_if;
 
@@ -247,9 +298,22 @@ const Value& Settings_impl::get(Option opt) const
   return it->second;
 }
 
+inline
+const common::Value& Settings_impl::get(Client_option_impl opt) const
+{
+  static Value null_value;
+
+  auto it = m_data.m_client_options.find(opt);
+
+  if (it == m_data.m_client_options.cend())
+    return null_value;
+
+  return it->second;
+}
+
 
 inline
-bool Settings_impl::has_option(Option opt) const
+bool Settings_impl::has_option(Option_impl opt) const
 {
   return m_data.m_options.cend() !=
     find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
@@ -258,13 +322,23 @@ bool Settings_impl::has_option(Option opt) const
 }
 
 
+inline
+bool Settings_impl::has_option(Client_option_impl opt) const
+{
+  return m_data.m_client_options.find(opt) != m_data.m_client_options.cend();
+}
 
 inline
-void Settings_impl::erase(Option opt)
+void Settings_impl::erase(Option_impl opt)
 {
   m_data.erase(opt);
 }
 
+inline
+void Settings_impl::erase(Client_option_impl opt)
+{
+  m_data.erase(opt);
+}
 
 /*
   Note: Removes all occurrences of the given option. Also updates the context
@@ -272,7 +346,7 @@ void Settings_impl::erase(Option opt)
 */
 
 inline
-void Settings_impl::Data::erase(Option opt)
+void Settings_impl::Data::erase(Option_impl opt)
 {
   remove_from(m_options,
     [opt](opt_val_t el) -> bool
@@ -288,23 +362,23 @@ void Settings_impl::Data::erase(Option opt)
 
   switch (opt)
   {
-  case Option::HOST:
+  case Option_impl::HOST:
     m_host_cnt = 0;
     FALLTHROUGH;
-  case Option::PORT:
+  case Option_impl::PORT:
     if (0 == m_host_cnt)
       m_tcpip = false;
     break;
-  case Option::SOCKET:
+  case Option_impl::SOCKET:
     m_sock = false;
     break;
-  case Option::PRIORITY:
+  case Option_impl::PRIORITY:
     m_user_priorities = false;
     break;
-  case Option::SSL_CA:
+  case Option_impl::SSL_CA:
     m_ssl_ca = false;
     break;
-  case Option::SSL_MODE:
+  case Option_impl::SSL_MODE:
     m_ssl_mode = SSL_mode::LAST;
     break;
   default:
@@ -312,7 +386,14 @@ void Settings_impl::Data::erase(Option opt)
   }
 }
 
+inline
+void Settings_impl::Data::erase(Client_option_impl opt)
+{
+  m_client_options.erase(opt);
+}
+
 }  // common namespace
 }  // mysqlx namespace
 
 #endif
+

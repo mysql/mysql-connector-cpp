@@ -51,12 +51,16 @@ class Collection;
 
 namespace common {
   class Session_impl;
+  class Session_pool;
+  using Shared_session_pool = std::shared_ptr<Session_pool>;
   class Result_init;
 }
 
 namespace internal {
 
 class Schema_detail;
+using Client_impl = common::Session_pool;
+using Shared_client_impl = std::shared_ptr<Client_impl>;
 using Session_impl = common::Session_impl;
 using Shared_session_impl = std::shared_ptr<common::Session_impl>;
 
@@ -255,6 +259,42 @@ struct SQL_statement
   }
 };
 
+struct Session_detail;
+
+struct PUBLIC_API Client_detail
+{
+
+  // Disable copy semantics for client class.
+
+  Client_detail(const Client_detail&) = delete;
+  Client_detail& operator=(const Client_detail&) = delete;
+
+
+
+  Client_detail(common::Settings_impl &settings);
+//  Client_detail(common::Settings_impl &&settings);
+
+  void close();
+
+protected:
+
+  Client_detail(Client_detail && other)
+  {
+    m_impl = other.m_impl;
+    other.m_impl.reset();
+  }
+
+  common::Shared_session_pool& get_session_pool();
+
+
+  struct INTERNAL Impl;
+
+  DLL_WARNINGS_PUSH
+  Shared_client_impl  m_impl = NULL;
+  DLL_WARNINGS_POP
+
+  friend Session;
+};
 
 struct PUBLIC_API Session_detail
 {
@@ -299,6 +339,13 @@ public:
 
 protected:
 
+  Session_detail(Session_detail && other)
+  {
+    m_impl = other.m_impl;
+    other.m_impl.reset();
+  }
+
+
   struct INTERNAL Impl;
 
   /*
@@ -313,6 +360,7 @@ protected:
   DLL_WARNINGS_POP
 
   Session_detail(common::Settings_impl&);
+  Session_detail(common::Shared_session_pool&);
 
   virtual ~Session_detail()
   {

@@ -30,6 +30,8 @@
 
 #include <test.h>
 #include <iostream>
+#include <future>
+#include <chrono>
 
 
 using std::cout;
@@ -1271,3 +1273,522 @@ TEST_F(Sess, bugs)
                Error);
 
 }
+
+TEST_F(Sess, pool_opts)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  ClientSettings dummy("mysqlx://root@localhost:1/test",
+                       ClientOption::POOLING            , 1,
+                       ClientOption::POOL_MAX_SIZE      , 2,
+                       ClientOption::POOL_QUEUE_TIMEOUT , 3,
+                       ClientOption::POOL_MAX_IDLE_TIME  , 4);
+
+  EXPECT_TRUE(dummy.has_option(SessionOption::USER             ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::HOST             ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::PORT             ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::DB               ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOLING           ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_SIZE     ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_QUEUE_TIMEOUT));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME ));
+
+  EXPECT_EQ(string("root")     ,dummy.find(SessionOption::USER             ).get<string>());
+  EXPECT_EQ(string("localhost"),dummy.find(SessionOption::HOST             ).get<string>());
+  EXPECT_EQ(1                  ,dummy.find(SessionOption::PORT             ).get<int>());
+  EXPECT_EQ(string("test")     ,dummy.find(SessionOption::DB               ).get<string>());
+  EXPECT_EQ(1                  ,dummy.find(ClientOption::POOLING           ).get<int>());
+  EXPECT_EQ(2                  ,dummy.find(ClientOption::POOL_MAX_SIZE     ).get<int>());
+  EXPECT_EQ(3                  ,dummy.find(ClientOption::POOL_QUEUE_TIMEOUT).get<int>());
+  EXPECT_EQ(4                  ,dummy.find(ClientOption::POOL_MAX_IDLE_TIME ).get<int>());
+
+  dummy.erase(SessionOption::USER             );
+  dummy.erase(ClientOption::POOLING           );
+  EXPECT_FALSE(dummy.has_option(SessionOption::USER             ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOLING           ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::HOST             ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::PORT             ));
+  EXPECT_TRUE(dummy.has_option(SessionOption::DB               ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_SIZE     ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_QUEUE_TIMEOUT));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME ));
+
+  EXPECT_TRUE(dummy.find(SessionOption::USER             ).isNull());
+  EXPECT_TRUE(dummy.find(ClientOption::POOLING           ).isNull());
+
+  dummy.clear();
+
+  EXPECT_FALSE(dummy.has_option(SessionOption::USER             ));
+  EXPECT_FALSE(dummy.has_option(SessionOption::HOST             ));
+  EXPECT_FALSE(dummy.has_option(SessionOption::PORT             ));
+  EXPECT_FALSE(dummy.has_option(SessionOption::DB               ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOLING           ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOL_MAX_SIZE     ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOL_QUEUE_TIMEOUT));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME ));
+
+
+  std::stringstream uri;
+  uri << "mysqlx://" << get_user()<< "@localhost:"<< get_port() <<"/test";
+
+  ClientSettings working_settings(uri.str(),
+                        R"( { "pooling": {
+                        "enabled": true,
+                        "maxSize": 25,
+                        "queueTimeout": 1000,
+                        "maxIdleTime": 5000}
+                        })");
+
+  ClientSettings working_settings_2(uri.str(),
+                        DbDoc(R"( { "pooling": {
+                        "enabled": true,
+                        "maxSize": 25,
+                        "queueTimeout": 1000,
+                        "maxIdleTime": 5000}
+                        })"));
+
+  EXPECT_THROW(
+        ClientSettings(uri.str(),
+                       DbDoc(R"( { "enabled": true, "maxSize": 25, "queueTimeout": 1000, "maxIdleTime": 5000 })")),
+        Error);
+
+  ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::milliseconds::max());
+  EXPECT_THROW(
+        ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT,
+                       std::numeric_limits<uint64_t>::max()),
+        Error);
+
+  EXPECT_THROW(ClientSettings(ClientOption::POOL_MAX_SIZE, 0),Error);
+
+  EXPECT_THROW(ClientSettings("mysqlx://root@localhost",
+                              R"( { "pooling": {
+                              "enabled": true,
+                              "maxSize": 0,
+                              "queueTimeout": 1000,
+                              "maxIdleTime": 5000}
+                              })"),
+                       Error);
+
+  //Client constructors
+
+  //Using ClientSettings;
+  {
+    mysqlx::Client client(working_settings);
+    mysqlx::Session s = client.getSession();
+  }
+
+  //Using connection string and ClientSettings
+  {
+    mysqlx::Client client(uri.str(), working_settings);
+    mysqlx::Session s = client.getSession();
+  }
+
+  // Using connection string plus JSON string
+  {
+    mysqlx::Client client(uri.str(),
+                          R"( { "pooling": {
+                          "enabled": true,
+                          "maxSize": 25,
+                          "queueTimeout": 1000,
+                          "maxIdleTime": 5000}
+                          })");
+    mysqlx::Session s = client.getSession();
+  }
+
+  //Using just options (ClientOptions and SessionOptions
+  {
+    mysqlx::Client client(SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password() ? get_password() : nullptr,
+                          ClientOption::POOLING, true,
+                          ClientOption::POOL_MAX_SIZE, 10,
+                          ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+                          ClientOption::POOL_MAX_IDLE_TIME, 10000);
+    mysqlx::Session s = client.getSession();
+  }
+
+  //Using just options (ClientOptions and SessionOptions) but starting with
+  //ClientOption
+  {
+    mysqlx::Client client(ClientOption::POOLING, true,
+                          SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password() ? get_password() : nullptr,
+                          ClientOption::POOL_MAX_SIZE, 10,
+                          ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+                          ClientOption::POOL_MAX_IDLE_TIME, 10000);
+    mysqlx::Session s = client.getSession();
+  }
+
+  //Using URI + ClientOptions
+  {
+    mysqlx::Client client(uri.str(),
+                          ClientOption::POOL_MAX_SIZE, 10,
+                          ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+                          ClientOption::POOL_MAX_IDLE_TIME, 10000);
+    mysqlx::Session s = client.getSession();
+  }
+
+  /*
+     Global Functions: getSession() and getCLient
+  */
+
+  mysqlx::getClient(uri.str(),
+                        ClientOption::POOL_MAX_SIZE, 10,
+                        ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+                        ClientOption::POOL_MAX_IDLE_TIME, 10000).getSession();
+
+  mysqlx::getSession(uri.str());
+
+}
+
+TEST_F(Sess, pool_use)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+
+  const int max_connections = 80;
+
+  ClientSettings settings(SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
+                          ClientOption::POOLING, true,
+                          SessionOption::SSL_MODE, SSLMode::DISABLED,
+                          ClientOption::POOL_MAX_SIZE, max_connections,
+                          ClientOption::POOL_QUEUE_TIMEOUT, 1000,
+                          ClientOption::POOL_MAX_IDLE_TIME, 10000,
+                          SessionOption::HOST, "localhost",
+                          SessionOption::PORT, get_port(),
+                          SessionOption::PRIORITY, 100,
+                          SessionOption::HOST, "localhost",
+                          SessionOption::PORT, get_port(),
+                          SessionOption::PRIORITY, 1,
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password(),
+                          SessionOption::DB, "test");
+
+  {
+
+    {
+      mysqlx::Client client(settings);
+      mysqlx::Session s1 = client.getSession();
+      {
+        mysqlx::Session s2(client);
+        {
+          std::list<mysqlx::Session> m_sessions;
+          for(int i = 3; i <= max_connections+10; ++i)
+          {
+            if (i <= max_connections)
+              m_sessions.emplace_back(client);
+            else
+              EXPECT_THROW(m_sessions.emplace_back(client),Error);
+          }
+        }
+        EXPECT_EQ(string("test"), s2.getSchema("test",true).getName());
+
+
+        //Closing Client!
+        client.close();
+        {
+        //Closes all opened sessions and creating new ones will throw error!
+          EXPECT_THROW( mysqlx::Session s3(client), Error);
+        }
+
+        EXPECT_THROW(s2.getSchema("test",true).getName(),Error);
+      }
+      EXPECT_THROW(s1.getSchema("test",true).getName(),Error);
+    }
+
+    {
+
+      // getting sessions from pool takes less time than getting new ones...
+      // so will wait more than time to live and then get sessions and compare time
+
+      ClientSettings settings_local(settings);
+      //Garantee pool will stay full!
+      settings_local.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::seconds(100));
+      settings_local.set(ClientOption::POOL_MAX_IDLE_TIME, std::chrono::seconds(100));
+
+      mysqlx::Client client(settings_local);
+
+      auto get_sessions = [&client, &max_connections] ()
+      {
+        std::list<mysqlx::Session> m_sessions;
+        for(int i = 0; i < max_connections; ++i)
+        {
+          m_sessions.emplace_back(client);
+        }
+      };
+
+
+      //First round, pool clean
+      std::chrono::time_point<std::chrono::system_clock> start_time
+          = std::chrono::system_clock::now();
+
+      get_sessions();
+
+      auto clean_pool_duration = std::chrono::system_clock::now() - start_time;
+
+
+
+      //Second round, pool full
+      start_time = std::chrono::system_clock::now();
+
+      get_sessions();
+
+      auto full_pool_duration = std::chrono::system_clock::now() - start_time;
+
+      std::cout << "Clean Pool: " <<
+                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                     clean_pool_duration).count() << "ms" << std::endl;
+      std::cout << "Populated Pool: " <<
+                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                     full_pool_duration).count() << "ms" <<std::endl;
+      EXPECT_GT(clean_pool_duration, full_pool_duration);
+
+    }
+
+  }
+
+  //Global getSession function
+  {
+    auto sess = mysqlx::getSession(
+                  SessionOption::HOST, "localhost",
+                  SessionOption::PORT, get_port(),
+                  SessionOption::PRIORITY, 100,
+                  SessionOption::HOST, "localhost",
+                  SessionOption::PORT, get_port(),
+                  SessionOption::PRIORITY, 1,
+                  SessionOption::USER, get_user(),
+                  SessionOption::PWD, get_password(),
+                  SessionOption::DB, "test");
+    auto res = sess.sql("Select 1").execute();
+    EXPECT_EQ(1, res.fetchOne()[0].get<int>());
+  }
+
+
+}
+
+TEST_F(Sess, pool_ttl)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  sql("set global mysqlx_wait_timeout=28800");
+
+  const int max_connections = 10;
+
+  std::chrono::seconds queue_timeout(50);
+  std::chrono::milliseconds pool_ttl(500);
+
+  ClientSettings settings(ClientOption::POOLING, true,
+                          SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
+                          SessionOption::SSL_MODE, SSLMode::DISABLED,
+                          ClientOption::POOL_MAX_SIZE, max_connections,
+                          ClientOption::POOL_QUEUE_TIMEOUT, queue_timeout,
+                          ClientOption::POOL_MAX_IDLE_TIME, pool_ttl,
+                          SessionOption::HOST, "localhost",
+                          SessionOption::PORT, get_port(),
+                          SessionOption::PRIORITY, 100,
+                          SessionOption::HOST, "localhost",
+                          SessionOption::PORT, get_port(),
+                          SessionOption::PRIORITY, 1,
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password(),
+                          SessionOption::DB, "test");
+
+
+
+  // threaded example
+  {
+    std::cout << "Threaded" << std::endl;
+
+    //short POOL_MAX_IDLE_TIME so that sessions expire.
+    settings.set(ClientOption::POOL_QUEUE_TIMEOUT, 100000,
+                 ClientOption::POOL_MAX_IDLE_TIME, 1);
+
+    settings.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::seconds(100),
+                 ClientOption::POOL_MAX_IDLE_TIME, std::chrono::microseconds(1));
+
+    mysqlx::Client client(settings);
+
+    std::list<std::future<mysqlx::Session*>> session_list;
+    for (int i=0; i < max_connections*4; ++i)
+    {
+      session_list.emplace_back(std::async(std::launch::async,
+                                           [&client] () -> mysqlx::Session*
+                                           {
+                                             return new mysqlx::Session(client.getSession());
+                                           }
+                                           ));
+    }
+
+    auto test_sessions = [&session_list,max_connections] (bool expect_errors = false)
+    {
+      int errors_found = 0;
+      while(session_list.size() > 0)
+      {
+        auto el = session_list.begin();
+        for (; el != session_list.end();)
+        {
+          mysqlx::Session *s = nullptr;
+          if (el->wait_for(std::chrono::milliseconds(100)) ==
+              std::future_status::ready)
+          {
+            try {
+              s = el->get();
+              SqlResult res = s->sql("SELECT 1").execute();
+
+              EXPECT_EQ(1, res.fetchOne()[0].get<int>());
+
+            } catch (Error &e) {
+              std::cout << "EXPECTED: " << e << std::endl;
+              errors_found++;
+            }
+            session_list.erase(el++);
+            delete s;
+          }
+          else
+          {
+            ++el;
+          }
+        }
+      }
+
+      if (expect_errors)
+      {
+        EXPECT_EQ(4*max_connections, errors_found);
+      }
+      else
+      {
+        EXPECT_EQ(0, errors_found);
+      }
+    };
+
+    test_sessions();
+
+    // Now closing pool so that waiting threads get session without timeout
+    ClientSettings settings1 = settings;
+
+    settings1.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::hours(1),
+                 ClientOption::POOL_MAX_IDLE_TIME, std::chrono::hours(1));
+
+    mysqlx::Client client1 = mysqlx::getClient(settings1);
+
+    for (int i=0; i < max_connections*4; ++i)
+    {
+      session_list.emplace_back(std::async(std::launch::async,
+                                           [&client1] () -> mysqlx::Session*
+                                           {
+                                             return new mysqlx::Session(client1.getSession());
+                                           }
+                                           ));
+    }
+
+    client1.close();
+
+    test_sessions(true);
+
+  }
+
+  {
+
+    std::cout << "Not threaded" << std::endl;
+
+    settings.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::seconds(100),
+    ClientOption::POOL_MAX_IDLE_TIME, std::chrono::seconds(10));
+
+    mysqlx::Client client(settings);
+
+
+    auto get_sessions = [&client, &max_connections] ()
+    {
+      std::list<mysqlx::Session> sessions;
+      for(int i = 0; i < max_connections; ++i)
+      {
+        sessions.emplace_back(client);
+        EXPECT_EQ(1, sessions.back().sql("select 1").execute()
+                     .fetchOne()[0].get<int>());
+      }
+    };
+
+    get_sessions();
+
+    std::cout << "Kill connections" << std::endl;
+
+    std::vector<int> proccess_ids;
+
+    int this_thread_id = sql("SELECT CONNECTION_ID()").fetchOne()[0].get<int>();
+
+    std::list<Row> rows =sql("show processlist").fetchAll();
+
+    for (auto row : rows)
+    {
+      auto val = row.get(7);
+      int thread_id = row.get(0).get<int>();
+      if (val.isNull() ||
+          val.get<string>() != string("PLUGIN") ||
+          thread_id == this_thread_id)
+        continue;
+
+      proccess_ids.push_back(thread_id);
+    }
+
+
+    for (auto id : proccess_ids)
+    {
+      std::stringstream query;
+      query << "KILL CONNECTION " << id;
+      sql(query.str());
+    }
+
+
+    std::cout << "set global mysqlx_wait_timeout=20" << std::endl;
+
+    sql("set global mysqlx_wait_timeout=20");
+
+    get_sessions();
+
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+
+    get_sessions();
+
+    std::cout << "set global mysqlx_wait_timeout=28800" << std::endl;
+    client.getSession().sql("set global mysqlx_wait_timeout=28800").execute();
+  }
+
+  {
+    settings.set(ClientOption::POOL_MAX_SIZE, 1);
+
+    mysqlx::Client cli(settings);
+    mysqlx::Session s1 = cli.getSession();
+    s1.close();
+    mysqlx::Session s2 = cli.getSession();
+
+  }
+
+  {
+
+    std::stringstream uri;
+    uri << "mysqlx://" << get_user();
+    if (get_password() && *get_password())
+      uri << ":" << get_password();
+    uri << "@" << "localhost:" << get_port();
+
+    mysqlx::Session s = mysqlx::getSession(uri.str());
+    s.close();
+  }
+
+  {
+    settings.set(ClientOption::POOL_MAX_SIZE, 10);
+    std::vector<mysqlx::Session> session_list;
+    for (int i=0; i < 5; ++i)
+    {
+      mysqlx::Client cli(settings);
+      for (int j=0; j < 10; ++j)
+      {
+        session_list.emplace_back(cli.getSession());
+      }
+    }
+  }
+
+}
+
+

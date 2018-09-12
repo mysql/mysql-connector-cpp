@@ -37,13 +37,118 @@
 
 #include <mysqlx/common.h>
 #include <mysql/cdk.h>
-
+#include <list>
+#include <mutex>
+#include <condition_variable>
 
 namespace mysqlx {
 namespace common {
 
 class Result_impl_base;
 class Result_init;
+
+using duration = std::chrono::milliseconds;
+using system_clock = std::chrono::system_clock;
+using time_point = std::chrono::time_point<system_clock>;
+
+/*
+   Session pooling
+*/
+class Session_pool;
+using Session_pool_shared = std::shared_ptr<Session_pool>;
+
+class Pooled_session
+    : public cdk::foundation::api::Async_op<void>
+    , public std::shared_ptr<cdk::Session>
+{
+  Session_pool_shared m_sess_pool;
+  time_point m_deadline;
+
+public:
+
+  Pooled_session(Session_pool_shared &pool);
+
+  Pooled_session(cdk::ds::Multi_source &ds);
+
+  ~Pooled_session() override;
+
+  bool is_completed() const override;
+  bool do_cont() override;
+  void do_wait() override;
+  void do_cancel() override;
+  const cdk::foundation::api::Event_info* get_event_info() const override;
+
+  void release();
+
+private:
+
+  friend class Session_pool;
+
+};
+
+class Session_pool
+{
+public:
+  Session_pool(cdk::ds::Multi_source &ds);
+
+  ~Session_pool();
+
+  void close();
+
+  void set_pool_opts(Settings_impl &opts);
+
+  void set_pooling(bool x)
+  {
+    m_pool_enable = x;
+  }
+
+  void set_size(size_t sz)
+  {
+    assert(sz > 0);
+    m_max = sz;
+  }
+
+  void set_timeout(uint64_t ms)
+  {
+    if (!check_num_limits<int64_t>(ms))
+      throw_error("Timeout value too big!");
+    m_timeout = duration(static_cast<int64_t>(ms));
+  }
+
+  void set_time_to_live(uint64_t ms)
+  {
+    if (!check_num_limits<int64_t>(ms))
+      throw_error("MaxIdleTime value too big!");
+    m_time_to_live = duration(static_cast<int64_t>(ms));
+  }
+
+
+protected:
+
+  void release_session(std::shared_ptr<cdk::Session> &sess);
+
+  //returns Session if possible (available).
+  //throws error if the pool is closed
+  std::shared_ptr<cdk::Session> get_session();
+
+  void time_to_live_cleanup();
+
+  cdk::ds::Multi_source m_ds;
+  bool m_pool_enable = true;
+  bool m_pool_closed = false;
+  size_t m_max = 25;
+  duration m_timeout = duration::max();
+  duration m_time_to_live = duration::max();
+
+  std::map<cdk::shared_ptr<cdk::Session>,time_point> m_pool;
+  std::recursive_mutex m_pool_mutex;
+  std::mutex m_reelase_mutex;
+  std::condition_variable m_release_cond;
+
+
+  friend Pooled_session;
+};
+
 
 /*
   Internal implementation for Session objects.
@@ -57,16 +162,26 @@ public:
 
   using string = cdk::string;
 
-  cdk::Session  m_sess;
+  Pooled_session  m_sess;
   string        m_default_db;
+
+  Session_impl(Session_pool_shared &pool)
+    : m_sess(pool)
+  {
+    m_sess.wait();
+    if (m_sess->get_default_schema())
+      m_default_db = *m_sess->get_default_schema();
+    if (!m_sess->is_valid())
+      m_sess->get_error().rethrow();
+  }
 
   Session_impl(cdk::ds::Multi_source &ms)
     : m_sess(ms)
   {
-    if (m_sess.get_default_schema())
-      m_default_db = *m_sess.get_default_schema();
-    if (!m_sess.is_valid())
-      m_sess.get_error().rethrow();
+    if (m_sess->get_default_schema())
+      m_default_db = *m_sess->get_default_schema();
+    if (!m_sess->is_valid())
+      m_sess->get_error().rethrow();
   }
 
   Result_impl_base *m_current_result = nullptr;
@@ -118,6 +233,8 @@ public:
   {
     return ++m_savepoint;
   }
+
+  void release();
 };
 
 

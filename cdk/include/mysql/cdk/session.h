@@ -82,6 +82,10 @@ public:
   option_t is_valid() { return m_session->is_valid(); }
   option_t check_valid() { return m_session->check_valid(); }
 
+  void reset() {
+    m_session->reset();
+  }
+
   void close() {
     m_session->close();
     m_connection->close();

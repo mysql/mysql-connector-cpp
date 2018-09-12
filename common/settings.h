@@ -60,12 +60,36 @@ class Settings_impl::Setter
 {
   Settings_impl &m_settings;
   Settings_impl::Data m_data;
-  Option m_cur_opt = Option::LAST;
 
-  static Option get_option_from_name(const std::string&)
+
+  Option_impl m_cur_opt = Option_impl::LAST;
+  Client_option_impl m_cur_cli_opt = Client_option_impl::LAST;
+
+  Client_option_impl get_option_from_name(const std::string& key)
   {
-    assert(false);
-    return Option::LAST;
+
+    //Client options object
+    std::string upper_key = to_upper(key);
+    if (!m_inside_client_opts && upper_key == "POOLING")
+    {
+      m_inside_client_opts = true;
+      return Client_option_impl::LAST;
+    } else if (m_inside_client_opts)
+    {
+      if (upper_key == "ENABLED")
+        return Client_option_impl::POOLING;
+      else if (upper_key == "MAXSIZE")
+        return Client_option_impl::POOL_MAX_SIZE;
+      else if (upper_key == "QUEUETIMEOUT")
+        return Client_option_impl::POOL_QUEUE_TIMEOUT;
+      else if (upper_key == "MAXIDLETIME")
+        return Client_option_impl::POOL_MAX_IDLE_TIME;
+    }
+
+    std::string msg = "Invalid client option: " + key;
+    throw_error(msg.c_str());
+    // Quiet compiler warnings
+    return Client_option_impl::LAST;
   }
 
 public:
@@ -74,6 +98,18 @@ public:
     : m_settings(settings)
     , m_data(settings.m_data)
   {}
+
+  void set_client_opts(const Settings_impl &opts)
+  {
+    for(auto &opt_val : opts.m_data.m_client_options)
+    {
+      auto ret = m_data.m_client_options.emplace(opt_val);
+      if (!ret.second)
+      {
+        ret.first->second = opt_val.second;
+      }
+    }
+  }
 
   /*
     This method should be called after setting options to actually update
@@ -99,7 +135,7 @@ public:
       earlier.
     */
 
-    if (m_data.m_user_priorities && !m_prio)
+    if (m_data.m_user_priorities && (m_host && !m_prio))
       throw_error("Expected PRIORITY for a host in multi-host settings");
 
     /*
@@ -114,7 +150,12 @@ public:
 
   void doc_end() override
   {
-    commit();
+    if (m_inside_client_opts)
+    {
+      m_inside_client_opts = false;
+    }
+    else
+      commit();
   }
 
   Any_prc* key_val(const string &opt) override
@@ -122,9 +163,17 @@ public:
     return key_val(get_option_from_name(opt));
   }
 
-  Any_prc* key_val(Option opt)
+  Any_prc* key_val(Option_impl opt)
   {
     m_cur_opt = opt;
+    m_cur_cli_opt = Client_option_impl::LAST;
+    return this;
+  }
+
+  Any_prc* key_val(Client_option_impl opt)
+  {
+    m_cur_cli_opt = opt;
+    m_cur_opt = Option_impl::LAST;
     return this;
   }
 
@@ -136,7 +185,9 @@ private:
     for options which build the list of hosts).
   */
 
-  template <typename T> void add_option(Option, const T&);
+  template <typename T> void add_option(Option_impl, const T&);
+
+  template <typename T> void add_option(Client_option_impl, const T&);
 
   // State used for option consistency checks.
 
@@ -144,20 +195,37 @@ private:
   bool m_port = false;
   bool m_socket = false;
   bool m_prio = false;
-  std::set<Option> m_opt_set;
-  Option m_prev_option = Option::LAST;
+  bool m_inside_client_opts = false;
+  std::set<Option_impl> m_opt_set;
+  Option_impl m_prev_option = Option_impl::LAST;
 
   // Set option value doing all consistency checks.
 
-  template <Option OPT, typename T>
+  template <Option_impl OPT, typename T>
   void set_option(const T &val)
   {
     add_option(OPT, val);
   }
 
-  template <Option OPT>
+  template <Option_impl OPT>
   void set_option(const int &val)
   {
+    if (0 > val)
+      throw_error("Option value can not be a negative number");
+    set_option<OPT>((unsigned)val);
+  }
+
+  template <Client_option_impl OPT, typename T>
+  void set_cli_option(const T &val)
+  {
+    add_option(OPT, val);
+  }
+
+  template <Client_option_impl OPT>
+  void set_cli_option(const int &val)
+  {
+    if (0 > val)
+      throw_error("Option value can not be a negative number");
     set_option<OPT>((unsigned)val);
   }
 
@@ -177,8 +245,9 @@ private:
 
   Doc_prc* doc() override
   {
-    throw_error("Option ... does not accept document values");
-    return nullptr;
+    if (!m_inside_client_opts || m_cur_cli_opt != Client_option_impl::LAST)
+      throw_error("Option ... does not accept document values");
+    return this;
   }
 
   // Scalar processor
@@ -194,13 +263,9 @@ private:
     num(uint64_t(val));
   }
 
-  // These value types should not be used
+  void yesno(bool) override;
 
-  void yesno(bool) override
-  {
-    // TODO: throw errror instead
-    assert(false);
-  }
+  // These value types should not be used
 
   void num(float) override
   {
@@ -246,7 +311,7 @@ public:
   void key_val(const std::string &key) override;
   void key_val(const std::string &key, const std::list<std::string>&) override;
 
-  static Option get_uri_option(const std::string&);
+  static Option_impl get_uri_option(const std::string&);
 };
 
 
@@ -258,9 +323,10 @@ public:
 // Options which build a list of hosts.
 
 
+
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::HOST>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::HOST>(
   const std::string &val
 )
 {
@@ -281,13 +347,14 @@ Settings_impl::Setter::set_option<Settings_impl::Option::HOST>(
   m_prio = false;
   ++m_data.m_host_cnt;
   m_data.m_tcpip = true;
-  add_option(Option::HOST, val);
+  add_option(Option_impl::HOST, val);
 }
+
 
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::SOCKET>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::SOCKET>(
 #ifdef _WIN32
   const std::string&
 #else
@@ -315,7 +382,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SOCKET>(
   m_port = false;
   ++m_data.m_host_cnt;
   m_data.m_sock = true;
-  add_option(Option::SOCKET, val);
+  add_option(Option_impl::SOCKET, val);
 
 #endif
 }
@@ -323,14 +390,14 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SOCKET>(
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::PORT>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::PORT>(
   const unsigned &val
 )
 {
   if (m_port)
     throw_error("duplicate PORT value");  // TODO: overwrite instead?
 
-  if (0 < m_data.m_host_cnt && (Option::HOST != m_prev_option))
+  if (0 < m_data.m_host_cnt && (Option_impl::HOST != m_prev_option))
     throw_error("PORT must follow HOST setting in multi-host settings");
 
   if (m_socket)
@@ -344,21 +411,21 @@ Settings_impl::Setter::set_option<Settings_impl::Option::PORT>(
 
   m_port = true;
   m_data.m_tcpip = true;
-  add_option(Option::PORT, val);
+  add_option(Option_impl::PORT, val);
 }
 
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::PRIORITY>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::PRIORITY>(
   const unsigned &val
 )
 {
   switch (m_prev_option)
   {
-  case Option::HOST:
-  case Option::PORT:
-  case Option::SOCKET:
+  case Option_impl::HOST:
+  case Option_impl::PORT:
+  case Option_impl::SOCKET:
     break;
   default:
     throw_error("PRIORITY must directly follow host specification");
@@ -383,7 +450,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::PRIORITY>(
 
   m_data.m_user_priorities = true;
   m_prio = true;
-  add_option(Option::PRIORITY, val);
+  add_option(Option_impl::PRIORITY, val);
 }
 
 
@@ -392,7 +459,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::PRIORITY>(
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::SSL_MODE>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::SSL_MODE>(
   const unsigned &val
 )
 {
@@ -416,13 +483,13 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SSL_MODE>(
       throw_error("SSL_MODE ... not valid when SSL_CA is set");
   }
 
-  add_option(Option::SSL_MODE, val);
+  add_option(Option_impl::SSL_MODE, val);
 }
 
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::SSL_CA>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::SSL_CA>(
   const std::string &val
 )
 {
@@ -442,13 +509,13 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SSL_CA>(
   }
 
   m_data.m_ssl_ca = true;
-  add_option(Option::SSL_CA, val);
+  add_option(Option_impl::SSL_CA, val);
 }
 
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::SSL_MODE>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::SSL_MODE>(
   const std::string &val
 )
 {
@@ -467,7 +534,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SSL_MODE>(
     if (SSL_mode::LAST == opt)
       throw std::out_of_range("");
 
-    set_option<Option::SSL_MODE>(unsigned(opt));
+    set_option<Option_impl::SSL_MODE>(unsigned(opt));
     return;
   }
   catch (const std::out_of_range&)
@@ -484,19 +551,19 @@ Settings_impl::Setter::set_option<Settings_impl::Option::SSL_MODE>(
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::AUTH>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::AUTH>(
   const unsigned &val
 )
 {
   if (val >= size_t(Auth_method::LAST))
     throw_error("Invalid auth method");
-  add_option(Option::AUTH, val);
+  add_option(Option_impl::AUTH, val);
 }
 
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::AUTH>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::AUTH>(
   const std::string &val
 )
 {
@@ -515,7 +582,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::AUTH>(
     if (Auth_method::LAST == m)
       throw std::out_of_range("");
 
-    set_option<Option::AUTH>(unsigned(m));
+    set_option<Option_impl::AUTH>(unsigned(m));
     return;
   }
   catch (const std::out_of_range&)
@@ -533,7 +600,7 @@ Settings_impl::Setter::set_option<Settings_impl::Option::AUTH>(
 
 template<>
 inline void
-Settings_impl::Setter::set_option<Settings_impl::Option::URI>(
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::URI>(
   const std::string &val
 )
 {
@@ -542,22 +609,33 @@ Settings_impl::Setter::set_option<Settings_impl::Option::URI>(
 }
 
 
+template<>
+inline void
+Settings_impl::Setter::set_cli_option<Settings_impl::Client_option_impl::POOL_MAX_SIZE>(
+ const uint64_t &val)
+{
+  if (val == 0)
+    throw_error("Max pool size has to be greater than 0");
+  add_option(Settings_impl::Client_option_impl::POOL_MAX_SIZE, val);
+}
+
+
 // Generic add_option() method.
 
 
 template <typename T>
 inline
-void Settings_impl::Setter::add_option(Option opt, const T &val)
+void Settings_impl::Setter::add_option(Option_impl opt, const T &val)
 {
   auto &options = m_data.m_options;
   m_prev_option = opt;
 
   switch(opt)
   {
-  case Option::HOST:
-  case Option::SOCKET:
-  case Option::PORT:
-  case Option::PRIORITY:
+  case Option_impl::HOST:
+  case Option_impl::SOCKET:
+  case Option_impl::PORT:
+  case Option_impl::PRIORITY:
     options.emplace_back(opt, val);
     return;
 
@@ -591,6 +669,29 @@ void Settings_impl::Setter::add_option(Option opt, const T &val)
 }
 
 
+template <typename T>
+inline
+void Settings_impl::Setter::add_option(Client_option_impl opt, const T &val)
+{
+  auto &options = m_data.m_client_options;
+
+  switch(opt)
+  {
+  case Client_option_impl::POOLING:
+  case Client_option_impl::POOL_MAX_SIZE:
+  case Client_option_impl::POOL_QUEUE_TIMEOUT:
+  case Client_option_impl::POOL_MAX_IDLE_TIME:
+    {
+      auto rc =  options.emplace(opt, val);
+      if (!rc.second)
+        rc.first->second = val;
+      return;
+    }
+  case Client_option_impl::LAST:break;
+  }
+}
+
+
 // Value processor
 
 inline
@@ -600,7 +701,7 @@ void Settings_impl::Setter::str(const string &val)
   std::string utf8_val(val);
 
 #define SET_OPTION_STR_str(X,N) \
-  case Option::X: return set_option<Option::X,std::string>(utf8_val);
+  case Option_impl::X: return set_option<Option_impl::X,std::string>(utf8_val);
 #define SET_OPTION_STR_any(X,N) SET_OPTION_STR_str(X,N)
 #define SET_OPTION_STR_num(X,N)
 
@@ -610,6 +711,7 @@ void Settings_impl::Setter::str(const string &val)
   default:
     throw_error("Option ... does not accept string values.");
   }
+
 }
 
 
@@ -617,19 +719,37 @@ inline
 void Settings_impl::Setter::num(uint64_t val)
 {
 #define SET_OPTION_NUM_num(X,N) \
-  case Option::X: return set_option<Option::X,unsigned>((unsigned)val);
+  case Option_impl::X: return set_option<Option_impl::X,unsigned>((unsigned)val);
 #define SET_OPTION_NUM_any(X,N) SET_OPTION_NUM_num(X,N)
 #define SET_OPTION_NUM_str(X,N)
 
-  if (!check_num_limits<unsigned>(val))
+#define SET_CLI_OPTION_NUM_num(X,N) \
+  case Client_option_impl::X: return set_cli_option<Client_option_impl::X,uint64_t>(val);
+#define SET_CLI_OPTION_NUM_any(X,N) SET_CLI_OPTION_NUM_num(X,N)
+#define SET_CLI_OPTION_NUM_str(X,N)
+#define SET_CLI_OPTION_NUM_end(X,N)\
+  case Client_option_impl::X: throw_error("Unexpected Option"); return;
+
+  if (m_cur_opt != Option_impl::LAST && !check_num_limits<unsigned>(val))
+    throw_error("Option ... value too big");
+
+  if (m_cur_cli_opt != Client_option_impl::LAST &&
+      !check_num_limits<int64_t>(val))
     throw_error("Option ... value too big");
 
   switch (m_cur_opt)
   {
     SESSION_OPTION_LIST(SET_OPTION_NUM)
-  default:
-    throw_error("Option ... does not accept numeric values.");
+    default:break;
   }
+
+  switch(m_cur_cli_opt)
+  {
+    CLIENT_OPTION_LIST(SET_CLI_OPTION_NUM)
+    default:break;
+  }
+
+  throw_error("Option ... does not accept numeric values.");
 }
 
 
@@ -638,38 +758,57 @@ void Settings_impl::Setter::null()
 {
   switch (m_cur_opt)
   {
-  case Option::HOST:
-  case Option::PORT:
-  case Option::PRIORITY:
-  case Option::USER:
+  case Option_impl::HOST:
+  case Option_impl::PORT:
+  case Option_impl::PRIORITY:
+  case Option_impl::USER:
     throw_error("Option ... can not be unset");
     break;
+  case Option_impl::LAST: break;
   default:
     m_data.erase(m_cur_opt);
+  }
+
+  switch (m_cur_cli_opt)
+  {
+  case Client_option_impl::LAST: break;
+  default:
+    m_data.erase(m_cur_cli_opt);
   }
 }
 
 
-
+inline
+void Settings_impl::Setter::yesno(bool b)
+{
+  switch (m_cur_cli_opt)
+  {
+  case Client_option_impl::POOLING:
+    add_option(m_cur_cli_opt, b);
+      return;
+  default: break;
+  }
+  throw_error("Option ... can not be bool");
+}
 
 // URI processor
 
 inline
 void Settings_impl::Setter::user(const std::string &usr)
 {
-  set_option<Option::USER>(usr);
+  set_option<Option_impl::USER>(usr);
 }
 
 inline
 void Settings_impl::Setter::password(const std::string &pwd)
 {
-  set_option<Option::PWD>(pwd);
+  set_option<Option_impl::PWD>(pwd);
 }
 
 inline
 void Settings_impl::Setter::schema(const std::string &db)
 {
-  set_option<Option::DB>(db);
+  set_option<Option_impl::DB>(db);
 }
 
 inline
@@ -677,9 +816,9 @@ void Settings_impl::Setter::host(
   unsigned short priority, const std::string &host
 )
 {
-  set_option<Option::HOST>(host);
+  set_option<Option_impl::HOST>(host);
   if (0 < priority)
-    set_option<Option::PRIORITY>(priority-1);
+    set_option<Option_impl::PRIORITY>(priority-1);
 }
 
 inline
@@ -689,18 +828,18 @@ void Settings_impl::Setter::host(
   unsigned short port
 )
 {
-  set_option<Option::HOST>(host);
-  set_option<Option::PORT>(port);
+  set_option<Option_impl::HOST>(host);
+  set_option<Option_impl::PORT>(port);
   if (0 < priority)
-    set_option<Option::PRIORITY>(priority-1);
+    set_option<Option_impl::PRIORITY>(priority-1);
 }
 
 inline
 void Settings_impl::Setter::socket(unsigned short priority, const std::string &path)
 {
-  set_option<Option::SOCKET>(path);
+  set_option<Option_impl::SOCKET>(path);
   if (0 < priority)
-    set_option<Option::PRIORITY>(priority-1);
+    set_option<Option_impl::PRIORITY>(priority-1);
 }
 
 inline
@@ -743,19 +882,19 @@ void Settings_impl::Setter::key_val(const std::string &key, const std::list<std:
 
 
 inline
-Settings_impl::Option
+Settings_impl::Option_impl
 Settings_impl::Setter::get_uri_option(const std::string &name)
 {
   using std::map;
 
-#define URI_OPT_MAP(X,Y) { X, Option::Y },
+#define URI_OPT_MAP(X,Y) { X, Option_impl::Y },
 
-  static map< std::string, Option > uri_map{
+  static map< std::string, Option_impl > uri_map{
     URI_OPTION_LIST(URI_OPT_MAP)
   };
 
-  Option opt = uri_map.at(to_lower(name));
-  assert(Option::LAST != opt);
+  Option_impl opt = uri_map.at(to_lower(name));
+  assert(Option_impl::LAST != opt);
   return opt;
 }
 

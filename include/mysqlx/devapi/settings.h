@@ -42,6 +42,46 @@
 
 namespace mysqlx {
 
+/**
+  Client creation options
+*/
+
+enum_class ClientOption
+{
+#define CLIENT_OPT_ENUM_any(X,N) X = N,
+#define CLIENT_OPT_ENUM_num(X,N) X = N,
+#define CLIENT_OPT_ENUM_str(X,N) X = N,
+#define CLIENT_OPT_ENUM_end(X,N) X = N,
+
+  CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
+};
+
+
+/// @cond DISABLED
+// Note: Doxygen gets confused here and renders docs incorrectly.
+
+inline
+std::string ClientOptionName(ClientOption opt)
+{
+#define CLT_OPT_NAME_any(X,N) case ClientOption::X: return #X;
+#define CLT_OPT_NAME_num(X,N) CLT_OPT_NAME_any(X,N)
+#define CLT_OPT_NAME_str(X,N) CLT_OPT_NAME_any(X,N)
+#define CLT_OPT_NAME_end(X,N) // let it use the default
+
+  switch(opt)
+  {
+    CLIENT_OPTION_LIST(CLT_OPT_NAME)
+    default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+/// @endcond
+
 /*
   TODO: Cross-references to session options inside Doxygen docs do not work.
 */
@@ -163,6 +203,7 @@ std::string AuthMethodName(AuthMethod m)
 
 namespace internal {
 
+
 /*
   Encapsulate public enumerations in the Settings_traits class to be used
   by Settings_detail<> template.
@@ -171,6 +212,7 @@ namespace internal {
 struct Settings_traits
 {
   using Options    = mysqlx::SessionOption;
+  using CliOptions   = mysqlx::ClientOption;
   using SSLMode    = mysqlx::SSLMode;
   using AuthMethod = mysqlx::AuthMethod;
 
@@ -194,12 +236,15 @@ struct Settings_traits
 template<>
 PUBLIC_API
 void
-internal::Settings_detail<internal::Settings_traits>::do_set(opt_list_t &&opts);
+internal::Settings_detail<internal::Settings_traits>::
+do_set(session_opt_list_t &&opts);
+
 
 
 } // internal namespace
 
 
+class Client;
 class Session;
 
 /**
@@ -408,7 +453,7 @@ public:
   /**
     Specify settings as a list of session options.
 
-    The list of options consist of a `SessionOption` constant,
+    The list of options consist of a SessionOption constant,
     identifying the option to set, followed by the value of the option.
 
     Example:
@@ -428,7 +473,8 @@ public:
   SessionSettings(SessionOption opt, R&&...rest)
   {
     try {
-      Settings_detail::set(opt, std::forward<R>(rest)...);
+      // set<true> means that only SessionOption can be used
+      Settings_detail::set<true>(opt, std::forward<R>(rest)...);
     }
     CATCH_AND_WRAP
   }
@@ -463,7 +509,7 @@ public:
   /**
     Find the specified option @p opt and returns its Value.
 
-    Throws an error if the given option was not found in the settings.
+    Returns NULL Value if not found.
 
     @note For option such as `HOST`, which can repeat several times in
     the settings, only the last value is reported.
@@ -496,7 +542,8 @@ public:
   void set(SessionOption opt, R&&... rest)
   {
     try {
-      Settings_detail::set(opt, std::forward<R>(rest)...);
+      // set<true> means that only SessionOption can be used
+      Settings_detail::set<true>(opt, std::forward<R>(rest)...);
     }
     CATCH_AND_WRAP
   }
@@ -543,6 +590,325 @@ public:
 
 private:
 
+  friend Client;
+  friend Session;
+};
+
+
+/**
+  ClientSettings are used to construct Client objects.
+
+  It can be constructed using a connection string plus a JSON with client
+  options, or by setting each ClientOption and SessionOption with its
+  correspondant value.
+
+  @ingroup devapi
+ */
+
+class ClientSettings
+    : private internal::Settings_detail<internal::Settings_traits>
+{
+
+public:
+
+  using Value = mysqlx::Value;
+
+
+  /**
+    Create client settings from a connection string.
+
+    @see SessionSettings
+  */
+
+  ClientSettings(const string &uri)
+  {
+    try {
+      Settings_detail::set_from_uri(uri);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Create client settings from a connection string and a ClientSettings object
+
+    @see SessionSettings
+  */
+
+  ClientSettings(const string &uri, ClientSettings &opts)
+  {
+    try {
+      Settings_detail::set_from_uri(uri);
+      Settings_detail::set_client_opts(opts);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Create client settings from a connection string and. Client options are
+    expressed in JSON format. Here is an example:
+    ~~~~~~
+    { "pooling": {
+        "enabled": true,
+        "maxSize": 25,
+        "queueTimeout": 1000,
+        "maxIdleTime": 5000}
+    }
+    ~~~~~~
+
+    All options are defined under a document with key vale "pooling". Inside the
+    document, the available options are these:
+    - `enabled` : boolean value that enable or disable connection pooling. If
+                  disabled, session created from pool are the same as created
+                  directly without client handle.
+                  Enabled by default.
+    - `mazSize` : integer that defines the max pooling sessions possible. If
+                  uses tries to get session from pool when maximum sessions are
+                  used, it will wait for an available session untill
+                  `queueTimeout`.
+                  Defaults to 25.
+    - `queueTimeout` : integer value that defines the time, in milliseconds,
+                       that client will wait to get an available session.
+                       By default it doesn't timeouts.
+    - `maxIdleTime` : integer value that defines the time, in milliseconds, that
+                     an available session will wait in the pool before it is
+                     removed.
+                     By default it doesn't cleans sessions.
+
+  */
+
+  ClientSettings(const string &uri, const DbDoc &options)
+  {
+    try {
+      Settings_detail::set_from_uri(uri);
+      std::stringstream str_opts;
+      str_opts << options;
+      Settings_detail::set_client_opts(str_opts.str());
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Create client settings from a connection string and. Client options are
+    expressed in JSON format. Here is an example:
+    ~~~~~~
+    { "pooling": {
+        "enabled": true,
+        "maxSize": 25,
+        "queueTimeout": 1000,
+        "maxIdleTime": 5000}
+    }
+    ~~~~~~
+
+    All options are defined under a document with key vale "pooling". Inside the
+    document, the available options are these:
+    - `enabled` : boolean value that enable or disable connection pooling. If
+                  disabled, session created from pool are the same as created
+                  directly without client handle.
+                  Enabled by default.
+    - `mazSize` : integer that defines the max pooling sessions possible. If
+                  uses tries to get session from pool when maximum sessions are
+                  used, it will wait for an available session untill
+                  `queueTimeout`.
+                  Defaults to 25.
+    - `queueTimeout` : integer value that defines the time, in milliseconds,
+                       that client will wait to get an available session.
+                       By default it doesn't timeouts.
+    - `maxIdleTime` : integer value that defines the time, in milliseconds, that
+                     an available session will wait in the pool before it is
+                     removed.
+                     By default it doesn't cleans sessions.
+
+  */
+
+  ClientSettings(const string &uri, const char *options)
+  {
+    try {
+      Settings_detail::set_from_uri(uri);
+      Settings_detail::set_client_opts(options);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Create client settings from a connection string and  client settings as a
+    list of client options.
+
+    The list of options consist of a ClientOption constant,
+    identifying the option to set, followed by the value of the option.
+
+    Example:
+    ~~~~~~
+    ClientSettings from_option_list( "mysqlx://root@localhost",
+                   ClientOption::POOLING, true,
+                   ClientOption::POOL_MAX_SIZE, max_connections,
+                   ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::seconds(100),
+                   ClientOption::POOL_MAX_IDLE_TIME, std::chrono::microseconds(1)
+      );
+    ~~~~~~
+
+    ClientOption::POOL_QUEUE_TIMEOUT and ClientOption::POOL_MAX_IDLE_TIME can
+    be specified using std::chrono::duration objects, or by integer values, with
+    the latest to be specified in milliseconds.
+
+    @see SessionSettings
+  */
+
+  template<typename...R>
+  ClientSettings(const string &uri, mysqlx::ClientOption opt, R... rest)
+    try
+    : ClientSettings(uri)
+  {
+    // set<false> means that both SessionOption and ClientOption can be used
+    Settings_detail::set<false>(opt, std::forward<R>(rest)...);
+  }
+  CATCH_AND_WRAP
+
+
+  template <typename... R>
+  ClientSettings(mysqlx::SessionOption opt, R&&...rest)
+  {
+    try {
+      // set<false> means that both SessionOption and ClientOption can be used
+      Settings_detail::set<false>(opt, std::forward<R>(rest)...);
+    }
+    CATCH_AND_WRAP
+  }
+
+  template <typename... R>
+  ClientSettings(mysqlx::ClientOption opt, R&&...rest)
+  {
+    try {
+      // set<false> means that both SessionOption and ClientOption can be used
+      Settings_detail::set<false>(opt, std::forward<R>(rest)...);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Find the specified option @p opt and returns its Value.
+
+    Returns NULL Value if not found.
+
+  */
+
+  Value find(mysqlx::ClientOption opt)
+  {
+    try {
+      return Settings_detail::get(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Find the specified option @p opt and returns its Value.
+
+    Returns NULL Value if not found.
+
+    @note For option such as `HOST`, which can repeat several times in
+    the settings, only the last value is reported.
+  */
+
+  Value find(mysqlx::SessionOption opt)
+  {
+    try {
+      return Settings_detail::get(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Set client and session options.
+
+    Accepts a list of one or more `ClientOption` or `SessionOption` constants,
+    each followed by the option value. Options specified here are added to the
+    current settings.
+
+    Repeated `HOST`, `PORT`, `SOCKET` and `PRIORITY` options build a list of
+    hosts to be used by the fail-over logic. For other options, if they are set
+    again, the new value overrides the previous setting.
+
+    @note
+    When using `HOST`, `PORT` and `PRIORITY` options to specify a single
+    host, all have to be specified in the same `set()` call.
+   */
+
+  template<typename OPT,typename... R>
+  void set(OPT opt, R&&... rest)
+  {
+    try {
+      // set<false> means that both SessionOption and ClientOption can be used
+      Settings_detail::set<false>(opt, std::forward<R>(rest)...);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Clear all settings specified so far.
+  */
+
+  void clear()
+  {
+    try {
+      Settings_detail::clear();
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Remove the given option @p opt.
+  */
+
+  void erase(mysqlx::ClientOption opt)
+  {
+    try {
+      Settings_detail::erase(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Remove all settings for the given option @p opt.
+
+    @note For option such as `HOST`, which can repeat several times in
+    the settings, all occurrences are erased.
+  */
+
+  void erase(mysqlx::SessionOption opt)
+  {
+    try {
+      Settings_detail::erase(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+
+  /**
+    Check if option @p opt was defined.
+  */
+
+  bool has_option(mysqlx::ClientOption opt)
+  {
+    try {
+      return Settings_detail::has_option(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+  /**
+    Check if option @p opt was defined.
+  */
+
+  bool has_option(SessionOption opt)
+  {
+    try {
+      return Settings_detail::has_option(opt);
+    }
+    CATCH_AND_WRAP
+  }
+
+private:
+  friend Client;
   friend Session;
 };
 

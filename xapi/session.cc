@@ -37,6 +37,15 @@
 using std::string;
 
 
+mysqlx_session_struct::mysqlx_session_struct( mysqlx_client_t *cli)
+{
+  if (cli)
+    m_impl = std::make_shared<common::Session_impl>(cli->get_impl());
+  else
+    throw_error("Invalid client pool");
+}
+
+
 mysqlx_session_struct::mysqlx_session_struct(
   mysqlx_session_options_struct *opt
 )
@@ -150,6 +159,32 @@ void mysqlx_session_struct::savepoint_remove(const char *sp)
 }
 
 
+/*
+   ============================================================================
+   Client object implementation
+*/
+
+mysqlx_client_struct::mysqlx_client_struct(const char *conn_str,
+                                           const char *client_opt)
+{
+  mysqlx_session_options_struct opt(conn_str);
+  if (client_opt)
+    opt.set_client_opts(client_opt);
+  cdk::ds::Multi_source ds;
+  opt.get_data_source(ds);
+  m_impl.reset(new  mysqlx::common::Session_pool(ds));
+  m_impl->set_pool_opts(opt);
+}
+
+
+mysqlx_client_struct::mysqlx_client_struct(mysqlx_session_options_t *opt)
+{
+  cdk::ds::Multi_source ds;
+  opt->get_data_source(ds);
+  m_impl.reset(new  mysqlx::common::Session_pool(ds));
+  m_impl->set_pool_opts(*opt);
+}
+
 
 using cdk::foundation::connection::TLS;
 
@@ -196,7 +231,7 @@ unsigned int ssl_mode_to_uint(TLS::Options::SSL_MODE mode)
 const char* opt_name(mysqlx_opt_type_t opt)
 {
   using mysqlx::common::Settings_impl;
-  using Option = Settings_impl::Option;
+  using Option = Settings_impl::Option_impl;
   return Settings_impl::option_name(Option(opt));
 }
 

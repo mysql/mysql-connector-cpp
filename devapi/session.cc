@@ -51,41 +51,85 @@ using namespace ::mysqlx;
   ================
 */
 
+template<typename PRC>
+void process_val(PRC *prc, common::Value &val)
+{
+  assert(prc);
+
+  switch (val.get_type())
+  {
+  case common::Value::STRING:  prc->str(val.get_string()); break;
+  case common::Value::WSTRING: prc->str(val.get_wstring()); break;
+  case common::Value::INT64:   prc->num(val.get_sint());   break;
+  case common::Value::UINT64:  prc->num(val.get_uint());   break;
+  case common::Value::BOOL:  prc->yesno(val.get_bool());   break;
+
+  default:
+    throw_error("Invalid type of session option value");
+  }
+}
 
 template<>
 void
-internal::Settings_detail<internal::Settings_traits>::do_set(opt_list_t &&opts)
+internal::Settings_detail<internal::Settings_traits>::do_set(
+    session_opt_list_t &&opts)
 {
   Setter set(*this);
 
   set.doc_begin();
 
-  for (auto opt_val : opts)
+  for (auto &opt_val : opts)
   {
-    const Value &val = opt_val.second;
-    auto *prc = set.key_val(opt_val.first)->scalar();
-    assert(prc);
-
-    switch (val.get_type())
+    if (opt_val.first > 0)
     {
-    case Value::STRING:  prc->str(val.get_string()); break;
-    case Value::WSTRING: prc->str(val.get_wstring()); break;
-    case Value::INT64:   prc->num(val.get_sint());   break;
-    case Value::UINT64:  prc->num(val.get_uint());   break;
-
-    default:
-      throw_error("Invalid type of session option value");
+      process_val(set.key_val(int_to_option(opt_val.first))->scalar(),
+                  opt_val.second);
     }
+    else
+    {
+      process_val(set.key_val(int_to_client_option(opt_val.first))->scalar(),
+                  opt_val.second);
+    }
+
   }
 
   set.doc_end();
 }
 
+
+/*
+  Client implementation
+  ======================
+*/
+
+internal::Client_detail::Client_detail(common::Settings_impl &settings)
+{
+  cdk::ds::Multi_source source;
+  settings.get_data_source(source);
+  m_impl = std::make_shared<Impl>(source);
+  m_impl->set_pool_opts(settings);
+}
+
+
+common::Shared_session_pool&
+internal::Client_detail::get_session_pool()
+{
+  return m_impl;
+}
+
+
+void internal::Client_detail::close()
+{
+  auto p = get_session_pool();
+  if (p)
+    p->close();
+}
+
+
 /*
   Session implementation
   ======================
 */
-
 
 internal::Session_detail::Session_detail(common::Settings_impl &settings)
 {
@@ -100,12 +144,10 @@ internal::Session_detail::Session_detail(common::Settings_impl &settings)
 }
 
 
-//Session::Session(Session* master)
-//{
-//  assert(master);
-//  m_impl = master->m_impl;
-//  master->add_child(this);
-//}
+internal::Session_detail::Session_detail(common::Shared_session_pool &pool)
+{
+  m_impl = std::make_shared<Impl>(pool);
+}
 
 
 cdk::Session& internal::Session_detail::get_cdk_session()
@@ -113,7 +155,7 @@ cdk::Session& internal::Session_detail::get_cdk_session()
   if (!m_impl)
     throw Error("Session closed");
 
-  return m_impl->m_sess;
+  return *(m_impl->m_sess);
 }
 
 
@@ -127,7 +169,7 @@ void internal::Session_detail::prepare_for_cmd()
 void internal::Session_detail::close()
 {
   get_cdk_session().rollback();
-
+  m_impl->release();
   m_impl.reset();
 }
 

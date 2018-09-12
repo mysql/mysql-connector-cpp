@@ -812,6 +812,12 @@ public:
 };
 
 
+Protocol::Op& Protocol::snd_SessionReset()
+{
+  Mysqlx::Session::Reset reset;
+  return get_impl().snd_start(reset, msg_type::cli_SessionReset);
+}
+
 Protocol::Op& Protocol::snd_Close()
 {
   Mysqlx::Connection::Close close;

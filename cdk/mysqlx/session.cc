@@ -348,6 +348,15 @@ private:
 */
 
 
+void Session::send_auth()
+{
+  start_authentication(m_auth_interface->auth_method(),
+                       m_auth_interface->auth_data(),
+                       m_auth_interface->auth_response());
+
+  start_reading_auth_reply();
+}
+
 void Session::do_authenticate(const Options &options,
                               int original_am,
                               bool  secure_conn)
@@ -381,16 +390,9 @@ void Session::do_authenticate(const Options &options,
       THROW("Unknown authentication method");
   }
 
+  send_auth();
 
-  start_authentication(m_auth_interface->auth_method(),
-                       m_auth_interface->auth_data(),
-                       m_auth_interface->auth_response());
-
-  start_reading_auth_reply();
-
-  wait();
-
-  if (!m_isvalid)
+  if (!is_valid())
   {
     if (Protocol_options::DEFAULT == original_am && !secure_conn)
     {
@@ -473,6 +475,25 @@ option_t Session::check_valid()
   return  is_valid() ? true : false;
 }
 
+void Session::reset()
+{
+  clear_errors();
+
+  m_reply_op_queue.clear();
+
+  if (is_valid())
+  {
+    m_protocol.snd_SessionReset().wait();
+    m_protocol.rcv_Reply(*this).wait();
+
+    m_isvalid = false;
+
+    // Re-authenticate
+    send_auth();
+  }
+
+}
+
 
 void Session::close()
 {
@@ -481,8 +502,7 @@ void Session::close()
   if (is_valid())
   {
     m_protocol.snd_Close().wait();
-    //    TODO: Uncomment this line when srever implements Close OK reply message
-    //    m_protocol.rcv_Reply(*this).wait();
+    m_protocol.rcv_Reply(*this).wait();
   }
   m_isvalid = false;
 
@@ -741,7 +761,6 @@ Reply_init &Session::set_command(Proto_op *cmd)
 void Session::auth_ok(bytes data)
 {
   m_isvalid = true;
-  m_auth_interface.reset();
 }
 
 
