@@ -1899,6 +1899,12 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
         SESSION_OPTION_LIST(OPT_SET)
 
+#define CLIENT_OPT_SET_bool(X,N) \
+            case -N: \
+            { uint_data = va_arg(args, int); \
+              set.key_val(ClientOption::X)->scalar()->num(uint_data); }; \
+            break;
+
 #define CLIENT_OPT_SET_num(X,N) \
         case -N: \
         { uint_data = va_arg(args, uint64_t); \

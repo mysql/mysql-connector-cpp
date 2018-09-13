@@ -725,6 +725,7 @@ void Settings_impl::Setter::num(uint64_t val)
 
 #define SET_CLI_OPTION_NUM_num(X,N) \
   case Client_option_impl::X: return set_cli_option<Client_option_impl::X,uint64_t>(val);
+#define SET_CLI_OPTION_NUM_bool(X,N) SET_CLI_OPTION_NUM_num(X,N)
 #define SET_CLI_OPTION_NUM_any(X,N) SET_CLI_OPTION_NUM_num(X,N)
 #define SET_CLI_OPTION_NUM_str(X,N)
 #define SET_CLI_OPTION_NUM_end(X,N)\

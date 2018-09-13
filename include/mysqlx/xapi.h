@@ -360,6 +360,7 @@ typedef enum mysqlx_client_opt_type_enum
 {
 
 #define XAPI_CLIENT_OPT_ENUM_str(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
+#define XAPI_CLIENT_OPT_ENUM_bool(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 #define XAPI_CLIENT_OPT_ENUM_num(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 #define XAPI_CLIENT_OPT_ENUM_any(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 #define XAPI_CLIENT_OPT_ENUM_end(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
@@ -368,7 +369,7 @@ typedef enum mysqlx_client_opt_type_enum
 }
 mysqlx_client_opt_type_t;
 
-#define OPT_POOLING(A)     MYSQLX_CLIENT_OPT_POOLING, (bool)(A)
+#define OPT_POOLING(A)     MYSQLX_CLIENT_OPT_POOLING, (int)(bool)(A)
 #define OPT_POOL_MAX_SIZE(A) MYSQLX_CLIENT_OPT_POOL_MAX_SIZE, (uint64_t)(A)
 #define OPT_POOL_QUEUE_TIMEOUT(A) MYSQLX_CLIENT_OPT_POOL_QUEUE_TIMEOUT, (uint64_t)(A)
 #define OPT_POOL_MAX_IDLE_TIME(A) MYSQLX_CLIENT_OPT_POOL_MAX_IDLE_TIME, (uint64_t)(A)

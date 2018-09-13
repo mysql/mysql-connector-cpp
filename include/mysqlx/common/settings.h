@@ -87,6 +87,7 @@ public:
   */
 
 #define CLIENT_OPT_ENUM_str(X,N)  X = N,
+#define CLIENT_OPT_ENUM_bool(X,N)  X = N,
 #define CLIENT_OPT_ENUM_num(X,N)  X = N,
 #define CLIENT_OPT_ENUM_any(X,N)  X = N,
 #define CLIENT_OPT_ENUM_end(X,N)  X = N,
@@ -235,6 +236,7 @@ const char* Settings_impl::option_name(Option_impl opt)
 }
 
 #define CLIENT_OPT_NAME_str(X,N)  case N: return #X;
+#define CLIENT_OPT_NAME_bool(X,N)  case N: return #X;
 #define CLIENT_OPT_NAME_num(X,N)  case N: return #X;
 #define CLIENT_OPT_NAME_any(X,N)  case N: return #X;
 #define CLIENT_OPT_NAME_end(X,N)  case N: throw_error("Unexpected Option"); return #X;

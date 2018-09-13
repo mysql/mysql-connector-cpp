@@ -64,6 +64,7 @@ inline
 std::string ClientOptionName(ClientOption opt)
 {
 #define CLT_OPT_NAME_any(X,N) case ClientOption::X: return #X;
+#define CLT_OPT_NAME_bool(X,N) CLT_OPT_NAME_any(X,N)
 #define CLT_OPT_NAME_num(X,N) CLT_OPT_NAME_any(X,N)
 #define CLT_OPT_NAME_str(X,N) CLT_OPT_NAME_any(X,N)
 #define CLT_OPT_NAME_end(X,N) // let it use the default

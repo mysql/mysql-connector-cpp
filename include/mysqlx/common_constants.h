@@ -57,7 +57,7 @@
 
 
 #define CLIENT_OPTION_LIST(x)                                                  \
-  OPT_NUM(x,POOLING,1) /*!< disable/enable the pool. (Enabled by default)*/    \
+  OPT_BOOL(x,POOLING,1) /*!< disable/enable the pool. (Enabled by default)*/    \
   OPT_NUM(x,POOL_MAX_SIZE,2) /*!< size of the pool. (Defaults to 25)*/         \
   OPT_NUM(x,POOL_QUEUE_TIMEOUT,3) /*!< timeout for waiting for a connection in
   the pool (ms). (No timeout by default)*/                                     \
@@ -88,6 +88,7 @@
   END_LIST
 
 #define OPT_STR(X,Y,N) X##_str(Y,N)
+#define OPT_BOOL(X,Y,N) X##_bool(Y,N)
 #define OPT_NUM(X,Y,N) X##_num(Y,N)
 #define OPT_ANY(X,Y,N) X##_any(Y,N)
 #define OPT_END(X,Y,N) X##_end(Y,N)
