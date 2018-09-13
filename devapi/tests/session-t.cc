@@ -1361,12 +1361,7 @@ TEST_F(Sess, pool_opts)
   EXPECT_THROW(ClientSettings(ClientOption::POOL_MAX_SIZE, 0),Error);
 
   EXPECT_THROW(ClientSettings("mysqlx://root@localhost",
-                              R"( { "pooling": {
-                              "enabled": true,
-                              "maxSize": 0,
-                              "queueTimeout": 1000,
-                              "maxIdleTime": 5000}
-                              })"),
+                              R"( { "pooling": {"enabled": true, "maxSize": 0, "queueTimeout": 1000, "maxIdleTime": 5000}})"),
                        Error);
 
   //Client constructors
@@ -1386,12 +1381,7 @@ TEST_F(Sess, pool_opts)
   // Using connection string plus JSON string
   {
     mysqlx::Client client(uri.str(),
-                          R"( { "pooling": {
-                          "enabled": true,
-                          "maxSize": 25,
-                          "queueTimeout": 1000,
-                          "maxIdleTime": 5000}
-                          })");
+                          R"( { "pooling": {"enabled": true, "maxSize": 25, "queueTimeout": 1000, "maxIdleTime": 5000}})");
     mysqlx::Session s = client.getSession();
   }
 
