@@ -627,7 +627,10 @@ void Session_pool::set_pool_opts(Settings_impl &opts)
 
   if (opts.has_option(Settings_impl::Client_option_impl::POOL_MAX_SIZE))
   try{
-    set_size(opts.get(Settings_impl::Client_option_impl::POOL_MAX_SIZE).get_uint());
+    set_size(
+          static_cast<size_t>(
+            opts.get(Settings_impl::Client_option_impl::POOL_MAX_SIZE)
+            .get_uint()));
   }catch(...)
   {
     throw_error("Invalid POOL_MAX_SIZE value");
