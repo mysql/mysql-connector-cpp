@@ -2235,6 +2235,10 @@ TEST_F(Crud, lock_contention)
 
   auto &sess = get_sess();
 
+  //decrease the lock wait time (default = 50s)
+  sql("set session innodb_lock_wait_timeout = 5");
+  sql("set global innodb_lock_wait_timeout = 5");
+
   Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
   Table tbl = sch.getCollectionAsTable("c1", true);
@@ -2334,9 +2338,6 @@ TEST_F(Crud, lock_contention)
   /*
     Shared lock tests
   */
-
-  //decrease the lock wait time (default = 50s)
-  sql("set innodb_lock_wait_timeout = 10");
 
   sess.startTransaction();
   s_nolock.startTransaction();

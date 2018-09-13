@@ -275,6 +275,9 @@ TEST_F(xapi, lock_contention)
 
   AUTHENTICATE();
 
+  exec_sql("SET SESSION innodb_lock_wait_timeout = 5");
+  exec_sql("SET GLOBAL innodb_lock_wait_timeout = 5");
+
   EXPECT_TRUE((sch = mysqlx_get_schema(get_session(), "test", 1)) != NULL);
 
   mysqlx_collection_drop(sch, "c1");
