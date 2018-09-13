@@ -731,10 +731,10 @@ int poll_one(Socket socket, Select_mode mode, bool wait)
   switch(mode)
   {
     case SELECT_MODE_READ:
-      fds.events = POLLIN | POLLPRI;
+      fds.events = POLLRDNORM;
       break;
     case SELECT_MODE_WRITE:
-      fds.events = POLLOUT;
+      fds.events = POLLWRNORM;
       break;
   }
 
