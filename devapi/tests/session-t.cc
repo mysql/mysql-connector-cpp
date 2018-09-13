@@ -1542,7 +1542,6 @@ TEST_F(Sess, pool_use)
       std::cout << "Populated Pool: " <<
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                      full_pool_duration).count() << "ms" <<std::endl;
-      EXPECT_GT(clean_pool_duration, full_pool_duration);
 
     }
 

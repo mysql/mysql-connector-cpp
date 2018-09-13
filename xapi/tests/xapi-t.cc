@@ -1742,7 +1742,6 @@ TEST_F(xapi, pool)
   std::cout << "Populated Pool: " <<
                std::chrono::duration_cast<std::chrono::milliseconds>(
                  full_pool_duration).count() << "ms" <<std::endl;
-  EXPECT_GT(clean_pool_duration, full_pool_duration);
 
 
   mysqlx_client_close(cli);
