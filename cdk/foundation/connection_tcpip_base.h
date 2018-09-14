@@ -119,7 +119,7 @@ public:
   {
     if (!is_open())
       return false;
-    return detail::poll_one(m_sock, detail::SELECT_MODE_WRITE, false) > 0;
+    return detail::select_one(m_sock, detail::SELECT_MODE_WRITE, false) > 0;
   }
 
   virtual ~Impl()
