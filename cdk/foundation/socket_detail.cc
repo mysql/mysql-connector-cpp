@@ -51,6 +51,8 @@ PUSH_SYS_WARNINGS
 #endif
 POP_SYS_WARNINGS
 
+using namespace std::chrono;
+
 namespace cdk {
 namespace foundation {
 namespace connection {
@@ -550,7 +552,7 @@ Socket connect(const char *host_name, unsigned short port,
 {
   Socket socket = NULL_SOCKET;
   addrinfo* host_list = NULL;
-  time_t deadline = (time_t)timeout_usec / 1000 + get_time();
+  auto deadline = system_clock::now() + microseconds(timeout_usec);
 
   // Resolve host name.
   // TODO: Configurable number of attempts
@@ -565,7 +567,7 @@ Socket connect(const char *host_name, unsigned short port,
         Therefore, we will do the blocking call and measure the time
       */
       host_list = detail::addrinfo_from_string(host_name, port);
-      if (timeout_usec > 0 && get_time() >= deadline)
+      if (timeout_usec > 0 && system_clock::now() >= deadline)
       {
         throw Connect_timeout_error(timeout_usec / 1000);
       }
@@ -604,10 +606,11 @@ Socket connect(const char *host_name, unsigned short port,
       #endif
         {
           int select_result = select_one(socket, SELECT_MODE_WRITE, true,
-                                         (uint64_t)1000 * (deadline - get_time()));
+                                         (uint64_t)duration_cast<microseconds>(
+                                           deadline - system_clock::now()).count());
 
           if (select_result == 0 && (timeout_usec > 0) &&
-               (get_time() >= deadline))
+               (std::chrono::system_clock::now() >= deadline))
           {
             // Throw the error in milliseconds, which we did not adjust.
             // Otherwise the user will be confused why the timeout
@@ -652,7 +655,7 @@ DIAGNOSTIC_POP
 Socket connect(const char *path, uint64_t timeout_usec)
 {
   Socket socket = NULL_SOCKET;
-  time_t deadline = timeout_usec / 1000 + get_time();
+  auto deadline = system_clock::now() + microseconds(timeout_usec);
 
   // Connect to host.
   int connect_result = SOCKET_ERROR;
@@ -676,7 +679,7 @@ Socket connect(const char *path, uint64_t timeout_usec)
         int select_result = select_one(socket, SELECT_MODE_WRITE, true,
                                        timeout_usec);
         if (select_result == 0 && (timeout_usec > 0) &&
-          (get_time() >= deadline))
+          (system_clock::now() >= deadline))
         {
           // We probably hit the timeout
           throw Connect_timeout_error(timeout_usec / 1000);
