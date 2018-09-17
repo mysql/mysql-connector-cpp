@@ -42,6 +42,8 @@ PUSH_SYS_WARNINGS
 
 #include <cstdio>
 #include <limits>
+#include <chrono>
+#include <sstream>
 #ifndef _WIN32
 #include <arpa/inet.h>
 #include <signal.h>
@@ -543,10 +545,12 @@ DIAGNOSTIC_PUSH
   DISABLE_WARNING(4189)
 #endif
 
-Socket connect(const char *host_name, unsigned short port)
+Socket connect(const char *host_name, unsigned short port,
+               uint64_t timeout_usec)
 {
   Socket socket = NULL_SOCKET;
   addrinfo* host_list = NULL;
+  time_t deadline = (time_t)timeout_usec / 1000 + get_time();
 
   // Resolve host name.
   // TODO: Configurable number of attempts
@@ -556,7 +560,15 @@ Socket connect(const char *host_name, unsigned short port)
     attempts--;
     try
     {
+      /*
+        The DNS async resolution is not supported on all platforms.
+        Therefore, we will do the blocking call and measure the time
+      */
       host_list = detail::addrinfo_from_string(host_name, port);
+      if (timeout_usec > 0 && get_time() >= deadline)
+      {
+        throw Connect_timeout_error(timeout_usec / 1000);
+      }
     }
     catch (Error& e)
     {
@@ -591,9 +603,19 @@ Socket connect(const char *host_name, unsigned short port)
         if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       #endif
         {
-          int select_result = select_one(socket, SELECT_MODE_WRITE, true);
+          int select_result = select_one(socket, SELECT_MODE_WRITE, true,
+                                         (uint64_t)1000 * (deadline - get_time()));
 
-          if (select_result < 0)
+          if (select_result == 0 && (timeout_usec > 0) &&
+               (get_time() >= deadline))
+          {
+            // Throw the error in milliseconds, which we did not adjust.
+            // Otherwise the user will be confused why the timeout
+            // in the error message is smaller than defined
+            // (original timeout minus DNS resolution time)
+            throw Connect_timeout_error(timeout_usec / 1000);
+          }
+          else if (select_result < 0)
             throw_socket_error();
           else
             check_socket_error(socket);
@@ -605,6 +627,11 @@ Socket connect(const char *host_name, unsigned short port)
           throw_socket_error();
         }
       }
+    }
+    catch (Connect_timeout_error&)
+    {
+      close(socket);
+      throw;
     }
     catch (...)
     {
@@ -622,10 +649,10 @@ Socket connect(const char *host_name, unsigned short port)
 DIAGNOSTIC_POP
 
 #ifndef _WIN32
-Socket connect(const char *path)
+Socket connect(const char *path, uint64_t timeout_usec)
 {
   Socket socket = NULL_SOCKET;
-
+  time_t deadline = timeout_usec / 1000 + get_time();
 
   // Connect to host.
   int connect_result = SOCKET_ERROR;
@@ -646,9 +673,15 @@ Socket connect(const char *path)
     {
       if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       {
-        int select_result = select_one(socket, SELECT_MODE_WRITE, true);
-
-        if (select_result < 0)
+        int select_result = select_one(socket, SELECT_MODE_WRITE, true,
+                                       timeout_usec);
+        if (select_result == 0 && (timeout_usec > 0) &&
+          (get_time() >= deadline))
+        {
+          // We probably hit the timeout
+          throw Connect_timeout_error(timeout_usec / 1000);
+        }
+        else if (select_result < 0)
           throw_socket_error();
         else
           check_socket_error(socket);
@@ -721,10 +754,14 @@ Socket listen_and_accept(unsigned short port)
   return client;
 }
 
-
-int select_one(Socket socket, Select_mode mode, bool wait)
+int select_one(Socket socket, Select_mode mode, bool wait,
+               uint64_t timeout_usec)
 {
-  timeval zero_timeout = {};
+  timeval timeout_val = {};
+
+  // Pre-initialize pointer with zero timeval structure
+  // to make select() return immediately
+  timeval *select_timeout = &timeout_val;
 
 DIAGNOSTIC_PUSH
 
@@ -744,10 +781,25 @@ DIAGNOSTIC_PUSH
 
 DIAGNOSTIC_POP
 
-  int result = ::select(FD_SETSIZE,
+  if (wait)
+  {
+    if (timeout_usec > 0)
+    {
+      // If timeout is specified we will use it
+      select_timeout->tv_sec = (long)timeout_usec / 1000000;
+      select_timeout->tv_usec = (long)(timeout_usec % 1000000);
+    }
+    else
+    {
+      // Otherwise wait until socket becomes available
+      select_timeout = NULL;
+    }
+  }
+
+  int result = ::select((int)socket + 1,
     mode == SELECT_MODE_READ ? &socket_set : NULL,
     mode == SELECT_MODE_WRITE ? &socket_set : NULL,
-    &except_set, wait ? NULL : &zero_timeout);
+    &except_set, select_timeout);
 
   if (result > 0 && FD_ISSET(socket, &except_set))
     check_socket_error(socket);

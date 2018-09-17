@@ -47,11 +47,18 @@ class connection_TCPIP_impl
 {
   std::string m_host;
   unsigned short m_port;
+  typedef ::cdk::foundation::connection::Socket_base::Options Options;
+  Options m_opts;
 
 public:
 
   connection_TCPIP_impl(const std::string &host, unsigned short port)
     : m_host(host), m_port(port)
+  {}
+
+  connection_TCPIP_impl(const std::string &host, unsigned short port,
+                        const Options &opts)
+    : m_host(host), m_port(port), m_opts(opts)
   {}
 
   void do_connect();
@@ -66,7 +73,8 @@ void connection_TCPIP_impl::do_connect()
   if (is_open())
     return;
 
-  m_sock = connection::detail::connect(m_host.c_str(), m_port);
+  m_sock = connection::detail::connect(m_host.c_str(), m_port,
+                                       m_opts.get_connection_timeout());
 }
 
 
@@ -83,11 +91,18 @@ class connection_Unix_socket_impl
   : public ::cdk::foundation::connection::Socket_base::Impl
 {
   std::string m_path;
+  typedef ::cdk::foundation::connection::Socket_base::Options Options;
+  Options m_opts;
 
 public:
 
   connection_Unix_socket_impl(const std::string &path)
     : m_path(path)
+  {}
+
+  connection_Unix_socket_impl(const std::string &path,
+                              const Options& opts)
+    : m_path(path), m_opts(opts)
   {}
 
   void do_connect();
@@ -102,7 +117,8 @@ void connection_Unix_socket_impl::do_connect()
   if (is_open())
     return;
 
-  m_sock = connection::detail::connect(m_path.c_str());
+  m_sock = connection::detail::connect(m_path.c_str(),
+                                       m_opts.get_connection_timeout());
 }
 
 
@@ -116,14 +132,16 @@ namespace connection {
 
 
 TCPIP::TCPIP(const std::string& host,
-             unsigned short port)
-  : opaque_impl<TCPIP>(NULL, host, port)
+             unsigned short port,
+             const Options& opts)
+  : opaque_impl<TCPIP>(NULL, host, port, opts)
 {}
 
 
 #ifndef WIN32
-Unix_socket::Unix_socket(const std::string& path)
-  : opaque_impl<Unix_socket>(NULL, path)
+Unix_socket::Unix_socket(const std::string& path,
+                         const Options& opts)
+  : opaque_impl<Unix_socket>(NULL, path, opts)
 {}
 #endif //#ifndef WIN32
 

@@ -27,13 +27,111 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
-
 #include <stdio.h>
 #include <string.h>
 #include <climits>
 #include <chrono>
 #include <iostream>
 #include "test.h"
+
+TEST_F(xapi, connect_timeout)
+{
+// Set MANUAL_TESTING to 1 and define NON_BOUNCE_SERVER
+#define MANUAL_TESTING 0
+#if(MANUAL_TESTING == 1)
+  mysqlx_session_t *local_sess = NULL;
+  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
+  int conn_err_code = 0;
+  #define NON_BOUNCE_SERVER "define.your.server"
+  #define NON_BOUNCE_PORT1 81
+  #define NON_BOUNCE_PORT2 82
+
+  {
+    // No timeout is specified, assume 10 seconds
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                   OPT_HOST(NON_BOUNCE_SERVER),
+                                                   OPT_PORT(NON_BOUNCE_PORT1),
+                                                   OPT_USER(m_xplugin_usr),
+                                                   OPT_PWD(m_xplugin_pwd),
+                                                   PARAM_END));
+
+    local_sess = mysqlx_get_session_from_options(opt, conn_error,
+                                                 &conn_err_code);
+    if (local_sess)
+    {
+      mysqlx_session_close(local_sess);
+      FAIL() << "Session should not be established";
+    }
+    else
+      cout << "Expected error: " << conn_error << endl;
+  }
+
+  {
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                            OPT_HOST(NON_BOUNCE_SERVER),
+                            OPT_PORT(NON_BOUNCE_PORT1),
+                            OPT_USER(m_xplugin_usr),
+                            OPT_PWD(m_xplugin_pwd),
+                            OPT_CONNECT_TIMEOUT(5000),
+                            PARAM_END));
+
+    local_sess = mysqlx_get_session_from_options(opt, conn_error,
+                                                 &conn_err_code);
+    if (local_sess)
+    {
+      mysqlx_session_close(local_sess);
+      FAIL() << "Session should not be established";
+    }
+    else
+      cout << "Expected error: " << conn_error << endl;
+  }
+
+  {
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                            OPT_HOST(NON_BOUNCE_SERVER),
+                            OPT_PORT(NON_BOUNCE_PORT1),
+                            OPT_PRIORITY(10),
+                            OPT_HOST(NON_BOUNCE_SERVER),
+                            OPT_PORT(NON_BOUNCE_PORT2),
+                            OPT_PRIORITY(20),
+                            OPT_USER(m_xplugin_usr),
+                            OPT_PWD(m_xplugin_pwd),
+                            OPT_CONNECT_TIMEOUT(3500),
+                            PARAM_END));
+
+    local_sess = mysqlx_get_session_from_options(opt, conn_error,
+                                                 &conn_err_code);
+    if (local_sess)
+    {
+      mysqlx_session_close(local_sess);
+      FAIL() << "Session should not be established";
+    }
+    else
+      cout << "Expected error: " << conn_error << endl;
+  }
+
+  {
+    stringstream sstream;
+    sstream << "mysqlx://usr:pass@" << NON_BOUNCE_SERVER << ":" <<
+      NON_BOUNCE_PORT1 << "/?connect-timeout=5000";
+    local_sess = mysqlx_get_session_from_url(sstream.str().c_str(),
+      conn_error, &conn_err_code);
+
+    if (local_sess)
+    {
+      mysqlx_session_close(local_sess);
+      FAIL() << "Session should not be established";
+    }
+    else
+      cout << "Expected error: " << conn_error << endl;
+  }
+#else
+  cout << "xapi connection timeout test skipped" << endl;
+#endif
+}
 
 
 TEST_F(xapi, store_result_select)
@@ -1792,5 +1890,6 @@ TEST_F(xapi, pool)
 
   mysqlx_client_close(cli);
   mysqlx_free_options(opt);
+
 
 }

@@ -61,7 +61,8 @@ namespace foundation {
 
 
 Socket::Connection::Connection(const Socket &sock)
-  : connection::TCPIP("", sock.m_port)
+  : connection::TCPIP("", sock.m_port,
+                      connection::Socket_base::Options())
   , opaque_impl<Socket::Connection>(NULL, sock.m_port)
 {}
 

@@ -292,6 +292,7 @@ struct mysqlx_client_struct
 
 
 
+
 inline
 bool mysqlx_stmt_struct::session_valid()
 {

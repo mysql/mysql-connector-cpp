@@ -140,6 +140,12 @@ void prepare_options(
       ? &settings.get(Option::PWD).get_string() : nullptr
   );
 
+  if (settings.has_option(Option::CONNECT_TIMEOUT))
+    opts.set_connection_timeout(settings.get(Option::CONNECT_TIMEOUT).
+           get_uint() * 1000); // millisec to microsec
+  else
+    opts.set_connection_timeout(DEFAULT_CN_TIMEOUT_US);
+
   // Set basic options
 
   if (settings.has_option(Option::DB))
@@ -260,7 +266,8 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     TCPIP host with optional priority to the data source.
   */
 
-  auto add_host = [this, &src, &opts, check_prio](iterator &it, int prio) {
+  auto add_host = [this, &src, &opts, check_prio]
+    (iterator &it, int prio) {
 
     string host("localhost");
     unsigned short  port = DEFAULT_MYSQLX_PORT;

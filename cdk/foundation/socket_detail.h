@@ -225,7 +225,6 @@ void shutdown(Socket socket, Shutdown_mode mode);
 
 addrinfo* addrinfo_from_string(const char* host_name, unsigned short port);
 
-
 /**
   Create and connect socket.
 
@@ -235,6 +234,8 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port);
     Destination host name.
   @param[in] port
     Destination host port.
+  @param[in] timeout_usec
+    Timeout in microseconds. 0 means wait indefinitely.
 
   @return
     Connected socket.
@@ -246,7 +247,8 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port);
     This function always blocks.
 */
 
-Socket connect(const char *host, unsigned short port);
+Socket connect(const char *host, unsigned short port,
+               uint64_t timeout_usec);
 
 #ifndef _WIN32
 /**
@@ -257,6 +259,9 @@ Socket connect(const char *host, unsigned short port);
   @param[in] path
     Destination socket path.
 
+  @param[in] timeout_usec
+    Timeout in microseconds. 0 means wait indefinitely.
+
   @return
     Connected socket.
 
@@ -266,7 +271,7 @@ Socket connect(const char *host, unsigned short port);
   @note
     This function always blocks.
 */
-Socket connect(const char *path);
+Socket connect(const char *path, uint64_t timeout_usec);
 #endif //_WIN32
 
 
@@ -304,7 +309,8 @@ Socket listen_and_accept(unsigned short port);
     I/O mode.
   @param[in] wait
     If `true`, function will block. Otherwise, it will return immediately.
-
+  @param[in] timeout_usec
+    Timeout in microsedonds
   @return
     Same as POSIX `select` function.
 
@@ -312,8 +318,8 @@ Socket listen_and_accept(unsigned short port);
     If after testing socket is in an erroneous state, function throws.
 */
 
-int select_one(Socket socket, Select_mode mode, bool wait);
-
+int select_one(Socket socket, Select_mode mode, bool wait,
+               uint64_t timeout_usec = 0);
 
 /**
   Get the number of bytes pending read.

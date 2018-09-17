@@ -408,6 +408,7 @@ mysqlx_opt_type_t;
 #define OPT_SSL_CA(A)   MYSQLX_OPT_SSL_CA, (A)
 #define OPT_PRIORITY(A) MYSQLX_OPT_PRIORITY, (unsigned int)(A)
 #define OPT_AUTH(A)     MYSQLX_OPT_AUTH, (unsigned int)(A)
+#define OPT_CONNECT_TIMEOUT(A) MYSQLX_OPT_CONNECT_TIMEOUT, (unsigned int)(A)
 
 /**
   Session SSL mode values for use with `mysqlx_session_option_get()`

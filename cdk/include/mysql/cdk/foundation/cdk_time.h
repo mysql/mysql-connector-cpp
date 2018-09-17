@@ -37,7 +37,6 @@ PUSH_SYS_WARNINGS
 #include <time.h>
 POP_SYS_WARNINGS
 
-
 namespace cdk {
 namespace foundation {
 

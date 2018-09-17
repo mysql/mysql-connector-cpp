@@ -33,6 +33,7 @@
 
 #include "../common.h"
 #include "../document.h"
+#include <chrono>
 
 #include <list>
 #include <chrono>
@@ -111,6 +112,20 @@ protected:
     return string(val);
   }
 
+  template<typename _Rep, typename _Period>
+  static Value opt_val(Option_impl opt,
+                       const std::chrono::duration<_Rep, _Period> &val)
+  {
+    if (opt != Option_impl::CONNECT_TIMEOUT)
+    {
+      std::stringstream err_msg;
+      err_msg << "Option " << option_name(opt) << " does not accept time value";
+      throw_error(err_msg.str().c_str());
+    }
+    return Value(std::chrono::duration_cast<std::chrono::milliseconds>(val)
+                 .count());
+  }
+
   static Value opt_val(Option_impl opt, SSLMode m)
   {
     if (opt != Option_impl::SSL_MODE)
@@ -143,7 +158,7 @@ protected:
 
     return Value(std::chrono::duration_cast<std::chrono::milliseconds>(duration)
                  .count());
-  }
+  }  
 
 
   template <
@@ -222,7 +237,10 @@ protected:
   {
     Option_impl oo = (Option_impl)opt;
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
-    opts.emplace_front(option_to_int(oo), opt_val(oo, std::forward<V>(val)));
+    opts.emplace_front(
+      option_to_int(oo),
+      Settings_detail::opt_val(oo, std::forward<V>(val))
+    );
     return opts;
   }
 
@@ -233,7 +251,10 @@ protected:
   {
     Client_option_impl oo = (Client_option_impl)opt;
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
-    opts.emplace_front(option_to_int(oo), opt_val(oo, std::forward<V>(val)));
+    opts.emplace_front(
+      option_to_int(oo),
+      Settings_detail::opt_val(oo, std::forward<V>(val))
+    );
     return opts;
   }
 

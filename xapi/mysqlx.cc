@@ -1891,7 +1891,8 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
 #define OPT_SET_num(X,N) \
         case N: \
-        { uint_data = va_arg(args, unsigned); \
+        { \
+          uint_data = va_arg(args, unsigned); \
           set.key_val(Option::X)->scalar()->num(uint_data); }; \
         break;
 

@@ -129,6 +129,7 @@ public:
 
   virtual unsigned short port() const { return m_port; }
   virtual const std::string& host() const { return m_host; }
+
 };
 
 
@@ -151,7 +152,8 @@ class Protocol_options
 
 
 class Options
-  : public ds::Options<Protocol_options>
+  : public ds::Options<Protocol_options>,
+    public foundation::connection::Socket_base::Options
 {
 protected:
 
@@ -226,7 +228,7 @@ protected:
 
 public:
 
-  using Options = ds::mysqlx::Options;
+  class Options;
 
   Unix_socket(const std::string &path)
     : m_path(path)
@@ -238,6 +240,20 @@ public:
   virtual ~Unix_socket() {}
 
   virtual const std::string& path() const { return m_path; }
+};
+
+class Unix_socket::Options
+  : public ds::mysqlx::Options
+{
+  public:
+
+  Options()
+  {}
+
+  Options(const string &usr, const std::string *pwd = NULL)
+    : ds::mysqlx::Options(usr, pwd)
+  {}
+
 };
 #endif //_WIN32
 

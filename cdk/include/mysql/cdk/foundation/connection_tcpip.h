@@ -31,6 +31,10 @@
 #ifndef CDK_FOUNDATION_CONNECTION_TCPIP_H
 #define CDK_FOUNDATION_CONNECTION_TCPIP_H
 
+// 10 seconds
+#define DEFAULT_CN_TIMEOUT_MS 10000
+#define DEFAULT_CN_TIMEOUT_US 10000*1000
+
 #include "async.h"
 #include "stream.h"
 #include "opaque_impl.h"
@@ -99,6 +103,22 @@ public:
 };
 
 
+class Connect_timeout_error :
+  public Error_class<Connect_timeout_error, Error_timeout>
+{
+  uint64_t m_msec = 0;
+public:
+  Connect_timeout_error(uint64_t msec) :
+    m_msec(msec)
+  {}
+
+  void do_describe(std::ostream &out) const override
+  {
+    out << "Connection attempt to the server was aborted. Timeout of " <<
+      m_msec << " milliseconds was exceeded";
+  }
+};
+
 class Socket_base
   : public Connection_class<Socket_base>
 {
@@ -106,6 +126,7 @@ public:
 
   class Impl;
   class IO_op;
+  class Options;
   class Read_op;
   class Read_some_op;
   class Write_op;
@@ -143,13 +164,38 @@ protected:
 };
 
 
+class Socket_base::Options
+{
+  private:
+
+    // By default the timeout is 10 seconds
+    uint64_t m_timeout_usec = DEFAULT_CN_TIMEOUT_US;
+
+  public:
+
+    Options()
+    {}
+
+    Options(uint64_t timeout_usec) : m_timeout_usec(timeout_usec)
+    {}
+
+    uint64_t get_connection_timeout() const
+    { return m_timeout_usec; }
+
+    void set_connection_timeout(uint64_t timeout_usec)
+    {
+      m_timeout_usec = timeout_usec;
+    }
+};
+
 class TCPIP
   : public Socket_base
   , opaque_impl<TCPIP>
 {
 public:
 
-  TCPIP(const std::string& host, unsigned short port);
+  TCPIP(const std::string& host, unsigned short port,
+        const Options& opts);
 
   bool is_secure() const
   {
@@ -169,7 +215,7 @@ class Unix_socket
 {
 public:
 
-  Unix_socket(const std::string& path);
+  Unix_socket(const std::string& path, const Options& opts);
 
   bool is_secure() const
   {

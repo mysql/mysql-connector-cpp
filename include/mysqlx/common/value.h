@@ -70,7 +70,7 @@ public:
     WSTRING,    ///< Wide string
     RAW,        ///< Raw bytes
     EXPR,       ///< String to be interpreted as an expression
-    JSON        ///< JSON string
+    JSON,       ///< JSON string
   };
 
 protected:
@@ -166,7 +166,6 @@ public:
   Value(T val)
     : Value(int64_t(val))
   {}
-
 
   bool is_null() const
   {

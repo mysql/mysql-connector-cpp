@@ -33,7 +33,6 @@
 #include <future>
 #include <chrono>
 
-
 using std::cout;
 using std::endl;
 using namespace mysqlx;
@@ -302,6 +301,178 @@ TEST_F(Sess, trx)
   EXPECT_EQ(3U, coll.count());
 
   cout << "Done!" << endl;
+}
+
+
+TEST_F(Sess, timeout_opts)
+{
+
+  EXPECT_NO_THROW(
+    SessionSettings settings("root@localhost?connect-timeout=10")
+  );
+
+  EXPECT_NO_THROW(
+    SessionSettings settings(SessionOption::CONNECT_TIMEOUT,10)
+  );
+
+  EXPECT_NO_THROW(
+    SessionSettings settings(
+      SessionOption::CONNECT_TIMEOUT,std::chrono::seconds(10)
+    )
+  );
+
+  // Negative tests
+
+  EXPECT_THROW(
+    SessionSettings settings("root@localhost?connect-timeout=-10"),
+    Error
+  );
+
+  EXPECT_THROW(
+    SessionSettings settings(SessionOption::CONNECT_TIMEOUT,-10),
+    Error
+  );
+
+  EXPECT_THROW(
+    SessionSettings settings("root@localhost?connect-timeout=10.5"),
+    Error
+  );
+
+  EXPECT_THROW(
+    SessionSettings settings(SessionOption::CONNECT_TIMEOUT,10.5),
+    Error
+  );
+
+}
+
+
+TEST_F(Sess, connect_timeout)
+{
+// Set MANUAL_TESTING to 1 and define NON_BOUNCE_SERVER
+#define MANUAL_TESTING 0
+#if(MANUAL_TESTING == 1)
+
+#define NON_BOUNCE_SERVER "define.your.server"
+#define NON_BOUNCE_PORT1 81
+#define NON_BOUNCE_PORT2 82
+
+
+  SKIP_IF_NO_XPLUGIN;
+  {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // Timeout was not specified, assume 10s
+    EXPECT_THROW(mysqlx::Session sess(SessionOption::HOST, NON_BOUNCE_SERVER,
+                                      SessionOption::PORT, NON_BOUNCE_PORT1,
+                                      SessionOption::USER, get_user(),
+                                      SessionOption::PWD, get_password() ? get_password() : nullptr),
+                 Error);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds nsec = end - start;
+    cout << "Timeout default test passed " << nsec.count()/1000000 << " ms" << endl;
+  }
+
+  {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    EXPECT_THROW(mysqlx::Session sess(SessionOption::HOST, NON_BOUNCE_SERVER,
+                                      SessionOption::PORT, NON_BOUNCE_PORT1,
+                                      SessionOption::USER, get_user(),
+                                      SessionOption::PWD, get_password() ? get_password() : nullptr,
+                                      SessionOption::CONNECT_TIMEOUT,
+                                      std::chrono::seconds(5)),
+                 Error);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds nsec = end - start;
+    cout << "Timeout std::chrono::seconds(5) passed " << nsec.count() / 1000000 << " ms" << endl;
+  }
+
+
+  {
+
+    SessionSettings settings(SessionOption::HOST, NON_BOUNCE_SERVER,
+                             SessionOption::PORT, NON_BOUNCE_PORT1,
+                             SessionOption::USER, get_user(),
+                             SessionOption::PWD, get_password() ? get_password() : nullptr,
+                             SessionOption::CONNECT_TIMEOUT, 1000);
+
+    settings.erase(SessionOption::CONNECT_TIMEOUT);
+    settings.set(SessionOption::CONNECT_TIMEOUT, 5000);
+    auto start = std::chrono::high_resolution_clock::now();
+    EXPECT_THROW(mysqlx::Session sess(settings),
+                  Error);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds nsec = end - start;
+    cout << "Timeout plain integer 5000 ms test passed " <<
+      nsec.count() / 1000000 << " ms" << endl;
+  }
+
+  {
+    std::stringstream uri;
+    uri << "mysqlx://" << get_user();
+    if (get_password() && *get_password())
+      uri << ":" << get_password();
+    uri << "@" << NON_BOUNCE_SERVER << ":" << NON_BOUNCE_PORT1;
+    std::stringstream str;
+    str << uri.str() << "/?connect-timeout=5000";
+
+    // Record start time
+    auto start = std::chrono::high_resolution_clock::now();
+
+    EXPECT_THROW(
+      mysqlx::Session sess(str.str()),
+      Error);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds nsec = end - start;
+    cout << "Timeout URI (connect-timeout=5000) test passed " <<
+      nsec.count() / 1000000 << " ms" << endl;
+  }
+
+  {
+    // Record start time
+    auto start = std::chrono::high_resolution_clock::now();
+    EXPECT_THROW(
+    mysqlx::Session sess(SessionOption::HOST, NON_BOUNCE_SERVER,
+                         SessionOption::PORT, NON_BOUNCE_PORT1,
+                         SessionOption::PRIORITY, 1,
+                         SessionOption::HOST, NON_BOUNCE_SERVER,
+                         SessionOption::PORT, NON_BOUNCE_PORT2,
+                         SessionOption::PRIORITY, 2,
+                         SessionOption::CONNECT_TIMEOUT, std::chrono::seconds(3),
+                         SessionOption::USER, get_user(),
+                         SessionOption::PWD, get_password() ? get_password() : NULL
+                      ),
+                      Error);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds nsec = end - start;
+    cout << "Timeout multihost 2x3 sec test passed " <<
+      nsec.count() / 1000000 << " ms" << endl;
+  }
+
+#ifndef _WIN32
+  {
+    // Record start time
+    auto start = std::chrono::high_resolution_clock::now();
+    EXPECT_THROW(
+      // but ignore then when not having host
+      mysqlx::Session sess(SessionOption::SOCKET, "/tmp/socket_wrong.sock",
+                      SessionOption::USER, get_user(),
+                      SessionOption::PWD, get_password(),
+                      SessionOption::CONNECT_TIMEOUT, 3000
+                    ),
+                    Error);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    cout << "Timeout socket test passed " <<
+      nsec.count() / 1000000 << " ms" << endl;
+  }
+#endif
+
+#endif
 }
 
 TEST_F(Sess, auth_method)
@@ -1090,6 +1261,7 @@ TEST_F(Sess, unix_socket)
 }
 #endif //_WIN32
 
+
 TEST_F(Sess, sha256_memory)
 {
   SKIP_IF_NO_XPLUGIN
@@ -1145,7 +1317,6 @@ TEST_F(Sess, sha256_memory)
     std::cout << "Expected error: " << e << std::endl;
   }
 
-
   try{
     sql("CREATE USER 'doomuser'@'%' IDENTIFIED WITH caching_sha2_password BY '!sha2user_pass';");
   }catch(...)
@@ -1154,11 +1325,7 @@ TEST_F(Sess, sha256_memory)
     return;
   }
 
-
-
-
   {
-
     SessionSettings sha_256_cleartext(
           SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
           SessionOption::SSL_MODE, SSLMode::DISABLED,
@@ -1197,12 +1364,10 @@ TEST_F(Sess, sha256_memory)
                             SessionOption::HOST, "localhost",
                             SessionOption::PORT, get_port());
     EXPECT_THROW( mysqlx::Session s_sha256_fail(default_cleartext_fail),Error);
-
-
-
   }
 
 }
+
 
 TEST_F(Sess, bugs)
 {
@@ -1274,10 +1439,9 @@ TEST_F(Sess, bugs)
 
 }
 
+
 TEST_F(Sess, pool_opts)
 {
-  SKIP_IF_NO_XPLUGIN;
-
   ClientSettings dummy("mysqlx://root@localhost:1/test",
                        ClientOption::POOLING            , 1,
                        ClientOption::POOL_MAX_SIZE      , 2,
@@ -1300,18 +1464,18 @@ TEST_F(Sess, pool_opts)
   EXPECT_EQ(1                  ,dummy.find(ClientOption::POOLING           ).get<int>());
   EXPECT_EQ(2                  ,dummy.find(ClientOption::POOL_MAX_SIZE     ).get<int>());
   EXPECT_EQ(3                  ,dummy.find(ClientOption::POOL_QUEUE_TIMEOUT).get<int>());
-  EXPECT_EQ(4                  ,dummy.find(ClientOption::POOL_MAX_IDLE_TIME ).get<int>());
+  EXPECT_EQ(4                  ,dummy.find(ClientOption::POOL_MAX_IDLE_TIME).get<int>());
 
   dummy.erase(SessionOption::USER             );
   dummy.erase(ClientOption::POOLING           );
-  EXPECT_FALSE(dummy.has_option(SessionOption::USER             ));
-  EXPECT_FALSE(dummy.has_option(ClientOption::POOLING           ));
+  EXPECT_FALSE(dummy.has_option(SessionOption::USER            ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOLING          ));
   EXPECT_TRUE(dummy.has_option(SessionOption::HOST             ));
   EXPECT_TRUE(dummy.has_option(SessionOption::PORT             ));
   EXPECT_TRUE(dummy.has_option(SessionOption::DB               ));
   EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_SIZE     ));
   EXPECT_TRUE(dummy.has_option(ClientOption::POOL_QUEUE_TIMEOUT));
-  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME ));
+  EXPECT_TRUE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME));
 
   EXPECT_TRUE(dummy.find(SessionOption::USER             ).isNull());
   EXPECT_TRUE(dummy.find(ClientOption::POOLING           ).isNull());
@@ -1325,7 +1489,7 @@ TEST_F(Sess, pool_opts)
   EXPECT_FALSE(dummy.has_option(ClientOption::POOLING           ));
   EXPECT_FALSE(dummy.has_option(ClientOption::POOL_MAX_SIZE     ));
   EXPECT_FALSE(dummy.has_option(ClientOption::POOL_QUEUE_TIMEOUT));
-  EXPECT_FALSE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME ));
+  EXPECT_FALSE(dummy.has_option(ClientOption::POOL_MAX_IDLE_TIME));
 
 
   std::stringstream uri;
@@ -1352,11 +1516,29 @@ TEST_F(Sess, pool_opts)
                        DbDoc(R"( { "enabled": true, "maxSize": 25, "queueTimeout": 1000, "maxIdleTime": 5000 })")),
         Error);
 
-  ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::milliseconds::max());
   EXPECT_THROW(
-        ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT,
-                       std::numeric_limits<uint64_t>::max()),
-        Error);
+    ClientSettings(uri.str(),
+      R"( { "enabled": true, "queueTimeout": 10.5, "maxIdleTime": 5000 })"
+    ),
+    Error
+  );
+
+  EXPECT_THROW(
+    ClientSettings(uri.str(),
+      R"( { "enabled": true, "queueTimeout": 10, "maxIdleTime": 50.5 })"
+    ),
+    Error
+  );
+
+  ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::milliseconds::max());
+
+  EXPECT_THROW(
+    ClientSettings(
+      ClientOption::POOL_QUEUE_TIMEOUT,
+      std::numeric_limits<uint64_t>::max()
+    ),
+    Error
+  );
 
   EXPECT_THROW(ClientSettings(ClientOption::POOL_MAX_SIZE, 0),Error);
 
@@ -1364,7 +1546,12 @@ TEST_F(Sess, pool_opts)
                               R"( { "pooling": {"enabled": true, "maxSize": 0, "queueTimeout": 1000, "maxIdleTime": 5000}})"),
                        Error);
 
+  EXPECT_THROW(ClientSettings(ClientOption::POOL_QUEUE_TIMEOUT, 10.5), Error);
+  EXPECT_THROW(ClientSettings(ClientOption::POOL_MAX_IDLE_TIME, 10.5), Error);
+
+
   //Client constructors
+  SKIP_IF_NO_XPLUGIN;
 
   //Using ClientSettings;
   {
@@ -1431,6 +1618,7 @@ TEST_F(Sess, pool_opts)
   mysqlx::getSession(uri.str());
 
 }
+
 
 TEST_F(Sess, pool_use)
 {
@@ -1779,5 +1967,4 @@ TEST_F(Sess, pool_ttl)
   }
 
 }
-
 

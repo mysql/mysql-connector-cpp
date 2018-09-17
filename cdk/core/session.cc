@@ -158,7 +158,8 @@ Session_builder::operator() (
   using foundation::connection::TCPIP;
   using foundation::connection::Socket_base;
 
-  unique_ptr<TCPIP> connection(new TCPIP(ds.host(), ds.port()));
+  unique_ptr<TCPIP> connection(new TCPIP(ds.host(), ds.port(),
+                               options));
 
   if (!connect(*connection))
     return false;  // continue to next host if available
@@ -224,7 +225,7 @@ Session_builder::operator() (
   using foundation::connection::Unix_socket;
   using foundation::connection::Socket_base;
 
-  unique_ptr<Unix_socket> connection(new Unix_socket(ds.path()));
+  unique_ptr<Unix_socket> connection(new Unix_socket(ds.path(), options));
 
   if (!connect(*connection))
     return false;  // continue to next host if available

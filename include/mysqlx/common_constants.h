@@ -84,7 +84,8 @@
   /*! path to a PEM file specifying trusted root certificates*/              \
   OPT_STR(x,SSL_CA,9)                                                        \
   OPT_ANY(x,AUTH,10)      /*!< authentication method, PLAIN, MYSQL41, etc.*/ \
-  OPT_STR(x,SOCKET,11)
+  OPT_STR(x,SOCKET,11)                                                       \
+  OPT_NUM(x,CONNECT_TIMEOUT,12)                                              \
   END_LIST
 
 #define OPT_STR(X,Y,N) X##_str(Y,N)
@@ -103,6 +104,7 @@
   X("ssl-mode", SSL_MODE)   \
   X("ssl-ca", SSL_CA)       \
   X("auth", AUTH)           \
+  X("connect-timeout", CONNECT_TIMEOUT) \
   END_LIST
 
 

@@ -204,6 +204,9 @@ private:
   template <Option_impl OPT, typename T>
   void set_option(const T &val)
   {
+    if (OPT==Option_impl::CONNECT_TIMEOUT)
+      throw_error("The connection timeout value must be a positive integer (including 0)");
+
     add_option(OPT, val);
   }
 
@@ -512,6 +515,14 @@ Settings_impl::Setter::set_option<Settings_impl::Option_impl::SSL_CA>(
   add_option(Option_impl::SSL_CA, val);
 }
 
+template <>
+inline void
+Settings_impl::Setter::set_option<Settings_impl::Option_impl::CONNECT_TIMEOUT>(
+  const uint64_t &timeout
+)
+{
+  add_option(Settings_impl::Option_impl::CONNECT_TIMEOUT, timeout);
+}
 
 template<>
 inline void
@@ -638,7 +649,6 @@ void Settings_impl::Setter::add_option(Option_impl opt, const T &val)
   case Option_impl::PRIORITY:
     options.emplace_back(opt, val);
     return;
-
   default:
     // Check for doubled option
     if (0 < m_opt_set.count(opt))
@@ -700,16 +710,41 @@ void Settings_impl::Setter::str(const string &val)
   // TODO: avoid utf8 conversions
   std::string utf8_val(val);
 
+  auto to_number = [](const string &val) -> uint64_t
+  {
+    std::size_t pos;
+    long long x = std::stoll(val, &pos);
+
+    if (x < 0)
+      throw_error("Option ... accepts only non-negative values");
+
+    if (pos != val.length())
+      throw_error("Option ... accepts only integer values");
+
+    return x;
+  };
+
 #define SET_OPTION_STR_str(X,N) \
   case Option_impl::X: return set_option<Option_impl::X,std::string>(utf8_val);
 #define SET_OPTION_STR_any(X,N) SET_OPTION_STR_str(X,N)
-#define SET_OPTION_STR_num(X,N)
+#define SET_OPTION_STR_num(X,N) \
+  case Option_impl::X: \
+  try \
+  { \
+    return set_option<Option_impl::X,uint64_t>(to_number(val)); \
+  } \
+  catch (const std::invalid_argument&) \
+  { \
+    throw_error("Can not convert to integer value"); \
+  }
+
 
   switch (m_cur_opt)
   {
     SESSION_OPTION_LIST(SET_OPTION_STR)
-  default:
-    throw_error("Option ... does not accept string values.");
+
+    default:
+    throw_error("Option ... could not be processed.");
   }
 
 }
@@ -730,6 +765,14 @@ void Settings_impl::Setter::num(uint64_t val)
 #define SET_CLI_OPTION_NUM_str(X,N)
 #define SET_CLI_OPTION_NUM_end(X,N)\
   case Client_option_impl::X: throw_error("Unexpected Option"); return;
+  
+  /*
+    This cannot be processed inside switch because the numeric
+    values are converted to unsigned int. For timeout uint64_t is
+    required
+  */
+  if (m_cur_opt == Option_impl::CONNECT_TIMEOUT)
+    return set_option<Option_impl::CONNECT_TIMEOUT>(val);
 
   if (m_cur_opt != Option_impl::LAST && !check_num_limits<unsigned>(val))
     throw_error("Option ... value too big");

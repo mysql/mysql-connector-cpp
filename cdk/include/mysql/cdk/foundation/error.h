@@ -421,6 +421,9 @@ protected:
 
   typedef Error_class<E> Error_base;
 
+  Error_class()
+  {}
+
   Error_class(const Error_class &e)
     : B((const B&)e)
   {}
