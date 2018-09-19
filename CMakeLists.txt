@@ -54,21 +54,35 @@ ENDIF()
 #
 set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
+
+##########################################################################
+
 PROJECT(MySQL_CONCPP)
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
+#message("Compiler identification: ${CMAKE_CXX_COMPILER_ID}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   set(SUNOS ON CACHE INTERNAL "")
 endif()
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(IS64BIT 1)
+if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+  set(SUNPRO ON CACHE INTERNAL "")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.15")
+    message(WARNING "Connector/C++ requires SunPro version 5.15 or later.")
+  endif()
+  add_compile_options(-m64)
+endif()
+
+if((CMAKE_SIZEOF_VOID_P EQUAL 8) OR SUNPRO)
+  set(IS64BIT TRUE)
   message("Using 64bit generator")
 else()
+  set(IS64BIT FALSE)
   message("Using 32bit genereator")
 endif()
+
 
 #
 # On Windows, set VS to "vsNN" where NN is the MSVC version.
@@ -82,8 +96,6 @@ if(WIN32)
     set(VS "vs14")
   endif()
 endif()
-
-
 
 
 include(version.cmake)
@@ -105,6 +117,10 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # Then use modules from CDK sub-project
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
+
+#
+# Library utilities such as add_library_ex()
+#
 
 include(libutils)
 
@@ -150,28 +166,74 @@ endif()
 # =================
 #
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(SUNPRO)
+
+  set(options
+    -m64
+    -xatomic=studio
+    -xtarget=generic     # more portable code
+    -xdebuginfo=no%decl  # faster build times
+    # optimization options
+    -xbuiltin=%all
+    -xlibmil
+  )
+
+  if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+    list(APPEND options -nofstore)
+  endif()
+
+  string(REPLACE ";" " " options "${options}")
+
+  set(CMAKE_CXX_FLAGS "${options} ${CMAKE_CXX_FLAGS}")
+
+  #foreach(type EXE STATIC SHARED MODULE)
+  #  set(CMAKE_${type}_LINKER_FLAGS "${options}")
+  #endforeach()
+
+  set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    "-g -xO2 ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
+  )
+  set(CMAKE_CXX_FLAGS_RELEASE "-g0 -xO3 ${CMAKE_CXX_FLAGS_RELEASE}")
+  set(CMAKE_CXX_FLAGS_MINSIZEREL
+    "-g0 -xO3 -xsize ${CMAKE_CXX_FLAGS_MINSIZEREL}"
+  )
+
+  add_definitions(
+    -D_POSIX_PTHREAD_SEMANTICS
+    -D_REENTRANT
+  )
+
+endif()
+
 #
 # Enable C++11
 #
 
-if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
-  #set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+set(CPP11FLAGS)
+
+if (
+  CMAKE_COMPILER_IS_GNUCXX OR SUNPRO
+  OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+)
+  list(APPEND CPP11FLAGS -std=c++11)
+endif()
+
+# With SunPro use GNU libstdc++ implementation of c++ std library. This
+# is the default for -std=c++11, but we set it explicitly to be on the safe
+# side.
+
+if(SUNPRO)
+  list(APPEND CPP11FLAGS -library=stdcpp)
 endif()
 
 
 #
-# Tell cmake to not use compiler specific extensions
-#
-
-INCLUDE(compiler_features)
-SET(CMAKE_CXX_EXTENSIONS no)
-
-#
 # If Clang is used and deployment target is not specified
 # with MACOSX_DEPLOYMENT_TARGET environment variable, make
-# sure that clang's native implementation of C++ runtime
+# sure that clang's native implementation of C++ std
 # libarary (libc++) is used. Otherwise clang defaults to
 # GNU version (libstdc++) which is outdated and does
 # not handle C++11 well.
@@ -183,8 +245,21 @@ SET(CMAKE_CXX_EXTENSIONS no)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang"
    AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET}
    AND NOT CMAKE_SYSTEM_NAME MATCHES "Linux")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+
+  list(APPEND CPP11FLAGS -stdlib=libc++)
+
 endif()
+
+string(REPLACE ";" " " CPP11FLAGS "${CPP11FLAGS}")
+set(CMAKE_CXX_FLAGS "${CPP11FLAGS} ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_REQUIRED_FLAGS "${CPP11FLAGS} ${CMAKE_REQUIRED_FLAGS}")
+
+#
+# Tell cmake to not use compiler specific extensions
+#
+
+INCLUDE(compiler_features)
+SET(CMAKE_CXX_EXTENSIONS no)
 
 #
 # Configure static runtime library on Windows if requested
@@ -235,7 +310,7 @@ endif()
 #
 
 if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4297")
+  add_compile_options(/wd4297)
 endif()
 
 
@@ -318,6 +393,8 @@ else()
 
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-fvisibility-ms-compat)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+    add_compile_options(-xldscope=hidden)
   elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fvisibility=hidden)
   endif()
@@ -383,7 +460,7 @@ endif()
 
 SET(WITH_CDK_DOC 0)
 OPTION(WITH_CDK_TESTS "cdk tests" OFF)
-set(WITH_PIC ${CMAKE_POSITION_INDEPENDENT_CODE})
+set(WITH_PIC ON)
 
 ADD_SUBDIRECTORY(cdk)
 INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
@@ -411,8 +488,6 @@ INCLUDE_DIRECTORIES(include)
 # Set higher warning level for the main connector code.
 #
 
-foreach(LANG C CXX)
-
 if(WIN32)
 
   # 4127 = conditional expression is constant (needed for do {...} while(false))
@@ -423,25 +498,26 @@ if(WIN32)
   # (and this is the case for MSVC 2015).
   # See: http://en.cppreference.com/w/cpp/language/copy_assignment
 
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /W4 /wd4512 /wd4127")
+  add_compile_options(/W4 /wd4512 /wd4127)
 
 else()
 
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} -Wextra")
   set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
 
-endif()
+  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
 
-endforeach(LANG)
+    # TODO: Fix these warnings
 
-#
-# Enable C++11 for test, XAPI and DevAPI code
-#
+    add_compile_options(
+      -errtags=yes -erroff=hidevf,wvarhidemem
+    )
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  # Use C++11 also for CHECK_CXX_SOURCE_COMPILES()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+  else()
+
+    add_compile_options(-Wextra)
+
+  endif()
+
 endif()
 
 

@@ -38,12 +38,11 @@
 #include "../common/settings.h"
 #include "../common/db_object.h"
 
+#include <cstdarg>
+
 #include "def_internal.h"
 #include "error_internal.h"
 #include "crud_internal.h"
-
-#include <cstdarg>
-
 
 using common::throw_error;
 using mysqlx::common::Schema_ref;

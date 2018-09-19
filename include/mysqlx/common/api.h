@@ -59,6 +59,12 @@
  #define DLL_IMPORT
  #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
 
+#elif defined __SUNPRO_CC || defined __SUNPRO_C
+
+ #define DLL_EXPORT __global
+ #define DLL_IMPORT __global
+ #define DLL_LOCAL  __hidden
+
 #else
 
  #define DLL_EXPORT

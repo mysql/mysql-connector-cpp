@@ -57,7 +57,7 @@ PROJECT(MySQL_CONCPP_TEST)
 #
 
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+if((CMAKE_SIZEOF_VOID_P EQUAL 8) OR (CMAKE_CXX_COMPILER_ID MATCHES "SunPro"))
   set(IS64BIT 1)
   message("Generating 64bit code")
 else()
@@ -213,6 +213,24 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+
+  add_compile_options(
+    -m64 -fast
+  )
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -library=stdcpp,CrunG3")
+
+  foreach(type EXE STATIC SHARED)
+
+    set(CMAKE_${type}_LINKER_FLAGS
+      "-m64 -std=c++11 -library=stdcpp,CrunG3 -fast"
+    )
+
+  endforeach()
+
 endif()
 
 #

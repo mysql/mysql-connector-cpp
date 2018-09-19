@@ -35,6 +35,9 @@
 #include <gtest/gtest.h>
 #include <mysqlx/xapi.h>
 
+#undef NULL
+#define NULL nullptr
+
 using namespace ::std;
 
 #define SESS_CHECK(A) if((A) == NULL) { \

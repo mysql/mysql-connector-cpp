@@ -52,10 +52,8 @@
 # Note: We expect VS variable to hold the "vsNN" bit on Windows.
 #
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(IS64BIT 1)
-else()
-  set(IS64BIT 0)
+if(NOT DEFINED IS64BIT)
+  message(FATAL_ERROR "IS64BIT not defined!")
 endif()
 
 if(IS64BIT)

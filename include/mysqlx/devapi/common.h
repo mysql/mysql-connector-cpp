@@ -59,16 +59,6 @@ using common::byte;
 class Value;
 
 
-namespace internal {
-
-  using common::enable_if_t;
-  using common::is_constructible_t;
-  using common::remove_reference_t;
-  using common::is_same;
-
-}  // internal
-
-
 /**
   A wrapper around std::wstring that can perform
   conversions from/to different character encodings
@@ -323,7 +313,7 @@ struct Iterator
 {
 protected:
 
-  remove_reference_t<Impl> *m_impl = NULL;
+  typename std::remove_reference<Impl>::type *m_impl = NULL;
   bool m_at_end = false;
 
 public:
@@ -397,7 +387,7 @@ protected:
 
 public:
 
-  typedef typename remove_reference_t<Source>::iterator iterator;
+  typedef typename std::remove_reference<Source>::type::iterator iterator;
 
   /*
     Arguments given to the constructor are passed to the internal
@@ -418,10 +408,12 @@ public:
 
   template <
     typename U
-    , typename = is_constructible_t< U, const iterator&, const iterator& >
-    , typename = enable_if_t<
-        ! is_same< U, std::initializer_list<typename U::value_type> >::value
-      >
+    , typename std::is_constructible<
+        U, const iterator&, const iterator&
+      >::type* = nullptr
+    , typename std::enable_if<
+        ! std::is_same< U, std::initializer_list<typename U::value_type> >::value
+      >::type* = nullptr
   >
   operator U()
   {
@@ -453,7 +445,7 @@ public:
 template <typename T>
 struct iterator_traits
 {
-  using value_type = remove_reference_t<T>;
+  using value_type = typename std::remove_reference<T>::type;
   using difference_type
     = typename std::iterator_traits<value_type*>::difference_type;
   using pointer
@@ -657,7 +649,7 @@ class is_range
 
 public:
 
-  static const bool value = is_same<
+  static const bool value = std::is_same<
     std::true_type,
     decltype(test<C>(nullptr, nullptr))
   >::value;
@@ -724,7 +716,7 @@ public:
   public:
 
     static const bool value
-      = is_same< std::true_type, decltype(test<T>(nullptr)) >::value;
+      = std::is_same< std::true_type, decltype(test<T>(nullptr)) >::value;
   };
 
 public:
@@ -735,8 +727,8 @@ public:
 
   template <
     typename C,
-    enable_if_t<is_range<C>::value>* = nullptr,
-    enable_if_t<!can_process<C>::value>* = nullptr
+    typename std::enable_if<is_range<C>::value>::type* = nullptr,
+    typename std::enable_if<!can_process<C>::value>::type* = nullptr
   >
   static void process_args(D data, C container)
   {
@@ -755,7 +747,7 @@ public:
 
   template <
     typename It,
-    enable_if_t<!can_process<It>::value>* = nullptr
+    typename std::enable_if<!can_process<It>::value>::type* = nullptr
   >
   static void process_args(D data, const It &begin, const It &end)
   {
@@ -772,7 +764,7 @@ public:
   template <
     typename T,
     typename... R,
-    enable_if_t<can_process<T>::value>* = nullptr
+    typename std::enable_if<can_process<T>::value>::type* = nullptr
   >
   static void process_args(D data, T first, R&&... rest)
   {
@@ -784,7 +776,7 @@ private:
   template <
     typename T,
     typename... R,
-    enable_if_t<can_process<T>::value>* = nullptr
+    typename std::enable_if<can_process<T>::value>::type* = nullptr
   >
   static void process_args1(D data, T first, R&&... rest)
   {

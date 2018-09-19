@@ -1977,7 +1977,7 @@ class Op_collection_modify
   };
 
   std::list<Field_Op> m_update;
-  typename std::list<Field_Op>::const_iterator m_update_it = m_update.end();
+  std::list<Field_Op>::const_iterator m_update_it = m_update.end();
 
 
 public:

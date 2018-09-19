@@ -465,7 +465,7 @@ public:
   lockShared(LockContention contention= LockContention::DEFAULT)
   {
     get_impl()->set_lock_mode(common::Lock_mode::SHARED,
-                              common::Lock_contention(contention));
+                              common::Lock_contention((unsigned)contention));
     return *this;
   }
 
@@ -481,7 +481,7 @@ public:
   lockExclusive(LockContention contention = LockContention::DEFAULT)
   {
     get_impl()->set_lock_mode(common::Lock_mode::EXCLUSIVE,
-                              common::Lock_contention(contention));
+                              common::Lock_contention((unsigned)contention));
     return *this;
   }
 

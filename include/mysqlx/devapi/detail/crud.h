@@ -192,7 +192,7 @@ protected:
 
   template <
     typename T, typename... R,
-    typename = enable_if_t<!is_same<T, Expression>::value>
+    typename std::enable_if<!std::is_same<T, Expression>::value>::type* = nullptr
   >
     static void do_fields(Impl *impl, T first, R... rest)
   {

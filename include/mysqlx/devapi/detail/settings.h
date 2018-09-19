@@ -158,7 +158,7 @@ protected:
 
     return Value(std::chrono::duration_cast<std::chrono::milliseconds>(duration)
                  .count());
-  }  
+  }
 
 
   template <
@@ -235,7 +235,7 @@ protected:
   template <bool session_only,typename V, typename... Ty>
   static session_opt_list_t get_options(SOption opt, V&& val, Ty&&... rest)
   {
-    Option_impl oo = (Option_impl)opt;
+    Option_impl oo = (Option_impl)(unsigned)opt;
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
     opts.emplace_front(
       option_to_int(oo),
@@ -249,7 +249,7 @@ protected:
             = nullptr>
   static session_opt_list_t get_options(COption opt, V&& val, Ty&&... rest)
   {
-    Client_option_impl oo = (Client_option_impl)opt;
+    Client_option_impl oo = (Client_option_impl)(unsigned)opt;
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
     opts.emplace_front(
       option_to_int(oo),
@@ -266,32 +266,32 @@ protected:
 
   void erase(SOption opt)
   {
-    Settings_impl::erase((Option_impl)opt);
+    Settings_impl::erase((Option_impl)(unsigned)opt);
   }
 
   void erase(COption opt)
   {
-    Settings_impl::erase((Client_option_impl)opt);
+    Settings_impl::erase((Client_option_impl)(unsigned)opt);
   }
 
   bool has_option(SOption opt)
   {
-    return Settings_impl::has_option((Option_impl)opt);
+    return Settings_impl::has_option((Option_impl)(unsigned)opt);
   }
 
   bool has_option(COption opt)
   {
-    return Settings_impl::has_option((Client_option_impl)opt);
+    return Settings_impl::has_option((Client_option_impl)(unsigned)opt);
   }
 
   Value get(SOption opt)
   {
-    return Settings_impl::get((Option_impl)opt);
+    return Settings_impl::get((Option_impl)(unsigned)opt);
   }
 
   Value get(COption opt)
   {
-    return Settings_impl::get((Client_option_impl)opt);
+    return Settings_impl::get((Client_option_impl)(unsigned)opt);
   }
 };
 

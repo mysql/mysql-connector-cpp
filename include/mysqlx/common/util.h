@@ -202,28 +202,6 @@ namespace mysqlx {
 
 namespace common {
 
-   /*
-    Defined here because std::enable_if_t is not defined on all platforms on
-    which we build (clang is missing one). Note: it is C++14 feature.
-  */
-
-  template<bool Cond, typename T = void>
-  using enable_if_t = typename std::enable_if<Cond, T>::type;
-
-  template<typename... Ty>
-  using is_constructible_t = typename std::is_constructible<Ty...>::type;
-
-  template<typename T>
-  using remove_reference_t = typename std::remove_reference<T>::type;
-
-  template <typename A, typename B>
-  using is_same = std::is_same<A, B>;
-
-}  // common
-
-
-namespace common {
-
 /*
   Convenience for checking numeric limits (to be used when doing numeric
   casts).
@@ -236,7 +214,7 @@ namespace common {
 
 template <
   typename T, typename U,
-  enable_if_t<std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)
@@ -247,8 +225,8 @@ bool check_num_limits(U val)
 
 template <
   typename T, typename U,
-  enable_if_t<std::is_unsigned<T>::value>* = nullptr,
-  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)
@@ -258,8 +236,8 @@ bool check_num_limits(U val)
 
 template <
   typename T, typename U,
-  enable_if_t<!std::is_unsigned<T>::value>* = nullptr,
-  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<!std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)

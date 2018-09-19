@@ -152,7 +152,7 @@ public:
 
   template <
     typename T,
-    enable_if_t<std::is_unsigned<T>::value>* = nullptr
+    typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr
   >
   Value(T val)
     : Value(uint64_t(val))
@@ -160,8 +160,8 @@ public:
 
   template <
     typename T,
-    enable_if_t<!std::is_unsigned<T>::value>* = nullptr,
-    enable_if_t<std::is_integral<T>::value>* = nullptr
+    typename std::enable_if<!std::is_unsigned<T>::value>::type* = nullptr,
+    typename std::enable_if<std::is_integral<T>::value>::type* = nullptr
   >
   Value(T val)
     : Value(int64_t(val))
