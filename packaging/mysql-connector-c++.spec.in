@@ -69,6 +69,10 @@ A C++ interface for communicating with MySQL servers.
 %package        jdbc
 Summary:        MySQL Driver for C++ which mimics the JDBC 4.0 API
 %{?commercial:Obsoletes: mysql-connector-c++-jdbc < %{version}-%{release}}
+Obsoletes:      libmysqlcppconn7 < %{version}-%{release}
+Obsoletes:      libmysqlcppconn-devel < %{version}-%{release}
+Provides:       libmysqlcppconn7 = %{version}-%{release}
+Provides:       libmysqlcppconn-devel = %{version}-%{release}
 %description    jdbc
 This MySQL Driver for C++ mimics the JDBC 4.0 API.
 
