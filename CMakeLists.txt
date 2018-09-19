@@ -358,12 +358,12 @@ IF(MYSQLCLIENT_STATIC_BINDING AND
                    "connector: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}.")
 ENDIF()
 
-#
-# FIXME: Dirty trick to get Solaris build which uses gcc go through.
-#
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  list(REMOVE_ITEM MYSQL_LIBRARIES stdc++ gcc_s CrunG3 c statomic)
+  add_definitions(
+    -D_POSIX_PTHREAD_SEMANTICS
+    -D_REENTRANT
+  )
 endif()
 
 
