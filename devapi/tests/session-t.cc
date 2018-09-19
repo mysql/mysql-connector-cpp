@@ -1744,7 +1744,12 @@ TEST_F(Sess, pool_use)
 
 }
 
+
+#if defined __SUNPRO_CC
+TEST_F(Sess, DISABLED_pool_ttl)
+#else
 TEST_F(Sess, pool_ttl)
+#endif
 {
   SKIP_IF_NO_XPLUGIN;
 
