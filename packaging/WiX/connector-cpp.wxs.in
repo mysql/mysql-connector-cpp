@@ -51,7 +51,7 @@
       <Upgrade Id="@UPGRADE_CODE_OLD@">
         <?if '@PATCH_VERSION@' != '0'?>
           <UpgradeVersion 
-            Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.11"
+            Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.0"
             IncludeMinimum="yes"
             Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.13"
             IncludeMaximum="no"
