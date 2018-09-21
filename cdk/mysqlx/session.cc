@@ -746,13 +746,13 @@ Reply_init& Session::view_drop(const api::Table_ref &view, bool check_existence)
 }
 
 
-
 Reply_init &Session::set_command(Proto_op *cmd)
 {
+  m_cmd.reset(cmd);
+
   if (!is_valid())
     throw_error("set_command: invalid session");
 
-  m_cmd.reset(cmd);
 
   return *this;
 }
