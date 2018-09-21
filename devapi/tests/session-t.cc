@@ -988,7 +988,7 @@ TEST_F(Sess, failover)
     std::stringstream uri;
 
     uri << "[(address=localhost:" << get_port() <<",priority=0)";
-    uri << ",127.0.0.1:" << get_port();
+    uri << ",127.0.0.1:65535" << get_port();
     uri << "]";
     EXPECT_THROW(
       mysqlx::Session s(uri.str())
@@ -1007,8 +1007,8 @@ TEST_F(Sess, failover)
 
     uri << "@["
            "localhost6,"
-           "127.0.1.250:1,"
-           "[::1]:1,";
+           "127.0.1.250:65535,"
+           "[::1]:65535,";
     uri << "127.0.0.1";
     if (get_port() != 0)
       uri << ":" <<get_port();
@@ -1031,9 +1031,9 @@ TEST_F(Sess, failover)
       uri << ":" << get_password();
 
     uri << "@["
-           "(address=localhost6,priority=99),"
-           "(address=127.0.1.250:33060,priority=99),"
-           "(address=[::2]:1,priority=1),";
+           "(address=localhost6:65535,priority=99),"
+           "(address=127.0.0.1:65535,priority=99),"
+           "(address=[::1]:65535,priority=1),";
     uri << "(address=127.0.0.1";
     if (get_port() != 0)
       uri << ":" <<get_port();
@@ -1054,10 +1054,10 @@ TEST_F(Sess, failover)
                       SessionOption::HOST, "server.example.com",
                       SessionOption::PRIORITY, 1,
                       SessionOption::HOST, "192.0.2.11",
-                      SessionOption::PORT, 33060,
+                      SessionOption::PORT, 65535,
                       SessionOption::PRIORITY, 99,
-                      SessionOption::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
-                      SessionOption::PORT, 1,
+                      SessionOption::HOST, "[::1]",
+                      SessionOption::PORT, 65535,
                       SessionOption::PRIORITY, 2,
                       SessionOption::HOST, "::1",
                       SessionOption::PORT, get_port(),
@@ -1087,7 +1087,7 @@ TEST_F(Sess, failover)
 
     EXPECT_THROW(settings.set(SessionOption::HOST, "server.example.com",
                               SessionOption::USER, get_user(),
-                              SessionOption::PORT, 1,
+                              SessionOption::PORT, 65535,
                               SessionOption::PRIORITY, 1), Error);
 
     settings.erase(SessionOption::HOST);
@@ -1096,7 +1096,7 @@ TEST_F(Sess, failover)
     settings.set(SessionOption::HOST, "server.example.com",
                  SessionOption::PRIORITY, 1,
                  SessionOption::HOST, "192.0.2.11",
-                 SessionOption::PORT, 33060,
+                 SessionOption::PORT, 65535,
                  SessionOption::PRIORITY, 98,
                  SessionOption::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
                  SessionOption::PRIORITY, 2,
