@@ -325,12 +325,12 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
     assert(Option_impl::SOCKET == it->first);
 
-    string socket = it->second.get_string();
+    string socket_path = it->second.get_string();
     ++it;
 
     check_prio(it, prio);
 
-    src.add(cdk::ds::Unix_socket(socket),
+    src.add(cdk::ds::Unix_socket(socket_path),
       (cdk::ds::Unix_socket::Options&)opts,
       (unsigned short)prio);
 

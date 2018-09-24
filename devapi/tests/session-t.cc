@@ -1802,7 +1802,7 @@ TEST_F(Sess, pool_ttl)
                                            ));
     }
 
-    auto test_sessions = [&session_list,max_connections] (bool expect_errors = false)
+    auto test_sessions = [&session_list,max_connections] (bool expect_errors)
     {
       int errors_found = 0;
       while(session_list.size() > 0)
@@ -1844,7 +1844,7 @@ TEST_F(Sess, pool_ttl)
       }
     };
 
-    test_sessions();
+    test_sessions(false);
 
     // Now closing pool so that waiting threads get session without timeout
     ClientSettings settings1 = settings;
@@ -1972,4 +1972,3 @@ TEST_F(Sess, pool_ttl)
   }
 
 }
-

@@ -505,15 +505,10 @@ else()
   set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-
-    # TODO: Fix these warnings
-
     add_compile_options(
-      -errtags=yes -erroff=hidevf,wvarhidemem
+      -errtags=yes
     )
-
   else()
-
     add_compile_options(-Wextra)
 
   endif()
