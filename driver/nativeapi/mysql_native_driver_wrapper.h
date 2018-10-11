@@ -57,7 +57,7 @@ public:
   ~MySQL_NativeDriverWrapper();
 
   NativeConnectionWrapper & conn_init();
-    ;
+
   void thread_end();
 
   void thread_init();
