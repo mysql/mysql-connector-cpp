@@ -636,3 +636,28 @@ int mysqlx_stmt_struct::add_multiple_documents(va_list &args)
     set_diagnostic("No documents specified for ADD operation.", 0);
   return rc;
 }
+
+template <class T>
+uint64_t get_count(T &obj)
+{
+  mysqlx_session_struct &sess = obj.get_session();
+  mysqlx_stmt_struct *stmt =
+    sess.new_stmt<OP_SELECT>(obj);
+  if (!stmt)
+    throw_error("Failed to create statement");
+
+  if (RESULT_OK != mysqlx_set_items(stmt, "COUNT(*)", PARAM_END))
+    throw_error("Failed to bind parameter");
+
+  return stmt->exec()->read_row()->get(0).get_uint();
+}
+
+uint64_t mysqlx_collection_struct::count()
+{
+  return get_count(*this);
+}
+
+uint64_t mysqlx_table_struct::count()
+{
+  return get_count(*this);
+}

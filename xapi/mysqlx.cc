@@ -811,17 +811,32 @@ const char * STDCALL mysqlx_json_fetch_one(mysqlx_result_struct *res, size_t *le
 }
 
 
+int STDCALL _store_result(mysqlx_result_struct *result, size_t *num,
+                          bool no_data_error)
+{
+  SAFE_EXCEPTION_BEGIN(result, RESULT_ERROR)
+    if (no_data_error && !result->has_data())
+      throw Mysqlx_exception("Attempt to store data for result without a data set");
+
+  cdk::row_count_t row_num = result->count();
+  if (num)
+    *num = row_num;
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(result, RESULT_ERROR)
+}
+
+
 int STDCALL
 mysqlx_store_result(mysqlx_result_struct *result, size_t *num)
 {
-  SAFE_EXCEPTION_BEGIN(result, RESULT_ERROR)
-    if (!result->has_data())
-      throw Mysqlx_exception("Attempt to store data for result without a data set");
-    cdk::row_count_t row_num = result->count();
-    if (num)
-      *num = row_num;
-    return RESULT_OK;
-  SAFE_EXCEPTION_END(result, RESULT_ERROR)
+  return _store_result(result, num, true);
+}
+
+
+int STDCALL
+mysqlx_get_count(mysqlx_result_struct *result, size_t *num)
+{
+  return _store_result(result, num, false);
 }
 
 
@@ -1481,6 +1496,27 @@ mysqlx_table_delete(mysqlx_table_struct *table, const char *criteria)
   SAFE_EXCEPTION_END(table, NULL)
 }
 
+
+int STDCALL
+mysqlx_table_count(mysqlx_table_t *table, uint64_t *count)
+{
+  SAFE_EXCEPTION_BEGIN(table, RESULT_ERROR)
+  PARAM_NULL_CHECK(count, table, MYSQLX_ERROR_OUTPUT_VARIABLE_NULL, RESULT_ERROR);
+  *count = table->count();
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(table, RESULT_ERROR)
+}
+
+
+int STDCALL
+mysqlx_collection_count(mysqlx_collection_t *collection, uint64_t *count)
+{
+  SAFE_EXCEPTION_BEGIN(collection, RESULT_ERROR)
+  PARAM_NULL_CHECK(count, collection, MYSQLX_ERROR_OUTPUT_VARIABLE_NULL, RESULT_ERROR);
+  *count = collection->count();
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(collection, RESULT_ERROR)
+}
 
 mysqlx_result_struct * STDCALL
 mysqlx_collection_find(mysqlx_collection_struct *collection, const char *criteria)
