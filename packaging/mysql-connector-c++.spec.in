@@ -61,7 +61,11 @@ BuildRequires:  devtoolset-7-gcc
 BuildRequires:  devtoolset-7-gcc-c++
 %endif
 %{!?mysql_dir:BuildRequires: mysql-devel}
+%if 0%{?fedora} > 28
+BuildRequires:  compat-openssl10-devel
+%else
 BuildRequires:  openssl-devel
+%endif
 %{?commercial:Obsoletes: mysql-connector-c++ < %{version}-%{release}}
 %description
 A C++ interface for communicating with MySQL servers.
