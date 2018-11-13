@@ -150,4 +150,4 @@ if(UNIX)
 endif()
 
 
-ADD_SUBDIRECTORY(tests)
+#ADD_SUBDIRECTORY(tests)

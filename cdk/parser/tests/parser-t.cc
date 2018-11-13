@@ -197,12 +197,100 @@ public:
 };
 
 
-const wchar_t *docs[] =
+class JSON_sink
+  : public JSON::Processor
 {
-  L"{'str': 'foo', 'num': 123, 'bool': true, 'float': 12.4}",
-  L"{'str': 'bar', 'doc': {'str': 'foo', 'num': -123, 'bool': true}}",
-  L"{'str': 'bar', 'arr': ['foo', 123, true, -12.4, {'str': 'foo', 'num': 123, 'bool': true}] }",
-  L"{'null': null }"
+
+public:
+
+  struct Scalar_sink : public Any_prc::Scalar_prc
+  {
+    void null() {}
+    void str(const cdk::string &val) {}
+    void num(uint64_t val) {}
+    void num(int64_t val) {}
+    void num(float val) {}
+    void num(double val) {}
+    void yesno(bool val) {}
+  };
+
+  struct Any_sink
+    : public Any_prc
+    , public JSON::Processor
+    , public JSON::List::Processor
+  {
+    Scalar_sink  m_scalar_sink;
+
+    Scalar_prc* scalar()
+    {
+      return &m_scalar_sink;
+    }
+
+    Doc_prc *doc()
+    { return this; }
+
+    List_prc *arr()
+    {
+      return this;
+    }
+
+    // printing list
+
+    void list_begin()
+    {
+    }
+
+    void list_end()
+    {
+    }
+
+    Any_prc* list_el()
+    {
+      return this;
+    }
+
+    // printing sub-document
+
+    void doc_begin()
+    {
+    }
+
+    void doc_end()
+    {
+    }
+
+    Any_prc* key_val(const string &key)
+    {
+      return this;
+    }
+  }
+  m_any_sink;
+
+  // JSON processor
+
+  void doc_begin()
+  {
+  }
+
+  void doc_end()
+  {
+  }
+
+  Any_prc* key_val(const cdk::string &key)
+  {
+    return &m_any_sink;
+  }
+
+};
+
+
+
+const char *docs[] =
+{
+  R"({"str": "foo", "num": 123, "bool": true, "float": 12.4})",
+  R"({"str": "bar", "doc": {"str": "foo", "num": -123, "bool": true}})",
+  R"({"str": "bar", "arr": ["foo", 123, true, -12.4, {"str": "foo", "num": 123, "bool": true}] })",
+  R"({"null": null })"
 };
 
 
@@ -222,12 +310,13 @@ TEST(Parser, json)
   for (unsigned i=0; i < sizeof(docs)/sizeof(wchar_t*); i++)
   {
     cout <<endl <<"== doc#" <<i <<" ==" <<endl<<endl;
-    cdk::string doc(docs[i]);
-    JSON_parser parser(doc);
+    //std::string doc(docs[i]);
+    JSON_parser parser(docs[i]);
     parser.process(printer);
   }
 
   // negative tests
+  cout << endl << "== negative ==" << endl << endl;
 
   {
     JSON_parser parser("");
@@ -241,7 +330,7 @@ TEST(Parser, json)
   }
 
   {
-    const char *json = "{ foo: 123, invalid }";
+    const char *json = "{ \"foo\": 123, invalid }";
     JSON_parser parser(json);
     EXPECT_ERROR(parser.process(printer));
   }
@@ -249,16 +338,16 @@ TEST(Parser, json)
   // numeric tests
 
   static struct num_doc_t {
-    const wchar_t *doc;
+    const char *doc;
     double  val;
   }
   num_docs[] = {
-    { L"{'float': -123E-1  }", -123E-1 },
-    { L"{'float': +12.3e-1  }", +12.3E-1 },
-    { L"{'float': -12.3E+1  }", -12.3E+1 },
-    { L"{'float': +123e+1  }",  +123E+1 },
-    { L"{'float': +.123E+1  }",  +.123E+1 },
-    { L"{'float': -.123e-1  }",  -.123E-1 },
+    { "{\"float\": -123E-1  }", -123E-1 },
+    { "{\"float\": 12.3e-1  }", +12.3E-1 },
+    { "{\"float\": -12.3E+1  }", -12.3E+1 },
+    { "{\"float\": 123E+1  }",  +123E+1 },
+    { "{\"float\": 0.123E+1  }",  +.123E+1 },
+    { "{\"float\": -0.123e-1  }",  -.123E-1 },
   };
 
   struct : public JSON::Processor
@@ -310,8 +399,7 @@ TEST(Parser, json)
   for (unsigned i=0; i < sizeof(num_docs)/sizeof(num_doc_t); i++)
   {
     cout <<endl <<"== num#" <<i <<" ==" <<endl<<endl;
-    cdk::string doc(num_docs[i].doc);
-    JSON_parser parser(doc);
+    JSON_parser parser(num_docs[i].doc);
     parser.process(checker);
     EXPECT_EQ(num_docs[i].val, checker.m_val);
   }
@@ -583,269 +671,467 @@ public:
 };
 
 
+class Expr_sink
+  : public cdk::Expression::Processor
+{
+
+public:
+
+  Expr_sink()
+    : m_scalar_sink(*this)
+  {}
+
+  // Expr processor
+
+  struct Val_sink : public Scalar_prc::Value_prc
+  {
+    virtual void null()
+    {
+    }
+
+    virtual void str(const cdk::string &val)
+    {
+    }
+
+    virtual void num(int64_t val)
+    {
+    }
+
+    virtual void num(uint64_t val)
+    {
+    }
+
+    virtual void num(float val)
+    {
+    }
+
+    virtual void num(double val)
+    {
+    }
+
+    virtual void yesno(bool val)
+    {
+    }
+
+    void value(cdk::Type_info ti,const cdk::Format_info &fi,
+               cdk::foundation::bytes data)
+    {
+    }
+
+  };
+
+  struct Path_sink
+    : public cdk::api::Doc_path::Processor
+    , cdk::api::Doc_path_element_processor
+  {
+    using Element_prc::string;
+    using Element_prc::index_t;
+
+    void list_begin()
+    {
+    }
+
+    Element_prc* list_el()
+    {
+      return this;
+    }
+
+    void member(const string &name)
+    {
+    }
+
+    void any_member()
+    {
+    }
+
+    void index(index_t pos)
+    {
+    }
+
+    void any_index()
+    {
+    }
+
+    void any_path()
+    {
+    }
+
+    void whole_document()
+    {
+    }
+  };
+
+  struct Scalar_sink
+    : public Scalar_prc
+    , public Scalar_prc::Args_prc
+    , public cdk::api::Table_ref
+  {
+    Expr_sink  &m_parent;
+    cdk::string m_op_name;
+
+    Val_sink   m_val_sink;
+    Path_sink  m_path_sink;
+
+    Scalar_sink(Expr_sink &parent)
+      : m_parent(parent)
+    {}
+
+    // Table_ref
+
+    const cdk::string  name() const { return m_op_name; }
+    const cdk::api::Schema_ref* schema() const { return NULL; }
+
+    // Scalar_prc
+
+    Value_prc* val()
+    { return &m_val_sink; }
+
+    Args_prc* op(const char *op_name)
+    {
+      std::string name_str("operator \"");
+      name_str.append(op_name);
+      name_str.append("\"");
+      m_op_name= name_str;
+      return call(*this);
+    }
+
+    Args_prc* call(const cdk::api::Table_ref &db_obj)
+    {
+      return this;
+    }
+
+    void list_begin()
+    {
+    }
+
+    void list_end()
+    {
+    }
+
+    Element_prc* list_el()
+    {
+      return &m_parent;
+    }
+
+    virtual void var(const cdk::string &var_name)
+    {
+    }
+
+    virtual void ref(const cdk::Doc_path &path)
+    {
+      path.process(m_path_sink);
+    }
+
+    virtual void ref(const cdk::api::Column_ref &col, const cdk::Doc_path *path)
+    {
+      if (path)
+      {
+        path->process(m_path_sink);
+      }
+    }
+
+    virtual void placeholder()
+    {
+    }
+
+    virtual void param(const cdk::string &pname)
+    {
+    }
+
+    virtual void param(uint16_t pos)
+    {
+    }
+  }
+  m_scalar_sink;
+
+
+  Scalar_prc* scalar()
+  {
+    return &m_scalar_sink;
+  }
+
+  List_prc* arr()
+  {
+    // TODO: process list elements
+    return NULL;
+  }
+
+  Doc_prc* doc()
+  {
+    // TODO: process document contents
+    return NULL;
+  }
+
+};
+
+
+
 // TODO: more extensive testing when expr parser is completed
 // TODO: check if parsing is correct
 
-struct Expr_Test{ parser::Parser_mode::value mode; const wchar_t *txt;} ;
+// Note: non-ascii chars can be introduced in expressions using u8"..." string
+// literals.
+
+struct Expr_Test{ parser::Parser_mode::value mode; const char *txt;} ;
 
 const Expr_Test exprs[] =
 {
-  { parser::Parser_mode::DOCUMENT, L"-2*34.1%5"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and  not true"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName like 'foo%'"},
-  { parser::Parser_mode::TABLE,    L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or Schema.Table.docName is not true "},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName is not false"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName is not NULL "},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not in ('foo%', 'bar%')"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not between 'foo%' AND 'bar%'"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not regexp 'foo.*'"},
-  { parser::Parser_mode::DOCUMENT, L"-2*3+4.1%5 >> 6 & 7 >= 8 and true or Schema.Table.docName = null"},
-  { parser::Parser_mode::DOCUMENT, L"not (name <= 'foo' or not bar)"},
-  { parser::Parser_mode::DOCUMENT, L"colName.Xpto[1].a[*].* + .1e-2"},
-  { parser::Parser_mode::DOCUMENT, L"$.doc_path.Xpto[1].a[*].* + -.1e-2"},
-  { parser::Parser_mode::DOCUMENT, L"schemaName.functionX(cast(-2345 AS DECIMAL (2,3)))"},
-  { parser::Parser_mode::DOCUMENT, L"schemaName.functionX(cast(-2345 AS DECIMAL (2)))"},
-  { parser::Parser_mode::TABLE   , L"schemaName.tableName.columnName->$.doc_path.Xpto[1].a[*].*"},
-  { parser::Parser_mode::TABLE   , L"schemaName.tableName.columnName->'$.doc_path.Xpto[1].a[*].*'"},
-  { parser::Parser_mode::DOCUMENT, L"age and name"},
-  { parser::Parser_mode::DOCUMENT, L"name LIKE :name AND age > :age" },
-  { parser::Parser_mode::TABLE   , L"`date`->$.year"},
-  { parser::Parser_mode::DOCUMENT, L"count(*)" },
-  { parser::Parser_mode::TABLE   , L"~x"},
-  { parser::Parser_mode::TABLE   , L"a^22"},
-  { parser::Parser_mode::TABLE   , L"a^~22"},
-  { parser::Parser_mode::TABLE   , L" a >cast(11 as signed Int)"},
-  { parser::Parser_mode::TABLE   , L"c > cast(14.01 as decimal(3,2))"},
-  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65'))"},
-  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(0x65))"},
-  { parser::Parser_mode::TABLE   , L"'abc' NOT LIKE 'ABC1'"},
-  { parser::Parser_mode::TABLE   , L"'a' REGEXP '^[a-d]'"},
-  { parser::Parser_mode::TABLE   , L"'a' NOT RLIKE '^[a-d]'"},
-  { parser::Parser_mode::TABLE   , L"POSITION('bar' IN 'foobarbar')"},
-  { parser::Parser_mode::TABLE   , L"TRIM('barxxyz')"},
-  { parser::Parser_mode::DOCUMENT, L"1 IN field.array"},
-  { parser::Parser_mode::DOCUMENT, L"1 NOT IN field.array"},
-  { parser::Parser_mode::DOCUMENT, L"field IN [1,2,3]"},
-  { parser::Parser_mode::DOCUMENT, L"field NOT IN [1,2,3, NULL]"},
-  { parser::Parser_mode::DOCUMENT, L"{\"a\":1, \"b\":null } IN $"},
-  { parser::Parser_mode::DOCUMENT, L"{\"a\":1} NOT IN $"},
-  { parser::Parser_mode::DOCUMENT, L"$.field1 IN $.field2"},
-  { parser::Parser_mode::DOCUMENT, L"$.field1 NOT IN $.field2"},
-  { parser::Parser_mode::DOCUMENT, L"a IN (b)"},
-  { parser::Parser_mode::TABLE   , L"cast(column as json) IN doc->'$.field.array'"},
-  { parser::Parser_mode::TABLE   , L"cast(column as json) NOT IN doc->'$.field.array'"},
-  { parser::Parser_mode::TABLE   , L"column->'$.field' IN [1,2,3]"},
-  { parser::Parser_mode::TABLE   , L"column->'$.field' NOT IN [1,2,3]"},
-  { parser::Parser_mode::TABLE   , L"{\"a\":1} IN doc->'$'"},
-  { parser::Parser_mode::TABLE   , L"{\"a\":1} NOT IN doc->'$'"},
-  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' IN tab2.doc->'$.field2'"},
-  { parser::Parser_mode::TABLE   , L"tab1.doc->'$.field1' NOT IN tab2.doc->'$.field2'"},
+  { parser::Parser_mode::DOCUMENT, "-2*34.1%5"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and  not true"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName like 'foo%'"},
+  { parser::Parser_mode::TABLE,    "-2*3+4.1%5 >> 6 & 7 >= 8 and true or Schema.Table.docName is not true "},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName is not false"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName is not NULL "},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not in ('foo%', 'bar%')"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not between 'foo%' AND 'bar%'"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not regexp 'foo.*'"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or Schema.Table.docName = null"},
+  { parser::Parser_mode::DOCUMENT, "not (name <= 'foo' or not bar)"},
+  { parser::Parser_mode::DOCUMENT, "colName.Xpto[1].a[*].* + .1e-2"},
+  { parser::Parser_mode::DOCUMENT, "$.doc_path.Xpto[1].a[*].* + -.1e-2"},
+  { parser::Parser_mode::DOCUMENT, "schemaName.functionX(cast(-2345 AS DECIMAL (2,3)))"},
+  { parser::Parser_mode::DOCUMENT, "schemaName.functionX(cast(-2345 AS DECIMAL (2)))"},
+  { parser::Parser_mode::TABLE   , "schemaName.tableName.columnName->$.doc_path.Xpto[1].a[*].*"},
+  { parser::Parser_mode::TABLE   , "schemaName.tableName.columnName->'$.doc_path.Xpto[1].a[*].*'"},
+  { parser::Parser_mode::DOCUMENT, "age and name"},
+  { parser::Parser_mode::DOCUMENT, "name LIKE :name AND age > :age" },
+  { parser::Parser_mode::TABLE   , "`date`->$.year"},
+  { parser::Parser_mode::DOCUMENT, "count(*)" },
+  { parser::Parser_mode::TABLE   , "~x"},
+  { parser::Parser_mode::TABLE   , "a^22"},
+  { parser::Parser_mode::TABLE   , "a^~22"},
+  { parser::Parser_mode::TABLE   , " a >cast(11 as signed Int)"},
+  { parser::Parser_mode::TABLE   , "c > cast(14.01 as decimal(3,2))"},
+  { parser::Parser_mode::TABLE   , "CHARSET(CHAR(X'65'))"},
+  { parser::Parser_mode::TABLE   , "CHARSET(CHAR(0x65))"},
+  { parser::Parser_mode::TABLE   , "'abc' NOT LIKE 'ABC1'"},
+  { parser::Parser_mode::TABLE   , "'a' REGEXP '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , "'a' NOT RLIKE '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , "POSITION('bar' IN 'foobarbar')"},
+  { parser::Parser_mode::TABLE   , "TRIM('barxxyz')"},
+  { parser::Parser_mode::DOCUMENT, "1 IN field.array"},
+  { parser::Parser_mode::DOCUMENT, "1 NOT IN field.array"},
+  { parser::Parser_mode::DOCUMENT, "field IN [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, "field NOT IN [1,2,3, NULL]"},
+  { parser::Parser_mode::DOCUMENT, "{\"a\":1, \"b\":null } IN $"},
+  { parser::Parser_mode::DOCUMENT, "{\"a\":1} NOT IN $"},
+  { parser::Parser_mode::DOCUMENT, "$.field1 IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, "$.field1 NOT IN $.field2"},
+  { parser::Parser_mode::DOCUMENT, "a IN (b)"},
+  { parser::Parser_mode::TABLE   , "cast(column as json) IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , "cast(column as json) NOT IN doc->'$.field.array'"},
+  { parser::Parser_mode::TABLE   , "column->'$.field' IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , "column->'$.field' NOT IN [1,2,3]"},
+  { parser::Parser_mode::TABLE   , "{\"a\":1} IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , "{\"a\":1} NOT IN doc->'$'"},
+  { parser::Parser_mode::TABLE   , "tab1.doc->'$.field1' IN tab2.doc->'$.field2'"},
+  { parser::Parser_mode::TABLE   , "tab1.doc->'$.field1' NOT IN tab2.doc->'$.field2'"},
 
   //Tests from devcocs:
   //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#expr
 
-  { parser::Parser_mode::DOCUMENT, L"(1 in (1,2,3)) = TRUE"},
-  { parser::Parser_mode::DOCUMENT, L"(1 not in (1,2,3)) = FALSE"},
-  { parser::Parser_mode::DOCUMENT, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
-  { parser::Parser_mode::DOCUMENT, L"\"foo'bar\""},
-  { parser::Parser_mode::DOCUMENT, L"\"foo''bar\""},
-  { parser::Parser_mode::DOCUMENT, L"\"foo\\\"bar\""},
-  { parser::Parser_mode::DOCUMENT, L"\"foo\"\"bar\""},
-  { parser::Parser_mode::DOCUMENT, L"'foo\"bar'"},
-  { parser::Parser_mode::DOCUMENT, L"'foo\"\"bar'"},
-  { parser::Parser_mode::DOCUMENT, L"'foo\\'bar'"},
-  { parser::Parser_mode::DOCUMENT, L"'foo''bar'"},
-  { parser::Parser_mode::DOCUMENT, L"''''"},
-  { parser::Parser_mode::DOCUMENT, L"\"\"\"\""},
-  { parser::Parser_mode::DOCUMENT, L"\"\""},
-  { parser::Parser_mode::DOCUMENT, L"''"},
-  { parser::Parser_mode::DOCUMENT, L"'\\\\'"},
-  { parser::Parser_mode::DOCUMENT, L"\"\\\\\""},
+  { parser::Parser_mode::DOCUMENT, "(1 in (1,2,3)) = TRUE"},
+  { parser::Parser_mode::DOCUMENT, "(1 not in (1,2,3)) = FALSE"},
+  { parser::Parser_mode::DOCUMENT, "{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+  { parser::Parser_mode::DOCUMENT, "\"foo'bar\""},
+  { parser::Parser_mode::DOCUMENT, "\"foo''bar\""},
+  { parser::Parser_mode::DOCUMENT, "\"foo\\\"bar\""},
+  { parser::Parser_mode::DOCUMENT, "\"foo\"\"bar\""},
+  { parser::Parser_mode::DOCUMENT, "'foo\"bar'"},
+  { parser::Parser_mode::DOCUMENT, "'foo\"\"bar'"},
+  { parser::Parser_mode::DOCUMENT, "'foo\\'bar'"},
+  { parser::Parser_mode::DOCUMENT, "'foo''bar'"},
+  { parser::Parser_mode::DOCUMENT, "''''"},
+  { parser::Parser_mode::DOCUMENT, "\"\"\"\""},
+  { parser::Parser_mode::DOCUMENT, "\"\""},
+  { parser::Parser_mode::DOCUMENT, "''"},
+  { parser::Parser_mode::DOCUMENT, "'\\\\'"},
+  { parser::Parser_mode::DOCUMENT, "\"\\\\\""},
 // discarded from grammar
-//  { parser::Parser_mode::DOCUMENT, L"[<foo.bar>]"},
-//  { parser::Parser_mode::DOCUMENT, L"[<\"foo\">]"},
-//  { parser::Parser_mode::DOCUMENT, L"{<foo, bar>}"},
-//  { parser::Parser_mode::DOCUMENT, L"[<{\"foo\":bar}>]"},
+//  { parser::Parser_mode::DOCUMENT, "[<foo.bar>]"},
+//  { parser::Parser_mode::DOCUMENT, "[<\"foo\">]"},
+//  { parser::Parser_mode::DOCUMENT, "{<foo, bar>}"},
+//  { parser::Parser_mode::DOCUMENT, "[<{\"foo\":bar}>]"},
 
   // Following items were not included in original EBNF, but are valid
-  { parser::Parser_mode::DOCUMENT, L"1 <> 2"},
-  { parser::Parser_mode::DOCUMENT, L"4 % 2"},
-  { parser::Parser_mode::DOCUMENT, L"[]"},
-  { parser::Parser_mode::DOCUMENT, L"{}"},
+  { parser::Parser_mode::DOCUMENT, "1 <> 2"},
+  { parser::Parser_mode::DOCUMENT, "4 % 2"},
+  { parser::Parser_mode::DOCUMENT, "[]"},
+  { parser::Parser_mode::DOCUMENT, "{}"},
 
     // Document Only
-  { parser::Parser_mode::DOCUMENT, L"1 in [1,2,3]"},
-  { parser::Parser_mode::DOCUMENT, L"[1] in [[1],[2],[3]]"},
-  { parser::Parser_mode::DOCUMENT, L"foo = bar.baz"},
-  { parser::Parser_mode::DOCUMENT, L"foo**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"foo[*].bar"},
-  { parser::Parser_mode::DOCUMENT, L"_**._"},
-  { parser::Parser_mode::DOCUMENT, L"_**[*]._"},
-  { parser::Parser_mode::DOCUMENT, L"_**[*]._**._"},
-  { parser::Parser_mode::DOCUMENT, L"$.foo.bar[*]"},
-  { parser::Parser_mode::DOCUMENT, L"$ = {\"a\":1}"},
-  { parser::Parser_mode::DOCUMENT, L"$.\" \".bar"},
-  { parser::Parser_mode::DOCUMENT, L"$.a[0].b[0]"},
-  { parser::Parser_mode::DOCUMENT, L"$.a[0][0]"},
-  { parser::Parser_mode::DOCUMENT, L"$.a[*][*]"},
-  { parser::Parser_mode::DOCUMENT, L"$.a[*].z"},
-  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\".\"baz**\" = $"},
-  { parser::Parser_mode::DOCUMENT, L"$.foo**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"$.\"foo bar\"**.baz"},
-  { parser::Parser_mode::DOCUMENT, L"$.\"foo\"**.\"bar\""},
-  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\"bar\""},
-  { parser::Parser_mode::DOCUMENT, L"$.\"foo.\"**.\".bar\""},
-  { parser::Parser_mode::DOCUMENT, L"$.\"\""},
-  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"$**[0]"},
-  { parser::Parser_mode::DOCUMENT, L"$**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"$**.foo"},
-  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"$.a**[0]"},
-  { parser::Parser_mode::DOCUMENT, L"$.a**[*]"},
-  { parser::Parser_mode::DOCUMENT, L"$.a**.bar"},
-  { parser::Parser_mode::DOCUMENT, L"$.a**.foo"},
+  { parser::Parser_mode::DOCUMENT, "1 in [1,2,3]"},
+  { parser::Parser_mode::DOCUMENT, "[1] in [[1],[2],[3]]"},
+  { parser::Parser_mode::DOCUMENT, "foo = bar.baz"},
+  { parser::Parser_mode::DOCUMENT, "foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, "foo[*].bar"},
+  { parser::Parser_mode::DOCUMENT, "_**._"},
+  { parser::Parser_mode::DOCUMENT, "_**[*]._"},
+  { parser::Parser_mode::DOCUMENT, "_**[*]._**._"},
+  { parser::Parser_mode::DOCUMENT, "$.foo.bar[*]"},
+  { parser::Parser_mode::DOCUMENT, "$ = {\"a\":1}"},
+  { parser::Parser_mode::DOCUMENT, "$.\" \".bar"},
+  { parser::Parser_mode::DOCUMENT, "$.a[0].b[0]"},
+  { parser::Parser_mode::DOCUMENT, "$.a[0][0]"},
+  { parser::Parser_mode::DOCUMENT, "$.a[*][*]"},
+  { parser::Parser_mode::DOCUMENT, "$.a[*].z"},
+  { parser::Parser_mode::DOCUMENT, "$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::DOCUMENT, "$.foo**.bar"},
+  { parser::Parser_mode::DOCUMENT, "$.\"foo bar\"**.baz"},
+  { parser::Parser_mode::DOCUMENT, "$.\"foo\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, "$.\"foo.\"**.\"bar\""},
+  { parser::Parser_mode::DOCUMENT, "$.\"foo.\"**.\".bar\""},
+  { parser::Parser_mode::DOCUMENT, "$.\"\""},
+  { parser::Parser_mode::DOCUMENT, "$**.bar"},
+  { parser::Parser_mode::DOCUMENT, "$**[0]"},
+  { parser::Parser_mode::DOCUMENT, "$**.bar"},
+  { parser::Parser_mode::DOCUMENT, "$**.foo"},
+  { parser::Parser_mode::DOCUMENT, "$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, "$.a**[0]"},
+  { parser::Parser_mode::DOCUMENT, "$.a**[*]"},
+  { parser::Parser_mode::DOCUMENT, "$.a**.bar"},
+  { parser::Parser_mode::DOCUMENT, "$.a**.foo"},
 
   //Relational
   //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id8
 
-  { parser::Parser_mode::TABLE, L"1 in (1,2,3)"},
-  { parser::Parser_mode::TABLE, L"{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
-//  { parser::Parser_mode::TABLE, L"[<doc->'$.foo'>]"},
-//  { parser::Parser_mode::TABLE, L"[<\"foo\">]"},
-//  { parser::Parser_mode::TABLE, L"{<key, value>}"},
-//  { parser::Parser_mode::TABLE, L"{<\"x\", value>}"},
-//  { parser::Parser_mode::TABLE, L"[<{key:value}>]"},
+  { parser::Parser_mode::TABLE, "1 in (1,2,3)"},
+  { parser::Parser_mode::TABLE, "{\"foo\" : \"bar\", \"baz\": [1,2,[3],{}, TRUE, true, false, False, null, NULL, Null]}"},
+//  { parser::Parser_mode::TABLE, "[<doc->'$.foo'>]"},
+//  { parser::Parser_mode::TABLE, "[<\"foo\">]"},
+//  { parser::Parser_mode::TABLE, "{<key, value>}"},
+//  { parser::Parser_mode::TABLE, "{<\"x\", value>}"},
+//  { parser::Parser_mode::TABLE, "[<{key:value}>]"},
 
   // Following items were not included in original EBNF, but is MySQL syntax
-  { parser::Parser_mode::TABLE, L"1 <> 2"},
-  { parser::Parser_mode::TABLE, L"4 % 2"},
-  { parser::Parser_mode::TABLE, L"doc->>'$.foo'"},
+  { parser::Parser_mode::TABLE, "1 <> 2"},
+  { parser::Parser_mode::TABLE, "4 % 2"},
+  { parser::Parser_mode::TABLE, "doc->>'$.foo'"},
 
-  { parser::Parser_mode::TABLE, L"[]"},
-  { parser::Parser_mode::TABLE, L"{}"},
+  { parser::Parser_mode::TABLE, "[]"},
+  { parser::Parser_mode::TABLE, "{}"},
 
   // Relational Only
-  { parser::Parser_mode::TABLE, L"doc->'$.foo.bar[*]'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\" \".bar'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.a[0].b[0]'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.a[0][0]'"},
-  { parser::Parser_mode::TABLE, L"`x`->'$.a[*][*]'"},
-  { parser::Parser_mode::TABLE, L"`''`->'$.a[*].z'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\".\"baz**\"'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.foo**.bar'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"foo bar\"**.baz'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"foo\"**.\"bar\"'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\"bar\"'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"foo.\"**.\".bar\"'"},
-  { parser::Parser_mode::TABLE, L"doc->'$.\"\"'"},
-  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
-  { parser::Parser_mode::TABLE, L"doc->'$**[0]'"},
-  { parser::Parser_mode::TABLE, L"doc->'$**.bar'"},
-  { parser::Parser_mode::TABLE, L"doc->'$**.foo'"},
-  { parser::Parser_mode::TABLE, L"foo.doc->'$.a**.bar'"},
-  { parser::Parser_mode::TABLE, L"foo.bar.doc->'$.a**[0]'"},
-  { parser::Parser_mode::TABLE, L"`foo`.doc->'$.a**[*]'"},
-  { parser::Parser_mode::TABLE, L"`foo.bar`.doc->'$.a**.bar'"},
-  { parser::Parser_mode::TABLE, L"`->`.doc->'$.a**.foo'"}
+  { parser::Parser_mode::TABLE, "doc->'$.foo.bar[*]'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\" \".bar'"},
+  { parser::Parser_mode::TABLE, "doc->'$.a[0].b[0]'"},
+  { parser::Parser_mode::TABLE, "doc->'$.a[0][0]'"},
+  { parser::Parser_mode::TABLE, "`x`->'$.a[*][*]'"},
+  { parser::Parser_mode::TABLE, "`''`->'$.a[*].z'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"foo bar\".\"baz**\"'"},
+  { parser::Parser_mode::TABLE, "doc->'$.foo**.bar'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"foo bar\"**.baz'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"foo\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"foo.\"**.\"bar\"'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"foo.\"**.\".bar\"'"},
+  { parser::Parser_mode::TABLE, "doc->'$.\"\"'"},
+  { parser::Parser_mode::TABLE, "doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, "doc->'$**[0]'"},
+  { parser::Parser_mode::TABLE, "doc->'$**.bar'"},
+  { parser::Parser_mode::TABLE, "doc->'$**.foo'"},
+  { parser::Parser_mode::TABLE, "foo.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, "foo.bar.doc->'$.a**[0]'"},
+  { parser::Parser_mode::TABLE, "`foo`.doc->'$.a**[*]'"},
+  { parser::Parser_mode::TABLE, "`foo.bar`.doc->'$.a**.bar'"},
+  { parser::Parser_mode::TABLE, "`->`.doc->'$.a**.foo'"}
 
 };
 
 const Expr_Test negative_exprs[] =
 {
-  { parser::Parser_mode::TABLE   , L"-23452345243563467456745674567456745674567"},
-  { parser::Parser_mode::TABLE   , L""},
-  { parser::Parser_mode::TABLE   , L"CHARSET(CHAR(X'65' USING utf8))"},
-  { parser::Parser_mode::TABLE   , L"TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
-  { parser::Parser_mode::TABLE   , L"TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
-  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
-  { parser::Parser_mode::TABLE   , L"TRIM('xyz' FROM 'barxxyz')"},
-  { parser::Parser_mode::TABLE   , L"'Heoko' SOUNDS LIKE 'h1aso'"},
-  { parser::Parser_mode::TABLE   , L"foo+"},
+  { parser::Parser_mode::TABLE   , "-23452345243563467456745674567456745674567"},
+  { parser::Parser_mode::TABLE   , ""},
+  { parser::Parser_mode::TABLE   , "CHARSET(CHAR(X'65' USING utf8))"},
+  { parser::Parser_mode::TABLE   , "TRIM(BOTH 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , "TRIM(LEADING 'x' FROM 'xxxbarxxx')"},
+  { parser::Parser_mode::TABLE   , "TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , "TRIM('xyz' FROM 'barxxyz')"},
+  { parser::Parser_mode::TABLE   , "'Heoko' SOUNDS LIKE 'h1aso'"},
+  { parser::Parser_mode::TABLE   , "foo+"},
 
   //Tests from devcocs:
   //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#invalid
 
-  { parser::Parser_mode::DOCUMENT, L"$."                 },
-  { parser::Parser_mode::DOCUMENT, L".doc"               },
-  { parser::Parser_mode::DOCUMENT, L"**"                 },
-  { parser::Parser_mode::DOCUMENT, L"**foo"              },
-  { parser::Parser_mode::DOCUMENT, L"_**"                },
-  { parser::Parser_mode::DOCUMENT, L"_**[*]_**._"        },
-  { parser::Parser_mode::DOCUMENT, L"_**[*]._.**._"      },
-  { parser::Parser_mode::DOCUMENT, L"_**[*]_.**._"       },
-  { parser::Parser_mode::DOCUMENT, L"$.foo**"            },
-  { parser::Parser_mode::DOCUMENT, L"$.foo.**.bar"       },
-//  { parser::Parser_mode::DOCUMENT, L"$.foo.*.bar"        },
-  { parser::Parser_mode::DOCUMENT, L"$.foo[**]"          },
-  { parser::Parser_mode::DOCUMENT, L"$**"                },
-  { parser::Parser_mode::DOCUMENT, L"$.**"               },
-  { parser::Parser_mode::DOCUMENT, L"$.**bar"            },
-  { parser::Parser_mode::DOCUMENT, L"$.**\".bar\""       },
-  { parser::Parser_mode::DOCUMENT, L"$.**.bar"           },
-  { parser::Parser_mode::DOCUMENT, L"$.foo..bar"         },
-//  { parser::Parser_mode::DOCUMENT, L"foo[*].\"bar\""     },
-  { parser::Parser_mode::DOCUMENT, L"\"foo\".bar"        },
-  { parser::Parser_mode::DOCUMENT, L"$**.bar()"          },
-  { parser::Parser_mode::DOCUMENT, L"[<foo, bar>]"       },
-  { parser::Parser_mode::DOCUMENT, L"[<\"foo\", 1>]"     },
-  { parser::Parser_mode::DOCUMENT, L"{<foobar>}"         },
+  { parser::Parser_mode::DOCUMENT, "$."                 },
+  { parser::Parser_mode::DOCUMENT, ".doc"               },
+  { parser::Parser_mode::DOCUMENT, "**"                 },
+  { parser::Parser_mode::DOCUMENT, "**foo"              },
+  { parser::Parser_mode::DOCUMENT, "_**"                },
+  { parser::Parser_mode::DOCUMENT, "_**[*]_**._"        },
+  { parser::Parser_mode::DOCUMENT, "_**[*]._.**._"      },
+  { parser::Parser_mode::DOCUMENT, "_**[*]_.**._"       },
+  { parser::Parser_mode::DOCUMENT, "$.foo**"            },
+  { parser::Parser_mode::DOCUMENT, "$.foo.**.bar"       },
+//  { parser::Parser_mode::DOCUMENT, "$.foo.*.bar"        },
+  { parser::Parser_mode::DOCUMENT, "$.foo[**]"          },
+  { parser::Parser_mode::DOCUMENT, "$**"                },
+  { parser::Parser_mode::DOCUMENT, "$.**"               },
+  { parser::Parser_mode::DOCUMENT, "$.**bar"            },
+  { parser::Parser_mode::DOCUMENT, "$.**\".bar\""       },
+  { parser::Parser_mode::DOCUMENT, "$.**.bar"           },
+  { parser::Parser_mode::DOCUMENT, "$.foo..bar"         },
+//  { parser::Parser_mode::DOCUMENT, "foo[*].\"bar\""     },
+  { parser::Parser_mode::DOCUMENT, "\"foo\".bar"        },
+  { parser::Parser_mode::DOCUMENT, "$**.bar()"          },
+  { parser::Parser_mode::DOCUMENT, "[<foo, bar>]"       },
+  { parser::Parser_mode::DOCUMENT, "[<\"foo\", 1>]"     },
+  { parser::Parser_mode::DOCUMENT, "{<foobar>}"         },
 
   // Invalid that was wrongly included in parser (not MySQL syntax)
-//  { parser::Parser_mode::DOCUMENT, L"1 == 1"             },
+//  { parser::Parser_mode::DOCUMENT, "1 == 1"             },
 
  // Relational Only
-  { parser::Parser_mode::DOCUMENT, L"doc->'$.foo'"           },
-  { parser::Parser_mode::DOCUMENT, L"foo.bar->'$.foo'"       },
+  { parser::Parser_mode::DOCUMENT, "doc->'$.foo'"           },
+  { parser::Parser_mode::DOCUMENT, "foo.bar->'$.foo'"       },
 
   //http://devdocs.no.oracle.com/mysqlx/latest/devapi-docs/refguide2/DataTypes/expression.html#id9
 
-  { parser::Parser_mode::TABLE, L"doc->'foo**.bar'"           },
-  { parser::Parser_mode::TABLE, L"doc->'foo[*].bar'"          },
-  { parser::Parser_mode::TABLE, L"doc->'_**._'"               },
-  { parser::Parser_mode::TABLE, L"doc->'_**[*]._'"            },
-  { parser::Parser_mode::TABLE, L"doc->_**[*]._**._'"         },
-  { parser::Parser_mode::TABLE, L"[<doc->'$.foo', bar>]"      },
-  { parser::Parser_mode::TABLE, L"[<\"foo\", 1>]"             },
-  { parser::Parser_mode::TABLE, L"{<doc->'$.foobar'>}"        },
+  { parser::Parser_mode::TABLE, "doc->'foo**.bar'"           },
+  { parser::Parser_mode::TABLE, "doc->'foo[*].bar'"          },
+  { parser::Parser_mode::TABLE, "doc->'_**._'"               },
+  { parser::Parser_mode::TABLE, "doc->'_**[*]._'"            },
+  { parser::Parser_mode::TABLE, "doc->_**[*]._**._'"         },
+  { parser::Parser_mode::TABLE, "[<doc->'$.foo', bar>]"      },
+  { parser::Parser_mode::TABLE, "[<\"foo\", 1>]"             },
+  { parser::Parser_mode::TABLE, "{<doc->'$.foobar'>}"        },
 
   // Document Only
-//  { parser::Parser_mode::TABLE, L"1 in [1,2,3]"               },
-//  { parser::Parser_mode::TABLE, L"[1] in [[1],[2],[3]]"       },
-//  { parser::Parser_mode::TABLE, L"foo = bar.baz"              },
-  { parser::Parser_mode::TABLE, L"foo**.bar"                  },
-  { parser::Parser_mode::TABLE, L"foo[*].bar"                 },
-  { parser::Parser_mode::TABLE, L"_**._"                      },
-  { parser::Parser_mode::TABLE, L"_**[*]._"                   },
-  { parser::Parser_mode::TABLE, L"_**[*]._**._"               },
-  { parser::Parser_mode::TABLE, L"$.foo.bar[*]"               },
-  { parser::Parser_mode::TABLE, L"$ = {\"a\":1}"              },
-  { parser::Parser_mode::TABLE, L"$.\" \".bar"                },
-  { parser::Parser_mode::TABLE, L"$.a[0].b[0]"                },
-  { parser::Parser_mode::TABLE, L"$.a[0][0]"                  },
-  { parser::Parser_mode::TABLE, L"$.a[*][*]"                  },
-  { parser::Parser_mode::TABLE, L"$.a[*].z"                   },
-  { parser::Parser_mode::TABLE, L"$.\"foo bar\".\"baz**\" = $"},
-  { parser::Parser_mode::TABLE, L"$.foo**.bar"                },
-  { parser::Parser_mode::TABLE, L"$.\"foo bar\"**.baz"        },
-  { parser::Parser_mode::TABLE, L"$.\"foo\"**.\"bar\""        },
-  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\"bar\""       },
-  { parser::Parser_mode::TABLE, L"$.\"foo.\"**.\".bar\""      },
-  { parser::Parser_mode::TABLE, L"$.\"\""                     },
-  { parser::Parser_mode::TABLE, L"$**.bar"                    },
-  { parser::Parser_mode::TABLE, L"$**[0]"                     },
-  { parser::Parser_mode::TABLE, L"$**.bar"                    },
-  { parser::Parser_mode::TABLE, L"$**.foo"                    },
-  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
-  { parser::Parser_mode::TABLE, L"$.a**[0]"                   },
-  { parser::Parser_mode::TABLE, L"$.a**[*]"                   },
-  { parser::Parser_mode::TABLE, L"$.a**.bar"                  },
-  { parser::Parser_mode::TABLE, L"$.a**.foo"                  }
+//  { parser::Parser_mode::TABLE, "1 in [1,2,3]"               },
+//  { parser::Parser_mode::TABLE, "[1] in [[1],[2],[3]]"       },
+//  { parser::Parser_mode::TABLE, "foo = bar.baz"              },
+  { parser::Parser_mode::TABLE, "foo**.bar"                  },
+  { parser::Parser_mode::TABLE, "foo[*].bar"                 },
+  { parser::Parser_mode::TABLE, "_**._"                      },
+  { parser::Parser_mode::TABLE, "_**[*]._"                   },
+  { parser::Parser_mode::TABLE, "_**[*]._**._"               },
+  { parser::Parser_mode::TABLE, "$.foo.bar[*]"               },
+  { parser::Parser_mode::TABLE, "$ = {\"a\":1}"              },
+  { parser::Parser_mode::TABLE, "$.\" \".bar"                },
+  { parser::Parser_mode::TABLE, "$.a[0].b[0]"                },
+  { parser::Parser_mode::TABLE, "$.a[0][0]"                  },
+  { parser::Parser_mode::TABLE, "$.a[*][*]"                  },
+  { parser::Parser_mode::TABLE, "$.a[*].z"                   },
+  { parser::Parser_mode::TABLE, "$.\"foo bar\".\"baz**\" = $"},
+  { parser::Parser_mode::TABLE, "$.foo**.bar"                },
+  { parser::Parser_mode::TABLE, "$.\"foo bar\"**.baz"        },
+  { parser::Parser_mode::TABLE, "$.\"foo\"**.\"bar\""        },
+  { parser::Parser_mode::TABLE, "$.\"foo.\"**.\"bar\""       },
+  { parser::Parser_mode::TABLE, "$.\"foo.\"**.\".bar\""      },
+  { parser::Parser_mode::TABLE, "$.\"\""                     },
+  { parser::Parser_mode::TABLE, "$**.bar"                    },
+  { parser::Parser_mode::TABLE, "$**[0]"                     },
+  { parser::Parser_mode::TABLE, "$**.bar"                    },
+  { parser::Parser_mode::TABLE, "$**.foo"                    },
+  { parser::Parser_mode::TABLE, "$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, "$.a**[0]"                   },
+  { parser::Parser_mode::TABLE, "$.a**[*]"                   },
+  { parser::Parser_mode::TABLE, "$.a**.bar"                  },
+  { parser::Parser_mode::TABLE, "$.a**.foo"                  }
 };
 
 
@@ -853,49 +1139,53 @@ TEST(Parser, expr)
 {
   Expr_printer printer(cout, 0);
 
+#if 1
+  //unsigned i = 20;
   for (unsigned i=0; i < sizeof(exprs)/sizeof(Expr_Test); i++)
   {
     const Expr_Test &test = exprs[i];
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
     cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(test.txt);
+    std::string expr(test.txt);
     cout <<"expr string: " <<expr <<endl;
     cout <<"----" <<endl;
     Expression_parser parser(test.mode, expr);
     parser.process(printer);
   }
+#endif
 
+#if 1
   cout << endl << "=== NEGATIVE TESTS ===" << endl;
 
+  //unsigned i = 9;
   for (unsigned i=0; i < sizeof(negative_exprs)/sizeof(Expr_Test); i++)
   {
     const Expr_Test &test = negative_exprs[i];
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
     cout << (test.mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(test.txt);
+    std::string expr(test.txt);
     cout <<"expecting error when parsing string: " <<expr <<endl;
     cout <<"----" <<endl;
     EXPECT_ERROR(Expression_parser(test.mode, expr).process(printer));
   }
-
+#endif
 }
 
 
 const Expr_Test order_exprs[] =
 {
-  { parser::Parser_mode::DOCUMENT, L"$.age"},
-  { parser::Parser_mode::DOCUMENT, L"$.age ASC"},
-  { parser::Parser_mode::DOCUMENT, L"$.age DESC"},
-  { parser::Parser_mode::DOCUMENT, L"$.year-age"},
-  { parser::Parser_mode::DOCUMENT, L"$.year-age  ASC "},
-  { parser::Parser_mode::DOCUMENT, L"$.year-age    DESC "},
-  { parser::Parser_mode::DOCUMENT, L"$.doc_path.Xpto[1].a[*].* + -.1e-2"},
-  { parser::Parser_mode::DOCUMENT, L"$.doc_path.Xpto[1].a[*].* + -.1e-2 ASC"},
-  { parser::Parser_mode::DOCUMENT, L"$.doc_path.Xpto[1].a[*].* + -.1e-2 DESC"},
-  { parser::Parser_mode::TABLE   , L"`date`->$.year"},
-  { parser::Parser_mode::TABLE   , L"`date`->$.year ASC"},
-  { parser::Parser_mode::TABLE   , L"`date`->$.year DESC"},
-
+  { parser::Parser_mode::DOCUMENT, "$.age"},
+  { parser::Parser_mode::DOCUMENT, "$.age ASC"},
+  { parser::Parser_mode::DOCUMENT, "$.age DESC"},
+  { parser::Parser_mode::DOCUMENT, "$.year-age"},
+  { parser::Parser_mode::DOCUMENT, "$.year-age  ASC "},
+  { parser::Parser_mode::DOCUMENT, "$.year-age    DESC "},
+  { parser::Parser_mode::DOCUMENT, "$.doc_path.Xpto[1].a[*].* + -.1e-2"},
+  { parser::Parser_mode::DOCUMENT, "$.doc_path.Xpto[1].a[*].* + -.1e-2 ASC"},
+  { parser::Parser_mode::DOCUMENT, "$.doc_path.Xpto[1].a[*].* + -.1e-2 DESC"},
+  { parser::Parser_mode::TABLE   , "`date`->$.year"},
+  { parser::Parser_mode::TABLE   , "`date`->$.year ASC"},
+  { parser::Parser_mode::TABLE   , "`date`->$.year DESC"},
 };
 
 
@@ -933,7 +1223,7 @@ TEST(Parser, order_expr)
   {
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
     cout << (order_exprs[i].mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(order_exprs[i].txt);
+    std::string expr(order_exprs[i].txt);
     cout <<"Order expr string: " <<expr <<endl;
     cout <<"----" <<endl;
     Order_parser parser(order_exprs[i].mode, expr);
@@ -1013,13 +1303,13 @@ public:
 
 const Expr_Test proj_exprs[] =
 {
-  { parser::Parser_mode::DOCUMENT, L"$.age AS new_age"},
-  { parser::Parser_mode::DOCUMENT, L"2016-$.age AS birthyear"},
-  { parser::Parser_mode::DOCUMENT, L"HEX(1) AS `HEX`"},
-  { parser::Parser_mode::TABLE   , L"`date`->$.year"},
-  { parser::Parser_mode::TABLE   , L"`date`->$.year AS birthyear"},
-  { parser::Parser_mode::TABLE   , L"2016-`date`->$.year AS birthyear"},
-  { parser::Parser_mode::TABLE   , L"HEX(1) AS `HEX`"},
+  { parser::Parser_mode::DOCUMENT, "$.age AS new_age"},
+  { parser::Parser_mode::DOCUMENT, "2016-$.age AS birthyear"},
+  { parser::Parser_mode::DOCUMENT, "HEX(1) AS `HEX`"},
+  { parser::Parser_mode::TABLE   , "`date`->$.year"},
+  { parser::Parser_mode::TABLE   , "`date`->$.year AS birthyear"},
+  { parser::Parser_mode::TABLE   , "2016-`date`->$.year AS birthyear"},
+  { parser::Parser_mode::TABLE   , "HEX(1) AS `HEX`"},
 };
 
 
@@ -1033,7 +1323,7 @@ TEST(Parser, projection_expr)
   {
     cout <<endl <<"== expr#" <<i <<" ==" <<endl<<endl;
     cout << (proj_exprs[i].mode == parser::Parser_mode::DOCUMENT ? "DOCUMENT" : "TABLE") << endl;
-    cdk::string expr(proj_exprs[i].txt);
+    std::string expr(proj_exprs[i].txt);
     cout <<"expr string: " <<expr <<endl;
     cout <<"----" <<endl;
     Projection_parser parser(proj_exprs[i].mode, expr);
@@ -1059,7 +1349,7 @@ TEST(Parser, projection_expr)
 TEST(Parser, doc_path)
 {
   {
-    cdk::string test = L"$**.date[*]";
+    std::string test = "$**.date[*]";
 
     cout << "parsing path: " << test << endl;
 
@@ -1075,7 +1365,7 @@ TEST(Parser, doc_path)
   }
 
   {
-    cdk::string test = L"**.date[*]";
+    std::string test = "**.date[*]";
 
     cout << "parsing path: " << test << endl;
 
@@ -1091,7 +1381,7 @@ TEST(Parser, doc_path)
   }
 
   {
-    cdk::string test = L"$.date.date[*]";
+    std::string test = "$.date.date[*]";
 
     cout << "parsing path: " << test << endl;
 
@@ -1109,19 +1399,19 @@ TEST(Parser, doc_path)
 
   cout << endl << "== Negative tests ==" << endl << endl;
 
-  const wchar_t* negative[] =
+  const char* negative[] =
   {
-    L"date.date[*].**",
-    L"date.date[*]**",
-    L"[*].foo",
-    L"[1][2]",
-    L"$foo",
+    "date.date[*].**",
+    "date.date[*]**",
+    "[*].foo",
+    "[1][2]",
+    "$foo",
     NULL
   };
 
   for (unsigned pos = 0; NULL != negative[pos]; ++pos)
   {
-    cdk::string test = negative[pos];
+    std::string test = negative[pos];
     cout << "parsing path: " << test << endl;
 
     cdk::Doc_path_storage path;
@@ -1738,10 +2028,10 @@ TEST(Parser, uri)
 
   for (unsigned i = 0; i < 3; ++i)
   {
-    //unsigned pos = 3;
-    for (unsigned pos = 0;
-         pos < (i==0 ? sizeof(test_err_uri) : sizeof(test_err)) / sizeof(char*);
-         ++pos)
+    unsigned pos = 3;
+    //for (unsigned pos = 0;
+    //     pos < (i==0 ? sizeof(test_err_uri) : sizeof(test_err)) / sizeof(char*);
+    //     ++pos)
     {
       string uri = (i==0? test_err_uri[pos] : test_err[pos]);
 

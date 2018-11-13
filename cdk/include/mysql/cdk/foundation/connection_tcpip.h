@@ -195,7 +195,7 @@ class TCPIP
 public:
 
   TCPIP(const std::string& host, unsigned short port,
-        const Options& opts);
+        const Options& opts = Options());
 
   bool is_secure() const
   {

@@ -27,10 +27,10 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-#FILE(GLOB headers *.h)
-SET(headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/session.h
-   )
+FILE(GLOB headers *.h)
+#SET(headers
+#    ${CMAKE_CURRENT_SOURCE_DIR}/session.h
+#   )
 
 ADD_HEADERS(${headers})
 

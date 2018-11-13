@@ -147,6 +147,7 @@ add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
 
 if(WIN32)
   add_definitions(-DWIN32)
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 #
@@ -285,30 +286,11 @@ SETUP_TESTING()
 
 if(WITH_TESTS)
 
-  ADD_LIBRARY(process_launcher STATIC
-    extra/process_launcher/process_launcher.cc
-    extra/common/exception.cc)
-  target_include_directories(process_launcher PRIVATE
-    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
-    ${PROJECT_SOURCE_DIR}/extra/common)
-
-  # quiet compile warnings outside of our code
-  if (MSVC)
-    target_compile_options(process_launcher PRIVATE /W2)
-  else()
-    target_compile_options(process_launcher PRIVATE -Wno-unused-result)
-  endif()
-
-  ADD_TEST_LIBRARIES(process_launcher cdk)
-  ADD_TEST_INCLUDES(
-    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
-    ${PROJECT_SOURCE_DIR}/extra/common
-  )
-
   # This folder contains test headers that can be used by all tests
   # TODO: move it to a better place
 
   add_test_includes(${PROJECT_SOURCE_DIR}/mysqlx/tests)
+  add_test_libraries(cdk)
 
 endif()
 
@@ -448,10 +430,7 @@ IF(WITH_TESTS)
   # (see cmake/testing.cmake)
 
   ADD_TEST_TARGET()
-  ADD_DEPENDENCIES(${target_run_unit_tests} foundation_tests_server)
-  IF(WITH_NGS_MOCKUP)
-  ADD_DEPENDENCIES(${target_run_unit_tests} ngs_mockup)
-  ENDIF()
+
   # Checks for public headers declared with ADD_HEADERS() (see cmake/headers.cmake)
 
   ADD_HEADERS_TEST()

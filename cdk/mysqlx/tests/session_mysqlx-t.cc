@@ -31,9 +31,10 @@
 /*
   To use getenv() on Windows, which warns that it is not safe
 */
+
+#undef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <exception.h>
 #include <iostream>
 #include <mysql/cdk.h>
 #include <mysql/cdk/mysqlx.h>

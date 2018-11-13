@@ -181,6 +181,9 @@ TEST(Errors, system)
     errno = errc::bad_file_descriptor;
 #endif
 
+    // Note: This fails because string conversion clears windows
+    // error set above.
+
     throw_system_error(L"Prefix");
     FAIL() <<"Should throw error";
   }

@@ -118,6 +118,26 @@
 #define POP_PB_WARNINGS   DIAGNOSTIC_POP
 
 
+#if defined _MSC_VER
+
+/*
+  We want to use functions which trigger this security warning on Windows,
+  for example string::copy().
+*/
+
+#define PUSH_SCL_SECURE_WARNINGS  DIAGNOSTIC_PUSH \
+  DISABLE_WARNING(4996)
+
+#else
+
+#define PUSH_SCL_SECURE_WARNINGS
+
+#endif
+
+#define POP_SCL_SECURE_WARNINGS  DIAGNOSTIC_POP
+
+
+
 /*
   Include common system headers.
 */
@@ -193,12 +213,6 @@ POP_SYS_WARNINGS
 #endif
 
 
-
-
-
-
-#endif
-
 /*
   Macro to be used to disable "implicit fallthrough" gcc warning
   <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
@@ -225,3 +239,99 @@ POP_SYS_WARNINGS
 #   define FALLTHROUGH  // FALLTHROUGH
 # endif
 #endif //FALLTHROUGH
+
+#ifdef __cplusplus
+
+namespace cdk {
+namespace foundation {
+
+/*
+  Defined here because std::enable_if_t is not defined on all platforms on
+  which we build (clang is missing one). Note: it is C++14 feature.
+*/
+
+template<bool Cond, typename T = void>
+using enable_if_t = typename std::enable_if<Cond, T>::type;
+
+
+template<typename... Ty>
+using is_constructible_t = typename std::is_constructible<Ty...>::type;
+
+template<typename T>
+using remove_reference_t = typename std::remove_reference<T>::type;
+
+
+#ifndef HAVE_IS_SAME
+
+  template <typename T, typename U>
+  struct is_same
+  {
+    static const bool value = false;
+  };
+
+  template <typename T>
+  struct is_same<T,T>
+  {
+    static const bool value = true;
+  };
+
+#else
+
+  using std::is_same;
+
+#endif
+
+
+
+/*
+  Convenience for checking numeric limits (to be used when doing numeric
+  casts).
+
+  TODO: Maybe more templates are needed for the case where T is a float/double
+  type and U is an integer type or vice versa.
+*/
+
+
+template <
+  typename T, typename U,
+  enable_if_t<std::is_unsigned<U>::value>* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  using UT = typename std::make_unsigned<T>::type;
+  return !(val > (UT)std::numeric_limits<T>::max());
+}
+
+template <
+  typename T, typename U,
+  enable_if_t<std::is_unsigned<T>::value>* = nullptr,
+  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  return !(val < 0) && !(val > std::numeric_limits<T>::max());
+}
+
+template <
+  typename T, typename U,
+  enable_if_t<!std::is_unsigned<T>::value>* = nullptr,
+  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  return
+    !((val > std::numeric_limits<T>::max())
+     || (val < std::numeric_limits<T>::lowest()));
+}
+
+#define ASSERT_NUM_LIMITS(T,V) assert(cdk::foundation::check_num_limits<T>(V))
+
+
+}}  // cdk::foundation
+
+#endif
+
+#endif
