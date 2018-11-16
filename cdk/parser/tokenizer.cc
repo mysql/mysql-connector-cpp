@@ -411,8 +411,7 @@ bool Tokenizer::iterator::parse_quotted_string(char qchar)
       error.push_back(c);
   }
 
-  error += L"...";
-  throw_error(error);
+  throw_error(error + "...");
   return false;  // quiet compile warnings
 }
 

@@ -564,7 +564,7 @@ Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
 
 void Session::begin()
 {
-  Reply r(sql(L"START TRANSACTION", NULL));
+  Reply r(sql("START TRANSACTION", NULL));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -572,7 +572,7 @@ void Session::begin()
 
 void Session::commit()
 {
-  Reply r(sql(L"COMMIT", NULL));
+  Reply r(sql("COMMIT", NULL));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -580,9 +580,9 @@ void Session::commit()
 
 void Session::rollback(const string &savepoint)
 {
-  string qry = L"ROLLBACK";
+  string qry = "ROLLBACK";
   if (!savepoint.empty())
-    qry += string(L" TO `") + savepoint + L"`";
+    qry += " TO `" + savepoint + "`";
   Reply r(sql(qry, NULL));
   r.wait();
   if (r.entry_count() > 0)
@@ -592,7 +592,7 @@ void Session::rollback(const string &savepoint)
 void Session::savepoint_set(const string &savepoint)
 {
   // TODO: some chars in savepoint name need to be quotted.
-  string qry = L"SAVEPOINT `"+ savepoint + L"`";
+  string qry = u"SAVEPOINT `" + savepoint + u"`";
   Reply r(sql(qry, NULL));
   r.wait();
   if (r.entry_count() > 0)
@@ -601,7 +601,7 @@ void Session::savepoint_set(const string &savepoint)
 
 void Session::savepoint_remove(const string &savepoint)
 {
-  string qry = L"RELEASE SAVEPOINT `" + savepoint + L"`";
+  string qry = "RELEASE SAVEPOINT `" + savepoint + "`";
   Reply r(sql(qry, NULL));
   r.wait();
   if (r.entry_count() > 0)

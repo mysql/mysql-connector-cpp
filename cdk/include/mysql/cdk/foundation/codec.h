@@ -89,7 +89,7 @@ public:
   {
     using char_type = typename ENC::Ch;
     return sizeof(char_type) * str_encode<ENC>(
-      (const char_type*)in.begin(), in.size(), out
+      (const char_type*)in.begin(), in.size()/sizeof(char_type), out
     );
   }
 
@@ -97,7 +97,7 @@ public:
   {
     using char_type = typename ENC::Ch;
     return sizeof(char_type) * str_decode<ENC>(
-      in, (char_type*)out.begin(), out.size()
+      in, (char_type*)out.begin(), out.size()/sizeof(char_type)
     );
   }
 

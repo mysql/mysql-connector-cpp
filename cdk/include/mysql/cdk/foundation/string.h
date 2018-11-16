@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "types.h"
+#include "error.h"  // throw_error()
 
 // TODO: Replace with std::variant<> when available.
 #include "variant.h"
@@ -59,146 +60,168 @@ typedef std::basic_string<char16_t> ustring;
 
 struct String_encoding {
 
-using UCS4  = rapidjson::UTF32<char32_t>;
-using UTF16 = rapidjson::UTF16<char16_t>;
-using UTF8  = rapidjson::UTF8<char>;
-using ASCII = rapidjson::ASCII<char>;
+  using UCS4 = rapidjson::UTF32<char32_t>;
+  using UTF16 = rapidjson::UTF16<char16_t>;
+  using UTF8 = rapidjson::UTF8<char>;
+  using ASCII = rapidjson::ASCII<char>;
 
-using CHR   = UCS4;
-using WIDE  = rapidjson::UTF16<wchar_t>; // TODO: different on Linux!
-using STR   = WIDE;
-//using STR   = UTF16;
+  using CHR = UCS4;
+  using STR = UTF16;
+
+  /*
+    Note: We assume that wide strings are encoding using UTF encoding.
+    This is usually the case but gcc, for example, can be configured
+    to use different encoding for wide (and plain) strings. We do not cover
+    such exotic scenario.
+  */
+
+#if WCHAR_SIZE < 4
+  using WIDE  = rapidjson::UTF16<wchar_t>;
+#else
+  using WIDE  = rapidjson::UTF32<wchar_t>;
+#endif
 
 };
 
 
-// NOTE: Modified code taken from rapidjson memorystream.h
+/*
+  Rapidjson compatible stream of characters taken form fixed meomory
+  region.
+
+  Note: Modified code taken from rapidjson memorystream.h
+*/
 
 template <typename CHAR>
 struct Mem_stream
 {
-    typedef CHAR Ch; // byte
+  typedef CHAR Ch; // byte
 
 
-    Mem_stream(const Ch *beg, const Ch *end)
-      : src_(const_cast<Ch*>(beg)), begin_(beg), end_(end)
-    {}
+  Mem_stream(const Ch *beg, const Ch *end)
+    : src_(const_cast<Ch*>(beg)), begin_(beg), end_(end)
+  {}
 
-    Mem_stream(const Ch *src, size_t size)
-      : Mem_stream(src, src + size)
-    {}
+  Mem_stream(const Ch *src, size_t size)
+    : Mem_stream(src, src + size)
+  {}
 
-    Mem_stream()
-      : Mem_stream(nullptr, nullptr)
-    {}
+  Mem_stream()
+    : Mem_stream(nullptr, nullptr)
+  {}
 
-    bool hasData() const { return src_ && src_ < end_; }
+  bool hasData() const { return src_ && src_ < end_; }
 
-    Ch Peek() const
+  Ch Peek() const
+  {
+    return RAPIDJSON_UNLIKELY(src_ == end_) ? Ch(0) : *src_;
+  }
+
+  Ch Take()
+  {
+    return RAPIDJSON_UNLIKELY(src_ == end_) ? Ch(0) : *src_++;
+  }
+
+  size_t Tell() const
+  {
+    return static_cast<size_t>(src_ - begin_);
+  }
+
+  void SetPos(const Ch *pos)
+  {
+    assert(begin_ <= pos);
+    assert(pos <= end_);
+    src_ = const_cast<Ch*>(pos);
+  }
+
+  // TODO: ReserveN() and copy optimization...
+
+  void Put(Ch c)
+  {
+    if (RAPIDJSON_LIKELY(src_ < end_))
     {
-      return RAPIDJSON_UNLIKELY(src_ == end_) ? Ch(0) : *src_;
+      *src_++ = c;
+      return;
     }
+    overflow_ = true;
+  }
 
-    Ch Take()
-    {
-      return RAPIDJSON_UNLIKELY(src_ == end_) ? Ch(0) : *src_++;
-    }
+  void Flush() {}
 
-    size_t Tell() const
-    {
-      return static_cast<size_t>(src_ - begin_);
-    }
+  //Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
+  //size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
 
-    void SetPos(const Ch *pos)
-    {
-      assert(begin_ <= pos);
-      assert(pos <= end_);
-      src_ = const_cast<Ch*>(pos);
-    }
-
-    // TODO: ReserveN() and copy optimization...
-
-     void Put(Ch c)
-     {
-       if (RAPIDJSON_LIKELY(src_ < end_))
-       {
-         *src_++ = c;
-         return;
-       }
-       overflow_ = true;
-     }
-
-     void Flush() {}
-
-     //Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
-     //size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
-
-     Ch* src_;     //!< Current read position.
-     const Ch* begin_;   //!< Original head of the string.
-     const Ch* end_;     //!< End of stream.
-     bool  overflow_ = false;
+  Ch* src_;     //!< Current read position.
+  const Ch* begin_;   //!< Original head of the string.
+  const Ch* end_;     //!< End of stream.
+  bool  overflow_ = false;
 };
 
+
+/*
+  Rapidjson compatible stream of characters that writes to a string
+  object.
+*/
 
 template <typename CHAR>
 struct Str_stream
 {
-    typedef CHAR Ch; // byte
-    using string = std::basic_string<Ch>;
+  typedef CHAR Ch; // byte
+  using string = std::basic_string<Ch>;
 
-    Str_stream(string &str)
-      : buf_(str), pos_(str.length())
-    {}
+  Str_stream(string &str)
+    : buf_(str), pos_(str.length())
+  {}
 
 
-    bool hasData() const { return pos_ < buf_.length(); }
+  bool hasData() const { return pos_ < buf_.length(); }
 
-    Ch Peek() const
+  Ch Peek() const
+  {
+    return RAPIDJSON_LIKELY(!hasData()) ? Ch(0) : buf_[pos_];
+  }
+
+  Ch Take()
+  {
+    return RAPIDJSON_LIKELY(!hasData()) ? Ch(0) : buf_[pos_++];
+  }
+
+  size_t Tell() const
+  {
+    return pos_;
+  }
+
+  void SetPos(const Ch *pos)
+  {
+    assert(buf_.data() <= pos);
+    assert(pos <= buf_.data() + buf_.length());
+    pos_ = pos - buf_.data();
+  }
+
+  // TODO: ReserveN() and copy optimization...
+
+  void Put(Ch c)
+  {
+    if (RAPIDJSON_UNLIKELY(hasData()))
     {
-      return RAPIDJSON_LIKELY(!hasData()) ? Ch(0) : buf_[src_];
+      buf_[pos_++] = c;
+      return;
     }
+    buf_.push_back(c);
+    pos_++;
+  }
 
-    Ch Take()
-    {
-      return RAPIDJSON_LIKELY(!hasData()) ? Ch(0) : buf_[src_++];
-    }
+  void Flush() {}
 
-    size_t Tell() const
-    {
-      return pos_;
-    }
+  //Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
+  //size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
 
-    void SetPos(const Ch *pos)
-    {
-      assert(buf_.data() <= pos);
-      assert(pos <= buf_.data() + buf_.length());
-      pos_ = pos - buf_.data();
-    }
-
-    // TODO: ReserveN() and copy optimization...
-
-     void Put(Ch c)
-     {
-       if (RAPIDJSON_UNLIKELY(hasData()))
-       {
-         buf_[pos_++] = c;
-         return;
-       }
-       buf_.push_back(c);
-       pos_++;
-     }
-
-     void Flush() {}
-
-     //Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
-     //size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
-
-     string &buf_;
-     size_t pos_ = 0;     //!< Current read position.
+  string &buf_;
+  size_t pos_ = 0;     //!< Current read position.
 };
 
 
 // code points -> string
+// returns number of code points consumed
 
 template<class FROM, class TO = String_encoding::STR>
 size_t str_encode(
@@ -224,6 +247,7 @@ size_t str_encode(
 
 
 // string -> code points
+// returns number of code points produced
 
 template<class TO, class FROM = String_encoding::STR>
 size_t str_decode(
@@ -235,7 +259,9 @@ size_t str_decode(
   Mem_stream<typename FROM::Ch> input(in.data(), in.length());
   Mem_stream<typename TO::Ch>   output(out, len);
 
-  while (input.hasData())
+  // Note: output.hasData() in fact checks if there is space available
+
+  while (input.hasData() && output.hasData())
   {
     if (!Transcoder::Transcode(input, output))
     {
@@ -260,8 +286,8 @@ class char_iterator_base
       std::input_iterator_tag,
       char_t,
       long,
-      const typename char_t*,
-      const typename char_t&
+      const char_t*,
+      const char_t&
     >
 {
 protected:
@@ -438,416 +464,105 @@ public:
 };  // char_iterator_base
 
 
-class string : public std::wstring
+/*
+  String class using UTF16 for internal representation.
+*/
+
+class string : public std::basic_string<char16_t>
 {
+  using Base = std::basic_string<char16_t>;
+
 public:
 
   string() {}
-  string(const wchar_t *str) : std::wstring(str) {}
-  string(const std::wstring &str) : std::wstring(str) {}
+  string(const Base &str)
+    : Base(str)
+  {}
+  using Base::basic_string;
+
+  // UTF8 string conversions.
 
   string(const char *str) { set_utf8(str); }
   string(const std::string &str) { set_utf8(str); }
 
-  // internal -> UTF8 conversion
-  operator std::string() const;
-
-  // UTF8 -> internal conversion
-  string& set_utf8(const std::string&);
-  string& set_ascii(const char*, size_t);
-
-  void push_back(char_t);
-};
-
-
-inline
-string& string::set_ascii(const char *str, size_t len)
-{
-  clear();
-  str_encode<String_encoding::ASCII>(str, len, *this);
-  return *this;
-}
-
-inline
-string& string::set_utf8(const std::string &str)
-{
-  clear();
-  str_encode<String_encoding::UTF8>(str.data(), str.length(), *this);
-  return *this;
-}
-
-inline
-void string::push_back(char_t c)
-{
-  str_encode<String_encoding::UCS4>(&c, 1, *this);
-}
-
-inline
-string::operator std::string() const
-{
-  std::string out;
-  str_encode<String_encoding::STR, String_encoding::UTF8>(
-    data(), length(), out
-  );
-  return out;
-}
-
-
-inline
-std::ostream& operator<<(std::ostream &out, const string &str)
-{
-  return out << (std::string)str;
-}
-
-
-
-#if 0
-
-/*
-  String class which stores character data using the STR encoding defined
-  above (utf16).
-*/
-
-class string
-{
-  using code_unit = String_encoding::STR::Ch;
-  using string_base = std::basic_string<code_unit>;
-
-  /*
-    Rapidjson buffer used to store and convert code units.
-  */
-
-  struct Buffer
-    : rapidjson::GenericStringBuffer<String_encoding::STR>
+  operator std::string() const
   {
-    using Base = rapidjson::GenericStringBuffer<String_encoding::STR>;
-    using Base::GenericStringBuffer;
-
-    Buffer(const string_base &str)
-    {
-      Append(str);
-    }
-
-    Buffer() = default;
-
-    Buffer(const Buffer &other)
-    {
-      operator=(other);
-    }
-
-    Buffer& operator=(Buffer&&) = default;
-    Buffer& operator=(const Buffer&);
-
-    void Resize(size_t new_size)
-    {
-      stack_.Clear();
-      stack_.Reserve<char>(new_size);
-      stack_.ShrinkToFit();
-    }
-
-    // Append utf16 code units
-    void Append(const string_base&);
-
-    // Append ASCII characters
-    void Append(const char*, size_t);
-
-    size_t GetLength() const { return stack_.GetSize() / sizeof(Ch); }
-  };
-
-  Buffer m_buf;
-
-  template <class ENC>
-  std::basic_string<typename ENC::Ch> conv_to_string() const;
-
-  template <class ENC>
-  size_t conv_to_bytes(bytes) const;
-
-  template <class ENC>
-  size_t conv_from_codes(
-    typename ENC::Ch const *beg, typename ENC::Ch const *end
-  );
-
-  template <class ENC>
-  size_t conv_from_string(const std::basic_string<typename ENC::Ch> &str)
-  {
-    return conv_from_codes<ENC>(str.data(), str.data() + str.length());
+    std::string out;
+    str_encode<String_encoding::STR, String_encoding::UTF8>(
+      data(), length(), out
+      );
+    return out;
   }
 
-public:
+  string& set_utf8(const std::string &str)
+  {
+    clear();
+    str_encode<String_encoding::UTF8>(str.data(), str.length(), *this);
+    return *this;
+  }
 
-  /*
-    Define the same types as are defined by std::basic_string<>.
-  */
+  string& set_ascii(const char *str, size_t len)
+  {
+    clear();
+    str_encode<String_encoding::ASCII>(str, len, *this);
+    return *this;
+  }
 
-  using size_type = size_t;
-  using value_type = code_unit;
-  using reference = value_type&;
-  using const_reference = value_type const&;
+  // Wide string conversions.
 
-  static const size_type npos = (size_type)(-1);
-
-
-  string() {}
-
-  string(const string &other) = default;
-  string(string&&) = default;
-
-  string& operator=(const string&) = default;
-  string& operator=(string&&) = default;
-
-  // conversion from native wide encoding
-
-  string(const wchar_t *str)
+  explicit string(const wchar_t *str)
     : string(std::wstring(str))
   {}
 
-  string(const std::wstring &str)
+  explicit string(const std::wstring &str)
   {
-    m_buf.Clear();
-    conv_from_string<String_encoding::WIDE>(str);
+    clear();
+    str_encode<String_encoding::WIDE>(str.data(), str.length(), *this);
   }
 
-  // conversion from UTF8
-
-  string(const char *str)
-    : string(std::string(str))
-  {}
-
-  string(const std::string &str)
+  explicit operator std::wstring() const
   {
-    m_buf.Clear();
-    conv_from_string<String_encoding::UTF8>(str);
+    std::wstring out;
+    str_encode<String_encoding::STR, String_encoding::WIDE>(
+      data(), length(), out
+      );
+    return out;
   }
 
-  // conversion from UTF16
+  // Unicode string conversions.
 
-  string(const char16_t *str)
-    : string(string_base(str))
-  {}
-
-  string(const string_base &str)
-    : m_buf(str)
-  {}
-
-  // conversion from Unicode character string
-
-  string(const char_t *str)
+  explicit string(const char_t *str)
     : string(std::basic_string<char_t>(str))
   {}
 
-  string(const std::basic_string<char_t> &str)
+  explicit string(const std::basic_string<char_t> &str)
   {
-    m_buf.Clear();
-    conv_from_string<String_encoding::CHR>(str);
+    clear();
+    str_encode<String_encoding::UCS4>(str.data(), str.length(), *this);
   }
 
-
-  // conversions to standard string types
-
-
-  operator std::string() const
+  explicit operator std::basic_string<char_t>() const
   {
-    return conv_to_string<String_encoding::UTF8>();
+    std::basic_string<char_t> out;
+    str_encode<String_encoding::STR, String_encoding::UCS4>(
+      data(), length(), out
+      );
+    return out;
   }
 
-  operator std::wstring() const
+  void push_back(char_t c)
   {
-    return conv_to_string<String_encoding::WIDE>();
+    str_encode<String_encoding::UCS4>(&c, 1, *this);
   }
 
-  operator std::basic_string<char_t>() const
-  {
-    return conv_to_string<String_encoding::CHR>();
-  }
-
-  operator string_base() const
-  {
-    return { m_buf.GetString(), m_buf.GetLength() };
-  }
-
-
-  // -- Examining the string -----------------------------------
-
-
-  // NOTE: returns size in code units
-
-  size_t size()   const
-  {
-    return m_buf.GetLength();
-  }
-
-  size_t length() const
-  {
-    return size();
-  }
-
-  bool   empty()  const
-  {
-    return 0 == size();
-  }
-
-  /*
-    Note: These functions return utf16 code units at given position,
-    not characters. Use char_iterator to access characters.
-  */
-
-  reference at(size_type pos)
-  {
-    const_reference ref = const_cast<const string*>(this)->at(pos);
-    return const_cast<reference>(ref);
-  }
-
-  const_reference at(size_type pos) const
-  {
-    if (pos > m_buf.GetLength())
-      throw std::out_of_range("when referencing character inside cdk string");
-    return m_buf.GetString()[pos];
-  }
-
-
-  reference operator[]( size_type pos )
-  {
-    const_reference ref = const_cast<const string*>(this)->operator[](pos);
-    return const_cast<reference>(ref);
-  }
-
-  const_reference operator[]( size_type pos ) const
-  {
-    return m_buf.GetString()[pos];
-  }
+  // Character iterator.
 
   class char_iterator;
 
   char_iterator chars() const;
   char_iterator chars_end() const;
 
-
-  size_type copy(code_unit* dest,  size_type count, size_type pos = 0) const
-  {
-    if (pos + count > m_buf.GetLength())
-      count = m_buf.GetLength() - pos;
-    std::copy_n(m_buf.GetString() + pos, count, dest);
-    return count;
-  }
-
-
-  // -- String modifications ------------------------------
-
-
-  void clear()
-  {
-    m_buf.Clear();
-  }
-
-  void resize(size_type count)
-  {
-    m_buf.Resize(count);
-  }
-
-  string& append(const string &other)
-  {
-    m_buf.Append(other);
-    return *this;
-  }
-
-  void push_back(char_t ch)
-  {
-    using Transcoder
-    = rapidjson::Transcoder< String_encoding::CHR, String_encoding::STR >;
-
-    Mem_stream<char_t> input(&ch, 1);
-    if (!Transcoder::Transcode(input, m_buf))
-      throw_error("invalid character");
-  }
-
-  //char* utf8_str() const; // TODO (optimized version, if possible)
-
-  string& set_utf8(bytes utf8)
-  {
-    m_buf.Clear();
-    conv_from_codes<String_encoding::UTF8>(
-      (const char*)utf8.begin(), (const char*) utf8.end()
-    );
-    return *this;
-  }
-
-  string& set_ascii(const char *str, size_t len)
-  {
-    m_buf.Clear();
-    m_buf.Append(str, len);
-    return *this;
-  }
-
-
-  string& operator+=(const string &other)
-  {
-    return append(other);
-  }
-
-  friend
-  string operator+(const string &lhs, const string &rhs)
-  {
-    string ret(lhs);
-    ret += rhs;
-    return ret;
-  }
-
-
-  // -- Operators -----------------------------------------
-
-
-  friend
-  bool operator==(const string &lhs, const string &rhs)
-  {
-    size_t len = lhs.length();
-    if (len != rhs.length())
-      return false;
-
-    const char16_t *a = lhs.m_buf.GetString();
-    const char16_t *b = rhs.m_buf.GetString();
-
-    for (; len > 0; len--)
-    {
-      if (*a++ != *b++)
-        return false;
-    }
-
-    return true;
-  }
-
-  friend
-  bool operator!=(const string &lhs, const string &rhs)
-  {
-    return !(lhs == rhs);
-  }
-
-  /*
-    Note: This compares code units, so it is not exact string comparison.
-    But it should be good enough for situations such as when using string as
-    a std::map<> key.
-  */
-
-  friend
-  bool operator<(const string &lhs, const string &rhs)
-  {
-    const code_unit *a = lhs.m_buf.GetString();
-    const code_unit *b = rhs.m_buf.GetString();
-
-    return std::lexicographical_compare(
-      a, a + lhs.length(), b, b + rhs.length()
-    );
-  }
-
-  friend
-  bool operator>(const string &lhs, const string &rhs)
-  {
-    return rhs < lhs;
-  }
-
-  template <class ENC>
-  friend class String_codec;
-
-};  // string
+};
 
 
 /*
@@ -859,7 +574,7 @@ class string::char_iterator
   : public char_iterator_base<String_encoding::STR>
 {
   char_iterator(const string &str)
-    : char_iterator_base(str.m_buf.GetString(), str.length())
+    : char_iterator_base(str.data(), str.length())
   {}
 
   char_iterator() = default;
@@ -877,125 +592,55 @@ auto string::chars() const -> char_iterator
 inline
 auto string::chars_end() const -> char_iterator
 {
-  return {};
+  return{};
 }
 
 
 /*
-  Conversions to different encodings.
+  Operators to help overload resolution.
 */
 
-
-template <typename ENC>
 inline
-size_t string::conv_from_codes(
-  typename ENC::Ch const *beg, typename ENC::Ch const *end
-)
+string operator+(const string &lhs, const string &rhs)
 {
-  using Transcoder = rapidjson::Transcoder<ENC, String_encoding::STR>;
-  Mem_stream<typename ENC::Ch> input(beg, end);
-
-  while (input.hasData())
-  {
-    if (!Transcoder::Transcode(input, m_buf))
-    {
-      // TODO: add some context info from the input stream.
-      throw_error("Failed to convert string into internal representation");
-    }
-  }
-
-  return input.Tell();
-}
-
-
-template <class ENC>
-inline
-size_t string::conv_to_bytes(bytes out) const
-{
-  using rapidjson::Transcoder;
-  using char_type = typename ENC::Ch;
-  Mem_stream<char16_t> in_str(m_buf.GetString(), m_buf.GetLength());
-  Mem_stream<char_type> out_str((const char_type*)out.begin(), (const char_type*)out.end());
-  while (in_str.hasData())
-  {
-    Transcoder<String_encoding::STR, ENC>::Transcode(in_str, out_str);
-  }
-
-  return sizeof(char_type)*out_str.Tell();
-}
-
-
-template <class ENC>
-inline
-auto string::conv_to_string() const
-->std::basic_string<typename ENC::Ch>
-{
-  using namespace rapidjson;
-  using Transcoder = Transcoder<String_encoding::STR, ENC>;
-  using char_type = typename ENC::Ch;
-
-  GenericStringBuffer<ENC> out;
-
-  Mem_stream<char16_t> in(m_buf.GetString(), m_buf.GetLength());
-
-  while (in.hasData())
-  {
-    // TODO: better error description
-    if (!Transcoder::Transcode(in, out))
-      throw_error("Could not convert string to external representation");
-  }
-
-  return { out.GetString(), out.GetSize() / sizeof(char_type) };
-}
-
-
-/*
-  Internal string buffer.
-*/
-
-
-inline
-void string::Buffer::Append(const ustring &str)
-{
-  Ch *pos = Push(str.length());
-  PUSH_SCL_SECURE_WARNINGS
-  str.copy(pos, str.length());
-  POP_SCL_SECURE_WARNINGS
+  string ret(lhs);
+  ret += rhs;
+  return ret;
 }
 
 inline
-void string::Buffer::Append(const char *str, size_t len)
+bool operator==(const string &lhs, const string &rhs)
 {
-  Ch *pos = Push(len);
-  PUSH_SCL_SECURE_WARNINGS
-  std::copy_n(str, len, pos);
-  POP_SCL_SECURE_WARNINGS
+  return 0 == lhs.compare(rhs);
 }
-
 
 inline
-auto string::Buffer::operator=(const Buffer &other) -> Buffer&
+bool operator!=(const string &lhs, const string &rhs)
 {
-  if (this == &other)
-    return *this;
-
-  stack_.Clear();
-
-  size_t howmuch = other.GetSize();
-
-  if (0 == howmuch)
-    return *this;
-
-  stack_.Push<char>(howmuch);
-  memcpy(stack_.Bottom<char>(), other.stack_.Bottom<char>(), howmuch);
-
-  return *this;
+  return 0 != lhs.compare(rhs);
 }
 
 
-/*
-  Other
-*/
+// Note: these two needed to make overload resolution unique.
+
+inline
+string operator+(const string &lhs, const char16_t *rhs)
+{
+  string ret(lhs);
+  ret += rhs;
+  return ret;
+}
+
+inline
+string operator+(const char16_t *lhs, const string &rhs)
+{
+  string ret(lhs);
+  ret += rhs;
+  return ret;
+}
+
+
+// Output to stream converts to UTF8
 
 inline
 std::ostream& operator<<(std::ostream &out, const string &str)
@@ -1003,7 +648,6 @@ std::ostream& operator<<(std::ostream &out, const string &str)
   return out << (std::string)str;
 }
 
-#endif
 
 }} // cdk::foundation
 

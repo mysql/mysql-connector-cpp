@@ -31,6 +31,8 @@
 #include "test.h"
 #include <mysql/cdk/foundation/codec.h>
 
+#include <algorithm>
+
 using namespace ::std;
 using namespace ::cdk::foundation;
 
@@ -45,61 +47,182 @@ using namespace ::cdk::foundation;
 // ("I can eat glass" phrase in different languages)
 
 #define SAMPLES(X) \
-  X (english, L"I can eat glass", "I can eat glass") \
-  X (polish, L"Mog\u0119 je\u015B\u0107 szk\u0142o", \
-     "\x4D\x6F\x67\xC4\x99\x20\x6A\x65\xC5\x9B\xC4\x87\x20\x73\x7A\x6B\xC5\x82\x6F") \
-  X (japaneese, L"\u79C1\u306F\u30AC\u30E9\u30B9\u3092\u98DF\u3079\u3089\u308C\u307E\u3059\u3002\u305D\u308C\u306F\u79C1\u3092\u50B7\u3064\u3051\u307E\u305B\u3093\u3002", \
-     "\xE7\xA7\x81\xE3\x81\xAF\xE3\x82\xAC\xE3\x83\xA9\xE3\x82\xB9\xE3\x82\x92\xE9\xA3\x9F\xE3\x81\xB9\xE3\x82\x89\xE3\x82\x8C\xE3\x81\xBE\xE3\x81\x99\xE3\x80\x82\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xAF\xE7\xA7\x81\xE3\x82\x92\xE5\x82\xB7\xE3\x81\xA4\xE3\x81\x91\xE3\x81\xBE\xE3\x81\x9B\xE3\x82\x93\xE3\x80\x82") \
-  X (ukrainian, L"\u042F \u043C\u043E\u0436\u0443 \u0457\u0441\u0442\u0438 \u0441\u043A\u043B\u043E, \u0456 \u0432\u043E\u043D\u043E \u043C\u0435\u043D\u0456 \u043D\u0435 \u0437\u0430\u0448\u043A\u043E\u0434\u0438\u0442\u044C", \
-     "\xD0\xAF\x20\xD0\xBC\xD0\xBE\xD0\xB6\xD1\x83\x20\xD1\x97\xD1\x81\xD1\x82\xD0\xB8\x20\xD1\x81\xD0\xBA\xD0\xBB\xD0\xBE\x2C\x20\xD1\x96\x20\xD0\xB2\xD0\xBE\xD0\xBD\xD0\xBE\x20\xD0\xBC\xD0\xB5\xD0\xBD\xD1\x96\x20\xD0\xBD\xD0\xB5\x20\xD0\xB7\xD0\xB0\xD1\x88\xD0\xBA\xD0\xBE\xD0\xB4\xD0\xB8\xD1\x82\xD1\x8C") \
-  X (portuguese, L"Posso comer vidro, n\u00E3o me faz mal", \
-     "\x50\x6F\x73\x73\x6F\x20\x63\x6F\x6D\x65\x72\x20\x76\x69\x64\x72\x6F\x2C\x20\x6E\xC3\xA3\x6F\x20\x6D\x65\x20\x66\x61\x7A\x20\x6D\x61\x6C")
+  X (english, "I can eat glass") \
+  X (polish, "Mog\u0119 je\u015B\u0107 szk\u0142o") \
+  X (japaneese, \
+      "\u79C1\u306F\u30AC\u30E9\u30B9\u3092\u98DF\u3079\u3089\u308C\u307E\u3059\u3002\u305D\u308C\u306F\u79C1\u3092\u50B7\u3064\u3051\u307E\u305B\u3093\u3002") \
+  X (ukrainian, \
+      "\u042F \u043C\u043E\u0436\u0443 \u0457\u0441\u0442\u0438 \u0441\u043A\u043B\u043E, \u0456 \u0432\u043E\u043D\u043E \u043C\u0435\u043D\u0456 \u043D\u0435 \u0437\u0430\u0448\u043A\u043E\u0434\u0438\u0442\u044C") \
+  X (portuguese, "Posso comer vidro, n\u00E3o me faz mal") \
+
+// Samples with characters outside of Unicode BMP
+// Note: On Windows such characters can not be handled by wide string
+
+#define SAMPLES_EXT(X) \
+  X (banana, "z\u00df\u6c34\U0001f34c") \
+
+// Samples taken from: http://www.php.net/manual/en/reference.pcre.pattern.modifiers.php#54805
+
+#define SAMPLES_BAD_UTF8(X) \
+  X("\xc3\x28")                   /* 2 Octet Sequence */ \
+  X("\xa0\xa1")                   /* Invalid Sequence Identifier */ \
+  X("\xe2\x28\xa1")               /* 3 Octet Sequence (in 2nd Octet) */ \
+  X("\xe2\x82\x28")               /* 3 Octet Sequence (in 3rd Octet) */ \
+  X("\xf0\x28\x8c\xbc")           /* 4 Octet Sequence (in 2nd Octet) */ \
+  X("\xf0\x90\x28\xbc")           /* 4 Octet Sequence (in 3rd Octet) */ \
+  X("\xf0\x28\x8c\x28")           /* 4 Octet Sequence (in 4th Octet) */ \
+  X("\xf8\xa1\xa1\xa1\xa1")   /* Valid 5 Octet Sequence (but not Unicode!) */ \
+  X("\xfc\xa1\xa1\xa1\xa1\xa1")  /* Valid 6 Octet Sequence (but not Unicode!) */
+
+
+template <typename CHAR>
+struct samples
+{
+  static CHAR *sample[];
+  static const char *name;
+  static const size_t cnt;
+};
+
+
+#define SET_SAMPLES(CHAR,NAME) \
+CHAR* samples<CHAR>::sample[] = { \
+  SAMPLES(SAMPLE ## NAME) SAMPLES_EXT(SAMPLE ## NAME ## _EXT) \
+}; \
+const size_t samples<CHAR>::cnt = sizeof(samples<CHAR>::sample)/sizeof(CHAR*); \
+const char* samples<CHAR>::name = # NAME;
+
+#define SAMPLEutf8(X,Y) u8 ## Y,
+#define SAMPLEutf16(X,Y)   u ## Y,
+#define SAMPLEucs(X,Y)   U ## Y,
+#define SAMPLEwide(X,Y)   L ## Y,
+
+#define SAMPLEutf8_EXT(X,Y) u8 ## Y,
+#define SAMPLEutf16_EXT(X,Y)   u ## Y,
+#define SAMPLEucs_EXT(X,Y)   U ## Y,
+
+#ifdef WIN32
+  #define SAMPLEwide_EXT(X,Y)
+#else
+  #define SAMPLEwide_EXT(X,Y)   L ## Y,
+#endif
+
+
+SET_SAMPLES(char, utf8)
+SET_SAMPLES(char16_t, utf16)
+SET_SAMPLES(char32_t, ucs)
+SET_SAMPLES(wchar_t, wide)
+
+
+
+template <typename CHAR>
+void string_conv_test()
+{
+  using char_t = CHAR;
+  using string = std::basic_string<CHAR>;
+  using cdk_string = cdk::foundation::string;
+
+  cout << "== testing " << samples<char_t>::name << endl;
+
+  for (size_t i = 0; i < samples<char_t>::cnt; ++i)
+  {
+    string in = samples<char_t>::sample[i];
+    cdk_string cdk(in);
+    string out(cdk);
+    EXPECT_EQ(in, out) << "sample " << i;
+  }
+}
+
 
 TEST(Foundation, string)
 {
-  using cdk::foundation::string;
+  using cdk_string = cdk::foundation::string;
 
-  unsigned int sample_count = 0;
+#if 1
 
-#define SAMPLE_COUNT(X,Y,Z) ++sample_count;
+  string_conv_test<char>();
+  string_conv_test<char16_t>();
+  string_conv_test<char32_t>();
+  string_conv_test<wchar_t>();
 
-  SAMPLES(SAMPLE_COUNT)
+  cout << endl << "=== Bad UTF8 test ===" << endl << endl;
 
-#define SAMPLE_WIDE(X,Y,Z) Y,
-#define SAMPLE_UTF8(X,Y,Z) Z,
-
-  string sample[] = {
-    SAMPLES(SAMPLE_WIDE)
+  const char *bad_utf8[] = {
+#define BAD_SAMPLE(X) "bad" X "utf8",
+    SAMPLES_BAD_UTF8(BAD_SAMPLE)
   };
 
-  std::string utf8[] = {
-    SAMPLES(SAMPLE_UTF8)
-  };
+  for (const char *sample : bad_utf8)
+  {
+    cout << "-- checking: " << sample << endl;
+    EXPECT_THROW(cdk_string str(sample), Error);
+  }
 
-  Codec<Type::STRING> codec;
+  cout << endl << "=== Invalid character test ===" << endl << endl;
 
-  byte buf[128];
+  {
+    cdk_string str = "test";
+    EXPECT_THROW(str.push_back(cdk::foundation::invalid_char), Error);
+    EXPECT_EQ("test", str);
+  }
 
-  for (unsigned i=0; i < sample_count; ++i)
+#endif
+
+}
+
+
+TEST(Foundation, string_iter)
+{
+  using samples = samples<char_t>;
+  using string  = cdk::foundation::string;
+
+  for (unsigned i = 0; i < samples::cnt; ++i)
   {
     cout <<"checking sample " <<i <<endl;
 
-    string  wide = sample[i];
-    std::string narrow = utf8[i];
+    const std::u32string &s1 = samples::sample[i];
+    string s2(samples::sample[i]);
+    ASSERT_TRUE(std::equal(s2.chars(), s2.chars_end(), s1.begin(), s1.end()));
+    auto res = std::mismatch(s1.begin(), s1.end(), s2.chars());
+    ASSERT_EQ(s2.chars_end(), res.second);
+  }
+}
 
-    size_t len = codec.to_bytes(wide, bytes(buf, sizeof(buf)));
 
-    EXPECT_EQ(len, narrow.length());
-    EXPECT_EQ(narrow, std::string(buf, buf+len));
+template <typename ENC>
+void test_codec(const char_t *str)
+{
+  using cdk::foundation::string;
 
-    string back;
-    size_t len1 = codec.from_bytes(bytes(buf, len), back);
+  String_codec<ENC> codec;
+  static byte buf[256];
 
-    EXPECT_EQ(len, len1);
-    EXPECT_EQ(wide, back);
+  string a(str);
+  string b;
 
-    EXPECT_EQ(narrow, (std::string)wide);
-    EXPECT_EQ(wide, string(narrow));
+  size_t len = codec.to_bytes(a, { buf, sizeof(buf) });
+  size_t len1 = codec.from_bytes({ buf, len }, b);
+
+  EXPECT_EQ(len, len1);
+  EXPECT_EQ(a, b);
+}
+
+
+TEST(Foundation, string_codec)
+{
+  for (unsigned i=0; i < samples<char_t>::cnt; ++i)
+  {
+    cout << "checking sample " <<i <<endl;
+
+    const char_t *sample = samples<char_t>::sample[i];
+
+    cout << "- UTF8" << endl;
+    test_codec<String_encoding::UTF8>(sample);
+
+    cout << "- UTF16" << endl;
+    test_codec<String_encoding::UTF16>(sample);
+
+    cout << "- UCS4" << endl;
+    test_codec<String_encoding::UCS4>(sample);
   }
 }
 

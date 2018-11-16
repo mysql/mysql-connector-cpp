@@ -773,16 +773,16 @@ namespace parser {
     typename Num_t
   >
   inline
-  Num_t strtonum(const cdk::string &str, int radix = 10)
+  Num_t strtonum(const std::string &str, int radix = 10)
   {
     // TODO: Allow white-space at the beginning or end of the string?
 
-    typedef std::istreambuf_iterator<wchar_t> iter_t;
+    typedef std::istreambuf_iterator<char> iter_t;
     static std::locale c_locale("C");
-    static const std::num_get<wchar_t> &cvt
-      = std::use_facet<std::num_get<wchar_t>>(c_locale);
+    static const std::num_get<char> &cvt
+      = std::use_facet<std::num_get<char>>(c_locale);
 
-    std::wistringstream inp(str);
+    std::istringstream inp(str);
     Num_t val;
 
     inp.imbue(c_locale);
