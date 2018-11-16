@@ -36,11 +36,7 @@ PUSH_SYS_WARNINGS
 POP_SYS_WARNINGS
 
 
-// TODO: Complete the parser
-
-
 using namespace parser;
-using cdk::string;
 using cdk::Expression;
 typedef cdk::Expression::Processor Processor;
 typedef Processor::List_prc List_prc;
@@ -116,7 +112,7 @@ public:
 
 
 /*
-  Sink expression processor that ignores the expression reproted
+  Sink expression processor that ignores the expression reported
   to it.
 
   It is used below in situations where we want to ignore results
@@ -167,7 +163,7 @@ bool Expr_parser_base::parse_cast(Scalar_prc *prc)
 
   Safe_prc<List_prc> ap = safe_prc(prc)->op(Op::name(Op::CAST));
 
-  consume_token_throw(Token::LPAREN, L"Expected '(' after CAST");
+  consume_token_throw(Token::LPAREN, "Expected '(' after CAST");
 
   ap->list_begin();
 
@@ -176,7 +172,7 @@ bool Expr_parser_base::parse_cast(Scalar_prc *prc)
   delete parse(FULL, ignore_if(ap->list_el()));
 
   consume_token_throw(Keyword::AS,
-    L"Expected AS after expression inside CAST operator");
+    "Expected AS after expression inside CAST operator");
 
   // 2nd arg, cast_data_type
 
@@ -187,7 +183,7 @@ bool Expr_parser_base::parse_cast(Scalar_prc *prc)
   ap->list_end();
 
   consume_token_throw(Token::RPAREN,
-    L"Expected ')' closing CAST operator call");
+    "Expected ')' closing CAST operator call");
 
   return true;
 }
@@ -216,7 +212,7 @@ std::string Expr_parser_base::parse_cast_type()
   const Token* token = consume_token();
 
   if (!token)
-    parse_error(L"Expected cast type");
+    parse_error("Expected cast type");
 
   Keyword::Type type = Keyword::get(*token);
   type_str = Keyword::name(type);
@@ -246,7 +242,7 @@ std::string Expr_parser_base::parse_cast_type()
     break;
 
   default:
-    parse_error(L"Expected cast type");
+    parse_error("Expected cast type");
 
   }
 
@@ -265,24 +261,28 @@ std::string Expr_parser_base::parse_cast_type()
 
 std::string Expr_parser_base::cast_data_type_dimension(bool double_dimension)
 {
-  consume_token_throw(Token::LPAREN, L"Expected type dimension specification");
+  consume_token_throw(Token::LPAREN, "Expected type dimension specification");
+
   std::string result("(");
+
   result += consume_token_throw(
-              Token::INTEGER,
-              L"Expected integer type dimension"
-            ).get_text();
+    Token::INTEGER,
+    "Expected integer type dimension"
+  ).get_utf8();
+
   if (double_dimension && consume_token(Token::COMMA))
   {
     result += ",";
     result += consume_token_throw(
                 Token::INTEGER,
-                L"Expected second type dimension after ','"
-              ).get_text();
+                "Expected second type dimension after ','"
+              ).get_utf8();
   }
+
   result += ")";
   consume_token_throw(
     Token::RPAREN,
-    L"Expected ')' closing type dimension specification"
+    "Expected ')' closing type dimension specification"
   );
   return result;
 }
@@ -303,7 +303,7 @@ bool Expr_parser_base::get_ident(string &id)
 
   if (Token_base::cur_token_type_in({ Token::WORD, Token::QWORD }))
   {
-    id = consume_token()->get_text();
+    id = consume_token()->get_utf8();
     return true;
   }
 
@@ -331,10 +331,10 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
 
   // Report position(.. IN ..) as locate(...,...)
 
-  if (! qualified && Keyword::equal(func.name(), L"position"))
+  if (! qualified && Keyword::equal(func.name(), "position"))
   {
     Table_ref locate;
-    locate.set(L"locate");
+    locate.set("locate");
     aprc = safe_prc(prc)->call(locate);
     parse_position = true;
   }
@@ -347,12 +347,12 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
   if (!cur_token_type_is(Token::RPAREN))
   {
     if (
-      !qualified && Keyword::equal(func.name(), L"trim")
+      !qualified && Keyword::equal(func.name(), "trim")
       && cur_token_type_in({
            Keyword::BOTH, Keyword::LEADING, Keyword::TRAILING
          })
     )
-      unsupported(L"LEADING, TRAILING or BOTH clause inside function TRIM()");
+      unsupported("LEADING, TRAILING or BOTH clause inside function TRIM()");
 
     parse(parse_position ? COMP : FULL, aprc ? aprc->list_el() : NULL);
 
@@ -367,7 +367,7 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
 
   consume_token_throw(
     Token::RPAREN,
-    L"Expected ')' to close function argument list"
+    "Expected ')' to close function argument list"
   );
 
   return true;
@@ -383,20 +383,20 @@ Expr_parser_base::parse_special_args(
   if (func.schema())
     return;
 
-  if (Keyword::equal(func.name(), L"char"))
+  if (Keyword::equal(func.name(), "char"))
   {
     if (cur_token_type_is(Keyword::USING))
-      unsupported(L"USING clause inside function CHAR()");
+      unsupported("USING clause inside function CHAR()");
     return;
   }
 
-  if (Keyword::equal(func.name(), L"trim"))
+  if (Keyword::equal(func.name(), "trim"))
   {
     if (cur_token_type_is(Keyword::FROM))
-      unsupported(L"FROM clause inside function TRIM()");
+      unsupported("FROM clause inside function TRIM()");
   }
 
-  if (Keyword::equal(func.name(), L"position"))
+  if (Keyword::equal(func.name(), "position"))
   {
     if (!consume_token(Keyword::IN))
       parse_error("Expected IN inside POSITION(... IN ...)");
@@ -475,7 +475,7 @@ bool Expr_parser_base::parse_schema_ident(Token::Type (*types)[2])
 void Expr_parser_base::parse_column_ident(Path_prc *prc)
 {
   if (!parse_schema_ident())
-    parse_error(L"Expected a column identifier");
+    parse_error("Expected a column identifier");
   parse_column_ident1(prc);
 }
 
@@ -491,7 +491,7 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
     string name;
 
     if (!get_ident(name))
-      parse_error(L"Expected identifier after '.'");
+      parse_error("Expected identifier after '.'");
     // Note: the table part was initialized in parse_schema_ident()
     m_col_ref.set_name(name);
   }
@@ -513,14 +513,14 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
 
     if (Token_base::cur_token_type_in({ Token::QSTRING, Token::QQSTRING }))
     {
-      Tokenizer toks(consume_token()->get_text());
+      Tokenizer toks(consume_token()->get_bytes());
       It first = toks.begin();
       It last  = toks.end();
       Expr_parser_base path_parser(first, last, m_parser_mode);
       // TODO: Translate parse errors
       path_parser.parse_document_field(prc, true);
       if (first != last)
-        parse_error(L"Unexpected characters in a quotted path component");
+        parse_error("Unexpected characters in a quoted path component");
     }
     else
     {
@@ -570,10 +570,10 @@ void Expr_parser_base::parse_document_field(Path_prc *prc, bool prefix)
   }
 
   if (prefix)
-    parse_error(L"Expected '$' to start a document path");
+    parse_error("Expected '$' to start a document path");
 
   if (!parse_document_path(prc, false))
-    parse_error(L"Expected a document path");
+    parse_error("Expected a document path");
 }
 
 
@@ -633,7 +633,7 @@ void Expr_parser_base::parse_document_field(const string &first,
      correct - array locations should be possible only after a path to some
      array member.
 
-  2. It always requires a DOT befre a member element, but in some contexts
+  2. It always requires a DOT before a member element, but in some contexts
      we want a document path like "foo.bar.baz" to start without a dot.
 
   To deal with this the grammar has been changed and require_dot parameter
@@ -683,7 +683,7 @@ bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
     parse_docpath_member() it will become evident.
 
     The Path_el_reporter wrapper around path processor solves this problem by
-    deffering the initial list_begin() call and the list_el() calls to the
+    deferring the initial list_begin() call and the list_el() calls to the
     moment when a path element is reported. If no path elements are reported
     then list_begin() or list_el() will not be called. Similar, call to
     list_end() will be forwarded to the wrapped processor only if list_begin()
@@ -789,7 +789,7 @@ bool Expr_parser_base::parse_document_path(Path_prc *prc, bool require_dot)
   bool ret = parse_document_path1(&el_reporter);
 
   if (!ret && double_star)
-    parse_error(L"Document path ending in '**'");
+    parse_error("Document path ending in '**'");
 
   el_reporter.list_end();
 
@@ -845,7 +845,7 @@ bool Expr_parser_base::parse_document_path1(Path_prc *prc)
   }
 
   if (last_double_star)
-    parse_error(L"Document path ending in '**'");
+    parse_error("Document path ending in '**'");
 
   return has_item;
 }
@@ -892,7 +892,7 @@ bool Expr_parser_base::parse_docpath_member_dot(Path_prc *prc)
   if (!consume_token(Token::DOT))
     return false;
   if (!parse_docpath_member(prc))
-    parse_error(L"Expected member name or '*' after '.' in a document path");
+    parse_error("Expected member name or '*' after '.' in a document path");
   return true;
 }
 
@@ -916,12 +916,12 @@ bool Expr_parser_base::parse_docpath_array(Path_prc *prc)
   else
   {
     if (!cur_token_type_is(Token::INTEGER))
-      parse_error(L"Expected '*' or integer index after '[' in a document path");
+      parse_error("Expected '*' or integer index after '[' in a document path");
 
     uint64_t v;
 
     try {
-      v = strtoui(consume_token()->get_text());
+      v = strtoui(consume_token()->get_utf8());
     }
     catch (const Numeric_conversion_error &e)
     {
@@ -930,14 +930,14 @@ bool Expr_parser_base::parse_docpath_array(Path_prc *prc)
     }
 
     if (v > std::numeric_limits<Path_prc::Element_prc::index_t>::max())
-      parse_error(L"Array index too large");
+      parse_error("Array index too large");
 
     safe_prc(prc)->list_el()->index(Path_prc::Element_prc::index_t(v));
   }
 
   consume_token_throw(
     Token::RSQBRACKET,
-    L"Expected ']' to close a document path array component"
+    "Expected ']' to close a document path array component"
   );
   return true;
 }
@@ -1057,7 +1057,7 @@ bool column_ref_from_path(cdk::Doc_path &path, parser::Column_ref &column)
 Expression* Expr_parser_base::parse_atomic(Processor *prc)
 {
   if (!tokens_available())
-    parse_error(L"Expected an expression");
+    parse_error("Expected an expression");
 
   Token::Type type = peek_token()->get_type();
 
@@ -1081,7 +1081,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     Expression *res = parse(FULL, prc);
     consume_token_throw(
       Token::RPAREN,
-      L"Expected ')' to close parenthesized sub-expression"
+      "Expected ')' to close parenthesized sub-expression"
     );
     return res;
   }
@@ -1112,7 +1112,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   {
     sprc->param(consume_token_throw(
       Token::WORD,
-      L"Expected parameter name after ':'"
+      "Expected parameter name after ':'"
     ).get_text());
     return stored.release();
   }
@@ -1215,9 +1215,11 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     case Token::QSTRING:
       if (m_strings_as_blobs)
       {
-        // NOTE: if string is reported as blob, it gets converted to utf8
+        cdk::bytes raw = consume_token()->get_bytes();
+        // NOTE: we remove first and last byte which contain quotes
+        assert(raw.size() > 1);
         sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
-          cdk::bytes(consume_token()->get_text()));
+          cdk::bytes(raw.begin()+1, raw.end()-1));
       }
       else
         sprc->val()->str(consume_token()->get_text());
@@ -1225,7 +1227,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
     case Token::NUMBER:
       {
-        double val = strtod(consume_token()->get_text());
+        double val = strtod(consume_token()->get_utf8());
         sprc->val()->num(neg ? -val : val);
         return stored.release();
       }
@@ -1233,12 +1235,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     case Token::INTEGER:
       if (neg)
       {
-        int64_t val = strtoi(consume_token()->get_text());
+        int64_t val = strtoi(consume_token()->get_utf8());
         sprc->val()->num(-val);
       }
       else
       {
-        uint64_t val = strtoui(consume_token()->get_text());
+        uint64_t val = strtoui(consume_token()->get_utf8());
         sprc->val()->num(val);
       }
       return stored.release();
@@ -1246,12 +1248,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     case Token::HEX:
       if (neg)
       {
-        int64_t val = strtoi(consume_token()->get_text(), 16);
+        int64_t val = strtoi(consume_token()->get_utf8(), 16);
         sprc->val()->num(-val);
       }
       else
       {
-        uint64_t val = strtoui(consume_token()->get_text(), 16);
+        uint64_t val = strtoui(consume_token()->get_utf8(), 16);
         sprc->val()->num(val);
       }
       return stored.release();
@@ -1345,8 +1347,8 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   /*
     Here we know that we are in DOCUMENT mode and we are expecting a document
     path. If parse_schema_ident() called above consumed some tokens, we check
-    if they were not quotted identifiers. Such identifiers are allowed when
-    reffering to tables or columns but are invalid in a document path.
+    if they were not quoted identifiers. Such identifiers are allowed when
+    referring to tables or columns but are invalid in a document path.
   */
 
   if (Token::QWORD == types[0] || Token::QWORD == types[1])
@@ -1354,7 +1356,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   /*
     Now we treat the identifiers "A.B" parsed by parse_schema_ident() and
-    stored as table/schema name in m_col_ref (if any), as an initail segment
+    stored as table/schema name in m_col_ref (if any), as an initial segment
     of a document field reference and complete parsing the whole document
     field.
   */
@@ -1531,14 +1533,14 @@ Expression* Expr_parser_base::parse_or(Processor *prc)
 
 /**
    Expression Parser EBNF:
-   note; No reptetition, must be connected by logical operators
+   note; No repetition, must be connected by logical operators
     ilriExpr ::=
             compExpr IS NOT? (NULL|TRUE|FALSE)
         |   compExpr NOT? IN LPAREN argsList? RPAREN
         |   compExpr NOT? "IN" compExpr
-            // TODO: param to ESCAPE should be better defined
-        |   compExpr NOT? LIKE compExpr (ESCAPE compExpr)?
-        |   compExpr NOT? RLIKE compExpr (ESCAPE compExpr)?
+            // TODO: we don't know how to report ESCAPE on protocol level
+        |   compExpr NOT? LIKE compExpr //(ESCAPE compExpr)?
+        |   compExpr NOT? RLIKE compExpr //(ESCAPE compExpr)?
         |   compExpr NOT? BETWEEN compExpr AND compExpr
         |   compExpr NOT? REGEXP compExpr
 
@@ -1578,7 +1580,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   if (!t)
   {
     if (neg)
-      parse_error(L"Expected IN, (R)LIKE, BETWEEN or REGEXP after NOT");
+      parse_error("Expected IN, (R)LIKE, BETWEEN or REGEXP after NOT");
 
     // If prc is NULL return already stored expression.
 
@@ -1591,25 +1593,28 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     return NULL;
   }
 
-  // Handle IS NOT case.
-
-  if (neg && Op::IS == *t)
-    parse_error(L"Operator NOT before IS, should be IS NOT");
-
-  if (Op::IS == *t && consume_token(Op::NOT))
-    neg = true;
-
   // We have an ilri expression with operator and 2 arguments.
 
   Op::Type op = Op::get_binary(*t);
 
-  // Detect unsupported operators before handling parmaeters
+  // Handle IS NOT case.
+
+  if (neg && Op::IS == op)
+    parse_error("Operator NOT before IS, should be IS NOT");
+
+  // Note: consume_token() replaces contents of *t...
+
+  if (Op::IS == op && consume_token(Op::NOT))
+    neg = true;
+
+
+  // Detect unsupported operators before handling parameters
 
   switch (op)
   {
   case Op::SOUNDS_LIKE:
     if (cur_token_type_is(Keyword::LIKE))
-      unsupported(L"Operator SOUNDS LIKE");
+      unsupported("Operator SOUNDS LIKE");
     break;
   case Op::IS:
     if (neg)
@@ -1650,7 +1655,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   }
 
   /*
-    If prc is NULL and we are supposed to store parsed epression, use
+    If prc is NULL and we are supposed to store parsed expression, use
     specialized Stored_ilri class that can re-use the already stored first
     part of the expression.
   */
@@ -1711,7 +1716,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
         consume_token_throw(
               Token::RPAREN,
-              L"Expected ')' to close IN(... expression"
+              "Expected ')' to close IN(... expression"
               );
       }
       else
@@ -1731,7 +1736,6 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
       if (cur_token_type_is(Keyword::ESCAPE))
       {
-        //TODO: Check ESCAPE
         unsupported("ESCAPE clause for (R)LIKE operator");
       }
 
@@ -1748,7 +1752,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
       parse(COMP, aprc->list_el());
       consume_token_throw(
         Keyword::AND,
-        L"Expected AND in BETWEEN ... expression"
+        "Expected AND in BETWEEN ... expression"
       );
       parse(COMP, aprc->list_el());
       break;
@@ -1777,7 +1781,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   But Expr_parser_base constructor also needs parser mode parameter
   and the flag which tells if strings should be reported as blobs.
   To fix this, we define Base_parser<> template parametrized with parser
-  mode, which will construct required flavour of the parser.
+  mode, which will construct required flavor of the parser.
 */
 
 template <Parser_mode::value Mode,
@@ -1955,15 +1959,15 @@ void Projection_parser::parse_doc_mode(Document_processor& prc)
 
   // AS is mandatory on Collections
   if (!consume_token(Keyword::AS))
-    parse_error(L"Expected AS in projection specification");
+    parse_error("Expected AS in projection specification");
 
   if (!Token_base::cur_token_type_in({Token::WORD,Token::QWORD}))
-    parse_error(L"Expected identifier after AS");
+    parse_error("Expected identifier after AS");
 
   const string &id = consume_token()->get_text();
 
   if (tokens_available())
-    parse_error(L"Invalid characters after projection specification");
+    parse_error("Invalid characters after projection specification");
 
   store_expr.process_if(prc.key_val(id));
 }

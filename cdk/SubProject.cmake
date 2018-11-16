@@ -67,8 +67,11 @@ SET(WITH_HEADER_CHECKS OFF)
 # Infrastructure for adding CDK to main project targets
 #
 
-SET(CDK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include;${PROJECT_BINARY_DIR}/include"
-    CACHE PATH "CDK include path")
+set(CDK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
+list(APPEND CDK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/extra/rapidjson/include")
+list(APPEND CDK_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include")
+
+SET(CDK_INCLUDE_DIR ${CDK_INCLUDE_DIR} CACHE PATH "CDK include path" FORCE)
 MESSAGE("CDK include path: ${CDK_INCLUDE_DIR}")
 
 #
@@ -78,8 +81,14 @@ MESSAGE("CDK include path: ${CDK_INCLUDE_DIR}")
 MACRO(CDK_SETUP)
 ENDMACRO(CDK_SETUP)
 
+include(libutils)  # lib_link_libraries()
+
 MACRO(ADD_CDK target)
-  TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE ${CDK_INCLUDE_DIR})
-  TARGET_LINK_LIBRARIES(${target} cdk)
+
+  TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE
+    ${CDK_INCLUDE_DIR}
+  )
+
+  LIB_LINK_LIBRARIES(${target} cdk)
   MESSAGE("Configured target ${target} for using CDK")
 ENDMACRO(ADD_CDK)

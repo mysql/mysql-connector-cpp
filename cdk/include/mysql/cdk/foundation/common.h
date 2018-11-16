@@ -84,7 +84,8 @@
   PRAGMA(warning (push,2)) \
   DISABLE_WARNING(4350) \
   DISABLE_WARNING(4738) \
-  DISABLE_WARNING(4548)
+  DISABLE_WARNING(4548) \
+  DISABLE_WARNING(4996)
 
 #else
 
@@ -327,6 +328,7 @@ bool check_num_limits(U val)
      || (val < std::numeric_limits<T>::lowest()));
 }
 
+#undef  ASSERT_NUM_LIMITS
 #define ASSERT_NUM_LIMITS(T,V) assert(cdk::foundation::check_num_limits<T>(V))
 
 

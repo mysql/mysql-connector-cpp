@@ -50,7 +50,7 @@ namespace foundation {
   what().
 */
 
-const string Error::m_default_prefix = L"CDK Error: ";
+const char* Error::m_default_prefix = "CDK Error: ";
 
 
 void Error::description_materialize() const

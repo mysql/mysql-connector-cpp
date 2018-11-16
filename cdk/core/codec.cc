@@ -67,13 +67,8 @@ size_t cdk::Codec<TYPE_BYTES>::to_bytes(const std::string &str, bytes raw)
   return len;
 }
 
-size_t Codec<TYPE_STRING>::measure(const string &str)
-{
-  return get_codec().measure(str);
-}
 
-
-size_t Codec<TYPE_STRING>::from_bytes(bytes raw, string &str)
+size_t Codec<TYPE_STRING>::from_bytes(bytes raw, cdk::string &str)
 {
   //TODO: padding
 
@@ -91,7 +86,7 @@ size_t Codec<TYPE_STRING>::from_bytes(bytes raw, string &str)
 }
 
 
-size_t Codec<TYPE_STRING>::to_bytes(const string& str, bytes raw)
+size_t Codec<TYPE_STRING>::to_bytes(const cdk::string& str, bytes raw)
 {
   return get_codec().to_bytes(str, raw);
 }
@@ -105,8 +100,8 @@ foundation::api::String_codec* Format<TYPE_STRING>::codec() const
     character encodings.
   */
 
-  static foundation::String_codec<foundation::codecvt_utf8>  utf8;
-  static foundation::String_codec<foundation::codecvt_ascii> ascii;
+  static foundation::String_codec<foundation::String_encoding::UTF8>  utf8;
+  static foundation::String_codec<foundation::String_encoding::ASCII> ascii;
 
   switch (charset())
   {

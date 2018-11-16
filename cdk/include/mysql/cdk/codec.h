@@ -298,7 +298,7 @@ public:
   {}
 
   /// Return number of bytes required to encode given string.
-  size_t measure(const string&);
+  //size_t measure(const string&);
 
   size_t from_bytes(bytes raw, string& str);
   size_t to_bytes(const string&, bytes);

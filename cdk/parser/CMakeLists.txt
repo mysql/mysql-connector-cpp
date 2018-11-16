@@ -52,5 +52,6 @@ add_library(${target_parser} OBJECT
   uri_parser.cc
   ${HEADERS}
 )
+source_group(Headers FILES ${HEADERS})
 
 add_coverage(${target_parser})

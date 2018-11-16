@@ -277,6 +277,8 @@ INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include)
 set(configuration_header "${PROJECT_BINARY_DIR}/include/mysql/cdk/config.h")
 
+include_directories(${PROJECT_SOURCE_DIR}/extra/rapidjson/include)
+
 #
 # Testing framework
 #

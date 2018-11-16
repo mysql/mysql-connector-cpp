@@ -43,7 +43,7 @@ POP_SYS_WARNINGS
 
 
 /*
-  Parsing strings containing expressions as used by DevAPI.
+  Parsing strings containing expressions as used by X DevAPI.
 */
 
 
@@ -122,8 +122,8 @@ POP_SYS_WARNINGS
   List of operators that can appear in X DevAPI expressions.
 
   Each entry X(OOO,SSS,TTT,KKK) declares operator with name OOO, which is
-  reported to CDK as string SSS. TTT is a list of tokens that map to this
-  operator (usually just one token). KKK is a list of keywords that map to
+  reported to CDK as string SSS. TTT is a set of tokens that map to this
+  operator (usually just one token). KKK is a set of keywords that map to
   the token. Below an enum constant Op::OOO is defined for each operator
   declared here.
 
@@ -182,7 +182,7 @@ POP_SYS_WARNINGS
 
 namespace parser {
 
-using cdk::string;
+using string = std::string;
 
 
 /*
@@ -212,7 +212,7 @@ public:
 
   /*
     Check if given token is a keyword, and if yes, return enum constant of
-    this keyowrd. If the token is not a keyword it returns NONE.
+    this keyword. If the token is not a keyword it returns NONE.
   */
 
   static Type get(const Token &tok);
@@ -234,6 +234,9 @@ public:
   /*
     Case insensitive string comparison function which is used to match
     keywords.
+
+    TODO: First argument can be a cdk string - avoid utf8 conversion.
+    TODO: Simpler implementation that is not sensitive to locale settings.
   */
 
   static bool equal(const string &a, const string &b)
@@ -249,10 +252,10 @@ private:
   {
     struct char_cmp
     {
-      bool operator()(cdk::char_t, cdk::char_t) const;
+      bool operator()(char, char) const;
     };
 
-    bool operator()(const string &a, const string &b) const
+    bool operator()(const std::string &a, const std::string &b) const
     {
       static char_cmp cmp;
       return std::lexicographical_compare(
@@ -267,12 +270,12 @@ private:
     used to locate words in this map.
   */
 
-  typedef std::map<string, Type, kw_cmp> map_t;
+  typedef std::map<std::string, Type, kw_cmp> map_t;
 
   static map_t kw_map;
 
   /*
-    Default ctor builds the keyword map based on keyword declarartions given
+    Default ctor builds the keyword map based on keyword declarations given
     by KEYWORD_LIST() macro.
   */
 
@@ -284,7 +287,7 @@ private:
     KEYWORD_LIST(kw_add);
   }
 
-  // This initializer instance makes sure that the keyowrd map is built.
+  // This initializer instance makes sure that the keyword map is built.
 
   static Keyword init;
 };
@@ -293,14 +296,15 @@ private:
 inline
 Keyword::Type Keyword::get(const Token &t)
 {
-  // Only WORD tokens can be keyword.
+  // Only WORD tokens can be a keyword.
 
   if (Token::WORD != t.get_type())
     return NONE;
 
   // Locate WORD in the keyword map.
+  cdk::bytes data = t.get_bytes();
 
-  auto x = kw_map.find(t.get_text());
+  auto x = kw_map.find(std::string((const char*)data.begin(), data.size()));
 
   return (x == kw_map.end() ? NONE : x->second);
 }
@@ -313,23 +317,25 @@ bool operator==(Keyword::Type type, const Token &tok)
 }
 
 
+#if 1
+
 inline
-bool Keyword::kw_cmp::char_cmp::operator()(cdk::char_t a, cdk::char_t b) const
+bool Keyword::kw_cmp::char_cmp::operator()(char a, char b) const
 {
   /*
-    Since we operate on wide characters, "C" locale's ctype facet is used
-    to make lowercase conversion. "C" locale is sufficent because we care about
-    correct results only for ASCII characters (only these characters are used
-    in keywords).
+    Note: Explicitly using "C" locale's ctype facet to not depend on
+    default locale settings. This comparison needs to work correctly only
+    for ASCII characters. (only these characters are used in keywords).
   */
 
   static std::locale c_loc("C");
-  static const std::ctype<wchar_t> &ctf
-    = std::use_facet<std::ctype<wchar_t>>(c_loc);
+  static const auto &ctf
+    = std::use_facet<std::ctype<char>>(c_loc);
 
   return ctf.tolower(a) < ctf.tolower(b);
 }
 
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -515,6 +521,7 @@ public:
 
   using Token_base::consume_token;
 
+
   const Token& consume_token_throw(Keyword::Type kk, const string &msg)
   {
     const Token *t = consume_token(kk);
@@ -524,6 +531,7 @@ public:
   }
 
   using Token_base::consume_token_throw;
+
 
   bool cur_token_type_is(Keyword::Type kk)
   {
@@ -833,11 +841,8 @@ class Expression_parser
 
 public:
 
-  Expression_parser(Parser_mode::value parser_mode)
-    : m_tokenizer(std::string()), m_mode(parser_mode)
-  {}
 
-  Expression_parser(Parser_mode::value parser_mode, const cdk::string &expr)
+  Expression_parser(Parser_mode::value parser_mode, bytes expr)
     : m_tokenizer(expr), m_mode(parser_mode)
   {}
 
@@ -849,7 +854,7 @@ public:
     It last  = m_tokenizer.end();
 
     if (m_tokenizer.empty())
-      throw Expr_token_base::Error(first, L"Expected an expression");
+      throw Expr_token_base::Error(first, "Expected an expression");
 
     /*
       note: passing m_toks.end() directly as constructor argument results
@@ -863,7 +868,7 @@ public:
     if (first != last)
       throw Expr_token_base::Error(
               first,
-              L"Unexpected characters after expression"
+              "Unexpected characters after expression"
             );
   }
 
@@ -893,7 +898,7 @@ class Order_parser
 
 public:
 
-  Order_parser(Parser_mode::value parser_mode, const cdk::string &expr)
+  Order_parser(Parser_mode::value parser_mode, bytes expr)
     : m_tokenizer(expr), m_mode(parser_mode)
   {}
 
@@ -942,11 +947,7 @@ class Projection_parser
 
 public:
 
-  Projection_parser(Parser_mode::value parser_mode)
-    : m_tokenizer(std::string()), m_mode(parser_mode)
-  {}
-
-  Projection_parser(Parser_mode::value parser_mode, const cdk::string &expr)
+  Projection_parser(Parser_mode::value parser_mode, bytes expr)
     : m_tokenizer(expr), m_mode(parser_mode)
   {
     m_it = m_tokenizer.begin();
@@ -982,7 +983,7 @@ class Table_field_parser
 
 public:
 
-  Table_field_parser(const cdk::string &table_field)
+  Table_field_parser(bytes table_field)
   {
     Tokenizer toks(table_field);
 
@@ -1031,7 +1032,7 @@ class Doc_field_parser
 
 public:
 
-  Doc_field_parser(const cdk::string &doc_path)
+  Doc_field_parser(bytes doc_path)
     : m_tokenizer(doc_path)
   {
     m_it = m_tokenizer.begin();
@@ -1044,7 +1045,7 @@ public:
     const_cast<Expr_parser_base*>(m_parser.get())->parse_document_field(&prc);
 
     if (m_parser->tokens_available())
-      m_parser->parse_error(L"Unexpected characters at the end");
+      m_parser->parse_error("Unexpected characters at the end");
   }
 };
 

@@ -33,6 +33,8 @@
 
 #include <mysql/cdk.h>
 
+#include "char_iterator.h"
+
 PUSH_SYS_WARNINGS
 #include <string>
 #include <vector>
@@ -41,7 +43,12 @@ PUSH_SYS_WARNINGS
 #include <memory>
 #include <stdexcept>
 #include <sstream>
+#include <algorithm>
 POP_SYS_WARNINGS
+
+#ifdef _MSC_VER
+DISABLE_WARNING(4061)  // not all enums listed inside switch() statement
+#endif
 
 #undef WORD
 
@@ -118,12 +125,13 @@ POP_SYS_WARNINGS
 
 namespace parser {
 
-  using cdk::string;
+  using cdk::byte;
+  using cdk::bytes;
   using cdk::char_t;
-  using cdk::throw_error;
+  using cdk::invalid_char;
 
   class Token;
-
+  class iterator;
 
   /*
     Base class for all parser and tokenizer errors.
@@ -134,10 +142,8 @@ namespace parser {
 
   struct Error : public cdk::Error
   {
-    template <typename T>
-      Error(T arg)
-        : cdk::Error(arg)
-      {}
+    Error() = delete;
+    using cdk::Error::Error;
   };
 
 
@@ -164,35 +170,55 @@ namespace parser {
 
     Note: This class template is parametrized by the string type, which can
     be either a wide or a standard string, depending on which strings the
-    parser is working on (we have both cases). Remainig template parameters
+    parser is working on (we have both cases). Remaining template parameters
     specify sizes of buffers used to store input string fragments.
   */
 
-  template <
-    typename string_t,
-    size_t  seen_buf_len = 64,
-    size_t  ahead_buf_len = 8
-  >
+  constexpr  size_t  seen_buf_len = 64;
+  constexpr  size_t  ahead_buf_len = 12;
+
+
   class Error_base
-    : public cdk::Error_class<
-        Error_base<string_t, seen_buf_len, ahead_buf_len>,
-        parser::Error
-      >
+    : public cdk::Error_class< Error_base, parser::Error >
   {
-    typedef cdk::Error_class<
-              Error_base<string_t, seen_buf_len, ahead_buf_len>,
-              parser::Error
-            >  Base;
+    using Base = cdk::Error_class< Error_base, parser::Error >;
+
+    Error_base() = delete;
 
   protected:
 
-    typedef typename string_t::value_type  char_t;
+    using string = std::string;
+
+  public:
+
+    /*
+      Parser error with description 'descr' and parsing context specified
+      by remaining arguments (see set_ctx() for possibilities).
+    */
+
+    template<typename... Ty>
+    Error_base(
+      const string &descr,
+      Ty&&... args
+    )
+      : Base(nullptr, cdk::cdkerrc::parse_error)
+      , m_msg(descr)
+    {
+      set_ctx(std::forward<Ty>(args)...);
+    }
+
+    virtual ~Error_base() throw ()
+    {}
+
+  protected:
 
     // Storage for context data.
 
-    char_t   m_seen[seen_buf_len];   // Characters seen before current position.
-    char_t   m_ahead[ahead_buf_len]; // Few characters ahead of the current position.
-    size_t   m_pos;                  // Current parser position.
+    char  m_seen[seen_buf_len];   // Characters seen before current position.
+    char  m_ahead[ahead_buf_len]; // Few characters ahead of the current
+
+    void set_ctx(char_iterator &pos);
+    void set_ctx(const std::string&, size_t pos);
 
     string   m_msg;
 
@@ -215,36 +241,6 @@ namespace parser {
       out << " (" << code() << ")";
     }
 
-  public:
-
-    /*
-      Parser error for input string `inp` with given parser position
-      in the string.
-    */
-
-    Error_base(
-      const string_t &inp, size_t pos,
-      const string &descr = string()
-    );
-
-    /*
-      Parser error with parser position at a given token. The token
-      contains information about its position within the input
-      string. If `tok` is NULL then it is assumed that parser has
-      consumed the whole of the input string.
-    */
-    Error_base(
-      const string_t &inp, const Token *tok,
-      const string &descr = string()
-    );
-
-    virtual ~Error_base() throw ()
-    {}
-
-    size_t get_pos() const
-    {
-      return m_pos;
-    }
   };
 
 
@@ -253,13 +249,11 @@ namespace parser {
   /*
     Class representing a single token.
 
-    It stores token type, characters which make the token and its position
-    within the parsed string (begin and end position).
+    It stores token type and its position within the parsed string (begin and
+    end position).
 
-    Note: For tokens such as quotted string, the characters of the token do
-    not include the quotes. For that reason characters of the token are not
-    always identical with the sub-range [_pos_begin, _pos_end) of the input
-    string.
+    Note: For tokens such as quoted string, the characters of the token do
+    not include the quotes.
   */
 
   class Token
@@ -270,37 +264,19 @@ namespace parser {
 
     enum Type
     {
+      EMPTY = 0,
       TOKEN_LIST(token_enum)
     };
 
     typedef std::set<Type>  Set;
 
-    Token(
-      Type type, const string& text,
-      size_t begin, size_t end
-    )
-      : _type(type), _text(text)
-      , _pos_begin(begin), _pos_end(end)
-    {}
-
-    const string& get_text() const
-    {
-      return _text;
-    }
+    cdk::string get_text() const;
+    bytes get_bytes() const;
+    std::string get_utf8() const;
 
     Type get_type() const
     {
-      return _type;
-    }
-
-    size_t get_begin() const
-    {
-      return _pos_begin;
-    }
-
-    size_t get_end() const
-    {
-      return _pos_end;
+      return m_type;
     }
 
 #define token_name(X,T) case X: return #X;
@@ -316,31 +292,57 @@ namespace parser {
 
     const char* get_name() const
     {
-      return get_name(_type);
+      return get_name(m_type);
     }
 
-  private:
+    Token() = default;
+    Token(const Token&) = default;
 
-    Type _type;
-    string _text;
-    size_t    _pos_begin;
-    size_t    _pos_end;
+  protected:
+
+    Type m_type = EMPTY;
+    const char *m_begin = nullptr;
+    const char *m_end = nullptr;
 
   };
 
 
-  template <
-    typename string_t,
-    size_t  seen_buf_len,
-    size_t  ahead_buf_len
-  >
   inline
-  Error_base<string_t, seen_buf_len, ahead_buf_len>::Error_base(
-      const string_t &inp, const Token *tok, const string &msg
-  )
-    : Error_base(inp, tok ? tok->get_begin() : inp.length(), msg)
-  {}
+  cdk::string Token::get_text() const
+  {
+    cdk::string ret;
+    if (m_begin)
+    {
+      assert(m_begin <= m_end);
 
+      // Note: only strings and quoted words can contain non-ASCII characters.
+
+      switch (m_type)
+      {
+      case QSTRING:
+      case QQSTRING:
+      case QWORD:
+        ret.set_utf8({ (byte*)m_begin, (byte*)m_end });
+        break;
+      default:
+        ret.set_ascii(m_begin, (size_t)(m_end - m_begin));
+        break;
+      }
+    }
+    return ret;
+  }
+
+  inline
+  bytes Token::get_bytes() const
+  {
+    return { (byte*)m_begin, (byte*)m_end };
+  }
+
+  inline
+  std::string Token::get_utf8() const
+  {
+    return { (const char*)m_begin, (const char*)m_end };
+  }
 
   // -------------------------------------------------------------------------
 
@@ -350,12 +352,6 @@ namespace parser {
     After creating a Tokenizer instance from a given string, one can use
     Tokenizer::iterator returned by method begin() to iterate through the
     sequence of tokens.
-
-    Any errors in converting a string into a token sequence are thrown upon
-    construction of a tokenizer.
-
-    TODO: Avoid storing all tokens in memory.
-    Idea: have it working on istream instead.
   */
 
   class Tokenizer
@@ -365,127 +361,19 @@ namespace parser {
     class Error;
     class  iterator;
 
-    Tokenizer(const string& input)
-      : _input(input)
-      , _in_pos(0)
-      , _tok_pos(0)
-      //, _pos(0)
-    {
-      get_tokens();
-    }
+    Tokenizer(bytes input);
 
-
-    bool empty() const
-    {
-      return _tokens.empty();
-    }
+    /*
+      Return true if there are no tokens in the input string.
+    */
+    bool empty() const;
 
     iterator begin() const;
-    iterator end() const;
+    const iterator& end() const;
 
-  protected:
+  public:
 
-    // Build token sequence from the input string.
-
-    void get_tokens();
-
-    // Methods that parse characters into various kinds of tokens.
-
-    bool parse_number();
-    bool parse_digits(string *digits = NULL);
-    bool parse_hex();
-    bool parse_hex_digits(string &digits);
-    bool parse_string();
-    bool parse_word();
-    bool parse_quotted_string(char_t, string *val = NULL);
-
-    // access underlying sequence of characters
-
-    const string& get_input() const { return _input; }
-
-    char_t cur_char() const;
-    size_t get_char_pos() const;
-    bool chars_available() const;
-
-    bool next_char_is(char_t, size_t off=1) const;
-    bool next_char_in(const char_t*, size_t off=1) const;
-
-    bool cur_char_is(char_t c) const
-    {
-      return next_char_is(c, 0);
-    }
-
-    bool cur_char_is_space() const;
-
-    // Return true if current character can be part of a WORD token.
-
-    bool cur_char_is_word() const;
-
-    bool cur_char_in(const char_t *set) const
-    {
-      return next_char_in(set, 0);
-    }
-
-
-    char_t consume_char();
-
-    // Consume next character if it equals given one.
-
-    bool   consume_char(char_t);
-
-    /*
-      Consume next character if it is one of the character in the given
-      string. Returns consumed character, '\0' otherwise.
-    */
-
-    char_t consume_char(const char_t*);
-
-    /*
-      Consume given sequence of characters. Returns true if it was possible.
-      If not, the position within input string is not changed.
-    */
-
-    bool   consume_chars(const char_t*);
-
-    // Error reporting
-
-    void token_error(const string&) const;
-
-    // Building token sequence
-
-    /*
-      Set current position in the input string as a starting position for
-      next token.
-    */
-
-    size_t set_token_start();
-
-    /*
-      Add to the sequence new token of a given type. The token ends at the
-      current position within the input string and starts at the position
-      marked with set_token_start(). The characters of the token are all the
-      caracters of the input string between token's start and end position.
-    */
-
-    void add_token(Token::Type);
-
-    /*
-      This method works like `add_token(Token::Type)` but the characters of
-      the new token are as given by the second argument (instead of being taken
-      from the input string).
-    */
-
-    void add_token(Token::Type, const string&);
-
-
-    // Storage for tokens and the input string
-
-    string _input;
-    size_t _in_pos;   // current position in the input string
-    size_t _tok_pos;  // start position of a token in the input string
-
-    std::vector<Token> _tokens;
-    //tokens_t::size_type _pos;
+    char_iterator _begin;
 
     friend Error;
   };
@@ -493,84 +381,166 @@ namespace parser {
 
   /*
     Iterator for accessing a sequence of tokens of a tokenizer.
+
+       cur_pos()
+       |   char_iterator::m_pos
+       |   |
+       v   v
+    ---[--]----
+       ^^^^
+       m_token
+
   */
 
   class Tokenizer::iterator
+    : public char_iterator
   {
-    const Tokenizer *_toks;
-    size_t     _pos;
+    using pos_type = const char*;
+    pos_type  m_pos;
+    bool      m_at_end = true;
 
-    iterator(const Tokenizer *toks, size_t pos = 0)
-      : _toks(toks), _pos(pos)
-    {}
+    iterator(const char_iterator &input)
+      : char_iterator(input)
+      , m_at_end(false)
+    {
+      get_next_token();
+    }
+
+    pos_type cur_pos() const noexcept
+    {
+      return m_pos;
+    }
+
+    bool at_end() const noexcept
+    {
+      return m_at_end;
+    }
+
 
   public:
 
-    iterator()
-      : _toks(NULL), _pos(0)
-    {}
+    iterator() = default;
 
-    iterator(const Tokenizer &toks, bool at_end = false)
-      : _toks(&toks), _pos(0)
+    iterator(const iterator &other) = default;
+
+    const Token& operator*() const noexcept
     {
-      if (at_end)
-        _pos = toks._tokens.size();
+      assert(!(at_end()));
+      //if (at_end())
+      //  THROW("token iterator: accessing null iterator");
+      return m_token;
     }
 
-    iterator(const iterator &other)
-      : _toks(other._toks), _pos(other._pos)
-    {}
-
-    const Token& operator*() const
+    const Token* operator->() const noexcept
     {
-      if (!_toks)
-        THROW("token iterator: accessing null iterator");
-      return _toks->_tokens[_pos];
+      assert(!(at_end()));
+      //if (at_end())
+      //  THROW("token iterator: accessing null iterator");
+      return &m_token;
     }
 
-    const Token* operator->() const
+    iterator& operator++() //noexcept
     {
-      if (!_toks)
-        THROW("token iterator: accessing null iterator");
-      return &(_toks->_tokens[_pos]);
-    }
-
-    iterator& operator++()
-    {
-      if (_toks && _pos < _toks->_tokens.size())
-        ++_pos;
+      get_next_token();
       return *this;
     }
 
-    bool operator==(const iterator &other) const
+    bool operator==(const iterator &other) const noexcept
     {
-      return _toks == other._toks && _pos == other._pos;
+      if (at_end())
+        return other.at_end();
+
+      return m_pos == other.m_pos;
     }
 
-    bool operator!=(const iterator &other) const
+    bool operator!=(const iterator &other) const noexcept
     {
       return !(*this == other);
     }
 
-    iterator operator+(size_t diff) const
+  private:
+
+    struct : public Token
     {
-      return iterator(_toks, _pos + diff > 0 ? _pos + diff : 0);
+      friend iterator;
+    }
+    m_token;
+
+    bool get_next_token();
+
+    // Methods that parse characters into various kinds of tokens.
+
+    bool parse_number();
+    bool parse_digits() noexcept; // string *digits = NULL);
+    bool parse_hex();
+    bool parse_hex_digits() noexcept;
+    bool parse_string();
+    bool parse_word();
+    bool parse_quotted_string(char);
+
+    /*
+      Add to the sequence new token of a given type. The token ends at the
+      current position within the input string and starts at the position
+      marked with set_token_start(). The characters of the token are all the
+      characters of the input string between token's start and end position.
+    */
+
+    void set_token(Token::Type type, pos_type beg = nullptr, pos_type end = nullptr) noexcept
+    {
+      set_tok_type(type);
+      set_tok_pos(
+        beg == nullptr ? m_pos : beg,
+        end == nullptr ? char_iterator::cur_pos() : end
+      );
     }
 
+    void set_tok_pos(pos_type, pos_type) noexcept;
+    void set_tok_type(Token::Type) noexcept;
+
+    // Error reporting
+
+    void throw_error(const std::string&) const;
+
+    friend Tokenizer;
     friend Tokenizer::Error;
   };
 
 
   inline
-  Tokenizer::iterator Tokenizer::begin() const
+  Tokenizer::Tokenizer(cdk::bytes input)
+    : _begin(input)
+  {}
+
+  inline
+  bool Tokenizer::empty() const
   {
-    return iterator(*this);
+    return _begin.at_end();
   }
 
   inline
-  Tokenizer::iterator Tokenizer::end() const
+  Tokenizer::iterator Tokenizer::begin() const
   {
-    return iterator(*this, true);
+    return _begin;
+  }
+
+  inline
+  const Tokenizer::iterator& Tokenizer::end() const
+  {
+    static iterator end_iter;
+    return end_iter;
+  }
+
+  inline
+  void Tokenizer::iterator::set_tok_pos(pos_type beg, pos_type end) noexcept
+  {
+    m_token.m_begin = (const char*)beg;
+    m_token.m_end = (const char*)end;
+  }
+
+  inline
+  void Tokenizer::iterator::set_tok_type(Token::Type type) noexcept
+  {
+    m_token.m_type = type;
   }
 
 
@@ -582,28 +552,20 @@ namespace parser {
   */
 
   class Tokenizer::Error
-    : public parser::Error_base<string>
+    : public parser::Error_base
   {
   public:
 
-    Error(const Tokenizer *p, const string &descr = string())
-      : parser::Error_base<string>(p->_input, p->_in_pos, descr)
-    {}
-
-    Error(const Tokenizer::iterator &it, const string &msg = string())
-      : parser::Error_base<string>(
-          it._toks->_input,
-          it != it._toks->end() ? &(*it) : NULL,
-          msg
-        )
+    Error(char_iterator &it, const string &msg = string())
+      : Error_base(msg, it)
     {}
   };
 
 
   inline
-  void Tokenizer::token_error(const string &msg) const
+  void Tokenizer::iterator::throw_error(const std::string &msg) const
   {
-    throw Error(this, msg);
+    throw Error(*(char_iterator*)this, msg);
   }
 
 
@@ -620,66 +582,61 @@ namespace parser {
     used below because it is considered unsafe.
   */
 
-  DIAGNOSTIC_PUSH
-  #if _MSC_VER
-  DISABLE_WARNING(4996)
-  #endif
-
-  template <
-    typename string_t,
-    size_t  seen_buf_len,
-    size_t  ahead_buf_len
-  >
   inline
-  Error_base<string_t, seen_buf_len, ahead_buf_len>::Error_base(
-    const string_t &ctx, size_t pos, const string &descr
+  void Error_base::set_ctx(
+    const std::string &input, size_t pos
   )
-    : Base(NULL, cdk::cdkerrc::parse_error)
-    , m_pos(pos), m_msg(descr)
+  {
+    char_iterator it(input, input.data() + pos);
+    set_ctx(it);
+  }
+
+  inline
+  void Error_base::set_ctx(
+    char_iterator &it
+  )
   {
     memset(m_seen, 0, sizeof(m_seen));
     memset(m_ahead, 0, sizeof(m_ahead));
 
-    if (!ctx.empty())
+    /*
+      Copy characters seen so far to m_seen[] buffer.
+    */
+
+    bool   complete;
+    bytes  seen = it.get_seen(seen_buf_len -2, &complete);
+    char *dst = m_seen;
+
+    /*
+      If seen characters cover only a fragment of the parsed text, set
+      first character in m_seen[] to 0 to indicate that trailing '...'
+      should be added (see print_ctx()). The characters are then copied
+      starting from m_seen[1].
+    */
+
+    if (!complete)
     {
-      /*
-        Calculate how much to copy into m_seen, 1 byte is left for
-        null terminator.
-      */
-
-      size_t howmuch;
-
-      if (m_pos  > seen_buf_len - 1)
-        howmuch = seen_buf_len - 1;
-      else
-        howmuch = m_pos;
-
-      ctx.copy(m_seen, howmuch, m_pos-howmuch);
-
-      /*
-        If initial fragment is longer than size of m_seen, then
-        we set first byte to 0 to indicate that '...' prefix should
-        be added.
-      */
-
-      if (m_pos > seen_buf_len - 1)
-        m_seen[0] = 0;
-
-      /*
-        Similar, if remainder of the string does not fit in
-        m_ahead, then the last byte is set to 1 to indicate that
-        '...' should be added at the end. Note: Second last byte
-        is used as null terminator.
-      */
-
-      ctx.copy(m_ahead, ahead_buf_len - 2, m_pos);
-
-      if (ctx.length() > m_pos + ahead_buf_len - 2)
-        m_ahead[ahead_buf_len - 1] = 1;
+      m_seen[0] = '\0';
+      dst++;
     }
-  }
 
-  DIAGNOSTIC_POP
+    std::copy_n(seen.begin(), seen.size(), dst);
+    dst[seen.size()] = '\0';
+
+    /*
+      Copy some characters ahead of the current position to m_ahead[]
+      buffer. If this is just a fragment of the remaining text, indicate
+      that a trailing '...' should be added. This is done by setting the
+      last element in m_ahead to 1 (see print_ctx()).
+    */
+
+    bytes ahead = it.get_ahead(ahead_buf_len - 2, &complete);
+    std::copy_n(ahead.begin(), ahead.size(), m_ahead);
+    m_ahead[ahead.size()] = '\0';
+    if (!complete)
+      m_ahead[ahead_buf_len - 1] = 1;
+
+  }
 
 
   /*
@@ -693,14 +650,8 @@ namespace parser {
     "While looking at empty string"
   */
 
-  template <
-    typename string_t,
-    size_t  seen_buf_len,
-    size_t  ahead_buf_len
-  >
   inline
-  void parser::Error_base<string_t, seen_buf_len, ahead_buf_len>
-  ::print_ctx(std::ostream &out) const
+  void parser::Error_base::print_ctx(std::ostream &out) const
   {
     bool seen_part = false;
 
@@ -711,9 +662,9 @@ namespace parser {
       seen_part = true;
       out << "After seeing '";
       if (!m_seen[0])
-        out << "..." << cdk::string(m_seen + 1);
+        out << "..." << (m_seen + 1);
       else
-        out << cdk::string(m_seen);
+        out << m_seen;
       out << "'";
     }
 
@@ -724,7 +675,7 @@ namespace parser {
       else
         out << "While looking at '";
 
-      out << cdk::string(m_ahead);
+      out << m_ahead;
 
       if (1 == m_ahead[ahead_buf_len - 1])
         out << "...";
@@ -757,7 +708,7 @@ namespace parser {
 
   protected:
 
-    string m_inp;
+    std::string m_inp;
 
     void do_describe(std::ostream &out) const
     {
@@ -766,16 +717,16 @@ namespace parser {
 
   public:
 
-    Numeric_conversion_error(const string &inp)
+    Numeric_conversion_error(const std::string &inp)
       : Base(NULL, cdk::cdkerrc::parse_error)
       , m_inp(inp)
     {}
 
-    virtual string msg() const
+    virtual std::string msg() const
     {
-      string msg(L"Failed to convert string '");
+      std::string msg("Failed to convert string '");
       msg.append(m_inp);
-      msg.append(L"' to a number");
+      msg.append("' to a number");
       return msg;
     }
   };
@@ -792,15 +743,15 @@ namespace parser {
 
   public:
 
-    Numeric_conversion_partial(const string &inp)
+    Numeric_conversion_partial(const std::string &inp)
       : Base(NULL, inp)
     {}
 
-    string msg() const override
+    std::string msg() const override
     {
-      string msg(L"Not all characters consumed when converting string '");
+      std::string msg("Not all characters consumed when converting string '");
       msg.append(m_inp);
-      msg.append(L"' to a number");
+      msg.append("' to a number");
       return msg;
     }
   };
@@ -809,7 +760,7 @@ namespace parser {
   /*
     Generic string to number conversion function template.
 
-    Retrurns numeric value after converting given string in a given base,
+    Returns numeric value after converting given string in a given base,
     which should be either 10, 16 or 8. Throws error if the whole string
     could not be converted to a number.
 
@@ -822,14 +773,14 @@ namespace parser {
     typename Num_t
   >
   inline
-  Num_t strtonum(const string &str, int radix = 10)
+  Num_t strtonum(const cdk::string &str, int radix = 10)
   {
-    // TODO: Allow white-space at the beggingin or end of the string?
+    // TODO: Allow white-space at the beginning or end of the string?
 
-    typedef std::istreambuf_iterator<char_t> iter_t;
+    typedef std::istreambuf_iterator<wchar_t> iter_t;
     static std::locale c_locale("C");
-    static const std::num_get<char_t> &cvt
-      = std::use_facet<std::num_get<char_t>>(c_locale);
+    static const std::num_get<wchar_t> &cvt
+      = std::use_facet<std::num_get<wchar_t>>(c_locale);
 
     std::wistringstream inp(str);
     Num_t val;

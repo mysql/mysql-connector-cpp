@@ -1140,7 +1140,7 @@ TEST(Parser, expr)
   Expr_printer printer(cout, 0);
 
 #if 1
-  //unsigned i = 20;
+  //unsigned i = 34;
   for (unsigned i=0; i < sizeof(exprs)/sizeof(Expr_Test); i++)
   {
     const Expr_Test &test = exprs[i];
@@ -1157,7 +1157,7 @@ TEST(Parser, expr)
 #if 1
   cout << endl << "=== NEGATIVE TESTS ===" << endl;
 
-  //unsigned i = 9;
+  //unsigned i = 8;
   for (unsigned i=0; i < sizeof(negative_exprs)/sizeof(Expr_Test); i++)
   {
     const Expr_Test &test = negative_exprs[i];
@@ -1169,6 +1169,55 @@ TEST(Parser, expr)
     EXPECT_ERROR(Expression_parser(test.mode, expr).process(printer));
   }
 #endif
+
+#if 1
+
+  cout << endl << "=== NON-ASCII TESTS ===" << endl;
+
+  {
+    Expression_parser parser(Parser_mode::TABLE,
+      u8"\"Mog\u0119 je\u015B\u0107 szk\u0142o\" "
+      u8"+ 'z\u00df\u6c34\U0001f34c' + `z\u00df\u6c34\U0001f34c`"
+    );
+    parser.process(printer);
+  }
+
+  {
+    /*
+      Note: Lengths of the strings are calculated so that the fragments
+      before and after the current parser position in the error description
+      need to be truncated at multi-byte character boundaries.
+    */
+
+    Expression_parser parser(Parser_mode::DOCUMENT,
+      u8"'z\u00df\u6c34\U0001f34c"
+      u8" very long string with non-ascii characters in it'"
+      u8" error\u00df\u6c34\U0001f34c\u00df\u6c34\U0001f34c"
+    );
+    EXPECT_ERROR(parser.process(printer));
+  }
+
+  {
+    // Unterminated string with multi-byte characters
+
+    Expression_parser parser(Parser_mode::DOCUMENT,
+      u8"'z\u00df\u6c34\U0001f34c"
+      u8" error\u00df\u6c34\U0001f34c\u00df\u6c34\U0001f34c"
+    );
+    EXPECT_ERROR(parser.process(printer));
+  }
+
+#endif
+
+  {
+    // samples from: http://www.php.net/manual/en/reference.pcre.pattern.modifiers.php#54805
+
+    Expression_parser parser(Parser_mode::DOCUMENT,
+      "'invalid\xc3\x28utf8'"
+    );
+
+    EXPECT_ERROR(parser.process(printer));
+  }
 }
 
 
@@ -1880,6 +1929,7 @@ TEST(Parser, uri)
                 Query("qry", "val"),Query("qry2", "2017"))
     }
   };
+
 
   //unsigned pos = 23;
   for (unsigned pos = 0; pos < sizeof(test_uri) / sizeof(URI_test); ++pos)

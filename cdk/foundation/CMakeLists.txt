@@ -95,7 +95,7 @@ endif()
 ADD_SUBDIRECTORY(tests)
 
 SET(sources error.cc stream.cc connection_tcpip.cc socket.cc diagnostics.cc
-            string.cc socket_detail.cc)
+            socket_detail.cc)
 
 IF(WITH_SSL)
 

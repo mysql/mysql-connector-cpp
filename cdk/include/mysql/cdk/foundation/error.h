@@ -257,7 +257,7 @@ void throw_system_error(const string &prefix);
 
 class Error : public std::system_error
 {
-  static const string m_default_prefix;
+  static const char* m_default_prefix;
 
 protected:
 
