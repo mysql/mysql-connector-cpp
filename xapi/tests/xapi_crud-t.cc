@@ -50,6 +50,93 @@
        "{\"_id\": \"C8B27676E8A1D1E12C250850273BD114\", \"a_key\": 5, \"b_key\": \"so long world\", \"c_key\": 88.888}"
   };
 
+TEST_F(xapi, test_count)
+{
+  mysqlx_result_t *res;
+  mysqlx_schema_t *schema;
+  mysqlx_collection_t *collection;
+  mysqlx_table_t *table;
+  mysqlx_stmt_t *stmt;
+  mysqlx_row_t *row;
+  const char *schema_name = "cc_crud_test";
+  const char *coll_name = "coll_test";
+  const char *tab_name = "tab_test";
+  char buf[512];
+  int i, j;
+  size_t count = 0;
+  uint64_t rec_count = 0;
+
+  AUTHENTICATE();
+
+  mysqlx_schema_drop(get_session(), schema_name);
+  ERR_CHECK(mysqlx_schema_create(get_session(), schema_name),
+            get_session());
+  schema = mysqlx_get_schema(get_session(), schema_name, 0);
+  ERR_CHECK(mysqlx_collection_create(schema, coll_name), schema);
+  collection = mysqlx_get_collection(schema, coll_name, 0);
+
+  ERR_CHECK(mysqlx_collection_count(collection, &rec_count), collection);
+  EXPECT_EQ(0, rec_count);
+
+  stmt = mysqlx_collection_add_new(collection);
+  for (i = 0; i < 100; ++i)
+  {
+    sprintf(buf, "{\"name\" : \"name %02d\"}", i);
+    ERR_CHECK(mysqlx_set_add_document(stmt, buf), stmt);
+  }
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+  rec_count = 0;
+  ERR_CHECK(mysqlx_collection_count(collection, &rec_count), collection);
+  EXPECT_EQ(100, rec_count);
+
+  sprintf(buf, "CREATE TABLE %s.%s (id int)",
+            schema_name, tab_name);
+  CRUD_CHECK(res = mysqlx_sql(get_session(), buf, MYSQLX_NULL_TERMINATED),
+             get_session());
+  table = mysqlx_get_table(schema, tab_name, 0);
+  ERR_CHECK(mysqlx_table_count(table, &rec_count), table);
+  EXPECT_EQ(0, rec_count);
+
+  stmt = mysqlx_table_insert_new(table);
+  for (i = 0; i < 100; ++i)
+  {
+    ERR_CHECK(mysqlx_set_insert_row(stmt, PARAM_UINT(i), PARAM_END), stmt);
+  }
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+  ERR_CHECK(mysqlx_table_count(table, &rec_count), table);
+  EXPECT_EQ(100, rec_count);
+
+  stmt = mysqlx_table_select_new(table);
+  ERR_CHECK(mysqlx_set_select_where(stmt, "id < 10"), stmt);
+  ERR_CHECK(mysqlx_set_select_order_by(stmt, "id", SORT_ORDER_ASC, PARAM_END), stmt);
+  CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
+
+  ERR_CHECK(mysqlx_get_count(res, &count), res);
+  EXPECT_EQ(10, count);
+
+  ERR_CHECK(mysqlx_get_count(res, &count), res);
+  EXPECT_EQ(10, count);
+
+  j = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    // Call again to make sure rows are inact
+    int64_t id = 0;
+
+    ERR_CHECK(mysqlx_get_count(res, &count), res);
+    EXPECT_EQ((9 - j), count);
+    ERR_CHECK(mysqlx_get_sint(row, 0, &id), row);
+    EXPECT_EQ(j, id);
+    ++j;
+  }
+  EXPECT_EQ(10, j);
+
+  // Check how mysqlx_get_count() handles next result
+  EXPECT_EQ(RESULT_NULL, mysqlx_next_result(res));
+  ERR_CHECK(mysqlx_get_count(res, &count), res);
+  EXPECT_EQ(0, count);
+}
+
 TEST_F(xapi, test_merge_patch)
 {
   SKIP_IF_NO_XPLUGIN

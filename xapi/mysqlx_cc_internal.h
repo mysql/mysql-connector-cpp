@@ -395,6 +395,8 @@ public:
     , m_sess(schema.get_session())
   {}
 
+  uint64_t count();
+
   bool exists()
   {
     return
@@ -452,6 +454,8 @@ public:
     : common::Object_ref(schema.name(), name)
     , m_sess(schema.get_session())
   {}
+
+  uint64_t count();
 
   bool exists()
   {

@@ -56,7 +56,7 @@ using namespace ::std;
 }
 
 #define ERR_CHECK(A, C) if((A) == RESULT_ERROR) { \
-  cout << endl << "Error!" << mysqlx_stmt_error_message(C) << endl; \
+  cout << endl << "Error!" << mysqlx_error_message(C) << endl; \
   FAIL(); \
 }
 

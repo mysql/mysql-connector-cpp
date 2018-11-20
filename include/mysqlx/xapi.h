@@ -170,6 +170,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_VIEW_TYPE_MSG "Statement must be of VIEW type"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_NULL "The output buffer cannot be NULL"
 #define MYSQLX_ERROR_OUTPUT_BUFFER_ZERO "The output buffer cannot have zero length"
+#define MYSQLX_ERROR_OUTPUT_VARIABLE_NULL "The output variable cannot be NULL"
 #define MYSQLX_ERROR_OP_NOT_SUPPORTED "The operation is not supported by the function"
 #define MYSQLX_ERROR_WRONG_SSL_MODE "Wrong value for SSL Mode"
 #define MYSQLX_ERROR_NO_TLS_SUPPORT "Can not create TLS session - this connector is built without TLS support"
@@ -1202,6 +1203,22 @@ mysqlx_sql_new(mysqlx_session_t *sess, const char *query,
 */
 
 /**
+  Return a number of documents in a collection.
+
+  @param collection collection handle
+  @param[out] count the number of documents in a given collection
+          is returned through the parameter
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+
+  @ingroup xapi_coll
+*/
+
+PUBLIC_API int
+mysqlx_collection_count(mysqlx_collection_t *collection, uint64_t *count);
+
+
+/**
   Execute a collection FIND statement with a specific find
   criteria.
 
@@ -1722,6 +1739,22 @@ PUBLIC_API int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
   Table operations
   ====================================================================
 */
+
+
+/**
+  Return a number of rows in a table
+
+  @param table table handle
+  @param[out] the number of rows in a given table is returned
+          through the parameter
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+
+  @ingroup xapi_coll
+*/
+
+PUBLIC_API int
+mysqlx_table_count(mysqlx_table_t *table, uint64_t *count);
 
 
 /**
@@ -2568,7 +2601,34 @@ mysqlx_get_affected_count(mysqlx_result_t *res);
   handle is valid.
 
   @param result result handle
-  @param[out] num number of records buffered
+  @param[out] num number of records buffered. Zero is never returned. If the
+              number of records to buffer is zero the function returns
+              `RESULT_ERR`
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error. If the error
+          occurred it can be retrieved by `mysqlx_error()` function.
+
+  @note Even in case of an error some rows/documents might be buffered if they
+        were retrieved before the error occurred.
+  @note When called for second time on the same result the function
+        does not store anything because the data is already buffered.
+        Instead it returns the number of items that have not been
+        fetched yet.
+
+  @ingroup xapi_res
+*/
+
+PUBLIC_API int
+mysqlx_store_result(mysqlx_result_t *result, size_t *num);
+
+
+/**
+  Function for getting the number of remaining cached items in a result.
+  If nothing is cached if will attempt to store result in the internal
+  cache like `mysqlx_store_result()`.
+
+  @param result result handle
+  @param[out] num number of records buffered.
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error. If the error
           occurred it can be retrieved by `mysqlx_error()` function.
@@ -2580,7 +2640,7 @@ mysqlx_get_affected_count(mysqlx_result_t *res);
 */
 
 PUBLIC_API int
-mysqlx_store_result(mysqlx_result_t *result, size_t *num);
+mysqlx_get_count(mysqlx_result_t *result, size_t *num);
 
 
 /**
