@@ -33,6 +33,9 @@
 
 #include "types.h"
 #include "error.h"
+
+PUSH_SYS_WARNINGS_CDK
+
 #ifdef HAVE_CODECVT_UTF8
 #include <codecvt>
 #else
@@ -42,6 +45,7 @@
 #include <limits>         // for std::numeric_limits
 #include <string.h>       // for memset
 
+POP_SYS_WARNINGS_CDK
 
 namespace cdk {
 namespace foundation {

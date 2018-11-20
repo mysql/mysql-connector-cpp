@@ -32,7 +32,7 @@
 //include socket_detail.h before ssl.h because it includes winsock2.h
 //which must be included before winsock.h
 #include "socket_detail.h"
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <openssl/ssl.h>
 #ifdef WITH_SSL_WOLFSSL
 
@@ -45,7 +45,7 @@ PUSH_SYS_WARNINGS
 #else
 #include <openssl/err.h>
 #endif
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_openssl.h>
 #include <mysql/cdk/foundation/opaque_impl.i>
@@ -296,7 +296,11 @@ void connection_TLS_impl::do_connect()
         cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_CA
         )
     {
-      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_PEER , NULL);
+      /*
+        Warnings must be disabled because of a bug in Visual Studio 2017 compiler:
+        https://developercommunity.visualstudio.com/content/problem/130244/c-warning-c5039-reported-for-nullptr-argument.html
+      */
+      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_PEER, nullptr);
 
       if (SSL_CTX_load_verify_locations(
             m_tls_ctx,
@@ -307,7 +311,7 @@ void connection_TLS_impl::do_connect()
     }
     else
     {
-      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_NONE, 0);
+      SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_NONE, nullptr);
     }
 
     m_tls = SSL_new(m_tls_ctx);

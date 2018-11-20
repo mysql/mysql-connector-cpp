@@ -37,9 +37,9 @@
 #include "protocol.h"
 #include "builders.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <iostream>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 PUSH_PB_WARNINGS
 #include "protobuf/mysqlx_session.pb.h"

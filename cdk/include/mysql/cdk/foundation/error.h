@@ -44,11 +44,11 @@
 #include "error_category.h"
 #include "std_error_conditions.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <ostream>
 #include <stdexcept>
 #include <string.h>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 /*
   On Windows, above includes define ERROR macro which breaks

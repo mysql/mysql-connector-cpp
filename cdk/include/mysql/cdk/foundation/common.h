@@ -37,40 +37,40 @@
 
 #if defined __GNUC__ || defined __clang__
 
-#define PRAGMA(X) _Pragma(#X)
-#define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
+#define PRAGMA_CDK(X) _Pragma(#X)
+#define DISABLE_WARNING_CDK(W) PRAGMA_CDK(GCC diagnostic ignored #W)
 
 #if defined __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#define DIAGNOSTIC_PUSH PRAGMA(GCC diagnostic push)
-#define DIAGNOSTIC_POP  PRAGMA(GCC diagnostic pop)
+#define DIAGNOSTIC_PUSH_CDK PRAGMA_CDK(GCC diagnostic push)
+#define DIAGNOSTIC_POP_CDK  PRAGMA_CDK(GCC diagnostic pop)
 #else
-#define DIAGNOSTIC_PUSH
-#define DIAGNOSTIC_POP
+#define DIAGNOSTIC_PUSH_CDK
+#define DIAGNOSTIC_POP_CDK
 #endif
 
 #elif defined _MSC_VER
 
 
-#define PRAGMA(X) __pragma(X)
-#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
+#define PRAGMA_CDK(X) __pragma(X)
+#define DISABLE_WARNING_CDK(W) PRAGMA_CDK(warning (disable:W))
 
-#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
-#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
+#define DIAGNOSTIC_PUSH_CDK  PRAGMA_CDK(warning (push))
+#define DIAGNOSTIC_POP_CDK   PRAGMA_CDK(warning (pop))
 
 #else
 
-#define PRAGMA(X)
-#define DISABLE_WARNING(W)
+#define PRAGMA_CDK(X)
+#define DISABLE_WARNING_CDK(W)
 
-#define DIAGNOSTIC_PUSH
-#define DIAGNOSTIC_POP
+#define DIAGNOSTIC_PUSH_CDK
+#define DIAGNOSTIC_POP_CDK
 
 #endif
 
 
 /*
   Macros to disable compile warnings in system headers. Put
-  PUSH_SYS_WARNINGS/POP_SYS_WARNINGS around sytem header includes.
+  PUSH_SYS_WARNINGS_CDK/POP_SYS_WARNINGS_CDK around sytem header includes.
 */
 
 #if defined _MSC_VER
@@ -78,21 +78,38 @@
 /*
   Warning 4350 is triggered by std::shared_ptr<> implementation
   - see https://msdn.microsoft.com/en-us/library/0eestyah.aspx
+
+  Warning 4365 conversion from 'type_1' to 'type_2', signed/unsigned mismatch
+  - see https://msdn.microsoft.com/en-us/library/ms173683.aspx
+
+  Warning 4774 format string expected in argument <position> is not a
+  string literal
 */
 
-#define PUSH_SYS_WARNINGS \
-  PRAGMA(warning (push,2)) \
-  DISABLE_WARNING(4350) \
-  DISABLE_WARNING(4738) \
-  DISABLE_WARNING(4548)
+#define PUSH_SYS_WARNINGS_CDK \
+  PRAGMA_CDK(warning (push,2)) \
+  DISABLE_WARNING_CDK(4350) \
+  DISABLE_WARNING_CDK(4738) \
+  DISABLE_WARNING_CDK(4548) \
+  DISABLE_WARNING_CDK(4365) \
+  DISABLE_WARNING_CDK(4774) \
+  DISABLE_WARNING_CDK(4244)
+
+#define PUSH_MSVC17_WARNINGS_CDK \
+  PRAGMA_CDK(warning (push,2)) \
+  DISABLE_WARNING_CDK(5039)
+
+#define POP_MSVC17_VARNINGS_CDK DIAGNOSTIC_POP_CDK
 
 #else
 
-#define PUSH_SYS_WARNINGS DIAGNOSTIC_PUSH
+#define PUSH_SYS_WARNINGS_CDK DIAGNOSTIC_PUSH_CDK
+#define PUSH_MSVC17_WARNINGS_CDK
+#define POP_MSVC17_VARNINGS_CDK
 
 #endif
 
-#define POP_SYS_WARNINGS  DIAGNOSTIC_POP
+#define POP_SYS_WARNINGS_CDK  DIAGNOSTIC_POP_CDK
 
 
 // Avoid warnings from Protobuf includes
@@ -104,25 +121,26 @@
   in tracing protbuf code warnings.
 */
 
-#define PUSH_PB_WARNINGS  PRAGMA(warning(push,1))
+#define PUSH_PB_WARNINGS  PRAGMA_CDK(warning(push,1)) \
+   DISABLE_WARNING_CDK(4365)
 
 #else
 
-#define PUSH_PB_WARNINGS DIAGNOSTIC_PUSH \
-    DISABLE_WARNING(-Wshadow) \
-    DISABLE_WARNING(-Wunused-parameter) \
-    DISABLE_WARNING(-Wdeprecated-declarations) \
+#define PUSH_PB_WARNINGS DIAGNOSTIC_PUSH_CDK \
+    DISABLE_WARNING_CDK(-Wshadow) \
+    DISABLE_WARNING_CDK(-Wunused-parameter) \
+    DISABLE_WARNING_CDK(-Wdeprecated-declarations) \
 
 #endif
 
-#define POP_PB_WARNINGS   DIAGNOSTIC_POP
+#define POP_PB_WARNINGS   DIAGNOSTIC_POP_CDK
 
 
 /*
   Include common system headers.
 */
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 
 #if defined(_WIN32)
 
@@ -163,7 +181,7 @@ PUSH_SYS_WARNINGS
 #include <limits>
 #include <utility>
 
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #undef max
 #undef THROW

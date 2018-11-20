@@ -34,8 +34,6 @@
 #undef min
 #undef max
 
-#include <cassert>
-
 /*
   Common definitions and declarations that are needed by public headers.
 
@@ -49,6 +47,10 @@
 #include "common/util.h"
 #include "common/value.h"
 #include "common/settings.h"
+
+PUSH_SYS_WARNINGS
+#include <cassert>
+POP_SYS_WARNINGS
 
 
 /*

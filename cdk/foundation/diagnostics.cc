@@ -30,9 +30,9 @@
 
 #include <mysql/cdk/foundation/diagnostics.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <algorithm>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 using namespace cdk;
 

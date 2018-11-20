@@ -33,7 +33,7 @@
 
 #include <mysql/cdk.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <string>
 #include <vector>
 #include <map>
@@ -41,7 +41,7 @@ PUSH_SYS_WARNINGS
 #include <memory>
 #include <stdexcept>
 #include <sstream>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #undef WORD
 
@@ -620,9 +620,9 @@ namespace parser {
     used below because it is considered unsafe.
   */
 
-  DIAGNOSTIC_PUSH
+  DIAGNOSTIC_PUSH_CDK
   #if _MSC_VER
-  DISABLE_WARNING(4996)
+  DISABLE_WARNING_CDK(4996)
   #endif
 
   template <
@@ -679,7 +679,7 @@ namespace parser {
     }
   }
 
-  DIAGNOSTIC_POP
+  DIAGNOSTIC_POP_CDK
 
 
   /*
