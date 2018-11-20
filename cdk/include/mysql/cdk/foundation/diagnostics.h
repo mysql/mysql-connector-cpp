@@ -32,6 +32,7 @@
 #define MYSQL_CDK_FOUNDATION_DIAGNOSTICS_H
 
 #include "error.h"
+#include "types.h"
 
 PUSH_SYS_WARNINGS
 #include <vector>

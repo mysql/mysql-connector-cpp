@@ -257,7 +257,7 @@ static size_t convert(bytes buf, T &val)
 
     // TODO: better error description
     throw_error(cdkerrc::conversion_error,
-                L"Number_codec: no data for conversion");
+                "Number_codec: no data for conversion");
 
     return 0;
   }
@@ -362,7 +362,7 @@ class Number_codec<
   {
     if (buf.size() < 1)
       throw_error(cdkerrc::conversion_error,
-                  L"Number_codec: no data for conversion");
+                  "Number_codec: no data for conversion");
     val= *buf.begin();
     return 1;
   }

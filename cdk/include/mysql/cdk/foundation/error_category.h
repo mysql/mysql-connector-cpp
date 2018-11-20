@@ -33,7 +33,9 @@
 
 #include "common.h"
 
+PUSH_SYS_WARNINGS
 #include <system_error>
+POP_SYS_WARNINGS
 
 
 namespace cdk {
