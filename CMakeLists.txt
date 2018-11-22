@@ -172,6 +172,7 @@ if(SUNPRO)
 
   set(options
     -m64
+    -mt
     -xatomic=studio
     -xtarget=generic     # more portable code
     -xdebuginfo=no%decl  # faster build times
@@ -394,7 +395,7 @@ else()
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-fvisibility-ms-compat)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-    add_compile_options(-xldscope=hidden)
+    add_compile_options(-xldscope=symbolic)
   elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fvisibility=hidden)
   endif()

@@ -70,6 +70,7 @@ if(cdk_stand_alone)
 
     set(options
       -m64
+      -mt
       -std=c++11
       -library=stdcpp
       -xatomic=studio
