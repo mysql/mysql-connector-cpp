@@ -28,3 +28,4 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 CONFIGURE_FILE(mysql-connector-c++.spec.in ${CMAKE_CURRENT_BINARY_DIR}/mysql-connector-c++.spec @ONLY)
+ADD_SUBDIRECTORY(deb-in)
