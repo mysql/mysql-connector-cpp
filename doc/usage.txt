@@ -72,7 +72,7 @@ option).
 Due to ABI incompatiblities between different compiler versions, the code
 that uses Connector/C++ libraries should be built with the same compiler
 version as the connector itself. The information about compiler version used
-to build connector libraries can be found inside `BUILDINFO.txt` file
+to build connector libraries can be found inside `INFO_BIN` file
 distributed with the connector. In principle a different version of the
 compiler can be used provided that it is ABI compatible, but it is difficult to
 determine which versions of the compiler are ABI compatible with each other.
@@ -302,7 +302,7 @@ and the application are the same.
 
 The binary distribution of Connector/C++ 8.0 ships libraries built in the
 release mode using dynamic runtime (`/MD`). The libraries are built with
-MSVC 2015 (the exact compiler version can be found in `BUILDINFO.txt` file
+MSVC 2015 (the exact compiler version can be found in `INFO_BIN` file
 included in the package). Consequently the code that uses these libraries must
 be built with the same version of MSVC and in the '/MD' mode. To build your
 code in different mode you must build the connector library in the same mode
