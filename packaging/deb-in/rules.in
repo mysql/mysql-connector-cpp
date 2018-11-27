@@ -39,7 +39,7 @@ override_dh_auto_configure:
 		-DINSTALL_LIB_DIR=lib/$(DEB_HOST_MULTIARCH) \
 		-DWITH_JDBC=ON \
 		-DWITH_SSL=system \
-        @DEB_CMAKE_EXTRAS@
+		@DEB_CMAKE_EXTRAS@
 
 	mkdir static && cd static && \
 	cmake .. \
@@ -49,7 +49,7 @@ override_dh_auto_configure:
 		-DINSTALL_LIB_DIR_STATIC=lib/$(DEB_HOST_MULTIARCH) \
 		-DWITH_JDBC=ON \
 		-DWITH_SSL=system \
-        @DEB_CMAKE_EXTRAS@
+		@DEB_CMAKE_EXTRAS@
 
 	touch $@
 
