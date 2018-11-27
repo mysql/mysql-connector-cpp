@@ -1897,8 +1897,8 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
   uint64_t  uint_data = 0;
   const char *char_data = NULL;
 
-  using Option = mysqlx_session_options_struct::Option_impl;
-  using ClientOption = mysqlx_session_options_struct::Client_option_impl;
+  using Option = mysqlx_session_options_struct::Session_option_impl;
+  using COption = mysqlx_session_options_struct::Client_option_impl;
 
   mysqlx_session_options_struct::Setter set(*opt);
 
@@ -1906,12 +1906,8 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
     va_start(args, opt);
 
-    while (0 != (type = mysqlx_opt_type_enum(va_arg(args, int))))
+    while (0 != (type = va_arg(args, int)))
     {
-      if (type >= mysqlx_opt_type_enum::MYSQLX_OPT_LAST ||
-          type <= mysqlx_client_opt_type_t::MYSQLX_CLIENT_OPT_LAST)
-        throw Mysqlx_exception("Unrecognized connection option");
-
       switch (type)
       {
 
@@ -1939,15 +1935,14 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 #define CLIENT_OPT_SET_bool(X,N) \
             case -N: \
             { uint_data = va_arg(args, int); \
-              set.key_val(ClientOption::X)->scalar()->num(uint_data); }; \
+              set.key_val(COption::X)->scalar()->num(uint_data); }; \
             break;
 
 #define CLIENT_OPT_SET_num(X,N) \
         case -N: \
         { uint_data = va_arg(args, uint64_t); \
-          set.key_val(ClientOption::X)->scalar()->num(uint_data); }; \
+          set.key_val(COption::X)->scalar()->num(uint_data); }; \
         break;
-#define CLIENT_OPT_SET_end(X,N) //let it use default
 
         CLIENT_OPTION_LIST(CLIENT_OPT_SET)
 
@@ -1993,7 +1988,7 @@ mysqlx_session_option_get(
   ...
 )
 {
-  using Option = mysqlx_session_options_struct::Option_impl;
+  using Option = mysqlx_session_options_struct::Session_option_impl;
 
   SAFE_EXCEPTION_BEGIN(opt, RESULT_ERROR)
 

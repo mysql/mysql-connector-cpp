@@ -1968,3 +1968,137 @@ TEST_F(Sess, pool_ttl)
   }
 
 }
+
+
+TEST_F(Sess, settings_iterator)
+{
+  {
+    mysqlx::ClientSettings client_settings(
+          ClientOption::POOLING, true,
+          ClientOption::POOL_MAX_IDLE_TIME, 3,
+          SessionOption::AUTH, AuthMethod::PLAIN,
+          ClientOption::POOL_MAX_SIZE, 1,
+          ClientOption::POOL_QUEUE_TIMEOUT, 2,
+          SessionOption::SSL_MODE, SSLMode::DISABLED,
+          SessionOption::HOST, "localhost1",
+          SessionOption::PORT, 1,
+          SessionOption::PRIORITY, 1,
+          SessionOption::HOST, "localhost2",
+          SessionOption::PORT, 2,
+          SessionOption::PRIORITY, 2,
+          SessionOption::USER, get_user(),
+          SessionOption::PWD, get_password(),
+          SessionOption::DB, "test");
+
+    uint64_t host_count = 1;
+    uint64_t port_count = 1;
+    uint64_t prio_count = 1;
+
+    for (auto set : client_settings)
+    {
+      ClientOption c_opt(set.first);
+      std::cout << ClientOptionName(c_opt) << std::endl;
+
+      switch(c_opt)
+      {
+        case ClientOption::POOLING:
+          EXPECT_TRUE(set.second.get<bool>());
+          break;
+        case SessionOption::URI:
+          break;
+        case SessionOption::HOST:
+          {
+            std::stringstream hostname;
+            hostname << "localhost" << host_count++;
+            EXPECT_EQ(hostname.str(), set.second.get<std::string>());
+          }
+          break;
+        case SessionOption::PORT:
+          {
+            EXPECT_EQ(port_count++, set.second.get<unsigned int>());
+          }
+          break;
+      }
+
+      if(set.first == ClientOption::POOL_MAX_SIZE)
+        EXPECT_EQ(1, set.second.get<unsigned int>());
+      else if(set.first == ClientOption::POOL_QUEUE_TIMEOUT)
+        EXPECT_EQ(2, set.second.get<unsigned int>());
+      else if(set.first == ClientOption::POOL_MAX_IDLE_TIME)
+        EXPECT_EQ(3, set.second.get<unsigned int>());
+      else if(set.first == SessionOption::PRIORITY)
+        EXPECT_EQ(prio_count++, set.second.get<unsigned int>());
+      else if(set.first == SessionOption::AUTH)
+        EXPECT_EQ(static_cast<int>(AuthMethod::PLAIN), set.second.get<int>());
+      else if(set.first == SessionOption::SSL_MODE)
+        EXPECT_EQ(static_cast<int>(SSLMode::DISABLED), set.second.get<int>());
+      else if(set.first == SessionOption::USER)
+        EXPECT_EQ(std::string(get_user()), set.second.get<std::string>());
+      else if(set.first == SessionOption::PWD)
+      {
+        if (get_password())
+          EXPECT_EQ(std::string(get_password()), set.second.get<std::string>());
+        else
+          EXPECT_TRUE(set.second.get<std::string>().empty());
+      }
+      else if(set.first == SessionOption::DB)
+        EXPECT_EQ(std::string("test"), set.second.get<std::string>());
+
+    }
+  }
+
+  {
+    mysqlx::SessionSettings session_settings(
+          SessionOption::AUTH, AuthMethod::PLAIN,
+          SessionOption::SSL_MODE, SSLMode::DISABLED,
+          SessionOption::HOST, "localhost1",
+          SessionOption::PORT, 1,
+          SessionOption::PRIORITY, 1,
+          SessionOption::HOST, "localhost2",
+          SessionOption::PORT, 2,
+          SessionOption::PRIORITY, 2,
+          SessionOption::USER, get_user(),
+          SessionOption::PWD, get_password(),
+          SessionOption::DB, "test");
+
+    uint64_t host_count = 1;
+    uint64_t port_count = 1;
+    uint64_t prio_count = 1;
+
+    for (auto set : session_settings)
+    {
+      SessionOption s_opt(set.first);
+      ClientOption c_opt(set.first);
+      std::cout << SessionOptionName(s_opt) << std::endl;
+      std::cout << ClientOptionName(c_opt) << std::endl;
+      if (set.first == SessionOption::HOST)
+      {
+        std::stringstream hostname;
+        hostname << "localhost" << host_count++;
+        EXPECT_EQ(hostname.str(), set.second.get<std::string>());
+      }
+      else if(set.first == SessionOption::PORT)
+      {
+        EXPECT_EQ(port_count++, set.second.get<unsigned int>());
+      }
+      else if(set.first == SessionOption::PRIORITY)
+        EXPECT_EQ(prio_count++, set.second.get<unsigned int>());
+      else if(set.first == SessionOption::AUTH)
+        EXPECT_EQ(static_cast<int>(AuthMethod::PLAIN), set.second.get<int>());
+      else if(set.first == SessionOption::SSL_MODE)
+        EXPECT_EQ(static_cast<int>(SSLMode::DISABLED), set.second.get<int>());
+      else if(set.first == SessionOption::USER)
+        EXPECT_EQ(std::string(get_user()), set.second.get<std::string>());
+      else if(set.first == SessionOption::PWD)
+      {
+        if (get_password())
+          EXPECT_EQ(std::string(get_password()), set.second.get<std::string>());
+        else
+          EXPECT_TRUE(set.second.get<string>().empty());
+      }
+      else if(set.first == SessionOption::DB)
+        EXPECT_EQ(std::string("test"), set.second.get<std::string>());
+
+    }
+  }
+}

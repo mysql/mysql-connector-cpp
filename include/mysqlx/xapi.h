@@ -364,7 +364,6 @@ typedef enum mysqlx_client_opt_type_enum
 #define XAPI_CLIENT_OPT_ENUM_bool(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 #define XAPI_CLIENT_OPT_ENUM_num(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 #define XAPI_CLIENT_OPT_ENUM_any(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
-#define XAPI_CLIENT_OPT_ENUM_end(X,N)  MYSQLX_CLIENT_OPT_##X = -N,
 
   CLIENT_OPTION_LIST(XAPI_CLIENT_OPT_ENUM)
 }
