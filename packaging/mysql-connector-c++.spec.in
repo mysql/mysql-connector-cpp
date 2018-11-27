@@ -196,7 +196,7 @@ popd
 
 # Add compat dir and remove unwanted file
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
-rm %{buildroot}/usr/BUILDINFO.txt
+rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
@@ -213,7 +213,7 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %{_libdir}/libmysqlcppconn.so.7*
 
 %files devel
-%doc README.txt LICENSE.txt build-dynamic/BUILDINFO.txt
+%doc README.txt LICENSE.txt INFO_SRC INFO_BIN
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so
@@ -235,6 +235,9 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %endif
 
 %changelog
+* Tue Nov 27 2018 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.14-1
+- Added INFO_BIN and INFO_SRC files
+
 * Fri Aug 24 2018 Kent Boortz <kent.boortz@oracle.com> - 8.0.13-1
 - Added "test" package
 
