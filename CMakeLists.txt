@@ -55,6 +55,7 @@ ENDIF()
 set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
 
+
 ##########################################################################
 
 PROJECT(MySQL_CONCPP)

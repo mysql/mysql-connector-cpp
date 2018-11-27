@@ -126,11 +126,13 @@ TEST_OPTS=
 mkdir build-dynamic && pushd build-dynamic
 %if 0%{?fedora} || 0%{?rhel}
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
     ${TEST_OPTS}
 %else
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
     ${TEST_OPTS} \
     -DCMAKE_INSTALL_PREFIX="%_prefix" \
+    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
     -DCMAKE_C_FLAGS:STRING="%optflags" \
     -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
@@ -192,9 +194,7 @@ mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/static/
 %endif
 popd
 
-# Adjust the directory structure for header files
-install -d -m0755 %{buildroot}%{_includedir}/mysql-cppconn-8
-mv %{buildroot}%{_includedir}/{jdbc,mysqlx} %{buildroot}%{_includedir}/mysql-cppconn-8
+# Add compat dir and remove unwanted file
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
 rm %{buildroot}/usr/BUILDINFO.txt
 

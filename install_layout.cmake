@@ -56,20 +56,37 @@ if(NOT DEFINED IS64BIT)
   message(FATAL_ERROR "IS64BIT not defined!")
 endif()
 
+#
+# Default locations, if not overridden with cmake options
+#
+
+set(CMAKE_INSTALL_INCLUDEDIR "include" CACHE STRING
+  "Include Install location (Relative to CMAKE_INSTALL_PREFIX)")
+
 if(IS64BIT)
-  set(INSTALL_LIB_DIR "lib64")
+  set(CMAKE_INSTALL_LIBDIR "lib64" CACHE STRING
+    "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
 else()
-  set(INSTALL_LIB_DIR "lib")
+  set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING
+    "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
 endif()
 
+set(CMAKE_INSTALL_DOCDIR "." CACHE STRING
+  "Doc Install location (Relative to CMAKE_INSTALL_PREFIX)")
+
+#
+# These variables should be used in install specs.
+#
+
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 
 set(INSTALL_LIB_DIR_STATIC "${INSTALL_LIB_DIR}")
 if(VS)
   set(INSTALL_LIB_DIR_STATIC "${INSTALL_LIB_DIR_STATIC}/${VS}")
 endif()
 
-set(INSTALL_INCLUDE_DIR include)
-set(INSTALL_DOC_DIR doc)
+set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+set(INSTALL_DOC_DIR ${CMAKE_INSTALL_DOCDIR})
 
 #
 # Store layout settings in the cache.
