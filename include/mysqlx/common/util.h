@@ -31,6 +31,79 @@
 #ifndef MYSQLX_COMMON_UTIL_H
 #define MYSQLX_COMMON_UTIL_H
 
+/*
+  Macros used to disable warnings for fragments of code.
+*/
+
+#if defined __GNUC__ || defined __clang__
+
+#define PRAGMA(X) _Pragma(#X)
+#define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
+
+#if defined __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#define DIAGNOSTIC_PUSH PRAGMA(GCC diagnostic push)
+#define DIAGNOSTIC_POP  PRAGMA(GCC diagnostic pop)
+#else
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+#endif
+
+#elif defined _MSC_VER
+
+
+#define PRAGMA(X) __pragma(X)
+#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
+
+#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
+#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
+
+#else
+
+#define PRAGMA(X)
+#define DISABLE_WARNING(W)
+
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+
+#endif
+
+
+/*
+  Macros to disable compile warnings in system headers. Put
+  PUSH_SYS_WARNINGS/POP_SYS_WARNINGS around sytem header includes.
+*/
+
+#if defined _MSC_VER
+
+/*
+  Warning 4350 is triggered by std::shared_ptr<> implementation
+  - see https://msdn.microsoft.com/en-us/library/0eestyah.aspx
+
+  Warning 4365 conversion from 'type_1' to 'type_2', signed/unsigned mismatch
+  - see https://msdn.microsoft.com/en-us/library/ms173683.aspx
+
+  Warning 4774 format string expected in argument <position> is not a
+  string literal
+*/
+
+#define PUSH_SYS_WARNINGS \
+  PRAGMA(warning (push,2)) \
+  DISABLE_WARNING(4350) \
+  DISABLE_WARNING(4738) \
+  DISABLE_WARNING(4548) \
+  DISABLE_WARNING(4365) \
+  DISABLE_WARNING(4774) \
+  DISABLE_WARNING(4244)
+
+#else
+
+#define PUSH_SYS_WARNINGS DIAGNOSTIC_PUSH
+
+#endif
+
+#define POP_SYS_WARNINGS  DIAGNOSTIC_POP
+
+PUSH_SYS_WARNINGS
 
 #include <string>
 #include <stdexcept>
@@ -43,6 +116,7 @@
 #include <functional>
 #include <type_traits>
 
+POP_SYS_WARNINGS
 
 /*
   Macro to be used to disable "implicit fallthrough" gcc warning

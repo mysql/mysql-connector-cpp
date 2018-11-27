@@ -39,11 +39,11 @@
 
 #include "common.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <type_traits> // std::aligned_storage
 #include <typeinfo>
 #include <new>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 /*

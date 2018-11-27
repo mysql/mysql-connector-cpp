@@ -53,16 +53,16 @@
 
 #include "protocol.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <memory.h> // for memcpy
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 #ifdef DEBUG_PROTOBUF
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <iostream>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #define MSG_CLIENT_name_client(MSG,N,C) case msg_type::cli_##N: return #MSG;
 #define MSG_SERVER_name_client(MSG,N,C)
@@ -121,7 +121,7 @@ static void log_handler(LogLevel level, const char* filename, int line, const st
 #ifdef _WIN32
 BOOL CALLBACK log_handler_init( PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContext)
 {
-  SetLogHandler(log_handler);
+  SetLogHandler(&log_handler);
   return TRUE;
 }
 #else
@@ -143,7 +143,10 @@ Protocol_impl::Protocol_impl(Protocol::Stream *str, Protocol_side side)
   , m_msg_state(PAYLOAD)
   , m_msg_size(0)
 {
-  EXECUTE_ONCE(&log_handler_once, &log_handler_init);
+	// Warning can be disabled because the handler is not called, only registered
+	PUSH_MSVC17_WARNINGS_CDK
+	EXECUTE_ONCE(&log_handler_once, &log_handler_init);
+	POP_MSVC17_VARNINGS_CDK
 
   // Allocate initial I/O buffers
 

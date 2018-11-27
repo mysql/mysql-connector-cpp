@@ -30,16 +30,16 @@
 
 #include "json_parser.h"
 #include <mysql/cdk.h>
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include "rapidjson/reader.h"
 #include "rapidjson/error/en.h"
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 #include <stack>
 
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdlib.h>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 /*

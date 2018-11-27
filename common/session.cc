@@ -33,9 +33,12 @@
 #include <uuid_gen.h>
 #include <uri_parser.h>
 #include <json_parser.h>
+
+PUSH_SYS_WARNINGS
 #include <chrono>
 #include <ratio>
 #include <thread>
+POP_SYS_WARNINGS
 
 #include "settings.h"
 #include "session.h"
