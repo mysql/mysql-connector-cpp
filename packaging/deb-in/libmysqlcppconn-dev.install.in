@@ -32,7 +32,9 @@ usr/include/mysqlx/common/*.h usr/include/mysql-cppconn-8/mysqlx/common
 usr/include/jdbc/*.h usr/include/mysql-cppconn-8/jdbc
 usr/include/jdbc/cppconn/*.h usr/include/mysql-cppconn-8/jdbc/cppconn
 
-/usr/BUILDINFO.txt /usr/share/doc/libmysqlcppconn-dev
+# Build info
+/usr/INFO_SRC /usr/share/doc/libmysqlcppconn-dev
+/usr/INFO_BIN /usr/share/doc/libmysqlcppconn-dev
 
 # Legal
 usr/LICENSE.txt /usr/share/doc/libmysqlcppconn-dev

@@ -22,6 +22,10 @@
 
 usr/lib/*/libmysqlcppconn8.so.1*
 
+# Build info
+/usr/INFO_SRC /usr/share/doc/libmysqlcppconn8-1
+/usr/INFO_BIN /usr/share/doc/libmysqlcppconn8-1
+
 # Legal
 usr/LICENSE.txt /usr/share/doc/libmysqlcppconn8-1
 usr/README.txt /usr/share/doc/libmysqlcppconn8-1
