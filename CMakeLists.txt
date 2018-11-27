@@ -837,12 +837,12 @@ add_test(NAME Link_test
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
-
 #
-# Create the BUILDINFO file
+# Create the INFO_SRC and INFO_BIN files
 # =========================
 #
 include(buildinfo.cmake)
+
 
 #
 # Packaging specifications

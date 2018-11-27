@@ -148,3 +148,25 @@ SET(WOLFCRYPT_SOURCES ${WOLFCRYPT_SOURCE_DIR}/src/aes.c
 # misc.c is not compiled in since using INLINE
 
 ADD_LIBRARY(wolfcrypt ${WOLFCRYPT_SOURCES})
+
+set(GETWOLFSSLVERSION_SOURCEFILE "${CMAKE_CURRENT_BINARY_DIR}/getwolfsslversion.c")
+file(WRITE "${GETWOLFSSLVERSION_SOURCEFILE}"
+       "#include <stdio.h>\n"
+       "#include <ssl.h>\n"
+       "int main() {\n"
+       "  printf(\"%s\", LIBWOLFSSL_VERSION_STRING);\n"
+       "}\n"
+  )
+
+  # Compile and run the created executable, store output in MYSQL_VERSION
+  try_run(_run_result _compile_result
+    "${CMAKE_BINARY_DIR}"
+    "${GETWOLFSSLVERSION_SOURCEFILE}"
+    CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${SSL_INCLUDES}"
+    RUN_OUTPUT_VARIABLE _WOLFSSL_VERSION
+  )
+
+IF (_WOLFSSL_VERSION)
+  SET(WOLFSSL_VERSION_GLOBAL ${_WOLFSSL_VERSION} CACHE INTERNAL "WolfSSL Version")
+  UNSET(OPENSSL_VERSION_GLOBAL CACHE)
+ENDIF()
