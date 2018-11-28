@@ -211,7 +211,7 @@ protected:
 
     if ((upper_version < test_upper_version) ||
       (upper_version == test_upper_version &&
-        minor_version << test_lower_version) ||
+        minor_version < test_lower_version) ||
         (upper_version == test_upper_version &&
           minor_version == test_lower_version &&
           release_version < test_release_version))
