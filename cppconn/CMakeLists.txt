@@ -26,6 +26,9 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+INCLUDE(CheckIncludeFiles)
+INCLUDE(CheckFunctionExists)
+INCLUDE(CheckTypeSize)
 
 
 CHECK_INCLUDE_FILES(stdint.h HAVE_STDINT_H)
@@ -57,10 +60,8 @@ CHECK_FUNCTION_EXISTS(strtoull HAVE_FUNCTION_STRTOULL)
 CHECK_FUNCTION_EXISTS(strtoimax HAVE_FUNCTION_STRTOIMAX)
 CHECK_FUNCTION_EXISTS(strtoumax HAVE_FUNCTION_STRTOUMAX)
 
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cm
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
+CONFIGURE_FILE(config.h.cm config.h)
+CONFIGURE_FILE(version_info.h.cmake version_info.h @ONLY)
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
     build_config.h
@@ -80,4 +81,4 @@ SET(MYSQLCPPCONN_INSTALL_HEADERS
     ${CMAKE_CURRENT_BINARY_DIR}/version_info.h
     variant.h)
 
-INSTALL(FILES ${MYSQLCPPCONN_INSTALL_HEADERS} DESTINATION include/cppconn COMPONENT JDBCDev)
+INSTALL(FILES ${MYSQLCPPCONN_INSTALL_HEADERS} DESTINATION include/jdbc/cppconn COMPONENT JDBCDev)

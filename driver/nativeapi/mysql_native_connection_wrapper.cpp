@@ -30,8 +30,8 @@
 
 
 
-#include <sqlstring.h>
-#include <exception.h>
+#include <cppconn/sqlstring.h>
+#include <cppconn/exception.h>
 
 #include <boost/scoped_array.hpp>
 

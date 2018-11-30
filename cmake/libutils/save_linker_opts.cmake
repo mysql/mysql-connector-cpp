@@ -1,4 +1,4 @@
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,30 +26,57 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+##########################################################################
+#
+# This script is invoked as a wrapper for linker invocation
+# (via RULE_LAUNCH_LINK property) to save arguments passed to the linker
+# for later processing by merge_archives.cmake script.
+#
+# OUTPUT_FILE = file where to save linker arguments
+#
 
-SET(CONNECTOR_MAJOR "@CONCPP_VERSION_MAJOR@")
-SET(CONNECTOR_MINOR "@CONCPP_VERSION_MINOR@")
-SET(CONNECTOR_PATCH "@CONCPP_VERSION_MICRO@")
-SET(CONNECTOR_LEVEL "@CONCPP_VERSION_LEVEL@")
-SET(CONNECTOR_QUALITY "GA")
+#message("-- out: ${OUTPUT_FILE}")
+#message("-- argc: ${CMAKE_ARGC}")
 
-# Bump this every time we change the API/ABI
-SET(MYSQLCPPCONN_SOVERSION "@JDBC_ABI_VERSION_MAJOR@")
+if(NOT DEFINED OUTPUT_FILE)
+  message(FATAL_ERROR "No output file given")
+endif()
 
-IF(CONNECTOR_MINOR LESS 10)
-        SET(CONNECTOR_MINOR_PADDED "0${CONNECTOR_MINOR}")
-ELSE(CONNECTOR_MINOR LESS 10)
-        SET(CONNECTOR_MINOR_PADDED "${CONNECTOR_MINOR}")
-ENDIF(CONNECTOR_MINOR LESS 10)
+if(EXISTS "${OUTPUT_FILE}")
+  file(REMOVE ${OUTPUT_FILE})
+endif()
 
-# If driver survives 100th patch this has to be changed
-IF(CONNECTOR_PATCH LESS 10)
-        SET(CONNECTOR_PATCH_PADDED "000${CONNECTOR_PATCH}")
-ELSE(CONNECTOR_PATCH LESS 10)
-        SET(CONNECTOR_PATCH_PADDED "00${CONNECTOR_PATCH}")
-ENDIF(CONNECTOR_PATCH LESS 10)
+set(argn 1)
 
-SET(CONNECTOR_BASE_VERSION    "${CONNECTOR_MAJOR}.${CONNECTOR_MINOR}")
-SET(CONNECTOR_BASE_PREVIOUS   "1.0")
-SET(CONNECTOR_NUMERIC_VERSION "${CONNECTOR_BASE_VERSION}.${CONNECTOR_PATCH}")
-SET(CONNECTOR_VERSION         "${CONNECTOR_NUMERIC_VERSION}${CONNECTOR_LEVEL}")
+#
+# Ingore all arguments up to first "--"
+#
+
+while(argn LESS CMAKE_ARGC)
+
+  if("${CMAKE_ARGV${argn}}" STREQUAL "--")
+    # Note: we also skip the next argument, which is the linker executable
+    math(EXPR argn "${argn}+2")
+    break()
+  endif()
+
+  math(EXPR argn "${argn}+1")
+
+endwhile()
+
+#
+# Remaining arguments are the arguments of the linker invocation. Save them
+# in the output file but ignore the "-o <output file>" part.
+#
+
+while(argn LESS CMAKE_ARGC)
+
+  if("${CMAKE_ARGV${argn}}" STREQUAL "-o")
+    math(EXPR argn "${argn}+2")
+  endif()
+
+  #message("-- arg ${argn}: ${CMAKE_ARGV${argn}}")
+  file(APPEND ${OUTPUT_FILE} "${CMAKE_ARGV${argn}}\n")
+  math(EXPR argn "${argn}+1")
+
+endwhile()

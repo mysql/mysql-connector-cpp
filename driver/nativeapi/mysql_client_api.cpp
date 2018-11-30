@@ -34,7 +34,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cppconn/sqlstring.h>
 
-#include "binding_config.h"
+//#include "binding_config.h"
 
 #ifdef MYSQLCLIENT_STATIC_BINDING
 /* MySQL client library is linked */
@@ -79,7 +79,7 @@ boost::shared_ptr< IMySQLCAPI > getCApiHandle(const sql::SQLString & name)
 } /* namespace mysql */
 } /* namespace sql */
 
-#include "binding_config.h"
+//#include "binding_config.h"
 
 #ifdef MYSQLCLIENT_STATIC_BINDING
 # include "libmysql_static_proxy.cpp"

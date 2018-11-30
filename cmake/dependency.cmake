@@ -1,4 +1,4 @@
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -7,7 +7,7 @@
 # This program is also distributed with certain software (including
 # but not limited to OpenSSL) that is licensed under separate terms,
 # as designated in a particular file or component or in included license
-# documentation.  The authors of MySQL hereby grant you an
+# documentation. The authors of MySQL hereby grant you an
 # additional permission to link the program and your derivative works
 # with the separately licensed software that they have included with
 # MySQL.
@@ -26,30 +26,19 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+##########################################################################
+#
+# find_dependency(XXX) command.
+#
+# Currently it is looking for DepFindXXX.cmake script that should perform
+# all steps required to locate given dependency and make it available in
+# the project. It is a layer on top of find_module().
+#
 
-SET(CONNECTOR_MAJOR "@CONCPP_VERSION_MAJOR@")
-SET(CONNECTOR_MINOR "@CONCPP_VERSION_MINOR@")
-SET(CONNECTOR_PATCH "@CONCPP_VERSION_MICRO@")
-SET(CONNECTOR_LEVEL "@CONCPP_VERSION_LEVEL@")
-SET(CONNECTOR_QUALITY "GA")
+function(find_dependency NAME)
 
-# Bump this every time we change the API/ABI
-SET(MYSQLCPPCONN_SOVERSION "@JDBC_ABI_VERSION_MAJOR@")
+  # TODO: Fallback to find_module()
 
-IF(CONNECTOR_MINOR LESS 10)
-        SET(CONNECTOR_MINOR_PADDED "0${CONNECTOR_MINOR}")
-ELSE(CONNECTOR_MINOR LESS 10)
-        SET(CONNECTOR_MINOR_PADDED "${CONNECTOR_MINOR}")
-ENDIF(CONNECTOR_MINOR LESS 10)
+  include(DepFind${NAME})
 
-# If driver survives 100th patch this has to be changed
-IF(CONNECTOR_PATCH LESS 10)
-        SET(CONNECTOR_PATCH_PADDED "000${CONNECTOR_PATCH}")
-ELSE(CONNECTOR_PATCH LESS 10)
-        SET(CONNECTOR_PATCH_PADDED "00${CONNECTOR_PATCH}")
-ENDIF(CONNECTOR_PATCH LESS 10)
-
-SET(CONNECTOR_BASE_VERSION    "${CONNECTOR_MAJOR}.${CONNECTOR_MINOR}")
-SET(CONNECTOR_BASE_PREVIOUS   "1.0")
-SET(CONNECTOR_NUMERIC_VERSION "${CONNECTOR_BASE_VERSION}.${CONNECTOR_PATCH}")
-SET(CONNECTOR_VERSION         "${CONNECTOR_NUMERIC_VERSION}${CONNECTOR_LEVEL}")
+endfunction(find_dependency)

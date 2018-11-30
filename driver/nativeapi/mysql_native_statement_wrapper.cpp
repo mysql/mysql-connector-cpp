@@ -30,7 +30,7 @@
 
 
 
-#include <sqlstring.h>
+#include <cppconn/sqlstring.h>
 
 #include "mysql_client_api.h"
 #include "mysql_native_statement_wrapper.h"

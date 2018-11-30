@@ -30,7 +30,7 @@
 
 
 
-#include "binding_config.h"
+//#include "binding_config.h"
 #ifndef MYSQLCLIENT_STATIC_BINDING
 
 #include <string>

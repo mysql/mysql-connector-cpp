@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include "mysql_uri.h"
 #include "mysql_util.h"
-#include "exception.h"
+#include <cppconn/exception.h>
 
 namespace sql
 {

@@ -34,7 +34,7 @@
 #define _NATIVE_CONNECTION_WRAPPER_H_
 
 #include <boost/noncopyable.hpp>
-#include <config.h>
+#include <cppconn/config.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif

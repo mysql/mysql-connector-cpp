@@ -33,7 +33,7 @@
 #ifndef _NATIVE_STATEMENT_WRAPPER_H_
 #define _NATIVE_STATEMENT_WRAPPER_H_
 
-#include <config.h>
+#include <cppconn/config.h>
 #include <boost/noncopyable.hpp>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
