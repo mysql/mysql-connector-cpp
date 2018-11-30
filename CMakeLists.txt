@@ -167,8 +167,17 @@ elseif(SUNPRO)
 
 endif()
 
+#
+#  TODO: We should fix the warnings below and then also increase warning
+#  level and fix remaining warnings. However, before this is done, we do
+#  not show the warnings to not break our release builds which are done
+#  in maintainer mode.
+#
 
-if(NOT MAINTAINER_MODE)
+set(SHOW_JDBC_WARNINGS OFF CACHE BOOL "Show compile warnings for legacy code")
+mark_as_advanced(SHOW_JDBC_WARNINGS)
+
+if(NOT SHOW_JDBC_WARNINGS)
   if(MSVC)
 
     add_compile_options(
