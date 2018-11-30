@@ -30,26 +30,23 @@
 #  DevAPI Implementation
 #
 
-include_directories("${WITH_UUID}/include")
+file(GLOB HEADERS *.h)
 
-ADD_LIBRARY(devapi OBJECT
+add_library(devapi STATIC
   session.cc
   result.cc
   document.cc
   crud.cc
+  ${HEADERS}
 )
 
-ADD_COVERAGE(devapi)
+target_link_libraries(devapi common)
 
-lib_interface_link_libraries(devapi cdk)
+add_coverage(devapi)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+
+if(0) #CMAKE_COMPILER_IS_GNUCXX)
   target_compile_options(devapi PRIVATE -Wall -Wextra)
-
-  # Required because of possible exception-related GCC bug.
-  # (observed in GCC 4.8.4)
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1")
 endif()
 
 add_subdirectory(tests)

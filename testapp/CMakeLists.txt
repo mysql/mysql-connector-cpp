@@ -150,87 +150,164 @@ else()
 endif()
 
 
+# ========================================================================
+# Dependencies
+
+#
+# Find Connector/C++ libraries
+#
+# Installation layout is as follows
+#
+# On Windows the install layout is as follows, where NN is the MSVC version
+# used to build the connector, A is the major ABI version:
+#
+#  {lib,lib64}/mysqlcppconn-A-vsNN.dll            <-- shared library
+#  {lib,lib64}/vsNN/mysqlcppconn-static.lib       <-- static with /MD
+#  {lib,lib64}/vsNN/mysqlcppconn-static-mt.lib    <-- static with /MT
+#  {lib,lib64}/vsNN/mysqlcppconn.lib              <-- import library for DLL
+#
+# On Linux it is as follows, where X.Y.Z is the connector version
+#
+#  {lib,lib64}/libmysqlcppconn.so.A.X.Y.Z         <-- shared library
+#  {lib,lib64}/libmysqlcppconn.so.A               <-- soname link
+#  {lib,lib64}/libmysqlcppconn.so                 <-- development link
+#  {lib,lib64}/libmysqlcppconn-static.a          <-- static library
+#
+# Additionally, if connector is built in debug mode, the libraries are installed
+# in debug/ subfolder of {lib,lib64}/ or {lib,lib64}/vsNN/.
+#
+
+set(find_name mysqlcppconn8)
+set(find_dir  "${CONCPP_LIB_DIR}")
+
+#
+# Note: On Windows we link with the import library located in the static
+# library dir and named the same as the shared library.
+#
+
+if(BUILD_STATIC OR WIN32)
+  set(find_dir  ${CONCPP_STATIC_LIB_DIR})
+endif()
+
+if(BUILD_STATIC)
+  set(find_name mysqlcppconn8-static)
+  if(WIN32 AND STATIC_MSVCRT)
+    set(find_name "${find_name}-mt")
+  endif()
+endif()
+
+#message("-- looking for: ${find_name}")
+#message("-- looking in: ${find_dir}")
+
+# This will cause find_libary() to perform search each time.
+
+set(CONCPP_LIB force-NOTFOUND CACHE PATH "" FORCE)
+set(CONCPP_LIB_DEBUG force-NOTFOUND CACHE BOOL "" FORCE)
+
+find_library(CONCPP_LIB
+  NAMES ${find_name}
+  PATHS "${find_dir}"
+  NO_DEFAULT_PATH
+)
+
+find_library(CONCPP_LIB_DEBUG
+  NAMES ${find_name}
+  PATHS "${find_dir}/debug"
+  NO_DEFAULT_PATH
+)
+
+
+if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
+  message(FATAL_ERROR
+    "Could not find Connector/C++ libraries at: ${find_dir}"
+  )
+endif()
+
+message("Using connector lib at: ${CONCPP_LIB}")
+
+#
+# If debug or optimized version of the library is missing, replace it
+# with the other one. This will not work on Windows (compiler will complain)
+# but it might work on other platforms.
+#
+
+if(NOT CONCPP_LIB_DEBUG)
+  message(WARNING
+    "Using non-debug library for debug builds - this will not work on Windows"
+    )
+  set(CONCPP_LIB_DEBUG "${CONCPP_LIB}")
+elseif(NOT CONCPP_LIB)
+  message(WARNING
+    "Using debug library for non-debug builds - this will not work on Windows"
+  )
+  set(CONCPP_LIB "${CONCPP_LIB_DEBUG}")
+endif()
+
+
+#
+# Define imported target for the connector library.
+#
+
+add_library(MySQL::conncpp STATIC IMPORTED)
+
+#message("-- location: ${CONCPP_LIB}")
+#message("-- debug location: ${CONCPP_LIB_DEBUG}")
+
+set_target_properties(MySQL::conncpp PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES   "${CONCPP_INCLUDE_DIR}"
+  IMPORTED_LOCATION               "${CONCPP_LIB}"
+  IMPORTED_LOCATION_DEBUG         "${CONCPP_LIB_DEBUG}"
+)
+
+
+#
+# We need to link with libraries on which connector depends
+# (however, no need to do it on Windows).
+#
+
+if(NOT WIN32)
+
+    # Connector/C++ requires these libraries on Unix.
+
+    if(NOT APPLE)
+      set_property(TARGET MySQL::conncpp
+        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  pthread # rt
+      )
+    endif()
+
+    # On Solaris we additionally need couple more libs.
+
+    if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+      set_property(TARGET MySQL::conncpp
+        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  socket nsl
+      )
+    endif()
+
+    #
+    # If connector uses OpenSSL libraries, we need to
+    # link to them too.
+    #
+
+    if(NOT WITH_SSL STREQUAL "builtin")
+      set_property(TARGET MySQL::conncpp
+        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ssl crypto
+      )
+    endif()
+
+endif()
+
+
 #
 # ========================================================================
 # Compiler settings
 #
 
-include_directories("${CONCPP_INCLUDE_DIR}")
-
-if(WITH_JDBC)
-
-  #
-  # Look for Boost which is required when building JDBC API application.
-  #
-
-  if(DEFINED WITH_BOOST)
-    set(BOOST_ROOT "${WITH_BOOST}")
-    set(Boost_NO_SYSTEM_PATHS ON)
-
-    # Setting this variable to ON disables attempts to use the cmake
-    # configuration script provided by Boost and use only the logic
-    # implemented in FindBoost. The cmake configuration script from Boost
-    # proved to be buggy on some platforms and breaks our builds.
-
-    set(Boost_NO_BOOST_CMAKE ON)
-  endif()
-
-  find_package(Boost)
-
-  if (Boost_FOUND)
-
-    set(BOOST_INCLUDES "${Boost_INCLUDE_DIRS}")
-    set(WITH_JDBC ON)
-
-  else()
-
-    if(DEFINED WITH_BOOST)
-      message("Boost could not be found at specified location: ${WITH_BOOST}")
-    endif()
-
-    if(WITH_JDBC)
-      message(FATAL_ERROR
-        "Can not build JDBC API application because Boost is missing"
-        " (use WITH_BOOST)."
-      )
-    else()
-      message(WARNING
-        "JDBC API application will not be built because required Boost headers"
-        " could not be found (use WITH_BOOST)."
-      )
-    endif()
-
-  endif()
-
-  include_directories(${BOOST_INCLUDES})
-
-endif()
-
-
 #
-# To use DevAPI or JDBC API we must enable C++11
+# To use DevAPI we must enable C++11
 #
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if(NOT WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-
-  add_compile_options(
-    -m64 -fast
-  )
-
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -library=stdcpp,CrunG3")
-
-  foreach(type EXE STATIC SHARED)
-
-    set(CMAKE_${type}_LINKER_FLAGS
-      "-m64 -std=c++11 -library=stdcpp,CrunG3 -fast"
-    )
-
-  endforeach()
-
 endif()
 
 #
@@ -240,6 +317,13 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
+# With SunPro we need to build in 64-bit mode
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
 endif()
 
 
@@ -257,130 +341,13 @@ IF(WIN32 AND STATIC_MSVCRT)
 
 ENDIF()
 
-
 #
-# ========================================================================
-# Set CONCPP_LIBS and CONCPP_JDBC_LIBS.
+# When linking with static library, this macro must be defined.
 #
 
-if(NOT BUILD_STATIC)
-
-  #
-  # Using dynamic connector library (that is easier).
-  #
-
-  if(WIN32)
-    # On Windows we link with the import library which is in the static
-    # library folder.
-    link_directories("${CONCPP_STATIC_LIB_DIR}")
-  else()
-    link_directories("${CONCPP_LIB_DIR}")
-  endif()
-
-  # Debug libraries, if present, are in the debug/ sub-folder of the main
-  # library folder. If debug libraries are not present, we use the same
-  # library for optimized and debug builds (debug_prefix is empty).
-
-  if(EXISTS "${CONCPP_LIB_DIR}/debug")
-    set(debug_prefix "debug/")
-  else()
-    set(debug_prefix)
-  endif()
-
-  set(CONCPP_LIBS
-    optimized mysqlcppconn8
-    debug     ${debug_prefix}mysqlcppconn8
-  )
-
-  set(CONCPP_JDBC_LIBS
-    optimized mysqlcppconn
-    debug     ${debug_prefix}mysqlcppconn8
-  )
-
-
-else(NOT BUILD_STATIC)
-
-  #
-  # Linking with static connector library
-  #
-
-  link_directories("${CONCPP_STATIC_LIB_DIR}")
-
-  if(EXISTS "${CONCPP_STATIC_LIB_DIR}/debug")
-    set(debug_prefix "debug/")
-  else()
-    set(debug_prefix)
-  endif()
-
-  #
-  #  Static versions of connector library have -static suffix. Additionally,
-  #  on Windows they have -mt suffix if the library was built using static
-  #  runtime libs (/MT compiler setting).
-  #
-
-  if(WIN32 AND STATIC_MSVCRT)
-    set(mt_suffix "-mt")
-  else()
-    set(mt_suffix)
-  endif()
-
-
-  set(CONCPP_LIBS
-    optimized mysqlcppconn8-static${mt_suffix}
-    debug     ${debug_prefix}mysqlcppconn8-static${mt_suffix}
-  )
-
-  set(CONCPP_JDBC_LIBS
-    optimized mysqlcppconn-static${mt_suffix}
-    debug     ${debug_prefix}mysqlcppconn-static${mt_suffix}
-  )
-
-  #
-  # These macros must be defined to correctly adjust declarations
-  # in connector public headers for linking with static library.
-  #
-
+if(BUILD_STATIC)
   add_definitions(-DSTATIC_CONCPP)
-
-  if(WITH_JDBC)
-      add_definitions(-DCPPCONN_PUBLIC_FUNC=)
-  endif()
-
-  #
-  # Connector/C++ requires pthread library on Unix. Legacy connector needs
-  # even more.
-  #
-
-  IF(CMAKE_HOST_UNIX)
-    list(APPEND CONCPP_LIBS pthread)
-    if(NOT APPLE)
-      list(APPEND CONCPP_JDBC_LIBS pthread rt dl)
-    endif()
-  ENDIF()
-
-  #
-  # On Solaris we additionally need socket and nsl libraries.
-  #
-
-  if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-    list(APPEND CONCPP_LIBS socket nsl)
-    # TODO: Could be couple more libs required..
-    # MYSQL_LIBRARIES: stdc++;gcc_s;CrunG3;c;..;socket;nsl;m;rt
-    list(APPEND CONCPP_JDBC_LIBS socket nsl rt)
-  endif()
-
-  #
-  # If connector uses OpenSSL libraries, we need to
-  # link to them too (however, no need to do it on Windows).
-  #
-
-  if(NOT WIN32 AND NOT WITH_SSL STREQUAL "builtin")
-      list(APPEND CONCPP_LIBS ssl crypto)
-      list(APPEND CONCPP_JDBC_LIBS ssl crypto)
-  endif()
-
-
-endif(NOT BUILD_STATIC)
+endif()
 
 
 #
@@ -391,15 +358,37 @@ endif(NOT BUILD_STATIC)
 # (see below).
 #
 
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run)
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/run/debug)
+set(OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/run")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY run)
+file(MAKE_DIRECTORY "${OUTPUT_DIRECTORY}")
+file(MAKE_DIRECTORY "${OUTPUT_DIRECTORY}/debug")
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}")
 foreach(config ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER "${config}" CONFIG)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG} run)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG} "${OUTPUT_DIRECTORY}")
 endforeach()
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIRECTORY}/debug")
+
+#
+# Make sure that bundled external dependencies are used, if available.
+#
+
+if(NOT WIN32)
+  set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-L${OUTPUT_DIRECTORY}/debug")
+  set(CMAKE_EXE_LINKER_FLAGS "-L${OUTPUT_DIRECTORY}")
+endif()
+
+#
+# This is needed on Windows to find import libraries for bundled
+# dependencies
+#
+# TODO: Use debug location for debug builds.
+#
+
+if(WIN32)
+  link_directories(${CONCPP_STATIC_LIB_DIR})
+endif()
 
 
 #
@@ -407,18 +396,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG run/debug)
 #
 
 add_executable(devapi_test devapi_test.cc)
-target_link_libraries(devapi_test ${CONCPP_LIBS})
+target_link_libraries(devapi_test MySQL::conncpp)
 
 add_executable(xapi_test xapi_test.c)
-target_link_libraries(xapi_test ${CONCPP_LIBS})
-
-if(WITH_JDBC)
-
-  add_executable(jdbc_test jdbc_test.cc)
-  target_link_libraries(jdbc_test ${CONCPP_JDBC_LIBS})
-
-endif()
-
+target_link_libraries(xapi_test MySQL::conncpp)
 
 #
 # Note: Connector/C++ library depends on C++ runtime library.
@@ -431,6 +412,32 @@ endif()
 
 set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
 
+#
+# Set RPATH so that libraries in run/ folder are found by the executable
+# (this is default behavior on Windows).
+#
+
+set_property(TARGET devapi_test xapi_test PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+
+set(rpath)
+if(APPLE)
+  set(rpath "@loader_path")
+elseif(NOT WIN32)
+  set(rpath "$ORIGIN")
+endif()
+
+if(rpath)
+  set_property(TARGET devapi_test xapi_test
+    APPEND PROPERTY INSTALL_RPATH "${rpath}"
+  )
+endif()
+
+# TODO
+if(WITH_JDBC)
+
+  add_subdirectory(../jdbc/link_test jdbc)
+
+endif()
 
 
 #
@@ -447,15 +454,9 @@ message("Installing shared library dependencies.")
 file(GLOB libs "${CONCPP_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 file(INSTALL ${libs} DESTINATION run)
 
-#
-# Note: Using non-debug libraries with code which was build in debug mode
-# (or vice versa) does not work on Windows, but on other platforms we try
-# it.
-#
+# Also copy to debug folder in case debug variants are not available.
 
-if (NOT WIN32)
-  file(INSTALL ${libs} DESTINATION run/debug)
-endif()
+file(INSTALL ${libs} DESTINATION run/debug)
 
 #
 # Overwrite libs in run/debug with debug versions if present.
@@ -469,7 +470,7 @@ file(INSTALL ${debug_libs} DESTINATION run/debug)
 # using debug ones, if present.
 #
 
-if (NOT WIN32 AND NOT libs)
+if (NOT libs)
   file(INSTALL ${debug_libs} DESTINATION run)
 endif()
 

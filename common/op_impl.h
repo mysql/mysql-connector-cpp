@@ -41,12 +41,6 @@
 #include <bitset>
 #include <list>
 
-#if defined __SUNPRO_CC
-
-//Disable warning of virtual methods being hidden
-#pragma error_messages (off, hidevf)
-
-#endif
 
 /*
   This file defines a hierarchy of classes which implement executable objects
@@ -2581,12 +2575,6 @@ protected:
   }
 
 };
-
-#if defined __SUNPRO_CC
-
-#pragma error_messages (default, hidevf)
-
-#endif
 
 
 }  // internal

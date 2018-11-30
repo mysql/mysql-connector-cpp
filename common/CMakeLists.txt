@@ -26,5 +26,11 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-include_directories(${PROJECT_SOURCE_DIR}/cdk/extra/uuid/include)
-add_library(common OBJECT session.cc result.cc collection.cc value.cc)
+file(GLOB HEADERS *.h)
+
+add_library(common STATIC
+  session.cc result.cc collection.cc value.cc
+  ${HEADERS}
+)
+
+target_link_libraries(common cdk uuid_gen)

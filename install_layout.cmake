@@ -63,7 +63,7 @@ endif()
 set(CMAKE_INSTALL_INCLUDEDIR "include" CACHE STRING
   "Include Install location (Relative to CMAKE_INSTALL_PREFIX)")
 
-if(IS64BIT)
+if(IS64BIT OR SUNPRO)
   set(CMAKE_INSTALL_LIBDIR "lib64" CACHE STRING
     "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
 else()
@@ -107,4 +107,74 @@ set(INSTALL_LIB_DIR "${INSTALL_LIB_DIR}"
 set(INSTALL_LIB_DIR_STATIC "${INSTALL_LIB_DIR_STATIC}"
   CACHE INTERNAL "Install location for static libraries (relative to install root)"
 )
+
+#
+#  Default install location
+#
+
+if(NOT CMAKE_INSTALL_PREFIX)
+
+  if(WIN32)
+
+    if(DEFINED ENV{HOMEPATH})
+      file(TO_CMAKE_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}" install_home)
+    else()
+      set(install_home "C:/Program Files (x86)")
+    endif()
+    set(CMAKE_INSTALL_PREFIX "${install_home}/MySQL/MySQL Connector C++ ${CONCPP_PACKAGE_BASE_VERSION}")
+
+  else()
+
+    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-${CONCPP_PACKAGE_BASE_VERSION}")
+
+  endif()
+
+endif()
+
+
+#
+# Library names
+#
+# The library name base is mysqlcppconnX where X is the major version
+# of Connector/C++ product.
+#
+# Static library has -static suffix added to the base name.
+#
+# On Windows we add major ABI version to the shared library name, so that
+# different ABI versions of the library can be installed next to each other.
+# Also, on Windows we distinguish the MSVC version used to build the library
+# (as this determines the runtime version). The shared libraries use
+# -vsNN suffix, the import library does not have the suffix but is installed
+# to a vsNN/ subfolder of the library install location (see install layout
+# below). For static libraries, we add -mt suffix if it is linked with
+# static runtime.
+#
+
+set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
+set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
+
+if(WIN32 AND STATIC_MSVCRT)
+  set(LIB_NAME_STATIC "${LIB_NAME}-mt")
+endif()
+
+if(BUILD_STATIC)
+
+  set(LIB_NAME ${LIB_NAME_STATIC})
+
+else()
+
+  set(LIB_NAME "${LIB_NAME_BASE}")
+  if(WIN32)
+    set(LIB_NAME "${LIB_NAME}-${ABI_VERSION_MAJOR}")
+  endif()
+  if(VS)
+    set(LIB_NAME "${LIB_NAME}-${VS}")
+  endif()
+
+endif()
+
+
+#set(LIB_NAME_BASE ${LIB_NAME_BASE} CACHE INTERNAL "")
+#set(LIB_NAME ${LIB_NAME} CACHE INTERNAL "")
+#set(LIB_NAME_STATIC ${LIB_NAME_STATIC} CACHE INTERNAL "")
 

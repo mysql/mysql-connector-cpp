@@ -60,8 +60,13 @@ endif()
 # Find Boost which is required by legacy connector
 #
 
-include(boost)
-list(APPEND jdbc_cmake_opts -DBOOST_ROOT=${BOOST_ROOT})
+#include(boost)
+if (DEFINED BOOST_ROOT)
+  list(APPEND jdbc_cmake_opts -DBOOST_ROOT=${BOOST_ROOT})
+endif()
+if (DEFINED WITH_BOOST)
+  list(APPEND jdbc_cmake_opts -DWITH_BOOST=${WITH_BOOST})
+endif()
 
 #
 # Generate version info for legacy connector
@@ -105,6 +110,9 @@ if(jdbc_config)
   message(FATAL_ERROR "Could not configure legacy connector build: ${jdbc_config}")
 endif()
 
+message("== Legacy connector build configuration ready")
+
+return()
 
 #############################################################################
 #

@@ -27,37 +27,35 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-include_directories("${WITH_UUID}/include")
-
 #
 # TODO: Fix XAPI code instead of disabling these warnings
 #
 
-set(warning_list)
+if(MSVC)
 
-IF(WIN32)
+  add_compile_options(
+    /wd4244
+    /wd4267
+    /wd4127
+    /wd4996
+    /wd4702
+  )
 
-  list(APPEND warnings_list "/wd4244")
-  list(APPEND warnings_list "/wd4267")
-  list(APPEND warnings_list "/wd4127")
-  list(APPEND warnings_list "/wd4996")
-  list(APPEND warnings_list "/wd4702")
-
-ENDIF()
-
-string(REPLACE ";" " " warning_options "${warnings_list}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
+endif()
 
 
-SET(_libmysqlx_cc_src
+set(_libmysqlx_cc_src
          crud.cc
          result.cc
          mysqlx.cc
          session.cc
 )
 
-ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})
-ADD_COVERAGE(xapi)
+file(GLOB HEADERS *.h)
 
-ADD_SUBDIRECTORY(tests)
+add_library(xapi STATIC ${_libmysqlx_cc_src} ${HEADERS})
+target_link_libraries(xapi common)
+add_coverage(xapi)
+
+add_subdirectory(tests)
 

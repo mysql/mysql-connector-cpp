@@ -126,6 +126,8 @@ endif()
 # Licenses for binary packages
 # ======================================================================
 
+if (0)
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
   set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
 else()
@@ -156,6 +158,7 @@ set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
 set(CPACK_RESOURCE_FILE_LICENSE "${LIC_FILE}${info_ext}")
 #set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
 
+endif()
 
 # ======================================================================
 # Specs for source package

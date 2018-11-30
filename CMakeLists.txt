@@ -27,10 +27,11 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
-CMAKE_POLICY(VERSION 2.8.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+
+CMAKE_POLICY(VERSION 3.0)
 cmake_policy(SET CMP0022 NEW)
-cmake_policy(SET CMP0023 OLD)
+
 
 SET(BUILDTYPE_DOCSTRING
  "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or
@@ -39,7 +40,7 @@ SET(BUILDTYPE_DOCSTRING
 #
 # If cmake is invoked with -DCMAKE_BUILD_TYPE,
 # respect user wishes and do not (re)define CMAKE_BUILD_TYPE. Otherwise,
-# use Relwithdebinfo.
+# use Debug by default.
 #
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "Debug" CACHE STRING
@@ -60,70 +61,42 @@ set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
 PROJECT(MySQL_CONCPP)
 
+include(version.cmake)
+
+# Load cmake modules
+
+include(cdk/cmake/setup.cmake)
+include(cmake/setup.cmake)
+
+include(platform)
+include(dependency)      # find_dependency()
+include(config_options)  # add_config_option()
+include(libutils)        # merge_static_library()
+
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 #message("Compiler identification: ${CMAKE_CXX_COMPILER_ID}")
 
-if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  set(SUNOS ON CACHE INTERNAL "")
-endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-  set(SUNPRO ON CACHE INTERNAL "")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.15")
+if(SUNPRO)
+  if(SUNPRO VERSION_LESS "5.15")
     message(WARNING "Connector/C++ requires SunPro version 5.15 or later.")
   endif()
-  add_compile_options(-m64)
+  set_arch_m64()
 endif()
 
-if((CMAKE_SIZEOF_VOID_P EQUAL 8) OR SUNPRO)
-  set(IS64BIT TRUE)
-  message("Using 64bit generator")
+#
+# Note: On Solaris cmake's built-in checks for bit size use plain compiler
+# options which imply 32-bit architecture. Above we force 64-bit but this
+# is not reflected in IS64BIT flag.
+#
+
+if(IS64BIT OR SUNPRO)
+  message("Building 64bit code")
 else()
-  set(IS64BIT FALSE)
-  message("Using 32bit genereator")
+  message("Building 32bit code")
 endif()
 
-
-#
-# On Windows, set VS to "vsNN" where NN is the MSVC version.
-#
-
-unset(VS)
-if(WIN32)
-  if(MSVC12)
-    set(VS "vs12")
-  elseif(MSVC14)
-    set(VS "vs14")
-  endif()
-endif()
-
-
-include(version.cmake)
-
-# Base name for the connector libraries.
-
-set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
-set(JDBC_LIB_NAME_BASE "mysqlcppconn")
-
-#
-# Set up cmake module search patch
-# ================================
-#
-
-# First, use modules that are local to this project
-
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-# Then use modules from CDK sub-project
-
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cdk/cmake)
-
-#
-# Library utilities such as add_library_ex()
-#
-
-include(libutils)
 
 #
 # Install settings
@@ -132,34 +105,10 @@ include(libutils)
 
 include(install_layout.cmake)
 
-set(
-  BUNDLE_DEPENDENCIES OFF CACHE BOOLEAN
-  "If enabled, external libraries used by the connector, such as openSSL,
-   will be installed together with the connector library"
+add_config_option(BUNDLE_DEPENDENCIES BOOL ADVANCED DEFAULT OFF
+  "If enabled, external libraries used by the connector, such as openSSL,"
+  " will be installed together with the connector library"
 )
-
-#
-#  Default install location
-#
-
-if(NOT CMAKE_INSTALL_PREFIX)
-
-  if(WIN32)
-
-    if(DEFINED ENV{HOMEPATH})
-      file(TO_CMAKE_PATH "$ENV{HOMEDRIVE}$ENV{HOMEPATH}" install_home)
-    else()
-      set(install_home "C:/Program Files (x86)")
-    endif()
-    set(CMAKE_INSTALL_PREFIX "${install_home}/MySQL/MySQL Connector C++ ${CONCPP_PACKAGE_BASE_VERSION}")
-
-  else()
-
-    set(CMAKE_INSTALL_PREFIX "/usr/local/mysql/connector-c++-${CONCPP_PACKAGE_BASE_VERSION}")
-
-  endif()
-
-endif()
 
 
 #
@@ -167,157 +116,26 @@ endif()
 # =================
 #
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(SUNPRO)
-
-  set(options
-    -m64
-    -mt
-    -xatomic=studio
-    -xtarget=generic     # more portable code
-    -xdebuginfo=no%decl  # faster build times
-    # optimization options
-    -xbuiltin=%all
-    -xlibmil
-  )
-
-  if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
-    list(APPEND options -nofstore)
-  endif()
-
-  string(REPLACE ";" " " options "${options}")
-
-  set(CMAKE_CXX_FLAGS "${options} ${CMAKE_CXX_FLAGS}")
-
-  #foreach(type EXE STATIC SHARED MODULE)
-  #  set(CMAKE_${type}_LINKER_FLAGS "${options}")
-  #endforeach()
-
-  set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS_DEBUG}")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-    "-g -xO2 ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
-  )
-  set(CMAKE_CXX_FLAGS_RELEASE "-g0 -xO3 ${CMAKE_CXX_FLAGS_RELEASE}")
-  set(CMAKE_CXX_FLAGS_MINSIZEREL
-    "-g0 -xO3 -xsize ${CMAKE_CXX_FLAGS_MINSIZEREL}"
-  )
-
-  add_definitions(
-    -D_POSIX_PTHREAD_SEMANTICS
-    -D_REENTRANT
-  )
-
-endif()
-
-#
-# Enable C++11
-#
-
-set(CPP11FLAGS)
-
-if (
-  CMAKE_COMPILER_IS_GNUCXX OR SUNPRO
-  OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
-)
-  list(APPEND CPP11FLAGS -std=c++11)
-endif()
-
-# With SunPro use GNU libstdc++ implementation of c++ std library. This
-# is the default for -std=c++11, but we set it explicitly to be on the safe
-# side.
-
-if(SUNPRO)
-  list(APPEND CPP11FLAGS -library=stdcpp)
-endif()
-
-
-#
-# If Clang is used and deployment target is not specified
-# with MACOSX_DEPLOYMENT_TARGET environment variable, make
-# sure that clang's native implementation of C++ std
-# libarary (libc++) is used. Otherwise clang defaults to
-# GNU version (libstdc++) which is outdated and does
-# not handle C++11 well.
-#
-# TODO: Add option to use the default runtime if user wishes
-# so.
-#
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang"
-   AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET}
-   AND NOT CMAKE_SYSTEM_NAME MATCHES "Linux")
-
-  list(APPEND CPP11FLAGS -stdlib=libc++)
-
-endif()
-
-string(REPLACE ";" " " CPP11FLAGS "${CPP11FLAGS}")
-set(CMAKE_CXX_FLAGS "${CPP11FLAGS} ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_REQUIRED_FLAGS "${CPP11FLAGS} ${CMAKE_REQUIRED_FLAGS}")
-
-#
-# Tell cmake to not use compiler specific extensions
-#
-
-INCLUDE(compiler_features)
-SET(CMAKE_CXX_EXTENSIONS no)
+enable_pic()
+enable_cxx11()
 
 #
 # Configure static runtime library on Windows if requested
 #
 
-option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+add_config_option(STATIC_MSVCRT BOOL ADVANCED DEFAULT OFF
+  "Use static MSVC runtime library"
+)
 
 if(WIN32 AND STATIC_MSVCRT)
-
-message("Using static runtime library")
-
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-  endforeach()
-  set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-endforeach(LANG)
-
+  message("Using static runtime library")
+  set_msvcrt(STATIC)
 endif()
 
-#
-# Enable MSVC Debug Format Information
-# Produces an .obj file containing full symbolic debugging information for use
-# with the debugger.
-#
+# Other MSVC settings
 
-if(WIN32)
-  foreach(LANG C CXX)
-    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /Z7")
-  endforeach()
-endif()
-
-#
-# Disable MSVC unreachable code warnings unless requested.
-#
-
-option(UNREACHABLE_CODE_WARNINGS "Enable unreachable code compiler warnings")
-mark_as_advanced(UNREACHABLE_CODE_WARNINGS)
-
-if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4702")
-endif()
-
-#
-# Disable MSVC warning C4297 as it seems to be buggy.
-# Seehttps://connect.microsoft.com/VisualStudio/feedback/details/897611/incorrect-warning-of-c4297-for-destructor-with-try-catch-statement
-#
-
-if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
-  add_compile_options(/wd4297)
-endif()
-
-
-if(WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+if(MSVC)
+  add_compile_options(/bigobj)
   add_definitions(-DNOMINMAX)
 endif()
 
@@ -326,15 +144,18 @@ endif()
 # Gcov support (Linux only)
 #
 
-include(gcov)
+find_dependency(Coverage)  # defines add_coverage() command
 #message("WITH_COVERAGE: ${WITH_COVERAGE}")
 
-#message("flags: ${CMAKE_C_FLAGS}")
-#message("c++ flags: ${CMAKE_CXX_FLAGS}")
-#foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-#  message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
-#  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
-#endforeach()
+
+if(0)
+message("flags: ${CMAKE_C_FLAGS}")
+message("c++ flags: ${CMAKE_CXX_FLAGS}")
+foreach(TYPE DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+  message("${TYPE} flags: ${CMAKE_C_FLAGS_${TYPE}}")
+  message("c++ ${TYPE} flags: ${CMAKE_CXX_FLAGS_${TYPE}}")
+endforeach()
+endif()
 
 
 #
@@ -358,11 +179,13 @@ endif()
 # =================================
 #
 
-option(BUILD_STATIC "Build static version of connector library" OFF)
+add_config_option(BUILD_STATIC BOOLEAN DEFAULT OFF
+  "Build static version of connector library"
+)
 
 if(BUILD_STATIC)
   message("Building static connector library")
-  set(LIB_TYPE STATIC)
+  set(BUILD_SHARED_LIBS OFF)
 
   set_property(
     DIRECTORY .
@@ -372,34 +195,30 @@ if(BUILD_STATIC)
 
 else()
   message("Building shared connector library")
+  set(BUILD_SHARED_LIBS ON)
 
   if(WIN32 AND STATIC_MSVCRT)
     message(SEND_ERROR "Shared library should not use static runtime.")
   endif()
 
-  set(LIB_TYPE SHARED)
+  if(WITH_COVERAGE)
+    message(WARNING "To get good coverage results use static build of the"
+            " connector (BUILD_STATIC)")
+  endif()
+
+  # Note: Using set_propery() instead of add_compile_options() because we
+  # want to remove these defs later, when building test code.
 
   set_property(
     DIRECTORY .
     APPEND PROPERTY COMPILE_DEFINITIONS
     $<$<NOT:$<CONFIG:Static>>:CONCPP_BUILD_SHARED>
   )
-
-  #TODO: do not set options below when building Static configuration?
-
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  #add_compile_options($<$<NOT:$<CONFIG:Static>>:-DCONCPP_BUILD_SHARED>)
 
   # Hide all symbols that are not explicitly exported.
-  # Note: setting target property CXX_VISIBILITY did not work for
-  # object libraries that we use to build the connector.
 
-  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-fvisibility-ms-compat)
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-    add_compile_options(-xldscope=symbolic)
-  elseif(CMAKE_COMPILER_IS_GNUCXX)
-    add_compile_options(-fvisibility=hidden)
-  endif()
+  set_visibility(hidden)
 
 endif()
 
@@ -420,7 +239,10 @@ if(MAINTAINER_MODE)
 
 endif()
 
-OPTION(WITH_TESTS "Build project's unit tests" 0)
+
+add_config_option(WITH_TESTS BOOL ADVANCED DEFAULT OFF
+  "Build project's unit tests"
+)
 
 #
 # Note: if building static connector on windows, the type of
@@ -434,25 +256,39 @@ if(WITH_TESTS AND BUILD_STATIC)
 endif()
 
 
-OPTION(THROW_AS_ASSERT
+add_config_option(THROW_AS_ASSERT BOOL ADVANCED DEFAULT OFF
   "Turn THROW() statements in the code into asserts for easier debugging"
-  0)
-
-mark_as_advanced(THROW_AS_ASSERT)
+)
 
 if(THROW_AS_ASSERT)
   add_definitions(-DTHROW_AS_ASSERT)
 endif()
 
-
 #
-# We use UUID generator from common sub-module.
+#  Warnings
+#
+# TODO: Fix these warnings.
 #
 
-set(WITH_UUID "${PROJECT_SOURCE_DIR}/cdk/extra/uuid")
+if(MSVC)
 
-if(NOT EXISTS "${WITH_UUID}/src/CMakeLists.txt")
-  message(FATAL_ERROR "Could not find UUID generator sources at: ${WITH_UUID}")
+  # Disable MSVC unreachable code warnings unless requested.
+  add_compile_options(/wd4702)
+
+  # Disable MSVC warning C4297 as it seems to be buggy.
+  # Seehttps://connect.microsoft.com/VisualStudio/feedback/details/897611/incorrect-warning-of-c4297-for-destructor-with-try-catch-statement
+
+  add_compile_options(/wd4297)
+
+endif()
+
+
+if(SUNPRO)
+
+  add_compile_options(
+    -errtags=yes -erroff=hidevf,wvarhidemem
+  )
+
 endif()
 
 
@@ -460,13 +296,7 @@ endif()
 # CDK
 #
 
-SET(WITH_CDK_DOC 0)
-OPTION(WITH_CDK_TESTS "cdk tests" OFF)
-set(WITH_PIC ON)
-
-ADD_SUBDIRECTORY(cdk)
-INCLUDE_DIRECTORIES(${CDK_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(cdk/parser)
+add_subdirectory(cdk)
 
 
 #
@@ -479,6 +309,12 @@ SETUP_TESTING()
 ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
 ADD_TEST_LIBRARIES(connector)
 
+if(MSVC)
+else()
+  set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
+endif()
+
+
 #
 # Project's public headers
 #
@@ -487,59 +323,63 @@ ADD_SUBDIRECTORY(include)
 INCLUDE_DIRECTORIES(include)
 
 #
+# The legacy connector, if selected.
+# Note: it is included before setting higher warning levels.
+#
+
+add_config_option(WITH_JDBC BOOL DEFAULT OFF
+ "Whether to build a variant of connector library which implements legacy JDBC API"
+)
+
+if(WITH_JDBC)
+  add_subdirectory(jdbc)
+endif()
+
+
+#
 # Set higher warning level for the main connector code.
 #
 
-if(WIN32)
+if(MAINTAINER_MODE)
 
-  # 4127 = conditional expression is constant (needed for do {...} while(false))
-  # 4512 = assignment operator could not be generated
-  #
-  # Note: 4512 is disabled because according to C++11 standard the situations
-  # that triggers this warning should be handled automatically by the compiler
-  # (and this is the case for MSVC 2015).
-  # See: http://en.cppreference.com/w/cpp/language/copy_assignment
+  if(MSVC)
 
-  add_compile_options(/W4 /wd4512 /wd4127)
+    # 4127 = conditional expression is constant (needed for do {...} while(false))
+    # 4512 = assignment operator could not be generated
+    #
+    # Note: 4512 is disabled because according to C++11 standard the situations
+    # that triggers this warning should be handled automatically by the compiler
+    # (and this is the case for MSVC 2015).
+    # See: http://en.cppreference.com/w/cpp/language/copy_assignment
 
-else()
+    add_compile_options(/W4 /wd4512 /wd4127)
 
-  set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
-
-  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-    add_compile_options(
-      -errtags=yes
-    )
+  elseif(SUNPRO)
   else()
-    add_compile_options(-Wextra)
+
+      add_compile_options(-Wextra)
 
   endif()
 
-endif()
+endif(MAINTAINER_MODE)
 
+
+#
+# We use UUID generator taken from server sources.
+#
+
+add_subdirectory(cdk/extra/uuid uuid)
 
 #
 # Connector/C++ components
 #
 
-option(WITH_JDBC
- "Whether to build a variant of connector library which implements legacy JDBC API"
- OFF
-)
 
-if(WITH_JDBC)
-  include(jdbc.cmake)
-endif()
+add_subdirectory(doc)
+add_subdirectory(common)
+add_subdirectory(xapi)
+add_subdirectory(devapi)
 
-ADD_SUBDIRECTORY(doc)
-ADD_SUBDIRECTORY(common)
-ADD_SUBDIRECTORY(xapi)
-ADD_SUBDIRECTORY(devapi)
-
-#
-# Packaging
-#
-ADD_SUBDIRECTORY(packaging)
 
 #
 #  Target which builds the final connector library
@@ -548,34 +388,16 @@ ADD_SUBDIRECTORY(packaging)
 
 # Generate the main connector library.
 
-add_library_ex(connector ${LIB_TYPE}
-    ${WITH_UUID}/src/uuid_gen.cc
-    OBJECTS xapi devapi common
-    LIBS    cdk
-)
-
-target_include_directories(connector PRIVATE "${WITH_UUID}/include")
-
+merge_libraries(connector xapi devapi)
+target_include_directories(connector PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 if(MAINTAINER_MODE)
 
-add_library_ex(connector-static STATIC EXCLUDE_FROM_ALL
-    ${WITH_UUID}/src/uuid_gen.cc
-    OBJECTS xapi devapi common
-    LIBS    cdk
-)
-
-target_include_directories(connector-static PRIVATE "${WITH_UUID}/include")
+  merge_libraries(connector-static STATIC xapi devapi)
+  target_include_directories(connector-static PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 endif()
 
-# Disable warnings in code which is not ours.
-
-if(MSVC)
-  set_source_files_properties(${WITH_UUID}/src/uuid_gen.cc
-    PROPERTIES COMPILE_FLAGS "/wd4244 /wd4311 /wd4302"
-  )
-endif()
 
 #
 # Embed rpath information in the connector library.
@@ -612,44 +434,11 @@ endif()
 
 
 #
-# Pick output library name
-# ------------------------
+# Install specifications
+# ----------------------
 #
-# The library name base is mysqlcppconnX where X is the major version
-# of Connector/C++ product.
+# Note: Locations and names are configured in install_layout.cmake
 #
-# Static library has -static suffix added to the base name.
-#
-# On Windows we add major ABI version to the shared library name, so that
-# different ABI versions of the library can be installed next to each other.
-# Also, on Windows we distinguish the MSVC version used to build the library
-# (as this determines the runtime version). The shared libraries use
-# -vsNN suffix, the import library does not have the suffix but is installed
-# to a vsNN/ subfolder of the library install location (see install layout
-# below). For static libraries, we add -mt suffix if it is linked with
-# static runtime.
-#
-
-set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
-if(WIN32 AND STATIC_MSVCRT)
-  set(LIB_NAME_STATIC "${LIB_NAME}-mt")
-endif()
-
-if(BUILD_STATIC)
-
-  set(LIB_NAME ${LIB_NAME_STATIC})
-
-else()
-
-  set(LIB_NAME "${LIB_NAME_BASE}")
-  if(WIN32)
-    set(LIB_NAME "${LIB_NAME}-${ABI_VERSION_MAJOR}")
-  endif()
-  if(VS)
-    set(LIB_NAME "${LIB_NAME}-${VS}")
-  endif()
-
-endif()
 
 
 set_property(TARGET connector PROPERTY OUTPUT_NAME ${LIB_NAME})
@@ -679,7 +468,7 @@ install(TARGETS connector
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}/debug" COMPONENT XDevAPIDll
 )
 
-if(MAINTAINER_MODE)
+if(TARGET connector-static)
 
   set_property(TARGET connector-static PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
 
@@ -695,7 +484,12 @@ if(MAINTAINER_MODE)
     LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT XDevAPIDll
   )
 
+  if(TARGET connector-jdbc-static)
+    add_dependencies(connector-static connector-jdbc-static)
+  endif()
+
 endif()
+
 
 #
 # Tests
@@ -732,17 +526,13 @@ ENDIF (WITH_TESTS)
 # Sample code to try things out
 #
 
-ADD_EXECUTABLE(try EXCLUDE_FROM_ALL try.cc)
-TARGET_LINK_LIBRARIES(try connector)
-SET_INTERFACE_OPTIONS(try devapi)
-#  ADD_GCOV(try)
+add_executable(try EXCLUDE_FROM_ALL try.cc)
+target_link_libraries(try connector)
 
 if(WITH_JDBC)
 
   add_executable(try_jdbc EXCLUDE_FROM_ALL try_jdbc.cc)
-  target_link_libraries(try_jdbc ${JDBC_LIBS})
-  add_dependencies(try_jdbc build_jdbc)
-  target_include_directories(try_jdbc PRIVATE ${JDBC_INCLUDES})
+  target_link_libraries(try_jdbc connector-jdbc)
 
 endif()
 
@@ -802,6 +592,7 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/link_test)
 
 unset(jdbc_options)
 if(WITH_JDBC)
+  #message("-- BOOST_ROOT: ${BOOST_ROOT}")
   list(APPEND jdbc_options -DWITH_JDBC=ON -DWITH_BOOST=${BOOST_ROOT})
 endif()
 
@@ -827,9 +618,12 @@ add_custom_target(link_test
 )
 
 add_dependencies(link_test connector)
-if(WITH_JDBC)
-  add_dependencies(link_test build_jdbc)
-endif()
+#if(TARGET connector-merge)
+#  add_dependencies(link_test connector-merge)
+#endif()
+#if(WITH_JDBC)
+#  add_dependencies(link_test build_jdbc)
+#endif()
 
 # TDOD: Use ${CMAKE_COMMAND}, but evaluated at test time, not here.
 
@@ -842,6 +636,7 @@ add_test(NAME Link_test
 # Create the INFO_SRC and INFO_BIN files
 # =========================
 #
+
 include(buildinfo.cmake)
 
 
@@ -854,8 +649,12 @@ message("Install location: ${CMAKE_INSTALL_PREFIX}")
 message("Connector libraries will be installed at: ${INSTALL_LIB_DIR}")
 
 option(WITH_PACKAGES "Configure for building binary/source packages" OFF)
+
 if(WITH_PACKAGES)
   include(PackageSpecs.cmake)
+  ADD_SUBDIRECTORY(packaging)
   ADD_SUBDIRECTORY(packaging/WiX)
 endif()
 
+
+show_config_options()
