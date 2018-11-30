@@ -52,34 +52,24 @@
 # Note: We expect VS variable to hold the "vsNN" bit on Windows.
 #
 
-if(NOT DEFINED IS64BIT)
-  message(FATAL_ERROR "IS64BIT not defined!")
+if(jdbc_stand_alone)
+  # TODO: Manage install locations for stand-alone build.
+  return()
 endif()
 
-if(NOT DEFINED INSTALL_LIB_DIR)
 
-  if(IS64BIT)
-    set(INSTALL_LIB_DIR "lib64")
-  else()
-    set(INSTALL_LIB_DIR "lib")
-  endif()
+if(NOT INSTALL_INCLUDE_DIR OR NOT INSTALL_LIB_DIR OR NOT INSTALL_DOC_DIR)
 
-endif()
-
-if(NOT DEFINED INSTALL_LIB_DIR_STATIC)
-
-  set(INSTALL_LIB_DIR_STATIC "${INSTALL_LIB_DIR}")
-  if(VS)
-    set(INSTALL_LIB_DIR_STATIC "${INSTALL_LIB_DIR_STATIC}/${VS}")
-  endif()
+  message(FATAL_ERROR
+    "Install locations not set when configuring legacy connector."
+    " This should not happen!"
+  )
 
 endif()
 
-if(NOT DEFINED INSTALL_DOC_DIR)
-  set(INSTALL_DOC_DIR doc)
-endif()
 
-set(INSTALL_INCLUDE_DIR include/jdbc)
+set(INSTALL_INCLUDE_DIR "${INSTALL_INCLUDE_DIR}/jdbc")
+
 
 #
 # Library names
