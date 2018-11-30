@@ -95,41 +95,27 @@ endif()
 ADD_SUBDIRECTORY(tests)
 
 SET(sources error.cc stream.cc connection_tcpip.cc socket.cc diagnostics.cc
-            string.cc socket_detail.cc)
-
-IF(WITH_SSL)
-
-  list(APPEND sources connection_openssl.cc)
-
-  if(WIN32 AND OPENSSL_APPLINK_C)
-    message("adding source: ${OPENSSL_APPLINK_C}")
-    list(APPEND sources "${OPENSSL_APPLINK_C}")
-    # Remove warnings from openssl applink.c
-    set_source_files_properties("${OPENSSL_APPLINK_C}"  PROPERTIES
-                                COMPILE_FLAGS "/wd4152 /wd4996")
-  endif()
-
-ENDIF()
+            string.cc socket_detail.cc connection_openssl.cc)
 
 file(GLOB HEADERS *.h)
 
 #message("cdk foundation sources: ${sources}")
 
-SET(target_foundation ${cdk_target_prefix}foundation
-    CACHE INTERNAL "CDK foundation target")
+add_library(cdk_foundation STATIC ${sources} ${HEADERS})
+add_coverage(cdk_foundation)
 
-ADD_LIBRARY(${target_foundation} OBJECT ${sources} ${HEADERS})
-ADD_COVERAGE(${target_foundation})
-add_ssl(${target_foundation})
+target_include_directories(cdk_foundation PUBLIC
+  "${PROJECT_SOURCE_DIR}/include"
+  "${PROJECT_BINARY_DIR}/include"  # generated config.h
+)
 
+target_link_libraries(cdk_foundation PRIVATE SSL::ssl)
 
 IF(WIN32)
-  lib_interface_link_libraries(${target_foundation} ws2_32)
-  target_compile_definitions(${target_foundation}
-                             PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_link_libraries(cdk_foundation PRIVATE ws2_32)
 ENDIF(WIN32)
 
-if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  lib_interface_link_libraries(${target_foundation} socket nsl)
+if(SUNOS)
+  target_link_libraries(cdk_foundation PRIVATE socket nsl)
 endif()
 

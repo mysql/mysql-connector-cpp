@@ -38,6 +38,9 @@
 cmake_minimum_required(VERSION 2.8)
 PROJECT(Protobuf)
 
+include(../cmake/setup.cmake)
+include(platform)
+
 #
 # Create empty config.h as Protobuf code includes it.
 # TODO: Put some meaningful configuration there.
@@ -50,7 +53,13 @@ file(WRITE ${PROJECT_BINARY_DIR}/config.h "\n")
 # Note: This is crucial on Solaris
 #
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+enable_pic()
+enable_cxx11()
+
+
+if(SUNPRO)
+  set_arch_m64()
+endif()
 
 #
 # Do not export any symbols
@@ -58,29 +67,20 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Note: The LIBPROTOBUF_EXPORTS macro should *not* be defined
 #
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-fvisibility=hidden)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-  add_compile_options(-xldscope=hidden)
-endif()
+set_visibility(hidden)
 
 
 #
 # Solaris compile and link settings
 #
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+if(SUNPRO)
 
   add_definitions(-DSOLARIS_64BIT_ENABLED)
 
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+  if(SPARC)
     add_definitions(-DGOOGLE_PROTOBUF_ARCH_SPARC)
   endif()
-
-    add_definitions(
-    -D_POSIX_PTHREAD_SEMANTICS
-    -D_REENTRANT
-  )
 
 endif()
 
@@ -94,20 +94,15 @@ OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
 IF(WIN32 AND STATIC_MSVCRT)
 
 message("Using static runtime library")
-
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-  endforeach()
-  set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-endforeach(LANG)
+set_msvcrt(static)
 
 ENDIF()
 
 
 #
 # Dependency on threads library.
+#
+# TODO: Use DepFind* instead?
 #
 
 INCLUDE(FindThreads)
@@ -129,56 +124,58 @@ ADD_DEFINITIONS(-DHAVE_ZLIB=${HAVE_ZLIB})
 # Turn off some warning flags when compiling protobuf.
 #
 
-IF(UNIX)
 
-  list(APPEND warnings_list "-Wno-sign-compare")
-  list(APPEND warnings_list "-Wno-ignored-qualifiers")
-  list(APPEND warnings_list "-Wno-return-type")
-  list(APPEND warnings_list "-Wno-unused-function")
-  list(APPEND warnings_list "-Wno-unused-local-typedefs")
+if(GCC OR CLANG)
 
-  if(APPLE)
+  add_compile_options(
+    -Wno-sign-compare
+    -Wno-ignored-qualifiers
+    -Wno-return-type
+    -Wno-unused-function
+    -Wno-unused-local-typedefs
+    -Wno-unused-local-typedefs
+    -Wno-maybe-uninitialized
+    -Wno-unused-but-set-parameter
+  )
 
-    # Our version of protobuf uses many constructs (mainly atomic ops)
-    # which were depracated in OSX 10.12.
-    # TODO: Upgrade bundled protobuf
+endif()
 
-    list(APPEND warnings_list -Wno-deprecated-declarations)
+if(APPLE)
 
-  endif()
+  # Our version of protobuf uses many constructs (mainly atomic ops)
+  # which were depracated in OSX 10.12.
+  # TODO: Upgrade bundled protobuf
 
-  if(CMAKE_COMPILER_IS_GNUCXX)
+  add_compile_options(-Wno-deprecated-declarations)
 
-    list(APPEND warnings_list "-Wno-unused-local-typedefs")
-    list(APPEND warnings_list "-Wno-maybe-uninitialized")
-    list(APPEND warnings_list "-Wno-unused-but-set-parameter")
+endif()
 
-  elseif(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+if(WIN32)
 
-    # Option -erroff disables only warnings, actually. This option requires
-    # a warning tag, which is printed if -errtags option is enabled.
+  add_compile_options(
+    /wd4018
+    /wd4996
+    /wd4244
+    /wd4715
+    /wd4065
+    /wd4800
+    /wd4355
+    /wd4267
+  )
 
-    add_compile_options(
-      -errtags=yes
-      -erroff=anonnotype
-    )
+endif()
 
-  endif()
+if(SUNPRO)
 
-ELSE(WIN32)
+  # Option -erroff disables only warnings, actually. This option requires
+  # a warning tag, which is printed if -errtags option is enabled.
 
-  list(APPEND warnings_list "/wd4018")
-  list(APPEND warnings_list "/wd4996")
-  list(APPEND warnings_list "/wd4244")
-  list(APPEND warnings_list "/wd4715")
-  list(APPEND warnings_list "/wd4065")
-  list(APPEND warnings_list "/wd4800")
-  list(APPEND warnings_list "/wd4355")
-  list(APPEND warnings_list "/wd4267")
+  add_compile_options(
+    -errtags=yes
+    -erroff=anonnotype
+  )
 
-ENDIF()
-
-add_compile_options(${warnings_list})
+endif()
 
 
 #
@@ -189,12 +186,10 @@ add_compile_options(${warnings_list})
 SET(PROTO_SRC_DIR
   "${PROJECT_SOURCE_DIR}/protobuf-2.6.1/src")
 
-set(build_stamp "${PROJECT_BINARY_DIR}/build.stamp")
-
 
 file(WRITE "${PROJECT_BINARY_DIR}/exports.cmake"
-  "set(PROTOBUF_INCLUDE_DIR \"${PROTO_SRC_DIR}\")\n"
-  "set(PROTOBUF_BUILD_STAMP \"${build_stamp}\")\n")
+  "set(PROTOBUF_INCLUDE_DIR \"${PROTO_SRC_DIR}\")\n\n"
+)
 
 macro(pb_export)
   export(TARGETS ${ARGV} NAMESPACE pb_
@@ -360,9 +355,5 @@ TARGET_LINK_LIBRARIES(protoclib protobuf)
 
 ADD_EXECUTABLE(protoc ${PROTO_SRC_DIR}/google/protobuf/compiler/main.cc)
 TARGET_LINK_LIBRARIES(protoc protoclib)
-
-ADD_CUSTOM_COMMAND(TARGET protoc POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E touch ${build_stamp}
-)
 
 pb_export(protoc)

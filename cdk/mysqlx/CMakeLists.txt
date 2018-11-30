@@ -27,8 +27,6 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(target_mysqlx ${cdk_target_prefix}mysqlx CACHE INTERNAL "CDK mysqlx target")
-
 ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN -DNOGDI)
 ADD_DEFINITIONS(-DNOMINMAX)
 ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LONG})
@@ -43,18 +41,17 @@ endif()
 
 file(GLOB HEADERS *.h)
 
-ADD_LIBRARY(${target_mysqlx} OBJECT
+ADD_LIBRARY(cdk_mysqlx STATIC
   session.cc
   result.cc
   auth_hash.cc
   ${HEADERS}
   )
-ADD_COVERAGE(${target_mysqlx})
 
-# Note: File auth_mysql41.cc and auth_sha256.cc uses SSL code.
+target_link_libraries(cdk_mysqlx cdk_proto_mysqlx cdk_foundation)
+# this is used by auth_hash.cc
+target_link_libraries(cdk_mysqlx SSL::ssl)
 
-add_ssl(${target_mysqlx})
-
-#TARGET_LINK_LIBRARIES(${target_mysqlx} ${target_proto_mysqlx})
+ADD_COVERAGE(cdk_mysqlx)
 
 ADD_SUBDIRECTORY(tests)

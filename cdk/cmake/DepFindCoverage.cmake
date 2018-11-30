@@ -27,59 +27,54 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-#
-#  Configuration for building CDK as part of another cmake project.
-#
+if(COMMAND add_coverage)
+  return()
+endif()
 
-MESSAGE("Configuring CDK as part of ${CMAKE_PROJECT_NAME} project")
-
-SET(cdk_target_prefix "cdk_")
-
-OPTION(WITH_CDK_TESTS "Build CDK unit tests" ${WITH_TESTS})
+function(add_coverage)
+endfunction()
 
 #
-# Override cached WITH_TESTS value for CDK sub-project
-#
-SET(WITH_TESTS ${WITH_CDK_TESTS})
-MESSAGE("WITH_TESTS: ${WITH_TESTS}")
-
-
-OPTION(WITH_CDK_DOC "Build CDK documentation" ${WITH_DOC})
-
-#
-# Override cached WITH_DOC value for CDK sub-project
-#
-SET(WITH_DOC ${WITH_CDK_DOC})
-#MESSAGE("WITH_DOC: ${WITH_DOC}")
-
-#
-# Different default for WITH_NGS_MOCKUP option: build only if testing enabled
+# Currently works only with gcc.
 #
 
-OPTION(WITH_NGS_MOCKUP "Build CDK's NGS mockup server" ${WITH_TESTS})
+if(NOT GCC)
+  return()
+endif()
 
-#
-# Disable public headers checks if CDK is part of another project
-#
-SET(WITH_HEADER_CHECKS OFF)
 
-#
-# Infrastructure for adding CDK to main project targets
-#
+add_config_option(WITH_COVERAGE BOOL ADVANCED DEFAULT OFF
+  "Build with coverage support (debug, gcc only)")
 
-SET(CDK_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include;${PROJECT_BINARY_DIR}/include"
-    CACHE PATH "CDK include path")
-MESSAGE("CDK include path: ${CDK_INCLUDE_DIR}")
+if(WITH_COVERAGE)
+  message(STATUS "Setting up coverage (gcov).")
+endif()
 
-#
-# Note: Currently no extra setup is needed for CDK
-#
+function(add_coverage target)
 
-MACRO(CDK_SETUP)
-ENDMACRO(CDK_SETUP)
+  if(NOT WTIH_COVERAGE)
+    return()
+  endif()
 
-MACRO(ADD_CDK target)
-  TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE ${CDK_INCLUDE_DIR})
-  TARGET_LINK_LIBRARIES(${target} cdk)
-  MESSAGE("Configured target ${target} for using CDK")
-ENDMACRO(ADD_CDK)
+  message(STATUS "Enabling gcc coverage support for target: ${target}")
+  target_link_libraries(${target} PRIVATE Coverage::enable)
+
+endfunction()
+
+
+add_library(Coverage::enable STATIC IMPORTED GLOBAL)
+
+set_property(TARGET Coverage::enable APPEND
+  PROPERTY INTERFACE_COMPILE_DEFINITIONS WITH_COVERAGE
+)
+
+set_property(TARGET Coverage::enable APPEND
+  PROPERTY INTERFACE_COMPILE_OPTIONS -O0;-fprofile-arcs;-ftest-coverage
+)
+
+# TODO: See if gcov is installed on the system
+
+set_property(TARGET Coverage::enable APPEND
+  PROPERTY INTERFACE_LINK_LIBRARIES gcov
+)
+

@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,12 +26,34 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-cmake_minimum_required(VERSION 2.8)
+##############################################################################
+#
+# RapidJSON::rapidjson
+#
 
-SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+if(TARGET RapidJSON::rapidjson)
+  return()
+endif()
 
-INCLUDE_DIRECTORIES(include)
+message(STATUS "Setting up RapidJSON.")
 
-ADD_SUBDIRECTORY(src)
-#ADD_SUBDIRECTORY(testing)
+# TODO: how to make it GLOBAL...
+
+add_library(rapidjson-if INTERFACE)
+add_library(RapidJSON::rapidjson ALIAS rapidjson-if)
+
+set_target_properties(rapidjson-if PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES
+  "${PROJECT_SOURCE_DIR}/extra/rapidjson/include"
+)
+
+# Note: copied from server configuration settings
+
+set_property(TARGET rapidjson-if
+  PROPERTY INTERFACE_COMPILE_OPTIONS
+  -DRAPIDJSON_HAS_CXX11_NOEXCEPT=1
+  -DRAPIDJSON_HAS_CXX11_RANGE_FOR=1
+  -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=1
+  #-DRAPIDJSON_NO_SIZETYPEDEFINE   # this did not work with SunPro
+)
+

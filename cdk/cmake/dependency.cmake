@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -7,7 +7,7 @@
 # This program is also distributed with certain software (including
 # but not limited to OpenSSL) that is licensed under separate terms,
 # as designated in a particular file or component or in included license
-# documentation.  The authors of MySQL hereby grant you an
+# documentation. The authors of MySQL hereby grant you an
 # additional permission to link the program and your derivative works
 # with the separately licensed software that they have included with
 # MySQL.
@@ -26,12 +26,19 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-cmake_minimum_required(VERSION 2.8)
+##########################################################################
+#
+# find_dependency(XXX) command.
+#
+# Currently it is looking for DepFindXXX.cmake script that should perform
+# all steps required to locate given dependency and make it available in
+# the project. It is a layer on top of find_module().
+#
 
-SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+function(find_dependency NAME)
 
-INCLUDE_DIRECTORIES(include)
+  # TODO: Fallback to find_module()
 
-ADD_SUBDIRECTORY(src)
-#ADD_SUBDIRECTORY(testing)
+  include(DepFind${NAME})
+
+endfunction(find_dependency)

@@ -28,9 +28,20 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+# Disable warnings in code which is not ours.
+
+if(MSVC)
+  add_compile_options(
+    /wd4244 /wd4311 /wd4302
+  )
+endif()
+
 SET (UUID_SRCS uuid_gen.cc)
 
 ADD_LIBRARY(uuid_gen STATIC ${UUID_SRCS})
 
 SET_TARGET_PROPERTIES(uuid_gen PROPERTIES LINKER_LANGUAGE CXX)
+
+get_filename_component(INC_DIR "../include" ABSOLUTE)
+target_include_directories(uuid_gen PUBLIC ${INC_DIR})
 

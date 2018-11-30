@@ -27,25 +27,11 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/extra/rapidjson/include)
-
-# Note: copied from server configuration settings
-
-add_definitions(
-  -DRAPIDJSON_HAS_CXX11_NOEXCEPT=1
-  -DRAPIDJSON_HAS_CXX11_RANGE_FOR=1
-  -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=1
-  #-DRAPIDJSON_NO_SIZETYPEDEFINE   # this did not work with SunPro
-)
-
 ADD_SUBDIRECTORY(tests)
-
-SET(target_parser ${cdk_target_prefix}parser CACHE INTERNAL "CDK parser target")
 
 file(GLOB HEADERS *.h)
 
-add_library(${target_parser} OBJECT
+add_library(cdk_parser STATIC
   tokenizer.cc
   json_parser.cc
   expr_parser.cc
@@ -53,4 +39,10 @@ add_library(${target_parser} OBJECT
   ${HEADERS}
 )
 
-add_coverage(${target_parser})
+target_link_libraries(cdk_parser PRIVATE cdk_foundation RapidJSON::rapidjson)
+
+target_include_directories(cdk_parser PUBLIC
+  ${PROJECT_SOURCE_DIR}/parser
+)
+
+add_coverage(cdk_parser)

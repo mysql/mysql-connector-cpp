@@ -45,11 +45,11 @@ set(CONFIG_VARS "" CACHE INTERNAL "configuration settings" FORCE)
 set(CONFIG_VARS_VAL "" CACHE INTERNAL "configuration settings" FORCE)
 
 function(ADD_CONFIG var)
-  #message("- adding configuration setting: ${var} (${ARGN})")
+  #message("- adding configuration setting: ${var} (${ARGN}, ${ARGV0}, ${ARGV1})")
 
   if(DEFINED ARGV1)
 
-    set(${var} ${ARGV1})
+    set(${var} ${ARGV1} CACHE INTERNAL "config setting" FORCE)
     list(APPEND CONFIG_VARS_VAL ${var})
     list(REMOVE_DUPLICATES CONFIG_VARS_VAL)
     set(CONFIG_VARS_VAL ${CONFIG_VARS_VAL} CACHE INERNAL "configuration settings" FORCE)
@@ -88,6 +88,7 @@ macro(WRITE_CONFIG_HEADER path)
   endforeach()
 
   foreach(var ${CONFIG_VARS_VAL})
+
     set(DEFINE "#define ${var} ${${var}}")
     #message("writing to config.h: ${DEFINE}")
     set(GENERATED_CONFIG_DEFS "${GENERATED_CONFIG_DEFS}\n${DEFINE}")

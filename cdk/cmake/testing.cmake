@@ -243,7 +243,7 @@ ENDMACRO(ADD_TEST_ENVIRONMENT)
 
 
 #
-# Define run_unit_ests and update_test_groups targets
+# Define run_unit_tests and update_test_groups targets
 #
 
 MACRO(ADD_TEST_TARGET)

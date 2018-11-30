@@ -28,118 +28,83 @@
 
 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
-cmake_policy(VERSION 2.8.12)
-cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
-cmake_policy(SET CMP0023 OLD)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+
+cmake_policy(VERSION 3.0)
+
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 NEW)  # consistently use INTERFACE_LINK_LIBRARIES property
+endif()
+
+if(POLICY CMP0028)
+  cmake_policy(SET CMP0028 NEW)  #23 OLD)
+endif()
 
 
 PROJECT(MySQLCDK)
+
+#
+# Load cmake modules.
+#
+
+include(cmake/setup.cmake)
+
+include(platform)
+include(config_header)
+include(config_options)
+include(dependency)
 
 
 #
 # Detect if we are configured as stand-alone project, or sub-project.
 #
 
-IF (PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
+if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
+
   MESSAGE("Stand-alone configuration")
   MESSAGE("Building on system: ${CMAKE_SYSTEM}")
   SET(cdk_stand_alone 1)
-ELSE()
+
+else()
+
+  MESSAGE("Configuring CDK as part of ${CMAKE_PROJECT_NAME} project")
   SET(cdk_stand_alone 0)
-  INCLUDE(SubProject.cmake)
-ENDIF()
+  set(WITH_TESTS OFF)
+  set(WITH_DOC OFF)
+  set(WITH_HEADER_CHECKS OFF)
 
+endif()
 
-#
-# Set up cmake module search patch.
-#
-
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-#MESSAGE("added module path: ${PROJECT_SOURCE_DIR}/cmake")
 
 #
 # Basic compiler settings.
 #
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+enable_pic()
+enable_cxx11()
+# ???      -mt
 
-if(cdk_stand_alone)
+set(HAVE_MOVE_SEMANTICS 1)
+add_config(HAVE_MOVE_SEMANTICS)
 
-  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-
-    set(options
-      -m64
-      -mt
-      -std=c++11
-      -library=stdcpp
-      -xatomic=studio
-      -xtarget=generic     # more portable code
-      -xdebuginfo=no%decl  # faster build times
-      # optimization options
-      -xbuiltin=%all
-      -xlibmil
-    )
-
-    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
-      list(APPEND options -nofstore)
-    endif()
-
-    string(REPLACE ";" " " options "${options}")
-
-    set(CMAKE_CXX_FLAGS "${options} ${CMAKE_CXX_FLAGS}")
-
-    #foreach(type EXE STATIC SHARED MODULE)
-    #  set(CMAKE_${type}_LINKER_FLAGS
-    #    "${options} ${CMAKE_${type}_LINKER_FLAGS}"
-    #  )
-    #endforeach()
-
-    set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO
-      "-g -xO2 ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
-    )
-    set(CMAKE_CXX_FLAGS_RELEASE "-g0 -xO3 ${CMAKE_CXX_FLAGS_RELEASE}")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL
-      "-g0 -xO3 -xsize ${CMAKE_CXX_FLAGS_MINSIZEREL}"
-    )
-
-    add_definitions(
-      -D_POSIX_PTHREAD_SEMANTICS
-      -D_REENTRANT
-    )
-
-  endif()
-
-endif(cdk_stand_alone)
-
+add_config(CDK_BIG_ENDIAN ${BIG_ENDIAN})
 
 #
-# Library utilities (add_library_ex)
+#  Dependencies
 #
 
-include(libutils)
+find_dependency(SSL)
+find_dependency(Protobuf)
+find_dependency(RapidJSON)
+find_dependency(Coverage)
 
-#
-# Infrastructure for defining code configuration settings
-# (the ADD_CONFIG() macro for declaring contents of config.h).
-#
 
-INCLUDE(config)
+# TODO: These macros should not be used in public headers because they are
+# specific to the particular build of the connector library and might not be
+# correct when used in a different environment.
 
-#
-# Detect endianess
-#
-
-if(NOT DEFINED CDK_BIG_ENDIAN)
-
-  INCLUDE(TestBigEndian)
-  TEST_BIG_ENDIAN(CDK_BIG_ENDIAN)
-
-endif()
-
-#message(STATUS "BIG_ENDIAN: ${CDK_BIG_ENDIAN}")
-add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
+add_config(WITH_SSL)
+#add_config(WITH_SSL_WOLFSSL)
 
 
 #
@@ -148,203 +113,44 @@ add_config(CDK_BIG_ENDIAN ${CDK_BIG_ENDIAN})
 
 if(WIN32)
   add_definitions(-DWIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 #
 # Configure static runtime library on Windows if requested
 #
 
-OPTION(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
+if(cdk_stand_alone)
 
-IF(WIN32 AND STATIC_MSVCRT)
+  add_config_option(STATIC_MSVCRT BOOL ADVANCED DEFAULT OFF "Use static MSVC runtime library")
 
-message("Using static runtime library")
-
-foreach(LANG C CXX)
-  set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-  foreach(TYPE RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}} /MT")
-  endforeach()
-  set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-endforeach(LANG)
-
-ENDIF()
-
-#
-# Position independent code support.
-#
-
-option(WITH_PIC "Generate position independet code (PIC)" OFF)
-if(WITH_PIC)
-  message("Generating position independent code")
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
-#
-# Gcov support (Linux only).
-#
-
-include(gcov)
-
-#
-# Disable 64-bit warnings until we have dealt with them
-# TODO: fix all 64-bit warnings
-#
-
-option(DISABLE_WARNINGS "Do not show selected compiler warnings" OFF)
-mark_as_advanced(DISABLE_WARNINGS)
-
-if(DISABLE_WARNINGS)
-
-  set(warning_list)
-
-  IF(WIN32)
-
-    list(APPEND warnings_list "/wd4244")
-    list(APPEND warnings_list "/wd4267")
-
-  ENDIF()
-
-  string(REPLACE ";" " " warning_options "${warnings_list}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${warning_options}")
+  if(WIN32 AND STATIC_MSVCRT)
+    message("Using static runtime library")
+    set_msvcrt(STATIC)
+  endif()
 
 endif()
-
-
-#
-# Add SSL
-#
-
-message("WITH_SSL: ${WITH_SSL}")
-
-include(install_macros)
-include(ssl)
-MYSQL_CHECK_SSL(${CDK_BIG_ENDIAN})
-add_config(WITH_SSL)
-add_config(WITH_SSL_WOLFSSL)
-
-
-#
-# Enable C++11
-#
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-
-set(HAVE_MOVE_SEMANTICS 1)
-ADD_CONFIG(HAVE_MOVE_SEMANTICS)
-
 
 #
 # Handling of THROW() statements.
 #
 
-option(THROW_AS_ASSERT
+add_config_option(THROW_AS_ASSERT BOOL ADVANCED DEFAULT ON
  "Turn THROW statements in the code into assertions for easier debugging"
- true)
-mark_as_advanced(THROW_AS_ASSERT)
+)
 
 if(THROW_AS_ASSERT)
-add_definitions(-DTHROW_AS_ASSERT)
+  add_definitions(-DTHROW_AS_ASSERT)
 endif()
 
 
 #
-# Add Protobuf (bundled)
+# Set higher warning level in maintainer mode.
 #
 
-INCLUDE(protobuf)
+if(MAINTAINER_MODE)
 
-
-#
-# Clean exports file
-#
-
-file(REMOVE ${PROJECT_BINARY_DIR}/exports.cmake)
-
-
-#
-# Project's public headers
-#
-
-ADD_SUBDIRECTORY(include)
-INCLUDE_DIRECTORIES(include)
-#
-# Add the binary directory to include path so that generated
-# headers like config.h are found
-#
-INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include)
-set(configuration_header "${PROJECT_BINARY_DIR}/include/mysql/cdk/config.h")
-
-#
-# Testing framework
-#
-
-INCLUDE(testing)
-SETUP_TESTING()
-
-if(WITH_TESTS)
-
-  ADD_LIBRARY(process_launcher STATIC
-    extra/process_launcher/process_launcher.cc
-    extra/common/exception.cc)
-  target_include_directories(process_launcher PRIVATE
-    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
-    ${PROJECT_SOURCE_DIR}/extra/common)
-
-  # quiet compile warnings outside of our code
-  if (MSVC)
-    target_compile_options(process_launcher PRIVATE /W2)
-  else()
-    target_compile_options(process_launcher PRIVATE -Wno-unused-result)
-  endif()
-
-  ADD_TEST_LIBRARIES(process_launcher cdk)
-  ADD_TEST_INCLUDES(
-    ${PROJECT_SOURCE_DIR}/extra/process_launcher/
-    ${PROJECT_SOURCE_DIR}/extra/common
-  )
-
-  # This folder contains test headers that can be used by all tests
-  # TODO: move it to a better place
-
-  add_test_includes(${PROJECT_SOURCE_DIR}/mysqlx/tests)
-
-endif()
-
-
-#
-# Deal with broken optimization in gcc 4.8.
-#
-# We observed very strange behaviour of exceptions when compiling
-# fully optimized code wtih gcc 4.8. Downgrade optimization to -O1
-# in this case. To get trully optimized code use gcc 4.9+ or clang.
-#
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9")
-  foreach(LANG C CXX)
-  foreach(TYPE RELEASE RELWITHDEBINFO)
-    string(REPLACE "-O3" "-O1" CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}}")
-    string(REPLACE "-O2" "-O1" CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}}")
-  endforeach(TYPE)
-  endforeach(LANG)
-endif()
-endif()
-
-
-# Bundled code (with normal warning level)
-
-ADD_SUBDIRECTORY(extra)
-
-
-#
-# Set higher warning level on Windows to catch non-portable
-# code.
-#
-
-IF(WIN32)
+IF(MSVC)
 
   # 4127 = conditional expression is constant (needed for do {...} while(false))
   # 4512 = assignment operator could not be generated
@@ -398,7 +204,7 @@ IF(WIN32)
 
 ELSE()
 
-  if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+  if(SUNPRO)
     # TODO: Enable -Wall after fixing warnings
     add_compile_options(-errtags=yes -erroff=hidevf)
   else()
@@ -406,6 +212,8 @@ ELSE()
   endif()
 
 ENDIF()
+
+endif()
 
 
 if(0)
@@ -417,12 +225,42 @@ if(0)
   endforeach()
 endif()
 
+
+
+#
+# Clean exports file
+#
+
+file(REMOVE ${PROJECT_BINARY_DIR}/exports.cmake)
+
+#
+# Project's public headers
+#
+
+ADD_SUBDIRECTORY(include)
+INCLUDE_DIRECTORIES(include)
+
+#
+# Add the binary directory to include path so that generated
+# headers like config.h are found
+#
+INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include)
+set(configuration_header "${PROJECT_BINARY_DIR}/include/mysql/cdk/config.h")
+
+
+#
+# Testing framework
+#
+
+#INCLUDE(testing)
+#SETUP_TESTING()
+
+
 #
 # Parser library
 #
 
 ADD_SUBDIRECTORY(parser)
-INCLUDE_DIRECTORIES(parser)
 
 #
 # CDK components
@@ -443,7 +281,9 @@ WRITE_CONFIG_HEADER(${configuration_header})
 # Tests
 #
 
-IF(WITH_TESTS)
+IF(0) #WITH_TESTS)
+
+  add_test_includes(${PROJECT_SOURCE_DIR}/mysqlx/tests)
 
   # Target (run_unit_tests) for running all tests declared with ADD_NG_TESTS()
   # (see cmake/testing.cmake)

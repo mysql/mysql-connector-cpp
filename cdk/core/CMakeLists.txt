@@ -29,22 +29,9 @@
 
 cmake_minimum_required(VERSION 2.8)
 # TODO: Why it is not enough to set it in the top-level CMakeLists.txt?
-cmake_policy(SET CMP0023 OLD)
+#cmake_policy(SET CMP0023 OLD)
 
 ADD_SUBDIRECTORY(tests)
-
-# required by codec.cc
-INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
-
-set(cdk_libs protobuf-lite)
-
-if(NOT PROTOBUF_LITE)
-  list(APPEND cdk_libs protobuf)
-endif()
-
-if(${WITH_SSL_WOLFSSL})
-  list(APPEND cdk_libs wolfssl wolfcrypt)
-endif()
 
 SET(cdk_sources
   session.cc
@@ -53,21 +40,14 @@ SET(cdk_sources
 
 file(GLOB HEADERS *.h)
 
-add_library_ex(cdk STATIC
-  ${cdk_sources}
-  ${HEADERS}
-  OBJECTS
-    ${target_mysqlx}
-    ${target_proto_mysqlx}
-    ${target_foundation}
-    ${target_parser}
-  LIBS
-    ${cdk_libs}
+add_library(cdk STATIC ${cdk_sources} ${HEADERS})
+
+target_link_libraries(cdk
+  cdk_mysqlx cdk_parser
+  Protobuf::pb-lite  # required by codecc.cc
 )
 
 add_coverage(cdk)
-
-#MESSAGE("cdk depends on: ${target_mysqlx} ${target_parser}")
 
 EXPORT(TARGETS cdk
   APPEND FILE ${PROJECT_BINARY_DIR}/exports.cmake

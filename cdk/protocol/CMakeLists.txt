@@ -33,4 +33,4 @@
 # but at the moment there is only one, using the MySQL X Protocol.
 #
 
-ADD_SUBDIRECTORY(mysqlx)
+add_subdirectory(mysqlx)
