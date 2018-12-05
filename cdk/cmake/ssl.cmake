@@ -565,7 +565,16 @@ function(get_lib_file LIB_VAR SONAME_VAR LIB)
 
     #message("== lib_soname: ${lib_soname}")
 
-    set(${SONAME_VAR} "${lib_soname}" PARENT_SCOPE)
+    #
+    # Note: We observed that for openssl library, the soname extracted is
+    # sometime identical to the original name, which breaks logic that later
+    # creates the soname link. Thus in this case we do not set soname and do
+    # not create soname link.
+    #
+
+    if(NOT lib_soname STREQUAL lib_name)
+      set(${SONAME_VAR} "${lib_soname}" PARENT_SCOPE)
+    endif()
 
   endif()
 
