@@ -145,7 +145,7 @@ const std::string& Value::get_string() const
       const_cast<Value*>(this)->m_val.v_bool = true;
     }
 
-    FALLTHROUGH
+    FALLTHROUGH;
 
   case RAW:
   case STRING:
@@ -167,6 +167,7 @@ const std::u16string& Value::get_ustring() const
   case JSON:
   case RAW:
   case STRING:
+
     // UTF8 conversion
 
     if (!m_val.v_bool)
@@ -175,7 +176,7 @@ const std::u16string& Value::get_ustring() const
       const_cast<Value*>(this)->m_val.v_bool = true;
     }
 
-    FALLTHROUGH
+    FALLTHROUGH;
 
   case USTRING:
     return m_ustr;
