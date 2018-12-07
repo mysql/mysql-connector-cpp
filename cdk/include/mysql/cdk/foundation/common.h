@@ -187,6 +187,7 @@ PUSH_SYS_WARNINGS
 POP_SYS_WARNINGS
 
 #undef max
+#undef byte
 #undef THROW
 
 /*
@@ -246,20 +247,27 @@ POP_SYS_WARNINGS
 namespace cdk {
 namespace foundation {
 
+
+#ifdef USE_NATIVE_BYTE
+  using ::byte;
+#else
+  typedef unsigned char byte;
+#endif
+
+
 /*
-  Defined here because std::enable_if_t is not defined on all platforms on
-  which we build (clang is missing one). Note: it is C++14 feature.
+  Convenience class to disable copy constructor in a derived class.
 */
 
-template<bool Cond, typename T = void>
-using enable_if_t = typename std::enable_if<Cond, T>::type;
+class nocopy
+{
+  nocopy(const nocopy&);
+  nocopy& operator=(const nocopy&);
 
+protected:
+  nocopy() {}
+};
 
-template<typename... Ty>
-using is_constructible_t = typename std::is_constructible<Ty...>::type;
-
-template<typename T>
-using remove_reference_t = typename std::remove_reference<T>::type;
 
 
 #ifndef HAVE_IS_SAME
@@ -283,7 +291,6 @@ using remove_reference_t = typename std::remove_reference<T>::type;
 #endif
 
 
-
 /*
   Convenience for checking numeric limits (to be used when doing numeric
   casts).
@@ -295,7 +302,7 @@ using remove_reference_t = typename std::remove_reference<T>::type;
 
 template <
   typename T, typename U,
-  enable_if_t<std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)
@@ -306,8 +313,8 @@ bool check_num_limits(U val)
 
 template <
   typename T, typename U,
-  enable_if_t<std::is_unsigned<T>::value>* = nullptr,
-  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)
@@ -317,8 +324,8 @@ bool check_num_limits(U val)
 
 template <
   typename T, typename U,
-  enable_if_t<!std::is_unsigned<T>::value>* = nullptr,
-  enable_if_t<!std::is_unsigned<U>::value>* = nullptr
+  typename std::enable_if<!std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
 >
 inline
 bool check_num_limits(U val)
@@ -328,9 +335,7 @@ bool check_num_limits(U val)
      || (val < std::numeric_limits<T>::lowest()));
 }
 
-#undef  ASSERT_NUM_LIMITS
-#define ASSERT_NUM_LIMITS(T,V) assert(cdk::foundation::check_num_limits<T>(V))
-
+#define ASSERT_NUM_LIMITS_CDK(T,V) assert(cdk::foundation::check_num_limits<T>(V))
 
 }}  // cdk::foundation
 

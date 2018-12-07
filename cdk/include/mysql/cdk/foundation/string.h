@@ -32,15 +32,12 @@
 #define SDK_FOUNDATION_STRING_H
 
 #include "common.h"
-#include "types.h"
 #include "error.h"  // throw_error()
-
-// TODO: Replace with std::variant<> when available.
-#include "variant.h"
 
 #include <rapidjson/encodings.h>
 #include <rapidjson/memorystream.h>
 #include <rapidjson/stringbuffer.h>
+#include <rapidjson/encodedstream.h>
 
 PUSH_SYS_WARNINGS
 #include <stdint.h>
@@ -53,6 +50,7 @@ POP_SYS_WARNINGS
 namespace cdk {
 namespace foundation {
 
+
 typedef char32_t      char_t;
 constexpr char_t   invalid_char = (char_t)-1;
 typedef std::basic_string<char16_t> ustring;
@@ -60,8 +58,23 @@ typedef std::basic_string<char16_t> ustring;
 
 struct String_encoding {
 
-  using UCS4 = rapidjson::UTF32<char32_t>;
-  using UTF16 = rapidjson::UTF16<char16_t>;
+  // Note: BE/LE versions are used with byte streams. Otherwise encodings
+  // work on single code units and as such are endianess agnostic.
+
+  // Unicode with 4 byte code units (so, code unit = code point)
+
+  using UCS4BE = rapidjson::UTF32BE<char32_t>;  // this is the standard
+  using UCS4LE = rapidjson::UTF32LE<char32_t>;
+  using UCS4   = rapidjson::UTF32<char32_t>;
+
+  // UTF16 with 2 byte code units.
+
+  using UTF16BE = rapidjson::UTF16BE<char16_t>;  // this is the standard
+  using UTF16LE = rapidjson::UTF16BE<char16_t>;
+  using UTF16   = rapidjson::UTF16<char16_t>;
+
+  // Single byte encodings.
+
   using UTF8 = rapidjson::UTF8<char>;
   using ASCII = rapidjson::ASCII<char>;
 
@@ -69,10 +82,9 @@ struct String_encoding {
   using STR = UTF16;
 
   /*
-    Note: We assume that wide strings are encoding using UTF encoding.
-    This is usually the case but gcc, for example, can be configured
-    to use different encoding for wide (and plain) strings. We do not cover
-    such exotic scenario.
+    Note: We assume that wide strings use UTF encoding. This is usually the case
+    but gcc, for example, can be configured to use different encoding for wide
+    (and plain) strings. We do not cover such exotic scenarios.
   */
 
 #if WCHAR_SIZE < 4
@@ -84,9 +96,10 @@ struct String_encoding {
 };
 
 
+
 /*
-  Rapidjson compatible stream of characters taken form fixed meomory
-  region.
+  Rapidjson compatible stream of characters taken form fixed memory
+  region. Supports both input and output.
 
   Note: Modified code taken from rapidjson memorystream.h
 */
@@ -220,15 +233,22 @@ struct Str_stream
 };
 
 
-// code points -> string
-// returns number of code points consumed
+/*
+  Decode sequence of code points of encoding FROM into a string that uses
+  encoding TO.
+
+  Returns number of code points consumed.
+*/
 
 template<class FROM, class TO = String_encoding::STR>
-size_t str_encode(
+size_t str_decode(
   const typename FROM::Ch *beg, size_t len,
   std::basic_string<typename TO::Ch> &out
 )
 {
+  if (!len)
+    return 0;
+
   using Transcoder = rapidjson::Transcoder<FROM, TO>;
   Mem_stream<typename FROM::Ch> input(beg, len);
   Str_stream<typename TO::Ch>   output(out);
@@ -246,15 +266,65 @@ size_t str_encode(
 }
 
 
-// string -> code points
-// returns number of code points produced
+/*
+  Decode sequence of bytes using encoding FROM into a string that uses
+  encoding TO.
+
+  Returns number of bytes consumed.
+*/
+
+template<class FROM, class TO = String_encoding::STR>
+size_t str_decode(
+  const byte *beg, size_t len,
+  std::basic_string<typename TO::Ch> &out
+)
+{
+  if (!len)
+    return 0;
+
+  using Transcoder = rapidjson::Transcoder<FROM, TO>;
+  Mem_stream<char> bytes((const char*)beg, len);
+  rapidjson::EncodedInputStream<FROM, Mem_stream<char> > input(bytes);
+  Str_stream<typename TO::Ch>   output(out);
+
+  /*
+    Note: EncodedInputStream looks for BOM mark and for that reason
+    the underlying byte stream is ahead of the current position in the
+    stream.
+  */
+
+  for(bool more = true; more;)
+  {
+    more = bytes.hasData();
+
+    if (!Transcoder::Transcode(input, output))
+    {
+      // TODO: add some context info from the input stream.
+      throw_error("Failed string conversion");
+    }
+  }
+
+  return bytes.Tell();
+}
+
+
+/*
+  Encode a string that uses encoding FROM into a sequence of code points
+  of encoding TO. At most as many code points are generated as will fit
+  into the output buffer.
+
+  Returns the number of code points generated.
+*/
 
 template<class TO, class FROM = String_encoding::STR>
-size_t str_decode(
+size_t str_encode(
   const std::basic_string<typename FROM::Ch> &in,
   typename TO::Ch *out, size_t len
 )
 {
+  if (in.empty())
+    return 0;
+
   using Transcoder = rapidjson::Transcoder<FROM, TO>;
   Mem_stream<typename FROM::Ch> input(in.data(), in.length());
   Mem_stream<typename TO::Ch>   output(out, len);
@@ -272,6 +342,45 @@ size_t str_decode(
 
   return output.Tell();
 }
+
+
+/*
+  Encode a string that uses encoding FROM into a sequence of bytes that
+  represent this string in encoding TO. At most as many bytes are generated
+  as will fit into the output buffer.
+
+  Returns the number of bytes generated.
+*/
+
+template<class TO, class FROM = String_encoding::STR>
+size_t str_encode(
+  const std::basic_string<typename FROM::Ch> &in,
+  byte *out, size_t len
+)
+{
+  if (in.empty())
+    return 0;
+
+  using Transcoder = rapidjson::Transcoder<FROM, TO>;
+  Mem_stream<typename FROM::Ch> input(in.data(), in.length());
+  Mem_stream<char>   buf((char*)out, len);
+  // Note: false means do not put BOM marker in the output
+  rapidjson::EncodedOutputStream<TO, Mem_stream<char> > output(buf, false);
+
+  // Note: buf.hasData() in fact checks if there is space available
+
+  while (input.hasData() && buf.hasData())
+  {
+    if (!Transcoder::Transcode(input, output))
+    {
+      // TODO: add some context info from the input stream.
+      throw_error("Failed string conversion");
+    }
+  }
+
+  return buf.Tell();
+}
+
 
 
 
@@ -488,23 +597,23 @@ public:
   operator std::string() const
   {
     std::string out;
-    str_encode<String_encoding::STR, String_encoding::UTF8>(
+    str_decode<String_encoding::STR, String_encoding::UTF8>(
       data(), length(), out
-      );
+    );
     return out;
   }
 
   string& set_utf8(const std::string &str)
   {
     clear();
-    str_encode<String_encoding::UTF8>(str.data(), str.length(), *this);
+    str_decode<String_encoding::UTF8>(str.data(), str.length(), *this);
     return *this;
   }
 
   string& set_ascii(const char *str, size_t len)
   {
     clear();
-    str_encode<String_encoding::ASCII>(str, len, *this);
+    str_decode<String_encoding::ASCII>(str, len, *this);
     return *this;
   }
 
@@ -517,15 +626,15 @@ public:
   explicit string(const std::wstring &str)
   {
     clear();
-    str_encode<String_encoding::WIDE>(str.data(), str.length(), *this);
+    str_decode<String_encoding::WIDE>(str.data(), str.length(), *this);
   }
 
   explicit operator std::wstring() const
   {
     std::wstring out;
-    str_encode<String_encoding::STR, String_encoding::WIDE>(
+    str_decode<String_encoding::STR, String_encoding::WIDE>(
       data(), length(), out
-      );
+    );
     return out;
   }
 
@@ -538,21 +647,21 @@ public:
   explicit string(const std::basic_string<char_t> &str)
   {
     clear();
-    str_encode<String_encoding::UCS4>(str.data(), str.length(), *this);
+    str_decode<String_encoding::UCS4>(str.data(), str.length(), *this);
   }
 
   explicit operator std::basic_string<char_t>() const
   {
     std::basic_string<char_t> out;
-    str_encode<String_encoding::STR, String_encoding::UCS4>(
+    str_decode<String_encoding::STR, String_encoding::UCS4>(
       data(), length(), out
-      );
+    );
     return out;
   }
 
   void push_back(char_t c)
   {
-    str_encode<String_encoding::UCS4>(&c, 1, *this);
+    str_decode<String_encoding::UCS4>(&c, 1, *this);
   }
 
   // Character iterator.

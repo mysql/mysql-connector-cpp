@@ -87,18 +87,12 @@ public:
 
   size_t from_bytes(bytes in, string &out) override
   {
-    using char_type = typename ENC::Ch;
-    return sizeof(char_type) * str_encode<ENC>(
-      (const char_type*)in.begin(), in.size()/sizeof(char_type), out
-    );
+    return str_decode<ENC>(in.begin(), in.size(), out);
   }
 
   size_t to_bytes(const string &in, bytes out) override
   {
-    using char_type = typename ENC::Ch;
-    return sizeof(char_type) * str_decode<ENC>(
-      in, (char_type*)out.begin(), out.size()/sizeof(char_type)
-    );
+    return str_encode<ENC>(in, out.begin(), out.size());
   }
 
 };

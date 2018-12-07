@@ -31,6 +31,7 @@
 #ifndef SDK_FOUNDATION_TYPES_H
 #define SDK_FOUNDATION_TYPES_H
 
+
 #include "common.h"
 #include "cdk_time.h"
 #include "string.h"
@@ -45,6 +46,7 @@ PUSH_SYS_WARNINGS
 #include <memory>
 POP_SYS_WARNINGS
 
+#undef byte
 
 namespace cdk {
 namespace foundation {
@@ -56,26 +58,6 @@ namespace foundation {
   throw_error() for the THROW() macro, so we declare it here.
 */
 void throw_error(const char*);
-
-
-#ifdef USE_NATIVE_BYTE
-  using ::byte;
-#else
-  typedef unsigned char byte;
-#endif
-
-/*
-  Convenience class to disable copy constructor in a derived class.
-*/
-
-class nocopy
-{
-  nocopy(const nocopy&);
-  nocopy& operator=(const nocopy&);
-
-protected:
-  nocopy() {}
-};
 
 
 class Iterator
