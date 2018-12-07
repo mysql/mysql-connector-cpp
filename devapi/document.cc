@@ -341,35 +341,33 @@ void DbDoc::Impl::JSONDoc::prepare()
 
 Value Value::Access::mk_from_json(const std::string &json)
 {
-  typedef parser::Any_parser<
-    parser::JSON_scalar_parser,
-    cdk::JSON_processor
-  > Parser;
-
-  // Create parser for the JSON string.
-
-  parser::Tokenizer toks(json);
-  auto first = toks.begin();
-  Parser parser(first, toks.end());
-
   /*
     Define builder which acts as JSON value processor and
     builds the corresponding Value object.
   */
 
-  struct Builder :
-    public cdk::JSON::Processor::Any_prc
+  struct Builder
+    : public cdk::JSON::Processor
     , cdk::JSON_processor
+    , cdk::JSON::Processor::Any_prc
   {
     Value *m_val = NULL;
 
+    // JSON::Processor
+
+    Any_prc* key_val(const string&) override
+    {
+      return this;
+    }
+
     // Any_prc
 
-    Scalar_prc *scalar() { return this; }
+    Scalar_prc *scalar() override
+    { return this; }
 
     std::unique_ptr<DbDoc::Impl::Builder> m_doc_builder;
 
-    Doc_prc    *doc()
+    Doc_prc *doc() override
     {
       m_val->m_type = DOC;
       m_doc_builder.reset(new DbDoc::Impl::Builder(*m_val->m_doc.m_impl));
@@ -378,7 +376,7 @@ Value Value::Access::mk_from_json(const std::string &json)
 
     DbDoc::Impl::Builder::Arr_builder m_arr_builder;
 
-    List_prc   *arr()
+    List_prc *arr() override
     {
       m_val->m_type = ARR;
       m_val->m_arr = std::make_shared<Array>();
@@ -388,18 +386,29 @@ Value Value::Access::mk_from_json(const std::string &json)
 
     // JSON_processor
 
-    void null() {}
+    void null() override
+    {}
 
-    void str(const cdk::string &val)
+    void str(const cdk::string &val) override
     {
       *m_val = (mysqlx::string)val;
     }
 
-    void num(uint64_t val) { *m_val = val; }
-    void num(int64_t val)  { *m_val = val; }
-    void num(float val)    { *m_val = val; }
-    void num(double val)   { *m_val = val; }
-    void yesno(bool val)   { *m_val = val; }
+    void num(uint64_t val) override
+    { *m_val = val; }
+
+    void num(int64_t val) override
+    { *m_val = val; }
+
+    void num(float val) override
+    { *m_val = val; }
+
+    void num(double val) override
+   { *m_val = val; }
+
+    void yesno(bool val) override
+    { *m_val = val; }
+
   }
   builder;
 
@@ -407,6 +416,16 @@ Value Value::Access::mk_from_json(const std::string &json)
 
   Value val;
   builder.m_val = &val;
+
+  /*
+    Note: json can be not only an object, but also scalar or array. Since
+    JSON_parser can parse only documents, we do a trick of parsing document
+    of the form { "doc": json } and builder ignores the top-level "doc"
+    field.
+  */
+
+  parser::JSON_parser parser(std::string("{ \"doc\":") + json + "}");
+
   parser.process(builder);
 
   return std::move(val);

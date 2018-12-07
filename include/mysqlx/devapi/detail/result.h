@@ -56,7 +56,8 @@ class Session;
 namespace common {
 
 class Result_init;
-template <class STR> class Column_info;
+class Column_info;
+class Result_impl;
 
 }  // common
 
@@ -76,7 +77,7 @@ class PUBLIC_API Result_detail
 
 public:
 
-  struct INTERNAL Impl;
+  using Impl = common::Result_impl;
 
 protected:
 
@@ -185,12 +186,12 @@ class PUBLIC_API Column_detail
 {
 protected:
 
-  using Impl = common::Column_info<string>;
+  using Impl = common::Column_info;
 
   const Impl *m_impl = nullptr;
 
-  Column_detail(const Impl &impl)
-    : m_impl(&impl)
+  Column_detail(const Impl *impl)
+    : m_impl(impl)
   {}
 
   const Impl& get_impl() const
@@ -249,7 +250,7 @@ template <class COL>
 struct Column_storage
   : public COL
 {
-  Column_storage(const typename COL::Impl &impl)
+  Column_storage(const typename COL::Impl *impl)
     : COL(impl)
   {}
 

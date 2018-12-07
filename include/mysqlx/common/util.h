@@ -32,18 +32,6 @@
 #define MYSQLX_COMMON_UTIL_H
 
 
-#include <string>
-#include <stdexcept>
-#include <ostream>
-#include <memory>
-#include <forward_list>
-#include <string.h>  // for memcpy
-#include <utility>   // std::move etc
-#include <algorithm>
-#include <functional>
-#include <type_traits>
-
-
 /*
   Macro to be used to disable "implicit fallthrough" gcc warning
   <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
@@ -94,6 +82,8 @@
 #undef DISABLE_WARNING
 #undef DIAGNOSTIC_PUSH
 #undef DIAGNOSTIC_POP
+#undef PUSH_SYS_WARNINGS
+#undef POP_SYS_WARNINGS
 
 
 #if defined __GNUC__ || defined __clang__
@@ -162,6 +152,49 @@
 
 
 /*
+  Macros to disable compile warnings in system headers. Put
+  PUSH_SYS_WARNINGS/POP_SYS_WARNINGS around sytem header includes.
+*/
+
+#if defined _MSC_VER
+
+/*
+  Warning 4350 is triggered by std::shared_ptr<> implementation
+  - see https://msdn.microsoft.com/en-us/library/0eestyah.aspx
+  Warning 4996 is about SCL_SECURE_WARNINGS (see MSVC docs on 'Checked Iterators'.
+*/
+
+#define PUSH_SYS_WARNINGS \
+  PRAGMA(warning (push,2)) \
+  DISABLE_WARNING(4350) \
+  DISABLE_WARNING(4738) \
+  DISABLE_WARNING(4548) \
+  DISABLE_WARNING(4996)
+
+#else
+
+#define PUSH_SYS_WARNINGS DIAGNOSTIC_PUSH
+
+#endif
+
+#define POP_SYS_WARNINGS  DIAGNOSTIC_POP
+
+
+PUSH_SYS_WARNINGS
+#include <string>
+#include <stdexcept>
+#include <ostream>
+#include <memory>
+#include <forward_list>
+#include <string.h>  // for memcpy
+#include <utility>   // std::move etc
+#include <algorithm>
+#include <functional>
+#include <type_traits>
+POP_SYS_WARNINGS
+
+
+/*
   A dirty trick to help Doxygen to process 'enum class' declarations, which
   are not fully supported. Thus we replace them by plain 'enum' when processing
   sources by Doxygen.
@@ -202,6 +235,7 @@ namespace mysqlx {
 
 namespace common {
 
+
 /*
   Convenience for checking numeric limits (to be used when doing numeric
   casts).
@@ -209,8 +243,6 @@ namespace common {
   TODO: Maybe more templates are needed for the case where T is a float/double
   type and U is an integer type or vice versa.
 */
-
-#ifdef __cplusplus
 
 template <
   typename T, typename U,
@@ -248,8 +280,6 @@ bool check_num_limits(U val)
 }
 
 #define ASSERT_NUM_LIMITS(T,V) assert(mysqlx::common::check_num_limits<T>(V))
-
-#endif
 
 
 inline

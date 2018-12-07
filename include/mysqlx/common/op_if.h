@@ -117,7 +117,7 @@ struct Executable_if
 
 struct Bind_if : public Executable_if
 {
-  using string = std::wstring;
+  using string = std::string;
   using Value = mysqlx::common::Value;
 
   // Add value for named parameter
@@ -144,7 +144,7 @@ struct Limit_if : public Bind_if
 
 struct Sort_if : public Limit_if
 {
-  using string = std::wstring;
+  using string = std::string;
   enum direction_t { ASC, DESC };
 
   virtual void add_sort(const string &expr, direction_t dir) = 0;
@@ -155,7 +155,7 @@ struct Sort_if : public Limit_if
 
 struct Having_if : public Sort_if
 {
-  using string = std::wstring;
+  using string = std::string;
 
   virtual void set_having(const string&) = 0;
   virtual void clear_having() = 0;
@@ -164,7 +164,7 @@ struct Having_if : public Sort_if
 
 struct Group_by_if : public Having_if
 {
-  using string = std::wstring;
+  using string = std::string;
 
   virtual void add_group_by(const string&) = 0;
   virtual void clear_group_by() = 0;
@@ -173,7 +173,7 @@ struct Group_by_if : public Having_if
 
 struct Proj_if : public Group_by_if
 {
-  using string = std::wstring;
+  using string = std::string;
 
   /*
     Add projection specification for a table query. It is an expression with
@@ -196,7 +196,7 @@ struct Proj_if : public Group_by_if
 template <class Base>
 struct Select_if : public Base
 {
-  using string = std::wstring;
+  using string = std::string;
   using Lock_mode = mysqlx::common::Lock_mode;
 
   // Set expression to select rows/documents.
@@ -246,7 +246,7 @@ struct Collection_remove_if : public Select_if<Sort_if>
 
 struct Collection_modify_if : public Select_if<Sort_if>
 {
-  using string = std::wstring;
+  using string = std::string;
   using Value = mysqlx::common::Value;
 
   enum Operation
@@ -276,7 +276,7 @@ struct Collection_modify_if : public Select_if<Sort_if>
 template <class Row_impl>
 struct Table_insert_if : public Executable_if
 {
-  using string = std::wstring;
+  using string = std::string;
 
   /*
     Pass to the implementation names of columns specified by
@@ -335,7 +335,7 @@ struct Table_remove_if : public Select_if<Sort_if>
 
 struct Table_update_if : public Table_remove_if
 {
-  using string = std::wstring;
+  using string = std::string;
   using Value = mysqlx::common::Value;
 
   virtual void add_set(const string&, const Value&) = 0;

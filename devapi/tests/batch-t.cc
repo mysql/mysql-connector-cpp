@@ -91,11 +91,11 @@ TEST_F(Batch, crud)
   // Add several documents in single add operation.
 
   static string docs[] = {
-    L"{ \"_id\": \"id1\", \"name\": \"foo\", \"age\": 1 }",
-    L"{ \"_id\": \"id2\", \"name\": \"bar\", \"age\": 2 }",
-    L"{ \"_id\": \"id3\", \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}",
-    L"{ \"_id\": \"id4\", \"name\": \"foo\", \"age\": 7 }",
-    L"{ \"_id\": \"id5\", \"name\": \"buz\", \"age\": 17 }"
+    "{ \"_id\": \"id1\", \"name\": \"foo\", \"age\": 1 }",
+    "{ \"_id\": \"id2\", \"name\": \"bar\", \"age\": 2 }",
+    "{ \"_id\": \"id3\", \"name\": \"baz\", \"age\": 3, \"date\": { \"day\": 20, \"month\": \"Apr\" }}",
+    "{ \"_id\": \"id4\", \"name\": \"foo\", \"age\": 7 }",
+    "{ \"_id\": \"id5\", \"name\": \"buz\", \"age\": 17 }"
   };
 
   {
@@ -126,11 +126,11 @@ TEST_F(Batch, crud)
   */
 
   static string docs1[] = {
-    L"{ \"_id\": \"id6\", \"name\": \"atomic test\" }",
-    L"{ \"_id\": \"id7\", \"name\": \"atomic test\" }",
-    L"{ \"_id\": \"id1\", \"name\": \"atomic test\" }",
-    L"{ \"_id\": \"id8\", \"name\": \"atomic test\" }",
-    L"{ \"_id\": \"id6\", \"name\": \"atomic test\" }",
+    "{ \"_id\": \"id6\", \"name\": \"atomic test\" }",
+    "{ \"_id\": \"id7\", \"name\": \"atomic test\" }",
+    "{ \"_id\": \"id1\", \"name\": \"atomic test\" }",
+    "{ \"_id\": \"id8\", \"name\": \"atomic test\" }",
+    "{ \"_id\": \"id6\", \"name\": \"atomic test\" }",
   };
 
   {

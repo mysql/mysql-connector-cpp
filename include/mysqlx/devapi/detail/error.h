@@ -56,25 +56,10 @@ protected:
   uint16_t m_code;
   string   m_msg;
 
-
-  // Some valid C++11 constructs do not work in MSVC 2013.
-
-#if defined(_MSC_VER) && _MSC_VER > 1800
-
   Warning_detail(Warning_detail&&) = default;
-
-#else
-
-  Warning_detail(Warning_detail &&other)
-    : m_level(other.m_level), m_code(other.m_code)
-    , m_msg(std::move(other.m_msg))
-  {}
-
-#endif
-
   Warning_detail(const Warning_detail&) = default;
 
-  Warning_detail(byte level, uint16_t code, const string &msg)
+  Warning_detail(byte level, uint16_t code, const std::string &msg)
     : m_level(level), m_code(code), m_msg(msg)
   {}
 

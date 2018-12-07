@@ -72,7 +72,7 @@ TEST_F(Types, numeric)
     EXPECT_EQ(7, v3);
 
     bool v4;
-    EXPECT_NO_THROW(v4 = val);
+    EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
 
@@ -96,7 +96,7 @@ TEST_F(Types, numeric)
     EXPECT_EQ(-7, v3);
 
     bool v4;
-    EXPECT_NO_THROW(v4 = val);
+    EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
 
@@ -122,7 +122,7 @@ TEST_F(Types, numeric)
     EXPECT_EQ(max_uint, v3);
 
     bool v4;
-    EXPECT_NO_THROW(v4 = val);
+    EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
 
@@ -145,7 +145,7 @@ TEST_F(Types, numeric)
     EXPECT_EQ(7.0, v3);
 
     bool v4;
-    EXPECT_THROW(v4 = val, Error);
+    EXPECT_THROW(v4 = (bool)val, Error);
   }
 
   {
@@ -166,7 +166,7 @@ TEST_F(Types, numeric)
     EXPECT_EQ(7.0, v3);
 
     bool v4;
-    EXPECT_THROW(v4 = val, Error);
+    EXPECT_THROW(v4 = (bool)val, Error);
   }
 
   {
@@ -188,7 +188,7 @@ TEST_F(Types, numeric)
     EXPECT_THROW(v3 = val, Error);
 
     bool v4;
-    EXPECT_NO_THROW(v4 = val);
+    EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
 
@@ -244,11 +244,12 @@ TEST_F(Types, basic)
   cout << "Table prepared, querying it..." << endl;
 
   RowResult res = types.select().execute();
+  const Columns &cc = res.getColumns();
 
   cout << "Query sent, reading rows..." << endl;
   cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
-  const Columns &cc = res.getColumns();
+  //const Columns &cc = res.getColumns();
 
   EXPECT_EQ(string("c0"), cc[0].getColumnName());
   EXPECT_EQ(Type::INT, cc[0].getType());
@@ -317,7 +318,7 @@ TEST_F(Types, basic)
   EXPECT_TRUE(row);
 
   cout << "value: " << row[0] << endl;
-  EXPECT_FALSE(row[0]);
+  EXPECT_FALSE((bool)row[0]);
 
   cout << "Testing null value" << endl;
 
@@ -416,8 +417,8 @@ TEST_F(Types, string)
 
   Table types = getSchema("test").getTable("types");
 
-  string str0(L"Foobar");
-  string str1(L"Mog\u0119 je\u015B\u0107 szk\u0142o");
+  string str0(u"Foobar");
+  string str1(u"Mog\u0119 je\u015B\u0107 szk\u0142o");
 
   types.insert().values(str0, str1, str1, str1, str1).execute();
 
@@ -612,7 +613,7 @@ TEST_F(Types, json)
     row = res.fetchOne();
     EXPECT_TRUE(row);
 
-    EXPECT_EQ(Value::INT64, row[0].getType());
+    EXPECT_EQ(Value::UINT64, row[0].getType());
     int c0 = row[0];
     cout << "c0 (int): " << c0 << endl;
 
@@ -655,9 +656,9 @@ TEST_F(Types, json)
   {
     {
       const string not_ending_double_quote[]=
-      {{LR"({"This is a wrong:"JSON Key"})"},
-       {LR"({"This is a wrong":"Value string})"},
-       {LR"({"This is a wrong":{"document":1})"},
+      {{R"({"This is a wrong:"JSON Key"})"},
+       {R"({"This is a wrong":"Value string})"},
+       {R"({"This is a wrong":{"document":1})"},
       };
 
       for (auto &json : not_ending_double_quote)

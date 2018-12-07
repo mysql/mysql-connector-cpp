@@ -313,6 +313,15 @@ if(WIN32 AND NOT UNREACHABLE_CODE_WARNINGS)
   add_compile_options(/wd4297)
 endif()
 
+#
+# Disable unsecure warnings as our current code uses std library methods
+# that trigger them (and we know what we are doing!)
+#
+
+if(WIN32)
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+endif()
+
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")

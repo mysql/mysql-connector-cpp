@@ -31,9 +31,11 @@
 #include <mysqlx/xdevapi.h>
 #include <uuid_gen.h>
 
+PUSH_SYS_WARNINGS
 #include <time.h>
 #include <forward_list>
 #include <list>
+POP_SYS_WARNINGS
 
 #include "impl.h"
 
@@ -364,7 +366,7 @@ internal::Collection_detail::index_create(const string &name, Value &&spec)
   }
 
   Object_ref coll(get_schema().m_name, m_name);
-  common::Op_idx_create cmd(m_sess, coll, name, spec);
+  common::Op_idx_create cmd(m_sess, coll, name, (std::string)spec);
   cmd.execute();
 
 }

@@ -77,7 +77,7 @@ mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd)
   auto &codec = fd.m_codec;
   cdk::string str;
   codec.from_bytes(raw, str);
-  return std::move(str);
+  return (std::u16string)str;
 }
 
 
@@ -158,7 +158,7 @@ mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 */
 
 
-Result_impl_base::Result_impl_base(Result_init &init)
+Result_impl::Result_impl(Result_init &init)
   : m_sess(init.get_session()), m_reply(init.get_reply())
 {
   // Note: init.get_reply() can be NULL in the case of ignored server error
@@ -167,7 +167,7 @@ Result_impl_base::Result_impl_base(Result_init &init)
 }
 
 
-Result_impl_base::~Result_impl_base()
+Result_impl::~Result_impl()
 {
   try {
     if (m_sess)
@@ -182,7 +182,7 @@ Result_impl_base::~Result_impl_base()
 }
 
 
-bool Result_impl_base::next_result()
+bool Result_impl::next_result()
 {
   /*
     Note: closing cursor discards previous rset. Only then
@@ -228,7 +228,7 @@ bool Result_impl_base::next_result()
   // Wait for cursor to fetch result meta-data and copy it to local storage.
 
   m_cursor->wait();
-  m_mdata.reset(fetch_meta_data(*m_cursor));
+  m_mdata.reset(new Meta_data(*m_cursor));
 
   m_pending_rows = true;
 
@@ -236,7 +236,7 @@ bool Result_impl_base::next_result()
 }
 
 
-const Row_data* Result_impl_base::get_row()
+const Row_data* Result_impl::get_row()
 {
   // TODO: Session parameter for cache prefetch size
 
@@ -264,7 +264,7 @@ const Row_data* Result_impl_base::get_row()
   rows).
 */
 
-bool Result_impl_base::load_cache(row_count_t prefetch_size)
+bool Result_impl::load_cache(row_count_t prefetch_size)
 {
   if (!m_inited)
     next_result();
@@ -312,7 +312,7 @@ bool Result_impl_base::load_cache(row_count_t prefetch_size)
 //  Row_processor interface implementation
 
 
-size_t Result_impl_base::field_begin(col_count_t pos, size_t size)
+size_t Result_impl::field_begin(col_count_t pos, size_t size)
 {
   //m_row.insert(std::pair<col_count_t, Buffer>(pos, Buffer()));
   m_row.emplace(pos, Buffer());
@@ -320,14 +320,14 @@ size_t Result_impl_base::field_begin(col_count_t pos, size_t size)
   return size;
 }
 
-size_t Result_impl_base::field_data(col_count_t pos, bytes data)
+size_t Result_impl::field_data(col_count_t pos, bytes data)
 {
   m_row[(unsigned)pos].append(data);
   // FIX
   return data.size();
 }
 
-void Result_impl_base::row_end(row_count_t)
+void Result_impl::row_end(row_count_t)
 {
   if (!m_row_filter(m_row))
     return;
@@ -336,7 +336,7 @@ void Result_impl_base::row_end(row_count_t)
   m_row_cache_size++;
 }
 
-void Result_impl_base::end_of_data()
+void Result_impl::end_of_data()
 {
   m_pending_rows = false;
 }

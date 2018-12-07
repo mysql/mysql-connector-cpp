@@ -36,6 +36,9 @@
   needs to be done. Current code is just a temporary hack.
 */
 
+#include "util.h"
+
+PUSH_SYS_WARNINGS
 #include <string>
 #include <stdexcept>
 #include <ostream>
@@ -43,6 +46,7 @@
 #include <forward_list>
 #include <string.h>  // for memcpy
 #include <utility>   // std::move etc
+POP_SYS_WARNINGS
 
 
 namespace mysqlx {

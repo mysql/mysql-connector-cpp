@@ -34,6 +34,7 @@
 
 #include "../common.h"
 
+PUSH_SYS_WARNINGS
 #include <string>
 #include <stdexcept>
 #include <ostream>
@@ -41,6 +42,19 @@
 #include <forward_list>
 #include <string.h>  // for memcpy
 #include <utility>   // std::move etc
+POP_SYS_WARNINGS
+
+
+#define CATCH_AND_WRAP \
+  catch (const ::mysqlx::Error&) { throw; }       \
+  catch (const std::out_of_range&) { throw; }     \
+  catch (const std::exception &e)                 \
+  { throw ::mysqlx::Error(e.what()); }            \
+  catch (const char *e)                           \
+  { throw ::mysqlx::Error(e); }                   \
+  catch (...)                                     \
+  { throw ::mysqlx::Error("Unknown exception"); } \
+
 
 namespace cdk {
 namespace foundation {
@@ -60,6 +74,41 @@ class Value;
 
 
 /**
+  Base class for connector errors.
+
+  @internal
+  TODO: Derive from std::system_error and introduce proper
+  error codes.
+  @endinternal
+
+  @ingroup devapi
+*/
+
+// TODO: Make it header-only class somehow...
+
+DLL_WARNINGS_PUSH
+
+class PUBLIC_API Error : public common::Error
+{
+
+  DLL_WARNINGS_POP
+
+public:
+
+  Error(const char *msg)
+    : common::Error(msg)
+  {}
+};
+
+
+inline
+void throw_error(const char *msg)
+{
+  throw ::mysqlx::Error(msg);
+}
+
+
+/**
   A wrapper around std::wstring that can perform
   conversions from/to different character encodings
   used by MySQL.
@@ -69,68 +118,153 @@ class Value;
   @ingroup devapi_aux
 */
 
-class string : public std::wstring
+class string : public std::u16string
 {
 
   struct Impl
   {
     PUBLIC_API static std::string to_utf8(const string&);
     PUBLIC_API static void from_utf8(string&, const std::string&);
+
+    PUBLIC_API static std::u32string to_ucs4(const string&);
+    PUBLIC_API static void from_ucs4(string&, const std::u32string&);
+
+    PUBLIC_API static std::wstring to_wide(const string&);
+    PUBLIC_API static void from_wide(string&, const std::wstring&);
   };
+
+  template <typename T>
+  struct traits
+  {};
+
 
 public:
 
   string() {}
+  string(const string&) = default;
+  string(string&&) = default;
 
-  string(const wchar_t *other)
+  string& operator=(const string&) = default;
+  string& operator=(string&&) = default;
+
+  using std::u16string::basic_string;
+
+  string(const std::u16string &other) : std::u16string(other) {}
+  string(std::u16string &&other) : std::u16string(std::move(other)) {}
+
+  template <typename C>
+  string(const C *other)
   {
-    if (other)
-      assign(other);
+    try {
+      if (!other)
+        return;
+      std::basic_string<C> str(other);
+      traits<C>::from_str(*this, str);
+    }
+    CATCH_AND_WRAP
   }
-  string(const std::wstring &other) : std::wstring(other) {}
-  string(std::wstring &&other) : std::wstring(std::move(other)) {}
 
-  // TODO: make utf8 conversions explicit
-
-  string(const char *other)
+  template <typename C>
+  string(const std::basic_string<C> &other)
   {
-    if (!other)
-      return;
-    std::string utf8(other);
-    Impl::from_utf8(*this, utf8);
+    try {
+      traits<C>::from_str(*this, other);
+    }
+    CATCH_AND_WRAP
   }
 
-  string(const std::string &other)
+  template <typename C>
+  operator std::basic_string<C>() const
   {
-    Impl::from_utf8(*this, other);
+    try {
+      return traits<C>::to_str(*this);
+    }
+    CATCH_AND_WRAP
   }
 
-  string(const common::Value&);
-  string(const Value &val);
 
-  // conversion to utf-8
-
-  operator std::string() const
+  friend bool operator==(const string&lhs, const string&rhs)
   {
-    return Impl::to_utf8(*this);
+    return operator==((const std::u16string&)lhs, (const std::u16string&)rhs);
+  }
+
+  friend bool operator!=(const string&lhs, const string&rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  // Note: These are needed to help overload resolution :/
+
+  friend bool operator==(const string &lhs, const char16_t *rhs)
+  {
+    return lhs == string(rhs);
+  }
+
+  friend bool operator==(const char16_t *lhs, const string &rhs)
+  {
+    return string(lhs) == rhs;
+  }
+
+  friend bool operator!=(const string &lhs, const char16_t *rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  friend bool operator!=(const char16_t *lhs, const string &rhs)
+  {
+    return !(lhs == rhs);
   }
 
 };
 
 
-inline
-string::string(const common::Value &val)
+template<>
+struct string::traits<char>
 {
-  switch (val.get_type())
-  {
-  case common::Value::STRING:
-    Impl::from_utf8(*this, val.get_string());
-    return;
+  using string = std::string;
 
-  default:
-    assign(val.get_wstring());
+  static void from_str(mysqlx::string &to, const string &from)
+  {
+    Impl::from_utf8(to, from);
   }
-}
+
+  static string to_str(const mysqlx::string &from)
+  {
+    return Impl::to_utf8(from);
+  }
+};
+
+template<>
+struct string::traits<wchar_t>
+{
+  using string = std::wstring;
+
+  static void from_str(mysqlx::string &to, const string &from)
+  {
+    Impl::from_wide(to, from);
+  }
+
+  static string to_str(const mysqlx::string &from)
+  {
+    return Impl::to_wide(from);
+  }
+};
+
+template<>
+struct string::traits<char32_t>
+{
+  using string = std::u32string;
+
+  static void from_str(mysqlx::string &to, const string &from)
+  {
+    Impl::from_ucs4(to, from);
+  }
+
+  static string to_str(const mysqlx::string &from)
+  {
+    return Impl::to_ucs4(from);
+  }
+};
 
 
 inline
@@ -204,52 +338,6 @@ public:
   friend Access;
 };
 
-
-/**
-  Base class for connector errors.
-
-  @internal
-  TODO: Derive from std::system_error and introduce proper
-  error codes.
-  @endinternal
-
-  @ingroup devapi
-*/
-
-// TODO: Make it header-only class somehow...
-
-DLL_WARNINGS_PUSH
-
-class PUBLIC_API Error : public common::Error
-{
-
-  DLL_WARNINGS_POP
-
-public:
-
-  Error(const char *msg)
-    : common::Error(msg)
-  {}
-};
-
-
-
-#define CATCH_AND_WRAP \
-  catch (const ::mysqlx::Error&) { throw; }       \
-  catch (const std::out_of_range&) { throw; }     \
-  catch (const std::exception &e)                 \
-  { throw ::mysqlx::Error(e.what()); }            \
-  catch (const char *e)                           \
-  { throw ::mysqlx::Error(e); }                   \
-  catch (...)                                     \
-  { throw ::mysqlx::Error("Unknown exception"); } \
-
-
-inline
-void throw_error(const char *msg)
-{
-  throw ::mysqlx::Error(msg);
-}
 
 
 /*

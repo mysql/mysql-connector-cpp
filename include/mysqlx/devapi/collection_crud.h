@@ -474,7 +474,7 @@ public:
   {
     try {
       get_impl()->add_operation(
-        Impl::SET, std::wstring(field), (const common::Value&)val
+        Impl::SET, field, (const common::Value&)val
       );
       return *this;
     }
@@ -490,7 +490,7 @@ public:
   CollectionModify& unset(const Field &field)
   {
     try {
-      get_impl()->add_operation(Impl::UNSET, std::wstring(field));
+      get_impl()->add_operation(Impl::UNSET, field);
       return *this;
     }
     CATCH_AND_WRAP
@@ -508,7 +508,7 @@ public:
     try {
       get_impl()->add_operation(
         Impl::ARRAY_INSERT,
-        std::wstring(field),
+        field,
         (const common::Value&)val
       );
       return *this;
@@ -529,7 +529,7 @@ public:
     try {
       get_impl()->add_operation(
         Impl::ARRAY_APPEND,
-        std::wstring(field),
+        field,
         (const common::Value&)val
       );
       return *this;
@@ -559,7 +559,7 @@ public:
   {
     try {
       get_impl()->add_operation(
-        Impl::MERGE_PATCH, L"$", (const common::Value&)expr(val)
+        Impl::MERGE_PATCH, "$", (const common::Value&)expr(val)
       );
       return *this;
     }

@@ -36,9 +36,11 @@
 #include <uri_parser.h>
 #include "value.h"
 
+PUSH_SYS_WARNINGS
 #include <vector>
 #include <bitset>
 #include <sstream>
+POP_SYS_WARNINGS
 
 namespace mysqlx {
 namespace common {
@@ -710,10 +712,10 @@ void Settings_impl::Setter::str(const string &val)
   // TODO: avoid utf8 conversions
   std::string utf8_val(val);
 
-  auto to_number = [](const string &val) -> uint64_t
+  auto to_number = [&]() -> uint64_t
   {
     std::size_t pos;
-    long long x = std::stoll(val, &pos);
+    long long x = std::stoll(utf8_val, &pos);
 
     if (x < 0)
       throw_error("Option ... accepts only non-negative values");
@@ -731,7 +733,7 @@ void Settings_impl::Setter::str(const string &val)
   case Option_impl::X: \
   try \
   { \
-    return set_option<Option_impl::X,uint64_t>(to_number(val)); \
+    return set_option<Option_impl::X,uint64_t>(to_number()); \
   } \
   catch (const std::invalid_argument&) \
   { \
@@ -765,7 +767,7 @@ void Settings_impl::Setter::num(uint64_t val)
 #define SET_CLI_OPTION_NUM_str(X,N)
 #define SET_CLI_OPTION_NUM_end(X,N)\
   case Client_option_impl::X: throw_error("Unexpected Option"); return;
-  
+
   /*
     This cannot be processed inside switch because the numeric
     values are converted to unsigned int. For timeout uint64_t is

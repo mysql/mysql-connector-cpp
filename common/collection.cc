@@ -28,9 +28,9 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <mysqlx/common.h>
 #include <mysql/cdk.h>
 #include <json_parser.h>
+#include <mysqlx/common.h>
 
 #include "op_impl.h"
 

@@ -331,7 +331,7 @@ int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op m
         Note: in this case path contains the patch to be applied, which should
         be trated as an expression, not a literal string.
       */
-      impl->add_operation(op, L"$", Value::Access::mk_expr(path));
+      impl->add_operation(op, "$", Value::Access::mk_expr(path));
       // For merge only one item is expected
       return RESULT_OK;
     }

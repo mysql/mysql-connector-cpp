@@ -31,11 +31,14 @@
 #ifndef MYSQLX_COMMON_VALUE_H
 #define MYSQLX_COMMON_VALUE_H
 
-#include <string>
 
 #include "api.h"
 #include "error.h"
 #include "util.h"
+
+PUSH_SYS_WARNINGS
+#include <string>
+POP_SYS_WARNINGS
 
 
 namespace mysqlx {
@@ -66,12 +69,14 @@ public:
     FLOAT,      ///< Float number
     DOUBLE,     ///< Double number
     BOOL,       ///< Boolean
-    STRING,     ///< String
-    WSTRING,    ///< Wide string
+    STRING,     ///< String (utf8)
+    USTRING,    ///< Wide string (utf16)
     RAW,        ///< Raw bytes
     EXPR,       ///< String to be interpreted as an expression
     JSON,       ///< JSON string
   };
+
+  using string = std::string;
 
 protected:
 
@@ -81,8 +86,8 @@ protected:
 
   DLL_WARNINGS_PUSH
 
-  std::string   m_str;
-  std::wstring  m_wstr;
+  std::string     m_str;
+  std::u16string  m_ustr;
 
   DLL_WARNINGS_POP
 
@@ -109,17 +114,19 @@ public:
   Value() : m_type(VNULL)
   {}
 
+
   // Construct an item from a string
   Value(const std::string& str) : m_type(STRING), m_str(str)
   {
     m_val.v_bool = false;
   }
 
-  // Construct an item from a string
-  Value(const std::wstring& str) : m_type(WSTRING), m_wstr(str)
+  Value(const std::u16string &str)
+    : m_type(USTRING), m_ustr(str)
   {
     m_val.v_bool = false;
   }
+
 
   // Construct an item from a signed 64-bit integer
   Value(int64_t v) : m_type(INT64)
@@ -136,6 +143,7 @@ public:
   // Construct an item from a double
   Value(double v) : m_type(DOUBLE)
   { m_val.v_double = v; }
+
 
   // Construct an item from a bool
   Value(bool v) : m_type(BOOL)
@@ -238,15 +246,34 @@ public:
     }
   }
 
+  /*
+    Note: In general this method returns raw value representation as obtained
+    from the server, which is stored in m_str member. If a non-string value was
+    not obtained from the server, there is no raw representation for it and
+    error is thrown. String values always have raw representation which is
+    either utf8 or utf16 encoding. Strings obtained from the server use utf8 as
+    raw representation. For strings created by user code this might be either
+    utf8 or utf16, depending on how string was created.
+  */
+
   const byte* get_bytes(size_t *size) const
   {
     switch (m_type)
     {
-    case WSTRING: // TODO
+    case USTRING:
+      if (!m_ustr.empty())
+      {
+        if(size)
+          *size = m_ustr.size() * sizeof(char16_t);
+        return (const byte*)m_ustr.data();
+      }
+      FALLTHROUGH;
+
     default:
       if (m_str.empty())
         throw Error("Value cannot be converted to raw bytes");
       FALLTHROUGH;
+
     case RAW:
     case STRING:
       if (size)
@@ -258,8 +285,8 @@ public:
 
   // Note: these methods perform utf8 conversions as necessary.
 
-  const std::string& get_string() const;
-  const std::wstring& get_wstring() const;
+  const std::string&    get_string() const;
+  const std::u16string& get_ustring() const;
 
   Type get_type() const
   {

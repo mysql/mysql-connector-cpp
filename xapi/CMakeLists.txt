@@ -56,7 +56,10 @@ SET(_libmysqlx_cc_src
          session.cc
 )
 
-ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src})
+file(GLOB HEADERS "*.h")
+
+ADD_LIBRARY(xapi OBJECT ${_libmysqlx_cc_src} ${HEADERS})
+add_cdk(xapi)
 ADD_COVERAGE(xapi)
 
 ADD_SUBDIRECTORY(tests)

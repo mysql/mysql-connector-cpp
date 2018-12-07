@@ -46,9 +46,9 @@ uint32_t get_type(const mysqlx::common::Format_info&);
 
 struct mysqlx_result_struct
   : public Mysqlx_diag
-  , common::Result_impl<std::string>
+  , common::Result_impl
 {
-  using Impl = common::Result_impl<std::string>;
+  using Impl = common::Result_impl;
 
   mysqlx_stmt_struct   *m_stmt;
   cdk::Diagnostic_iterator m_warn_it;

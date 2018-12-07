@@ -48,6 +48,11 @@ template <cdk::Type_info T> class Format_descr;
 
 struct Value::Access
 {
+  static Value mk_str(const cdk::string &str)
+  {
+    return (std::u16string)str;
+  }
+
   static Value mk_expr(const string &expr)
   {
     return { Value::EXPR, expr };

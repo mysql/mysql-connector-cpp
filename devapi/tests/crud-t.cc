@@ -154,7 +154,7 @@ TEST_F(Crud, basic)
   cout << "querying collection with SQL ..." << endl;
 
   {
-    SqlResult res = sql(L"SELECT * FROM test.c1");
+    SqlResult res = sql("SELECT * FROM test.c1");
 
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
@@ -209,7 +209,7 @@ TEST_F(Crud, life_time)
       Row row;
 
       {
-        RowResult res = sql(L"SELECT 7,doc FROM test.life_time");
+        RowResult res = sql("SELECT 7,doc FROM test.life_time");
         row = res.fetchOne();
         value = row[0];
 
@@ -1848,9 +1848,9 @@ TEST_F(Crud, add_empty)
   Result add;
 
   //Adding Empty docs throws Error
-  EXPECT_THROW(add = coll.add(static_cast<wchar_t*>(NULL)).execute(),
-               mysqlx::Error);
-  EXPECT_THROW(add = coll.add(static_cast<char*>(NULL)).execute(),
+//  EXPECT_THROW(add = coll.add(nullptr).execute(),
+//               mysqlx::Error);
+  EXPECT_THROW(add = coll.add(static_cast<char*>(nullptr)).execute(),
                mysqlx::Error);
 }
 
@@ -1898,8 +1898,8 @@ TEST_F(Crud, group_by_having)
          coll_row = coll_res.fetchOne(),
          tbl_row = tbl_res.fetchOne())
     {
-      EXPECT_EQ(1,cset.erase(coll_row["user"]));
-      EXPECT_EQ(1,tset.erase(tbl_row[0]));
+      EXPECT_EQ(1,cset.erase(coll_row["user"].get<string>()));
+      EXPECT_EQ(1, tset.erase(tbl_row[0].get<string>()));
     }
 
     EXPECT_TRUE(cset.empty());
@@ -1934,13 +1934,13 @@ TEST_F(Crud, group_by_having)
   coll_res = coll.find()
              .fields(expr(R"({"user": user, "bday": { "date": birthday}})"))
              .groupBy("user", "birthday")
-             .having(L"bday.date.day > 20")
+             .having("bday.date.day > 20")
              .execute();
 
   //and on table
   tbl_res = tbl.select("doc->$.user as user", "doc->$.birthday as bday")
             .groupBy(fields)
-            .having(L"bday->$.day > 20")
+            .having("bday->$.day > 20")
             .execute();
 
   check_results(coll_res, tbl_res);

@@ -32,16 +32,18 @@
 
 include_directories("${WITH_UUID}/include")
 
+file(GLOB HEADERS "*.h")
+
 ADD_LIBRARY(devapi OBJECT
   session.cc
   result.cc
   document.cc
   crud.cc
+  ${HEADERS}
 )
 
+add_cdk(devapi)
 ADD_COVERAGE(devapi)
-
-lib_interface_link_libraries(devapi cdk)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   target_compile_options(devapi PRIVATE -Wall -Wextra)
