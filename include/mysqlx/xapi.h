@@ -52,7 +52,7 @@
 
   @defgroup xapi_md  Meta data access
 
-  @defgroup xapi_diag     Diganostics
+  @defgroup xapi_diag     Diagnostics
   @}
 */
 
@@ -556,7 +556,7 @@ mysqlx_lock_contention_t;
   Create a client instance using connection string or URL and a client options
   JSON.
 
-  Connection sting has the form `"user:pass\@host:port/?option&option"`,
+  Connection sting has the form `"user:pass@host:port/?option&option"`,
   valid URL is like a connection string with a `mysqlx://` prefix. Host is
   specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
   IPv6 address of the form "[nn:nn:nn:...]".
