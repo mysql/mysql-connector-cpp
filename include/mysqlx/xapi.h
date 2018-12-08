@@ -718,7 +718,7 @@ mysqlx_get_collection(mysqlx_schema_t *schema, const char *col_name,
 
   @param sess session handle
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note a statement will belong to the transaction when
         it is actually executed after the transaction began (and before
@@ -737,7 +737,7 @@ mysqlx_transaction_begin(mysqlx_session_t *sess);
 
   @param sess session handle
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note This will commit all statements that were executed as part of this
         transaction, regardless of when the statements were created (see
@@ -755,7 +755,7 @@ mysqlx_transaction_commit(mysqlx_session_t *sess);
 
   @param sess session handle
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note This will roll back all statements that were executed as part of this
         transaction, regardless of when the statements were created (see
@@ -797,7 +797,7 @@ mysqlx_savepoint_set( mysqlx_session_t *sess, const char *name);
   @param name savepoint name to be released
 
   @return `RESULT_OK` - savepoint exists and is released;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_sess
 */
@@ -814,7 +814,7 @@ mysqlx_savepoint_release(mysqlx_session_t *sess, const char *name);
   @param name savepoint name.
 
   @return `RESULT_OK` - savepoint exists and is released;
-          `RESULT_ERR` - on error.
+          `RESULT_ERROR` - on error.
 
   @ingroup xapi_sess
 */
@@ -1172,7 +1172,7 @@ mysqlx_collection_modify_patch(mysqlx_collection_t *collection,
          interpreted like a JSON documents, but values of fields are
          interpreted as expressions
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
   @ingroup xapi_coll
 */
 
@@ -1217,7 +1217,7 @@ mysqlx_collection_find_new(mysqlx_collection_t *collection);
     in the projection can refer to fields in the original document
     using `$.path.to.field` syntax.
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note This function can be only called for the collection FIND statements
   @see mysqlsx_collection_find_new()
@@ -1324,7 +1324,7 @@ mysqlx_collection_add_new(mysqlx_collection_t *collection);
 
   @param stmt statement handle
   @param json_doc - the JSON string describing document to add
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note Each new call provides the values for the new document, which
     can be used for multi-document add operations.
@@ -1428,7 +1428,7 @@ mysqlx_collection_modify_new(mysqlx_collection_t *collection);
   @note For the convenience the code can use `PARAM_TTT(val)` macros
         instead of (`MYSQLX_TYPE_TTT`, value) pairs (see `mysqlx_stmt_bind()`).
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @ingroup xapi_coll
 */
@@ -1445,7 +1445,7 @@ mysqlx_set_modify_set(mysqlx_stmt_t *stmt, ...);
         entry in this list is a character string.
         The list is terminated by `PARAM_END`.
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @ingroup xapi_coll
 */
@@ -1468,7 +1468,7 @@ mysqlx_set_modify_unset(mysqlx_stmt_t *stmt, ...);
   @note For the convenience the code can use `PARAM_TTT(val)` macros
         instead of (`MYSQLX_TYPE_TTT`, value) pairs (see `mysqlx_stmt_bind()`).
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @ingroup xapi_coll
 */
@@ -1491,7 +1491,7 @@ mysqlx_set_modify_array_insert(mysqlx_stmt_t *stmt, ...);
   @note For the convenience the code can use `PARAM_TTT(val)` macros
         instead of (`MYSQLX_TYPE_TTT`, value) pairs (see `mysqlx_stmt_bind()`).
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @ingroup xapi_coll
 */
@@ -1507,7 +1507,7 @@ mysqlx_set_modify_array_append(mysqlx_stmt_t *stmt, ...);
   @param ... list of paths to array elements that should be deleted from their
         arrays. The list is terminated by `PARAM_END`.
 
-   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+   @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
    @ingroup xapi_coll
 */
@@ -1794,7 +1794,7 @@ mysqlx_table_insert_new(mysqlx_table_t *table);
   @param stmt statement handle
   @param ...  variable parameters list consisting of column names; the list is
               terminated by PARAM_END.
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note Each new call clears the list of column for a given statement
         if it was set earlier.
@@ -1823,7 +1823,7 @@ mysqlx_set_insert_columns(mysqlx_stmt_t *stmt, ...);
           For MYSQLX_TYPE_BYTES the function will expect three parameters
           instead of two as for all other types:
           <MYSQLX_TYPE_BYTES, (void*)byte_data, (size_t)length>
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note Each new call provides the row values for the new row, which
         can be used for multi-row inserts
@@ -1927,7 +1927,7 @@ mysqlx_table_update_new(mysqlx_table_t *table);
           instead of three as for all other types:
           <column_name, `MYSQLX_TYPE_BYTES`, (void*)byte_data, (size_t)length>
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note The `param` list must be not empty, otherwise error is reported.
 
@@ -2040,7 +2040,7 @@ mysqlx_execute(mysqlx_stmt_t *stmt);
            `PARAM_DOUBLE()`, `PARAM_STRING()`, `PARAM_BYTES()`, `PARAM_EXPR()`
            for different data types instead of (`MYSQLX_TYPE_TTT`, value) pairs.
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note Each new call resets the binds set by the previous call to
         `mysqlx_stmt_bind()`
@@ -2065,7 +2065,7 @@ PUBLIC_API int mysqlx_stmt_bind(mysqlx_stmt_t *stmt, ...);
           containing expressions: proj_1, ..., proj_n, PARAM_END
           (PARAM_END marks the end of projection's item list)
 
-   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+   @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
    @note This function can be only called for table SELECT statements
    @see mysqlx_table_select_new()
@@ -2092,7 +2092,7 @@ PUBLIC_API int mysqlx_set_items(mysqlx_stmt_t *stmt, ...);
   @param where_expr character string containing Boolean expression
                     like in SQL WHERE clause
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2123,7 +2123,7 @@ PUBLIC_API int mysqlx_set_where(mysqlx_stmt_t *stmt, const char *where_expr);
   @param having_expr character string containing Boolean expression
                      like in SQL HAVING clause
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2152,7 +2152,7 @@ PUBLIC_API int mysqlx_set_having(mysqlx_stmt_t *stmt, const char *having_expr);
   expr_1, ..., expr_n, PARAM_END
   (PARAM_END marks the end of projection's item list)
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2185,7 +2185,7 @@ PUBLIC_API int mysqlx_set_group_by(mysqlx_stmt_t *stmt, ...);
           strings because the empty string "" or NULL will be treated
           as the end of sequence
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2218,7 +2218,7 @@ PUBLIC_API int mysqlx_set_order_by(mysqlx_stmt_t *stmt, ...);
   @param row_count the number of result rows to return
   @param offset the number of rows to skip before starting counting
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2253,7 +2253,7 @@ mysqlx_set_limit_and_offset(mysqlx_stmt_t *stmt, uint64_t row_count,
   @param contention the integer locking contention
          (see ::mysqlx_lock_contention_t).
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
 
   @note this function can be be used directly, but for the convenience
         the code can use the specialized macros for a specific operation.
@@ -2341,7 +2341,7 @@ PUBLIC_API const char * mysqlx_json_fetch_one(mysqlx_result_t *res, size_t *out_
   @param res result handle
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when there is no more results;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2378,7 +2378,7 @@ mysqlx_get_affected_count(mysqlx_result_t *res);
   @param result result handle
   @param[out] num number of records buffered
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error. If the error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error. If the error
           occurred it can be retrieved by `mysqlx_error()` function.
 
   @note Even in case of an error some rows/documents might be buffered if they
@@ -2450,7 +2450,7 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
   @return `RESULT_OK` - on success; `RESULT_NULL` when the value in the
           requested column is NULL; `RESULT_MORE_DATA` if not all data was
           fetched after the last call to the function;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2473,7 +2473,7 @@ mysqlx_get_bytes(mysqlx_row_t* row, uint32_t col,
                   type in which to write the data
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when the column is NULL;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2495,7 +2495,7 @@ mysqlx_get_uint(mysqlx_row_t* row, uint32_t col, uint64_t* val);
               type in which to write the data
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when the column is NULL;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2517,7 +2517,7 @@ mysqlx_get_sint(mysqlx_row_t* row, uint32_t col, int64_t* val);
               type in which to write the data
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when the column is NULL;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2539,7 +2539,7 @@ mysqlx_get_float(mysqlx_row_t* row, uint32_t col, float* val);
                   type in which to write the data.
 
   @return `RESULT_OK` - on success; `RESULT_NULL` when the column is NULL;
-          `RESULT_ERR` - on error
+          `RESULT_ERROR` - on error
 
   @ingroup xapi_res
 */
@@ -2769,7 +2769,7 @@ mysqlx_column_get_catalog(mysqlx_result_t *res, uint32_t pos);
   @param sess session handle
   @param schema the name of the schema to be created
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
           The error handle can be obtained from the session
           using `mysqlx_error()` function.
 
@@ -2786,7 +2786,7 @@ mysqlx_schema_create(mysqlx_session_t *sess, const char *schema);
   @param sess session handle
   @param schema the name of the schema to be dropped
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
           The error handle can be obtained from the session
           using `mysqlx_error()` function.
 
@@ -2803,7 +2803,7 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
   @param schema schema handle
   @param collection collection name to create
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
           The error handle can be obtained from the session
           using `mysqlx_error()` function.
 
@@ -2820,7 +2820,7 @@ mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
   @param schema schema handle
   @param collection collection name to drop
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
           The error handle can be obtained from the session
           using `mysqlx_error()` function
 
@@ -2935,7 +2935,7 @@ mysqlx_result_next_warning(mysqlx_result_t *res);
   @see @ref indexing for information on how to define document
   collection indexes.
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
   The error handle can be obtained from the collection
   using `mysqlx_error()` function.
 
@@ -2955,7 +2955,7 @@ mysqlx_collection_create_index(mysqlx_collection_t *coll, const char *name,
   @param coll collection whose index should be dropped
   @param name name of the index to be dropped
 
-  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+  @return `RESULT_OK` - on success; `RESULT_ERROR` - on error
   The error handle can be obtained from the collection
   using `mysqlx_error()` function.
 
