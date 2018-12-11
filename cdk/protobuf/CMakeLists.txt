@@ -312,42 +312,6 @@ SET(LIBPROTOC_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_service.h
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_string_field.cc
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_string_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_context.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_context.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_enum.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_enum.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_enum_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_enum_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_extension.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_extension.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_file.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_file.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_generator.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_generator_factory.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_generator_factory.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_helpers.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_helpers.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_lazy_message_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_lazy_message_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_message.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_message.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_message_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_message_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_name_resolver.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_name_resolver.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_primitive_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_primitive_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_shared_code_generator.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_shared_code_generator.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_service.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_service.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_string_field.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_string_field.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_doc_comment.cc
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/java/java_doc_comment.h
-  ${PROTO_SRC_DIR}/google/protobuf/compiler/python/python_generator.cc
 )
 
 ADD_LIBRARY(protoclib STATIC ${LIBPROTOC_SOURCES})
