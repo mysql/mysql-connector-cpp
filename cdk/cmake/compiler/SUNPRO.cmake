@@ -39,12 +39,12 @@ endfunction()
 
 
 function(enable_pic)
-  add_compile_options(CXX -KPIC)
+  add_flags(CXX -KPIC)
 endfunction()
 
 
 function(set_visibility)
-  add_compile_options(-xldscope=hidden)
+  add_compile_options(-xldscope=symbolic)
 endfunction()
 
 # -----------------------------------------------------------------
