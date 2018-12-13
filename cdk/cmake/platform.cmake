@@ -70,7 +70,7 @@ message(STATUS "BIG_ENDIAN: ${BIG_ENDIAN}")
 #
 
 if(APPLE)
-  set(APPLE ${CMAKE_SYSTEM_VERSION})
+  set(MACOS ${CMAKE_SYSTEM_VERSION})
 endif()
 
 
