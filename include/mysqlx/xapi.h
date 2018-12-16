@@ -2452,6 +2452,7 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
           fetched after the last call to the function;
           `RESULT_ERR` - on error
 
+  @see https://dev.mysql.com/doc/dev/mysql-server/latest/mysqlx_protocol_messages.html#Mysqlx_Resultset_ColumnMetaData
   @ingroup xapi_res
 */
 
