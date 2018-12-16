@@ -784,7 +784,7 @@ TEST_F(Sess, ssl_session)
                     , mysqlx::Error);
   }
 
-  //using ssl-ca but ssl-enable = false on SessionSettings
+  //using ssl-ca but with the wrong CA
 
   {
     /*
@@ -802,7 +802,7 @@ TEST_F(Sess, ssl_session)
     , Error);
   }
 
-  //using ssl-enable and ssl-ca as SessionSettings
+  //using ssl-mode=VERIFY_IDENTITY and ssl-ca as SessionSettings
 
   {
 

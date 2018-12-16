@@ -480,10 +480,10 @@ mysqlx_lock_contention_t;
 
   Possible connection options are:
 
-  - `ssl-enable` : use TLS connection
+  - `ssl-mode` : TLS connection mode
   - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
 
-  Specifying `ssl-ca` option implies `ssl-enable`.
+  Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
 
   Client options are expressed in a JSON string format. Here is an example:
   ~~~~~~
@@ -668,10 +668,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
   Possible connection options are:
 
-  - `ssl-enable` : use TLS connection
+  - `ssl-mode` : TLS connection mode
   - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
 
-  Specifying `ssl-ca` option implies `ssl-enable`.
+  Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
 
   @param conn_string    connection string
   @param[out] out_error if error happens during connect the error message
