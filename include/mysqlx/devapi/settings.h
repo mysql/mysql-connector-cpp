@@ -662,7 +662,7 @@ public:
                   disabled, session created from pool are the same as created
                   directly without client handle.
                   Enabled by default.
-    - `mazSize` : integer that defines the max pooling sessions possible. If
+    - `maxSize` : integer that defines the max pooling sessions possible. If
                   uses tries to get session from pool when maximum sessions are
                   used, it will wait for an available session untill
                   `queueTimeout`.
@@ -706,7 +706,7 @@ public:
                   disabled, session created from pool are the same as created
                   directly without client handle.
                   Enabled by default.
-    - `mazSize` : integer that defines the max pooling sessions possible. If
+    - `maxSize` : integer that defines the max pooling sessions possible. If
                   uses tries to get session from pool when maximum sessions are
                   used, it will wait for an available session untill
                   `queueTimeout`.
