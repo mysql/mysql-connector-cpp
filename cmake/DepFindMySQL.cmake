@@ -57,8 +57,8 @@ add_config_option(WITH_MYSQL PATH
   "Base location of (monolithic) MySQL installation."
 )
 
-add_config_option(MYSQL_INCLUDE_DIR PATH "Path to MYSQL headers.")
-add_config_option(MYSQL_LIB_DIR PATH "Path to MYSQL libraries.")
+add_config_option(MYSQL_INCLUDE_DIR PATH ADVANCED "Path to MYSQL headers.")
+add_config_option(MYSQL_LIB_DIR PATH ADVANCED "Path to MYSQL libraries.")
 
 
 function(main)
@@ -235,13 +235,6 @@ function(main)
     PROPERTY VERSION ${MYSQL_VERSION}
   )
 
-  # Setting this should ensure that bundled external dependencies are used,
-  # if available.
-
-  set_property(TARGET MySQL::client-static
-    PROPERTY INTERFACE_LINK_DIRECTORIES "${MYSQL_DIR}/lib" "${MYSQL_DIR}/bin"
-  )
-
   #
   # Detect shared libraries on which MySQL client lib depends (if possible).
   # Stores result in MYSQL_EXTERNAL_DEPENDENCIES.
@@ -252,6 +245,20 @@ function(main)
   message("  version: ${MYSQL_VERSION}")
   message("  include path: ${MYSQL_INCLUDE_DIR}")
   message("  library location: ${MYSQL_LIB}")
+
+  # Using INTERFACE_LINK_LIBRARIES we ensure that -L option will appear
+  # in the link line of the consumer of this library. Adding this -L option
+  # is needed to resolve dependencies, such as -lssl, to the libraries that
+  # are bundled with the server.
+  #
+  # Note: This must be done before populating INTERFACE_LINK_LIBRARIES with
+  # the dependencies themselves.
+
+  if(NOT MSVC)
+    set_property(TARGET MySQL::client-static
+      PROPERTY INTERFACE_LINK_LIBRARIES "-L${MYSQL_DIR}/lib"
+    )
+  endif()
 
   if(MYSQL_EXTERNAL_DEPENDENCIES)
     string(REPLACE ";" " " deps "${MYSQL_EXTERNAL_DEPENDENCIES}")
@@ -266,6 +273,7 @@ function(main)
     target_link_libraries(MySQL::client-static INTERFACE ${MYSQL_EXTERNAL_DEPENDENCIES})
 
   endif()
+
 
 endfunction(main)
 
