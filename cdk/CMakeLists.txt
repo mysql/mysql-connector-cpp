@@ -104,7 +104,7 @@ find_dependency(Coverage)
 # correct when used in a different environment.
 
 add_config(WITH_SSL)
-#add_config(WITH_SSL_WOLFSSL)
+add_config(WITH_SSL_WOLFSSL)
 
 
 #

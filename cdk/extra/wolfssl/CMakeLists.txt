@@ -28,16 +28,21 @@
 
 include(CheckTypeSize)
 
-INCLUDE_DIRECTORIES(${SSL_INCLUDES})
+if(NOT EXISTS "${WOLFSSL_SOURCE_DIR}")
+  message(FATAL_ERROR "Wrong WolfSSL source location: ${WOLFSSL_SOURCE_DIR}")
+endif()
 
-ADD_DEFINITIONS(${SSL_DEFINES})
+INCLUDE_DIRECTORIES("${WOLFSSL_SOURCE_DIR}")
+
 
 CHECK_TYPE_SIZE("long"      SIZEOF_LONG)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LONG})
+
 # rename get_tty_password to avoid collisions with the main binary
 ADD_DEFINITIONS(-Dget_tty_password_ext=wolfssl_mysql_get_tty_password_ext)
 ADD_DEFINITIONS(-Dget_tty_password=wolfssl_mysql_get_tty_password)
+
 ADD_DEFINITIONS(
   -DBUILDING_WOLFSSL
   -DHAVE_ECC
@@ -56,7 +61,7 @@ ADD_DEFINITIONS(
   -DWOLFSSL_SHA512
   -DWOLFSSL_STATIC_RSA
   -DWOLFSSL_CERT_GEN
-  )
+)
 
 SET(WOLFSSL_SOURCES ${WOLFSSL_SOURCE_DIR}/src/crl.c
                     ${WOLFSSL_SOURCE_DIR}/src/internal.c
@@ -67,7 +72,25 @@ SET(WOLFSSL_SOURCES ${WOLFSSL_SOURCE_DIR}/src/crl.c
                     ${WOLFSSL_SOURCE_DIR}/src/ocsp.c
                     ${WOLFSSL_SOURCE_DIR}/src/ssl.c )
 
-ADD_LIBRARY(wolfssl ${WOLFSSL_SOURCES})
+add_library(wolfssl STATIC ${WOLFSSL_SOURCES})
+
+target_include_directories(wolfssl
+  PUBLIC "${WOLFSSL_SOURCE_DIR}/wolfssl" "${WOLFSSL_SOURCE_DIR}/."
+)
+
+target_compile_definitions(wolfssl
+  PUBLIC
+    HAVE_ECC
+    KEEP_OUR_CERT
+    OPENSSL_EXTRA
+    WC_NO_HARDEN
+    WOLFSSL_MYSQL_COMPATIBLE
+)
+
+if(SUNOS)
+  target_link_libraries(wolfssl PRIVATE socket)
+endif()
+
 
 SET(WOLFCRYPT_SOURCE_DIR "${WOLFSSL_SOURCE_DIR}/wolfcrypt")
 
@@ -144,10 +167,17 @@ SET(WOLFCRYPT_SOURCES ${WOLFCRYPT_SOURCE_DIR}/src/aes.c
                       ${WOLFSSL_SOURCE_DIR}/wolfssl/wolfcrypt/wc_port.h
                       ${WOLFSSL_SOURCE_DIR}/wolfssl/wolfcrypt/wc_encrypt.h
                       ${WOLFSSL_SOURCE_DIR}/wolfssl/wolfcrypt/hash.h
-   )
+)
 # misc.c is not compiled in since using INLINE
 
-ADD_LIBRARY(wolfcrypt ${WOLFCRYPT_SOURCES})
+add_library(wolfcrypto STATIC ${WOLFCRYPT_SOURCES})
+
+target_link_libraries(wolfssl INTERFACE wolfcrypto)
+
+
+#
+# Determine WolfSSL version
+#
 
 set(GETWOLFSSLVERSION_SOURCEFILE "${CMAKE_CURRENT_BINARY_DIR}/getwolfsslversion.c")
 file(WRITE "${GETWOLFSSLVERSION_SOURCEFILE}"

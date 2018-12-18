@@ -63,10 +63,10 @@ endif()
 include(CheckSymbolExists)
 
 add_config_option(WITH_SSL STRING DEFAULT system
-  "Path to custom SSL library or 'system' to..."
+  "Either 'system' to use system-wide OpenSSL library,"
+  " or custom OpenSSL location or path to WolfSSL sources."
 )
 
-# TODO: use_wolfssl()
 
 function(main)
 
@@ -330,6 +330,25 @@ function(bundle_ssl_libs)
   endif()
 
 endfunction(bundle_ssl_libs)
+
+
+function(use_wolfssl)
+
+  set(WOLFSSL_SOURCE_DIR "${WITH_SSL}")
+  message(STATUS "- using WolfSSL sources at: ${WOLFSSL_SOURCE_DIR}")
+
+  # Note: This cmake file expects WOLFSSL_SOURCE_DIR to be set
+
+  add_subdirectory("${PROJECT_SOURCE_DIR}/extra/wolfssl")
+
+  message(STATUS "- WolfSSL version: ${OPENSSL_VERSION_GLOBAL}")
+
+  add_library(SSL::ssl ALIAS wolfssl)
+  add_library(SSL::crypto ALIAS wolfcrypto)
+
+  set(WITH_SSL_WOLFSSL ON CACHE INTERNAL "Tells whether WolfSSL implementation is used")
+
+endfunction(use_wolfssl)
 
 
 main()
