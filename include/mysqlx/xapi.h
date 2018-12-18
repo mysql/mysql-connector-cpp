@@ -2588,7 +2588,9 @@ mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
   @param res result handle
   @param pos zero-based column number
 
-  @return column collation number. TODO: specify these
+  @return column collation number. The number matches the ID
+          in the INFORMATION_SCHEMA.COLLATIONS table.
+  @see https://dev.mysql.com/doc/mysql/en/collations-table.html
 
   @ingroup xapi_md
 */
