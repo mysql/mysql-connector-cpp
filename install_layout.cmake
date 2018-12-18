@@ -56,23 +56,37 @@ if(NOT DEFINED IS64BIT)
   message(FATAL_ERROR "IS64BIT not defined!")
 endif()
 
+
 #
 # Default locations, if not overridden with cmake options
 #
 
-set(CMAKE_INSTALL_INCLUDEDIR "include" CACHE STRING
-  "Include Install location (Relative to CMAKE_INSTALL_PREFIX)")
+if(NOT CMAKE_INSTALL_INCLUDEDIR)
 
-if(IS64BIT OR SUNPRO)
-  set(CMAKE_INSTALL_LIBDIR "lib64" CACHE STRING
-    "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
-else()
-  set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING
-    "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
+  set(CMAKE_INSTALL_INCLUDEDIR "include" CACHE STRING
+    "Include Install location (Relative to CMAKE_INSTALL_PREFIX)")
+
 endif()
 
-set(CMAKE_INSTALL_DOCDIR "." CACHE STRING
-  "Doc Install location (Relative to CMAKE_INSTALL_PREFIX)")
+if(NOT CMAKE_INSTALL_LIBDIR)
+
+  if(IS64BIT OR SUNPRO)
+    set(CMAKE_INSTALL_LIBDIR "lib64" CACHE STRING
+      "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
+  else()
+    set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING
+      "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
+  endif()
+
+endif()
+
+if(NOT CMAKE_INSTALL_DOCDIR)
+
+  set(CMAKE_INSTALL_DOCDIR "." CACHE STRING
+    "Doc Install location (Relative to CMAKE_INSTALL_PREFIX)")
+
+endif()
+
 
 #
 # These variables should be used in install specs.
