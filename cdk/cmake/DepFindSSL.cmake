@@ -194,10 +194,11 @@ function(find_openssl)
     OPENSSL_VERSION_NUMBER
     REGEX "^#[ ]*define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x[0-9].*"
   )
+
   #message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
   STRING(REGEX REPLACE
-    "^.*OPENSSL_VERSION_NUMBER[\t ]+0x(.)(..)(..)(..).*$"
-    "\\1;\\2;\\3;\\4"
+    "^.*OPENSSL_VERSION_NUMBER[\t ]+0x(.)(..)(..)(..)(.).*$"
+    "\\1;\\2;\\3;\\4;\\5"
     version_list "${OPENSSL_VERSION_NUMBER}"
   )
   #message("-- OPENSSL_VERSION: ${version_list}")
@@ -211,8 +212,23 @@ function(find_openssl)
   list(GET version_list 2 OPENSSL_VERSION_FIX)
   math(EXPR OPENSSL_VERSION_FIX ${OPENSSL_VERSION_FIX})
 
+  list(GET version_list 3 OPENSSL_VERSION_PATCH)
+  math(EXPR OPENSSL_VERSION_PATCH ${OPENSSL_VERSION_PATCH})
+
+  list(GET version_list 4 OPENSSL_VERSION_STATUS)
+
+  #
+  # Calculate patch letter as: 1 - 'a', 2 - 'b' , ...
+  # Note: ascii 'a' is 97
+  #
+
+  if(OPENSSL_VERSION_PATCH GREATER 0)
+    math(EXPR letter_code "97 + ${OPENSSL_VERSION_PATCH} - 1")
+    string(ASCII ${letter_code} patch_letter)
+  endif()
+
   set(OPENSSL_VERSION
-    "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}"
+    "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${patch_letter}"
     PARENT_SCOPE
   )
   set(OPENSSL_VERSION_MAJOR ${OPENSSL_VERSION_MAJOR} PARENT_SCOPE)
