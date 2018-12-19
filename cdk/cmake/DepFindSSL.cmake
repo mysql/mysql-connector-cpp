@@ -123,6 +123,7 @@ function(main)
     message(STATUS "Using OpenSSL version: ${OPENSSL_VERSION}")
   endif()
 
+  set(OPENSSL_VERSION_GLOBAL ${OPENSSL_VERSION} CACHE INTERNAL "OpenSSL Version")
   #message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
   #message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
 
@@ -281,6 +282,11 @@ function(find_openssl)
 endfunction(find_openssl)
 
 
+#
+# Add instructions for installing OpenSSL libraries together
+# with the connector.
+#
+
 function(bundle_ssl_libs)
 
   if(NOT OPENSSL_LIB_DIR)
@@ -332,6 +338,13 @@ function(bundle_ssl_libs)
 endfunction(bundle_ssl_libs)
 
 
+#
+# Define SSL::ssl and friends to point at WolfSSL libraries
+# built from sources in WOLFSSL_SOURCE_DIR. Build instructions
+# and target definitions for WolfSSL libraries are specified in
+# extra/wolfssl/CMakeLists.txt
+#
+
 function(use_wolfssl)
 
   set(WOLFSSL_SOURCE_DIR "${WITH_SSL}")
@@ -341,7 +354,7 @@ function(use_wolfssl)
 
   add_subdirectory("${PROJECT_SOURCE_DIR}/extra/wolfssl")
 
-  message(STATUS "- WolfSSL version: ${OPENSSL_VERSION_GLOBAL}")
+  message(STATUS "- WolfSSL version: ${WOLFSSL_VERSION_GLOBAL}")
 
   add_library(SSL::ssl ALIAS wolfssl)
   add_library(SSL::crypto ALIAS wolfcrypto)
