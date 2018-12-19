@@ -28,7 +28,8 @@
 
 ##############################################################################
 #
-# RapidJSON::rapidjson
+# Targets:
+#   RapidJSON::rapidjson
 #
 
 if(TARGET RapidJSON::rapidjson)

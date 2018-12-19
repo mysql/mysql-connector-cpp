@@ -147,12 +147,12 @@ function(merge_libraries TARGET)
 
   message("Preparing to merge ${TYPE} library: ${TARGET} (${ARGN})")
 
-  #  Note: empty.c is not really needed, but cmake does not accept a library
+  #  Note: empty.cc is not really needed, but cmake does not accept a library
   #  target with no sources.
 
-  set_property(SOURCE "${LIBUTILS_SCRIPT_DIR}/empty.c" PROPERTY LANGUAGE CXX)
+  set_property(SOURCE "${LIBUTILS_SCRIPT_DIR}/empty.cc" PROPERTY LANGUAGE CXX)
 
-  add_library(${TARGET} ${TYPE} "${LIBUTILS_SCRIPT_DIR}/empty.c")
+  add_library(${TARGET} ${TYPE} "${LIBUTILS_SCRIPT_DIR}/empty.cc")
   target_link_libraries(${TARGET} PRIVATE ${ARGN})
 
   #
@@ -205,7 +205,7 @@ function(merge_libraries TARGET)
 
     # TODO: Will it work with XCode?
 
-    add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.c")
+    add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.cc")
     target_link_libraries(${TARGET}-deps ${ARGN})
 
     #
@@ -280,7 +280,7 @@ function(merge_libraries TARGET)
     # lines.
     #
 
-    add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.c")
+    add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.cc")
     target_link_libraries(${TARGET}-deps ${ARGN})
 
     add_custom_command(TARGET ${TARGET} PRE_BUILD

@@ -28,33 +28,10 @@
 
 ##############################################################################
 #
-# SSL::ssl    - main library
-# SSL::crypto
+# Targets:
+#   SSL::ssl     - main library
+#   SSL::crypto  - crypto library (automatically linked in when needed)
 #
-# We support different versions of SSL:
-# - "system"  (typically) uses headers/libraries in /usr/lib and /usr/lib64
-# - a custom installation of openssl can be used like this
-#     - cmake -DCMAKE_PREFIX_PATH=</path/to/custom/openssl> -DWITH_SSL="system"
-#   or
-#     - cmake -DWITH_SSL=</path/to/custom/openssl>
-#   or
-#     - cmake -DWITH_SSL=</path/to/custom/wolfssl>
-#
-# The default value for WITH_SSL is "system"
-#
-# WITH_SSL="system" means: use the SSL library that comes with the operating
-# system. This typically means you have to do 'yum install openssl-devel'
-# or something similar.
-#
-# For Windows or OsX, WITH_SSL="system" is handled a bit differently:
-# We assume you have installed
-#     https://slproweb.com/products/Win32OpenSSL.html
-#     find_package(OpenSSL) will locate it
-# or
-#     http://brewformulas.org/Openssl
-#     we give a hint /usr/local/opt/openssl to find_package(OpenSSL)
-# When the package has been located, we treat it as if cmake had been
-# invoked with  -DWITH_SSL=</path/to/custom/openssl>
 
 if(TARGET SSL::ssl)
   return()

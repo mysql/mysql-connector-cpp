@@ -39,6 +39,14 @@
 # Protobuf::pb-full
 # Protobuf::protoc  -- compiler
 #
+# Commands:
+#
+# mysqlx_protobuf_generate_cpp()
+#
+
+if(TARGET Protobuf::pb)
+  return()
+endif()
 
 message(STATUS "Setting up Protobuf.")
 
@@ -230,6 +238,8 @@ add_dependencies(Protobuf::pb-lite build_protobuf)
 add_dependencies(Protobuf::protoc  build_protobuf)
 
 # TODO: Handle lite/full version
+
+
 
 # Standard PROTOBUF_GENERATE_CPP modified to our usage
 

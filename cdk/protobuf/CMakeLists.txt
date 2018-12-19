@@ -134,6 +134,13 @@ if(GCC OR CLANG)
     -Wno-unused-function
     -Wno-unused-local-typedefs
     -Wno-unused-local-typedefs
+  )
+
+endif()
+
+if(GCC)
+
+  add_compile_options(
     -Wno-maybe-uninitialized
     -Wno-unused-but-set-parameter
   )
