@@ -619,10 +619,25 @@ macro(find_openssl)
     )
     message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
     STRING(REGEX REPLACE
-      "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9]).*$" "\\1"
-      OPENSSL_VERSION_MAJOR "${OPENSSL_VERSION_NUMBER}"
+      "^.*OPENSSL_VERSION_NUMBER[\t ]+0x(.)(..)(..)(..)(.).*$"
+      "\\1;\\2;\\3;\\4;\\5"
+      version_list "${OPENSSL_VERSION_NUMBER}"
     )
-    message("== OPENSSL_VERSION_MAJOR: ${OPENSSL_VERSION_MAJOR}")
+    #message("-- OPENSSL_VERSION: ${version_list}")
+
+    list(GET version_list 0 OPENSSL_VERSION_MAJOR)
+    math(EXPR OPENSSL_VERSION_MAJOR ${OPENSSL_VERSION_MAJOR})
+
+    list(GET version_list 1 OPENSSL_VERSION_MINOR)
+    math(EXPR OPENSSL_VERSION_MINOR ${OPENSSL_VERSION_MINOR})
+
+    list(GET version_list 2 OPENSSL_VERSION_FIX)
+    math(EXPR OPENSSL_VERSION_FIX ${OPENSSL_VERSION_FIX})
+
+    list(GET version_list 3 OPENSSL_VERSION_PATCH)
+    math(EXPR OPENSSL_VERSION_PATCH ${OPENSSL_VERSION_PATCH})
+
+    list(GET version_list 4 OPENSSL_VERSION_STATUS)
 
     IF(
       OPENSSL_INCLUDE_DIR AND
@@ -631,7 +646,9 @@ macro(find_openssl)
     )
 
       set(OPENSSL_FOUND TRUE)
-      set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.?.?")
+      set(OPENSSL_VERSION
+       "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_STATUS}"
+      )
       set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARY}" "${CRYPTO_LIBRARY}")
 
     ELSE()
