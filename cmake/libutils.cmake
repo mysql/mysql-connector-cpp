@@ -150,9 +150,9 @@ function(merge_libraries TARGET)
   #  Note: empty.c is not really needed, but cmake does not accept a library
   #  target with no sources.
 
-  set_property(SOURCE "${LIBUTILS_SCRIPT_DIR}/empty.c" PROPERTY LANGUAGE CXX)
+  set_property(SOURCE "${LIBUTILS_SCRIPT_DIR}/empty.cc" PROPERTY LANGUAGE CXX)
 
-  add_library(${TARGET} ${TYPE} "${LIBUTILS_SCRIPT_DIR}/empty.c")
+  add_library(${TARGET} ${TYPE} "${LIBUTILS_SCRIPT_DIR}/empty.cc")
   target_link_libraries(${TARGET} PRIVATE ${ARGN})
 
   #

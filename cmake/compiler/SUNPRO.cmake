@@ -39,7 +39,7 @@ endfunction()
 
 
 function(enable_pic)
-  add_compile_options(CXX -KPIC)
+  add_flags(CXX -KPIC)
 endfunction()
 
 
