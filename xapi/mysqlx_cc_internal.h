@@ -59,7 +59,7 @@ struct mysqlx_session_options_struct
 {
 public:
 
-  using Settings_impl::Option_impl;
+  using Settings_impl::Session_option_impl;
   using Settings_impl::Client_option_impl;
 
   mysqlx_session_options_struct() = default;
@@ -83,7 +83,7 @@ public:
     if (db)
       set.schema(*db);
 #ifdef WITH_SSL
-    set.key_val(Option_impl::SSL_MODE)->scalar()->num(uint64_t(ssl_mode));
+    set.key_val(Session_option_impl::SSL_MODE)->scalar()->num(uint64_t(ssl_mode));
 #endif
     set.commit();
   }
@@ -99,7 +99,7 @@ public:
   bool has_option(mysqlx_opt_type_enum opt)
   {
     // Note: assumes the same enum values as used in Settings_impl::Option
-    return Settings_impl::has_option(Option_impl(opt));
+    return Settings_impl::has_option(Client_option_impl(opt));
   }
 
   void clear()
@@ -395,6 +395,8 @@ public:
     , m_sess(schema.get_session())
   {}
 
+  uint64_t count();
+
   bool exists()
   {
     return
@@ -452,6 +454,8 @@ public:
     : common::Object_ref(schema.name(), name)
     , m_sess(schema.get_session())
   {}
+
+  uint64_t count();
 
   bool exists()
   {

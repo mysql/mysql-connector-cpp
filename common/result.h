@@ -37,13 +37,13 @@
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 
-PUSH_SYS_WARNINGS
-#include <vector>
-POP_SYS_WARNINGS
-
 #include "../global.h"
 #include "session.h"
 #include "value.h"
+
+PUSH_SYS_WARNINGS
+#include <vector>
+POP_SYS_WARNINGS
 
 
 namespace mysqlx {

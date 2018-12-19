@@ -35,10 +35,10 @@
 
 #include <mysql/cdk/foundation/error.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdexcept>
 #include <sstream>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 namespace cdk {

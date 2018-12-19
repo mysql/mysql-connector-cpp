@@ -37,9 +37,9 @@
 
 #include "common.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <deque>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #undef max
 using cdk::shared_ptr;

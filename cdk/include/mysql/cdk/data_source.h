@@ -33,11 +33,11 @@
 
 #include <mysql/cdk/foundation.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <functional>
 #include <algorithm>
 #include <set>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 namespace cdk {

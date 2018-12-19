@@ -41,18 +41,18 @@
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 
+#include "../global.h"
+#include "../common/result.h"
+#include "../common/op_impl.h"
+
+//#include "result_impl.h"
+
 PUSH_SYS_WARNINGS
 #include <map>
 #include <memory>
 #include <stack>
 #include <list>
 POP_SYS_WARNINGS
-
-#include "../global.h"
-#include "../common/result.h"
-#include "../common/op_impl.h"
-
-//#include "result_impl.h"
 
 
 namespace mysqlx {

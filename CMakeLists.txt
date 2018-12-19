@@ -55,6 +55,7 @@ ENDIF()
 set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
 
+
 ##########################################################################
 
 PROJECT(MySQL_CONCPP)
@@ -172,6 +173,7 @@ if(SUNPRO)
 
   set(options
     -m64
+    -mt
     -xatomic=studio
     -xtarget=generic     # more portable code
     -xdebuginfo=no%decl  # faster build times
@@ -403,7 +405,7 @@ else()
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-fvisibility-ms-compat)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-    add_compile_options(-xldscope=hidden)
+    add_compile_options(-xldscope=symbolic)
   elseif(CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fvisibility=hidden)
   endif()
@@ -845,12 +847,12 @@ add_test(NAME Link_test
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
-
 #
-# Create the BUILDINFO file
+# Create the INFO_SRC and INFO_BIN files
 # =========================
 #
 include(buildinfo.cmake)
+
 
 #
 # Packaging specifications

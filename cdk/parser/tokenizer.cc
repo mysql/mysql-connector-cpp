@@ -30,14 +30,14 @@
 
 #include <mysql/cdk/common.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdexcept>
 #include <memory>
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
 #include <cstdlib>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #include "tokenizer.h"
 

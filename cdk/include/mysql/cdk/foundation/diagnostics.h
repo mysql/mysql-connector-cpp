@@ -34,10 +34,10 @@
 #include "error.h"
 #include "types.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <vector>
 #include <map>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 namespace cdk {
 namespace foundation {

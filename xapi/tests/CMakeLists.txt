@@ -36,6 +36,12 @@ set_property(
   PROPERTY COMPILE_DEFINITIONS ""
 )
 
+IF(WIN32)
+  add_definitions(
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
+ENDIF()
+
 if(BUILD_STATIC)
   add_definitions(-DSTATIC_CONCPP)
 endif()

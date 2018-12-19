@@ -39,12 +39,12 @@
 // TODO: Replace with std::variant<> when available.
 #include "variant.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdint.h>
 #include <string.h>
 #include <string>
 #include <memory>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #undef byte
 
@@ -230,15 +230,15 @@ public:
   */
 
 #ifdef __clang__
-  DIAGNOSTIC_PUSH
-  DISABLE_WARNING(-Wc++11-extensions)
+  DIAGNOSTIC_PUSH_CDK
+  DISABLE_WARNING_CDK(-Wc++11-extensions)
 #endif
 
 private:
   scoped_ptr(scoped_ptr&&);
 
 #ifdef __clang__
-  DIAGNOSTIC_POP
+  DIAGNOSTIC_POP_CDK
 #endif
 
 #endif

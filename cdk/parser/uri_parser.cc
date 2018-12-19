@@ -31,14 +31,14 @@
 #include "uri_parser.h"
 #include <mysql/cdk.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdlib.h>
 #include <algorithm>
 #include <sstream>
 #include <bitset>
 #include <cstdarg>
 #include <locale>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 using namespace parser;

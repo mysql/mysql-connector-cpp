@@ -35,7 +35,7 @@
 
 #include "char_iterator.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <string>
 #include <vector>
 #include <map>
@@ -44,10 +44,10 @@ PUSH_SYS_WARNINGS
 #include <stdexcept>
 #include <sstream>
 #include <algorithm>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #ifdef _MSC_VER
-DISABLE_WARNING(4061)  // not all enums listed inside switch() statement
+DISABLE_WARNING_CDK(4061)  // not all enums listed inside switch() statement
 #endif
 
 #undef WORD

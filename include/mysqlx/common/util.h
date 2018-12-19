@@ -31,6 +31,92 @@
 #ifndef MYSQLX_COMMON_UTIL_H
 #define MYSQLX_COMMON_UTIL_H
 
+/*
+  Macros used to disable warnings for fragments of code.
+*/
+
+#if defined __GNUC__ || defined __clang__
+
+#define PRAGMA(X) _Pragma(#X)
+#define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
+
+#if defined __clang__ || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#define DIAGNOSTIC_PUSH PRAGMA(GCC diagnostic push)
+#define DIAGNOSTIC_POP  PRAGMA(GCC diagnostic pop)
+#else
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+#endif
+
+#elif defined _MSC_VER
+
+
+#define PRAGMA(X) __pragma(X)
+#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
+
+#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
+#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
+
+#else
+
+#define PRAGMA(X)
+#define DISABLE_WARNING(W)
+
+#define DIAGNOSTIC_PUSH
+#define DIAGNOSTIC_POP
+
+#endif
+
+
+/*
+  Macros to disable compile warnings in system headers. Put
+  PUSH_SYS_WARNINGS/POP_SYS_WARNINGS around sytem header includes.
+*/
+
+#if defined _MSC_VER
+
+/*
+  Warning 4350 is triggered by std::shared_ptr<> implementation
+  - see https://msdn.microsoft.com/en-us/library/0eestyah.aspx
+
+  Warning 4365 conversion from 'type_1' to 'type_2', signed/unsigned mismatch
+  - see https://msdn.microsoft.com/en-us/library/ms173683.aspx
+
+  Warning 4774 format string expected in argument <position> is not a
+  string literal
+*/
+
+#define PUSH_SYS_WARNINGS \
+  PRAGMA(warning (push,2)) \
+  DISABLE_WARNING(4350) \
+  DISABLE_WARNING(4738) \
+  DISABLE_WARNING(4548) \
+  DISABLE_WARNING(4365) \
+  DISABLE_WARNING(4774) \
+  DISABLE_WARNING(4244)
+
+#else
+
+#define PUSH_SYS_WARNINGS DIAGNOSTIC_PUSH
+
+#endif
+
+#define POP_SYS_WARNINGS  DIAGNOSTIC_POP
+
+PUSH_SYS_WARNINGS
+
+#include <string>
+#include <stdexcept>
+#include <ostream>
+#include <memory>
+#include <forward_list>
+#include <string.h>  // for memcpy
+#include <utility>   // std::move etc
+#include <algorithm>
+#include <functional>
+#include <type_traits>
+
+POP_SYS_WARNINGS
 
 /*
   Macro to be used to disable "implicit fallthrough" gcc warning
@@ -82,8 +168,6 @@
 #undef DISABLE_WARNING
 #undef DIAGNOSTIC_PUSH
 #undef DIAGNOSTIC_POP
-#undef PUSH_SYS_WARNINGS
-#undef POP_SYS_WARNINGS
 
 
 #if defined __GNUC__ || defined __clang__
@@ -152,49 +236,6 @@
 
 
 /*
-  Macros to disable compile warnings in system headers. Put
-  PUSH_SYS_WARNINGS/POP_SYS_WARNINGS around sytem header includes.
-*/
-
-#if defined _MSC_VER
-
-/*
-  Warning 4350 is triggered by std::shared_ptr<> implementation
-  - see https://msdn.microsoft.com/en-us/library/0eestyah.aspx
-  Warning 4996 is about SCL_SECURE_WARNINGS (see MSVC docs on 'Checked Iterators'.
-*/
-
-#define PUSH_SYS_WARNINGS \
-  PRAGMA(warning (push,2)) \
-  DISABLE_WARNING(4350) \
-  DISABLE_WARNING(4738) \
-  DISABLE_WARNING(4548) \
-  DISABLE_WARNING(4996)
-
-#else
-
-#define PUSH_SYS_WARNINGS DIAGNOSTIC_PUSH
-
-#endif
-
-#define POP_SYS_WARNINGS  DIAGNOSTIC_POP
-
-
-PUSH_SYS_WARNINGS
-#include <string>
-#include <stdexcept>
-#include <ostream>
-#include <memory>
-#include <forward_list>
-#include <string.h>  // for memcpy
-#include <utility>   // std::move etc
-#include <algorithm>
-#include <functional>
-#include <type_traits>
-POP_SYS_WARNINGS
-
-
-/*
   A dirty trick to help Doxygen to process 'enum class' declarations, which
   are not fully supported. Thus we replace them by plain 'enum' when processing
   sources by Doxygen.
@@ -235,7 +276,6 @@ namespace mysqlx {
 
 namespace common {
 
-
 /*
   Convenience for checking numeric limits (to be used when doing numeric
   casts).
@@ -243,6 +283,8 @@ namespace common {
   TODO: Maybe more templates are needed for the case where T is a float/double
   type and U is an integer type or vice versa.
 */
+
+#ifdef __cplusplus
 
 template <
   typename T, typename U,
@@ -280,6 +322,8 @@ bool check_num_limits(U val)
 }
 
 #define ASSERT_NUM_LIMITS(T,V) assert(mysqlx::common::check_num_limits<T>(V))
+
+#endif
 
 
 inline

@@ -1,3 +1,5 @@
+Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+
 This folder contains common code used by X DevAPI and XAPI implementations.
 The code is not meant to be used separately.
 

@@ -34,12 +34,12 @@
 #include <mysql/cdk/common.h>
 #include "parser.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <vector>
 #include <map>
 #include <locale>
 #include <algorithm>  // for_each()
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 /*

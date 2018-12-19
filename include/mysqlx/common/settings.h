@@ -80,27 +80,29 @@ public:
 #define SETTINGS_OPT_ENUM_num(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_any(X,N)  X = N,
 
-  enum class Option_impl {
+  enum Session_option_impl{
     SESSION_OPTION_LIST(SETTINGS_OPT_ENUM)
     LAST
-  };
+  } ;
+
+
 
   /*
     Enumerations with available client options and their values.
   */
 
-#define CLIENT_OPT_ENUM_str(X,N)  X = N,
-#define CLIENT_OPT_ENUM_bool(X,N)  X = N,
-#define CLIENT_OPT_ENUM_num(X,N)  X = N,
-#define CLIENT_OPT_ENUM_any(X,N)  X = N,
-#define CLIENT_OPT_ENUM_end(X,N)  X = N,
+#define CLIENT_OPT_IMPL_ENUM_str(X,N)  X = -N,
+#define CLIENT_OPT_IMPL_ENUM_bool(X,N) X = -N,
+#define CLIENT_OPT_IMPL_ENUM_num(X,N)  X = -N,
+#define CLIENT_OPT_IMPL_ENUM_any(X,N)  X = -N,
 
-  enum class Client_option_impl {
-    CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
+  enum Client_option_impl{
+    CLIENT_OPTION_LIST(CLIENT_OPT_IMPL_ENUM)
   };
 
-  static  const char* option_name(Option_impl opt);
-  static  const char* option_name(Client_option_impl opt);
+
+
+  static  const char* option_name(int opt);
 
 
 #define SETTINGS_VAL_ENUM(X,N)  X = N,
@@ -123,13 +125,10 @@ public:
 protected:
 
   using Value = common::Value;
-  using opt_val_t = std::pair<Option_impl, Value>;
+  using opt_val_t = std::pair<int, Value>;
   // TODO: use multimap instead?
   using option_list_t = std::vector<opt_val_t>;
   using iterator = option_list_t::const_iterator;
-
-  using client_option_list_t = std::map<Client_option_impl, Value>;
-  using client_iterator = option_list_t::const_iterator;
 
 public:
 
@@ -137,11 +136,8 @@ public:
     Examine settings stored in this object.
   */
 
-  bool has_option(Option_impl) const;
-  const Value& get(Option_impl) const;
-
-  bool has_option(Client_option_impl) const;
-  const Value& get(Client_option_impl) const;
+  bool has_option(int) const;
+  const Value& get(int) const;
 
 
   // Iterating over options stored in this object.
@@ -161,8 +157,7 @@ public:
   */
 
   void clear();
-  void erase(Option_impl);
-  void erase(Client_option_impl);
+  void erase(int);
 
   /*
     Session options include connection options that specify data source
@@ -205,7 +200,6 @@ protected:
   {
     DLL_WARNINGS_PUSH
     option_list_t           m_options;
-    client_option_list_t    m_client_options;
     DLL_WARNINGS_POP
     unsigned m_host_cnt = 0;
     bool m_user_priorities = false;
@@ -214,8 +208,7 @@ protected:
     bool m_tcpip = false; // set to true if TCPIP connection was specified
     bool m_sock = false;  // set to true if socket connection was specified
 
-    void erase(Option_impl);
-    void erase(Client_option_impl);
+    void erase(int);
   };
 
   Data m_data;
@@ -227,32 +220,22 @@ protected:
 #define SETTINGS_OPT_NAME_num(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_any(X,N)  case N: return #X;
 
+
+#define CLIENT_OPT_NAME_str(X,N)  case -N: return #X;
+#define CLIENT_OPT_NAME_bool(X,N)  case -N: return #X;
+#define CLIENT_OPT_NAME_num(X,N)  case -N: return #X;
+#define CLIENT_OPT_NAME_any(X,N)  case -N: return #X;
+
+
 inline
-const char* Settings_impl::option_name(Option_impl opt)
+const char* Settings_impl::option_name(int opt)
 {
-  switch (unsigned(opt))
+  switch (opt)
   {
     SESSION_OPTION_LIST(SETTINGS_OPT_NAME)
-  default:
-    return nullptr;
-  }
-}
-
-#define CLIENT_OPT_NAME_str(X,N)  case N: return #X;
-#define CLIENT_OPT_NAME_bool(X,N)  case N: return #X;
-#define CLIENT_OPT_NAME_num(X,N)  case N: return #X;
-#define CLIENT_OPT_NAME_any(X,N)  case N: return #X;
-#define CLIENT_OPT_NAME_end(X,N)  case N: throw_error("Unexpected Option"); return #X;
-
-
-inline
-const char* Settings_impl::option_name(Client_option_impl opt)
-{
-  switch (unsigned(opt))
-  {
     CLIENT_OPTION_LIST(CLIENT_OPT_NAME)
-  default:
-    return nullptr;
+    default:
+      return nullptr;
   }
 }
 
@@ -265,8 +248,8 @@ const char* Settings_impl::ssl_mode_name(SSL_mode mode)
   switch (unsigned(mode))
   {
     SSL_MODE_LIST(SETTINGS_VAL_NAME)
-  default:
-    return nullptr;
+    default:
+      return nullptr;
   }
 }
 
@@ -276,8 +259,8 @@ const char* Settings_impl::auth_method_name(Auth_method method)
   switch (unsigned(method))
   {
     SSL_MODE_LIST(SETTINGS_VAL_NAME)
-  default:
-    return nullptr;
+    default:
+      return nullptr;
   }
 }
 
@@ -287,13 +270,13 @@ const char* Settings_impl::auth_method_name(Auth_method method)
 */
 
 inline
-const common::Value& Settings_impl::get(Option_impl opt) const
+const common::Value& Settings_impl::get(int opt) const
 {
   using std::find_if;
 
   auto it = find_if(m_data.m_options.crbegin(), m_data.m_options.crend(),
-    [opt](opt_val_t el) -> bool { return el.first == opt; }
-  );
+                    [opt](opt_val_t el) -> bool { return el.first == opt; }
+      );
 
   static Value null_value;
 
@@ -303,44 +286,19 @@ const common::Value& Settings_impl::get(Option_impl opt) const
   return it->second;
 }
 
-inline
-const common::Value& Settings_impl::get(Client_option_impl opt) const
-{
-  static Value null_value;
-
-  auto it = m_data.m_client_options.find(opt);
-
-  if (it == m_data.m_client_options.cend())
-    return null_value;
-
-  return it->second;
-}
-
 
 inline
-bool Settings_impl::has_option(Option_impl opt) const
+bool Settings_impl::has_option(int opt) const
 {
   return m_data.m_options.cend() !=
-    find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
-      [opt](opt_val_t el) -> bool { return el.first == opt; }
-    );
+      find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
+              [opt](opt_val_t el) -> bool { return el.first == opt; }
+      );
 }
 
 
 inline
-bool Settings_impl::has_option(Client_option_impl opt) const
-{
-  return m_data.m_client_options.find(opt) != m_data.m_client_options.cend();
-}
-
-inline
-void Settings_impl::erase(Option_impl opt)
-{
-  m_data.erase(opt);
-}
-
-inline
-void Settings_impl::erase(Client_option_impl opt)
+void Settings_impl::erase(int opt)
 {
   m_data.erase(opt);
 }
@@ -351,13 +309,13 @@ void Settings_impl::erase(Client_option_impl opt)
 */
 
 inline
-void Settings_impl::Data::erase(Option_impl opt)
+void Settings_impl::Data::erase(int opt)
 {
   remove_from(m_options,
-    [opt](opt_val_t el) -> bool
-    {
-      return el.first == opt;
-    }
+              [opt](opt_val_t el) -> bool
+  {
+    return el.first == opt;
+  }
   );
 
   /*
@@ -367,35 +325,30 @@ void Settings_impl::Data::erase(Option_impl opt)
 
   switch (opt)
   {
-  case Option_impl::HOST:
-    m_host_cnt = 0;
-    FALLTHROUGH;
-  case Option_impl::PORT:
-    if (0 == m_host_cnt)
-      m_tcpip = false;
-    break;
-  case Option_impl::SOCKET:
-    m_sock = false;
-    break;
-  case Option_impl::PRIORITY:
-    m_user_priorities = false;
-    break;
-  case Option_impl::SSL_CA:
-    m_ssl_ca = false;
-    break;
-  case Option_impl::SSL_MODE:
-    m_ssl_mode = SSL_mode::LAST;
-    break;
-  default:
-    break;
+    case Session_option_impl::HOST:
+      m_host_cnt = 0;
+      FALLTHROUGH;
+    case Session_option_impl::PORT:
+      if (0 == m_host_cnt)
+        m_tcpip = false;
+      break;
+    case Session_option_impl::SOCKET:
+      m_sock = false;
+      break;
+    case Session_option_impl::PRIORITY:
+      m_user_priorities = false;
+      break;
+    case Session_option_impl::SSL_CA:
+      m_ssl_ca = false;
+      break;
+    case Session_option_impl::SSL_MODE:
+      m_ssl_mode = SSL_mode::LAST;
+      break;
+    default:
+      break;
   }
 }
 
-inline
-void Settings_impl::Data::erase(Client_option_impl opt)
-{
-  m_client_options.erase(opt);
-}
 
 }  // common namespace
 }  // mysqlx namespace

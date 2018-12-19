@@ -32,7 +32,7 @@
 #define CDK_FOUNDATION_SOCKET_DETAIL_H
 #include <mysql/cdk/foundation/types.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 
 #ifdef _WIN32
 
@@ -59,7 +59,7 @@ PUSH_SYS_WARNINGS
 
 #endif
 
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 namespace cdk {

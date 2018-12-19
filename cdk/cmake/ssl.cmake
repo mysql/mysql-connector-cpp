@@ -359,6 +359,11 @@ function(MYSQL_CHECK_SSL)
 
   ENDIF()
 
+  IF(OPENSSL_VERSION)
+    SET(OPENSSL_VERSION_GLOBAL ${OPENSSL_VERSION} CACHE INTERNAL "OpenSSL Version")
+    UNSET(WOLFSSL_VERSION_GLOBAL CACHE)
+  ENDIF()
+
 endfunction()
 
 
@@ -560,7 +565,16 @@ function(get_lib_file LIB_VAR SONAME_VAR LIB)
 
     #message("== lib_soname: ${lib_soname}")
 
-    set(${SONAME_VAR} "${lib_soname}" PARENT_SCOPE)
+    #
+    # Note: We observed that for openssl library, the soname extracted is
+    # sometime identical to the original name, which breaks logic that later
+    # creates the soname link. Thus in this case we do not set soname and do
+    # not create soname link.
+    #
+
+    if(NOT lib_soname STREQUAL lib_name)
+      set(${SONAME_VAR} "${lib_soname}" PARENT_SCOPE)
+    endif()
 
   endif()
 
@@ -605,10 +619,25 @@ macro(find_openssl)
     )
     message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
     STRING(REGEX REPLACE
-      "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9]).*$" "\\1"
-      OPENSSL_VERSION_MAJOR "${OPENSSL_VERSION_NUMBER}"
+      "^.*OPENSSL_VERSION_NUMBER[\t ]+0x(.)(..)(..)(..)(.).*$"
+      "\\1;\\2;\\3;\\4;\\5"
+      version_list "${OPENSSL_VERSION_NUMBER}"
     )
-    message("== OPENSSL_VERSION_MAJOR: ${OPENSSL_VERSION_MAJOR}")
+    #message("-- OPENSSL_VERSION: ${version_list}")
+
+    list(GET version_list 0 OPENSSL_VERSION_MAJOR)
+    math(EXPR OPENSSL_VERSION_MAJOR ${OPENSSL_VERSION_MAJOR})
+
+    list(GET version_list 1 OPENSSL_VERSION_MINOR)
+    math(EXPR OPENSSL_VERSION_MINOR ${OPENSSL_VERSION_MINOR})
+
+    list(GET version_list 2 OPENSSL_VERSION_FIX)
+    math(EXPR OPENSSL_VERSION_FIX ${OPENSSL_VERSION_FIX})
+
+    list(GET version_list 3 OPENSSL_VERSION_PATCH)
+    math(EXPR OPENSSL_VERSION_PATCH ${OPENSSL_VERSION_PATCH})
+
+    list(GET version_list 4 OPENSSL_VERSION_STATUS)
 
     IF(
       OPENSSL_INCLUDE_DIR AND
@@ -617,7 +646,9 @@ macro(find_openssl)
     )
 
       set(OPENSSL_FOUND TRUE)
-      set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.?.?")
+      set(OPENSSL_VERSION
+       "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_STATUS}"
+      )
       set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARY}" "${CRYPTO_LIBRARY}")
 
     ELSE()

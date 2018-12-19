@@ -419,10 +419,10 @@ void Socket_base::flush()
 }
 
 
-DIAGNOSTIC_PUSH
+DIAGNOSTIC_PUSH_CDK
 #ifdef _MSC_VER
   // 4702 = unreachable code
-  DISABLE_WARNING(4702)
+  DISABLE_WARNING_CDK(4702)
 #endif // _MSC_VER
 
 cdk::foundation::error_condition
@@ -445,7 +445,7 @@ error_category_io::do_default_error_condition(int errc) const
   return errc::no_error;
 }
 
-DIAGNOSTIC_POP
+DIAGNOSTIC_POP_CDK
 
 
 bool

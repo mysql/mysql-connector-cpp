@@ -34,13 +34,13 @@
 #include <mysql/cdk/common.h>
 #include "parser.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <list>
 #include <stack>
 #include <bitset>
 #include <iomanip>
 #include <functional>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 namespace parser {

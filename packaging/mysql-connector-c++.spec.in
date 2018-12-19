@@ -126,11 +126,13 @@ TEST_OPTS=
 mkdir build-dynamic && pushd build-dynamic
 %if 0%{?fedora} || 0%{?rhel}
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
     ${TEST_OPTS}
 %else
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
     ${TEST_OPTS} \
     -DCMAKE_INSTALL_PREFIX="%_prefix" \
+    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
     -DCMAKE_C_FLAGS:STRING="%optflags" \
     -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
@@ -140,6 +142,7 @@ popd
 mkdir build-static && pushd build-static
 %if 0%{?fedora} || 0%{?rhel}
 %cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} \
+  -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
   ${TEST_OPTS} \
   -DBUILD_STATIC=ON
 %else
@@ -147,6 +150,7 @@ cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_JDBC=ON -DWITH_SSL=system %{?m
     ${TEST_OPTS} \
     -DBUILD_STATIC=ON \
     -DCMAKE_INSTALL_PREFIX="%_prefix" \
+    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 \
     -DCMAKE_C_FLAGS:STRING="%optflags" \
     -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %endif
@@ -192,11 +196,9 @@ mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/static/
 %endif
 popd
 
-# Adjust the directory structure for header files
-install -d -m0755 %{buildroot}%{_includedir}/mysql-cppconn-8
-mv %{buildroot}%{_includedir}/{jdbc,mysqlx} %{buildroot}%{_includedir}/mysql-cppconn-8
+# Add compat dir and remove unwanted file
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
-rm %{buildroot}/usr/BUILDINFO.txt
+rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
@@ -205,15 +207,15 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %postun jdbc -p /sbin/ldconfig
 
 %files
-%doc README.txt LICENSE.txt
+%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn8.so.1*
 
 %files jdbc
-%doc README.txt LICENSE.txt
+%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so.7*
 
 %files devel
-%doc README.txt LICENSE.txt build-dynamic/BUILDINFO.txt
+%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so
@@ -235,6 +237,9 @@ rm %{buildroot}/usr/BUILDINFO.txt
 %endif
 
 %changelog
+* Tue Nov 27 2018 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.14-1
+- Added INFO_BIN and INFO_SRC files
+
 * Fri Aug 24 2018 Kent Boortz <kent.boortz@oracle.com> - 8.0.13-1
 - Added "test" package
 

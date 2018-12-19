@@ -130,7 +130,7 @@ void prepare_options(
   Settings_impl &settings, bool socket, TCPIP_options &opts
 )
 {
-  using Option = Settings_impl::Option_impl;
+  using Option = Settings_impl::Session_option_impl;
   using SSL_mode = Settings_impl::SSL_mode;
 
   if (!settings.has_option(Option::USER))
@@ -247,7 +247,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
     if (0 > prio)
     {
-      if (it == end() || Option_impl::PRIORITY != it->first)
+      if (it == end() || Session_option_impl::PRIORITY != it->first)
         throw_error("No priority specified for host ...");
       // note: value of PRIORITY option is checked for validity
       prio = (int)it->second.get_uint();
@@ -260,7 +260,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       If there are more options, there should be no PRIORITY option
       at this point.
     */
-    assert(it == end() || Option_impl::PRIORITY != it->first);
+    assert(it == end() || Session_option_impl::PRIORITY != it->first);
   };
 
   /*
@@ -274,20 +274,20 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     string host("localhost");
     unsigned short  port = DEFAULT_MYSQLX_PORT;
 
-    if (Option_impl::PORT == it->first)
+    if (Session_option_impl::PORT == it->first)
     {
       assert(0 == m_data.m_host_cnt);
     }
     else
     {
-      assert(Option_impl::HOST == it->first);
+      assert(Session_option_impl::HOST == it->first);
       host = it->second.get_string();
       ++it;
     }
 
     // Look for PORT
 
-    if (it != end() && Option_impl::PORT == it->first)
+    if (it != end() && Session_option_impl::PORT == it->first)
     {
       port = (unsigned short)it->second.get_uint();
       ++it;
@@ -325,7 +325,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 #else
   auto add_socket = [this, &src, &opts, check_prio](iterator &it, int prio) {
 
-    assert(Option_impl::SOCKET == it->first);
+    assert(Session_option_impl::SOCKET == it->first);
 
     string socket_path = it->second.get_string();
     ++it;
@@ -347,17 +347,17 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   {
     switch (it->first)
     {
-    case Option_impl::HOST:
+    case Session_option_impl::HOST:
       add_host(it, prio--); break;
 
-    case Option_impl::SOCKET:
+    case Session_option_impl::SOCKET:
       add_socket(it, prio--); break;
 
     /*
       Note: if m_host_cnt > 0 then a HOST setting must be before PORT setting,
       so the case above should cover that HOST/PORT pair.
     */
-    case Option_impl::PORT:
+    case Session_option_impl::PORT:
       assert(0 == m_data.m_host_cnt);
       add_host(it, prio--);
       break;

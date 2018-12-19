@@ -42,46 +42,7 @@
 
 namespace mysqlx {
 
-/**
-  Client creation options
-*/
 
-enum_class ClientOption
-{
-#define CLIENT_OPT_ENUM_any(X,N) X = N,
-#define CLIENT_OPT_ENUM_num(X,N) X = N,
-#define CLIENT_OPT_ENUM_str(X,N) X = N,
-#define CLIENT_OPT_ENUM_end(X,N) X = N,
-
-  CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
-};
-
-
-/// @cond DISABLED
-// Note: Doxygen gets confused here and renders docs incorrectly.
-
-inline
-std::string ClientOptionName(ClientOption opt)
-{
-#define CLT_OPT_NAME_any(X,N) case ClientOption::X: return #X;
-#define CLT_OPT_NAME_bool(X,N) CLT_OPT_NAME_any(X,N)
-#define CLT_OPT_NAME_num(X,N) CLT_OPT_NAME_any(X,N)
-#define CLT_OPT_NAME_str(X,N) CLT_OPT_NAME_any(X,N)
-#define CLT_OPT_NAME_end(X,N) // let it use the default
-
-  switch(opt)
-  {
-    CLIENT_OPTION_LIST(CLT_OPT_NAME)
-    default:
-    {
-      std::ostringstream buf;
-      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
-      return buf.str();
-    }
-  };
-}
-
-/// @endcond
 
 /*
   TODO: Cross-references to session options inside Doxygen docs do not work.
@@ -98,14 +59,115 @@ std::string ClientOptionName(ClientOption opt)
   setting `SSL_CA` implies `VERIFY_CA`.
 */
 
-enum_class SessionOption
+class SessionOption
 {
 #define SESS_OPT_ENUM_any(X,N) X = N,
 #define SESS_OPT_ENUM_num(X,N) X = N,
 #define SESS_OPT_ENUM_str(X,N) X = N,
 
+public:
+
+  enum Enum{
   SESSION_OPTION_LIST(SESS_OPT_ENUM)
-  LAST
+    LAST
+  };
+
+  SessionOption(Enum opt)
+    : m_opt(opt)
+  {}
+
+  SessionOption()
+  {}
+
+  bool operator==(const SessionOption &other) const
+  {
+    return m_opt == other.m_opt;
+  }
+
+  bool operator==(Enum opt) const
+  {
+    return m_opt == opt;
+  }
+
+  bool operator!=(Enum opt) const
+  {
+    return m_opt != opt;
+  }
+
+  operator int()
+  {
+   return m_opt;
+  }
+
+protected:
+  int m_opt = LAST;
+};
+
+
+/**
+  Client creation options
+*/
+
+class ClientOption
+    : protected SessionOption
+{
+
+#define CLIENT_OPT_ENUM_any(X,N) X = -N,
+#define CLIENT_OPT_ENUM_bool(X,N) X = -N,
+#define CLIENT_OPT_ENUM_num(X,N) X = -N,
+#define CLIENT_OPT_ENUM_str(X,N) X = -N,
+
+
+public:
+
+  using SessionEnum = SessionOption::Enum;
+
+
+  enum Enum{
+    CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
+  };
+
+  ClientOption()
+  {}
+
+  ClientOption(SessionOption opt)
+    : SessionOption(opt)
+  {}
+
+  ClientOption(Enum opt)
+  {
+    m_opt = opt;
+  }
+
+  ClientOption(SessionEnum opt)
+    : SessionOption(opt)
+  {}
+
+  bool operator==(Enum opt) const
+  {
+    return m_opt == opt;
+  }
+
+  bool operator==(SessionEnum opt) const
+  {
+    return SessionOption::operator==(opt);
+  }
+
+  bool operator!=(Enum opt) const
+  {
+    return m_opt != opt;
+  }
+
+  bool operator!=(SessionEnum opt) const
+  {
+    return SessionOption::operator!=(opt);
+  }
+
+  inline operator int()
+  {
+    return SessionOption::operator int();
+  }
+
 };
 
 
@@ -113,25 +175,40 @@ enum_class SessionOption
 // Note: Doxygen gets confused here and renders docs incorrectly.
 
 inline
-std::string SessionOptionName(SessionOption opt)
+std::string OptionName(ClientOption opt)
 {
+#define CLT_OPT_NAME_any(X,N) case ClientOption::X: return #X;
+#define CLT_OPT_NAME_bool(X,N) CLT_OPT_NAME_any(X,N)
+#define CLT_OPT_NAME_num(X,N) CLT_OPT_NAME_any(X,N)
+#define CLT_OPT_NAME_str(X,N) CLT_OPT_NAME_any(X,N)
+
 #define SESS_OPT_NAME_any(X,N) case SessionOption::X: return #X;
 #define SESS_OPT_NAME_num(X,N) SESS_OPT_NAME_any(X,N)
 #define SESS_OPT_NAME_str(X,N) SESS_OPT_NAME_any(X,N)
 
+
   switch(opt)
   {
+    CLIENT_OPTION_LIST(CLT_OPT_NAME)
     SESSION_OPTION_LIST(SESS_OPT_NAME)
+
     default:
-    {
-      std::ostringstream buf;
-      buf << "<UKNOWN (" << unsigned(opt) << ")>" << std::ends;
-      return buf.str();
-    }
+      throw_error("Unexpected Option"); return "";
   };
 }
 
 /// @endcond
+
+
+inline std::string ClientOptionName(ClientOption opt)
+{
+  return OptionName(opt);
+}
+
+inline std::string SessionOptionName(SessionOption opt)
+{
+  return OptionName(opt);
+}
 
 
 /**
@@ -213,7 +290,7 @@ namespace internal {
 struct Settings_traits
 {
   using Options    = mysqlx::SessionOption;
-  using CliOptions   = mysqlx::ClientOption;
+  using COptions   = mysqlx::ClientOption;
   using SSLMode    = mysqlx::SSLMode;
   using AuthMethod = mysqlx::AuthMethod;
 
@@ -222,9 +299,9 @@ struct Settings_traits
     return SSLModeName(mode);
   }
 
-  static std::string get_option_name(Options opt)
+  static std::string get_option_name(COptions opt)
   {
-    return SessionOptionName(opt);
+    return ClientOptionName(opt);
   }
 
   static std::string get_auth_name(AuthMethod m)
@@ -240,6 +317,55 @@ void
 internal::Settings_detail<internal::Settings_traits>::
 do_set(session_opt_list_t &&opts);
 
+template<typename Option, typename base_iterator>
+class iterator
+    : public std::iterator<std::input_iterator_tag,
+                           std::pair<Option, mysqlx::Value>>
+{
+  base_iterator m_it;
+  std::pair<Option, mysqlx::Value> m_pair;
+
+public:
+  iterator(const base_iterator &init)
+    : m_it(init)
+  {}
+
+  iterator(const iterator &init)
+    : m_it(init.m_it)
+  {}
+
+
+  std::pair<Option, mysqlx::Value>& operator*()
+  {
+    auto &el = *m_it;
+    m_pair.first = static_cast<typename Option::Enum>(el.first);
+    m_pair.second = el.second;
+    return m_pair;
+  }
+
+  std::pair<ClientOption, mysqlx::Value>* operator->()
+  {
+    return &operator*();
+  }
+
+  iterator& operator++()
+  {
+    ++m_it;
+    return *this;
+  }
+
+  iterator& operator--()
+  {
+    --m_it;
+    return *this;
+  }
+
+  bool operator !=(const iterator &other)
+  {
+    return m_it != other.m_it;
+  }
+
+};
 
 
 } // internal namespace
@@ -471,7 +597,7 @@ public:
   */
 
   template <typename... R>
-  SessionSettings(SessionOption opt, R&&...rest)
+  SessionSettings(SessionOption::Enum opt, R&&...rest)
   {
     try {
       // set<true> means that only SessionOption can be used
@@ -483,8 +609,7 @@ public:
   /*
     Return an iterator pointing to the first element of the SessionSettings.
   */
-
-  using Settings_detail::iterator;
+  using iterator = internal::iterator<SessionOption,Settings_detail::iterator>;
 
   iterator begin()
   {
@@ -571,7 +696,7 @@ public:
   void erase(SessionOption opt)
   {
     try {
-      Settings_detail::erase(opt);
+      Settings_detail::erase(static_cast<int>(opt));
     }
     CATCH_AND_WRAP
   }
@@ -612,8 +737,34 @@ class ClientSettings
 
 public:
 
+  using Base = internal::Settings_detail<internal::Settings_traits>;
   using Value = mysqlx::Value;
 
+  /*
+    Return an iterator pointing to the first element of the SessionSettings.
+  */
+
+  using iterator = internal::iterator<ClientOption,Settings_detail::iterator>;
+
+  iterator begin()
+  {
+    try {
+      return Settings_detail::begin();
+    }
+    CATCH_AND_WRAP
+  }
+
+  /*
+    Return an iterator pointing to the last element of the SessionSettings.
+  */
+
+  iterator end()
+  {
+    try {
+      return Settings_detail::end();
+    }
+    CATCH_AND_WRAP
+  }
 
   /**
     Create client settings from a connection string.
@@ -766,16 +917,6 @@ public:
 
 
   template <typename... R>
-  ClientSettings(mysqlx::SessionOption opt, R&&...rest)
-  {
-    try {
-      // set<false> means that both SessionOption and ClientOption can be used
-      Settings_detail::set<false>(opt, std::forward<R>(rest)...);
-    }
-    CATCH_AND_WRAP
-  }
-
-  template <typename... R>
   ClientSettings(mysqlx::ClientOption opt, R&&...rest)
   {
     try {
@@ -793,23 +934,6 @@ public:
   */
 
   Value find(mysqlx::ClientOption opt)
-  {
-    try {
-      return Settings_detail::get(opt);
-    }
-    CATCH_AND_WRAP
-  }
-
-  /**
-    Find the specified option @p opt and returns its Value.
-
-    Returns NULL Value if not found.
-
-    @note For option such as `HOST`, which can repeat several times in
-    the settings, only the last value is reported.
-  */
-
-  Value find(mysqlx::SessionOption opt)
   {
     try {
       return Settings_detail::get(opt);
@@ -863,22 +987,7 @@ public:
   void erase(mysqlx::ClientOption opt)
   {
     try {
-      Settings_detail::erase(opt);
-    }
-    CATCH_AND_WRAP
-  }
-
-  /**
-    Remove all settings for the given option @p opt.
-
-    @note For option such as `HOST`, which can repeat several times in
-    the settings, all occurrences are erased.
-  */
-
-  void erase(mysqlx::SessionOption opt)
-  {
-    try {
-      Settings_detail::erase(opt);
+      Settings_detail::erase(static_cast<int>(opt));
     }
     CATCH_AND_WRAP
   }
@@ -888,7 +997,7 @@ public:
     Check if option @p opt was defined.
   */
 
-  bool has_option(mysqlx::ClientOption opt)
+  bool has_option(ClientOption::Enum opt)
   {
     try {
       return Settings_detail::has_option(opt);
@@ -900,7 +1009,7 @@ public:
     Check if option @p opt was defined.
   */
 
-  bool has_option(SessionOption opt)
+  bool has_option(SessionOption::Enum opt)
   {
     try {
       return Settings_detail::has_option(opt);

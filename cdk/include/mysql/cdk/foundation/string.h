@@ -39,12 +39,12 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/encodedstream.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <stdint.h>
 #include <string.h>
 #include <string>
 #include <memory>
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 
 namespace cdk {

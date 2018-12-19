@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,9 +35,12 @@
 #include "error.h"
 #include "string.h"
 
+PUSH_SYS_WARNINGS_CDK
+
 #include <limits>         // for std::numeric_limits
 #include <string.h>       // for memset
 
+POP_SYS_WARNINGS_CDK
 
 
 namespace cdk {

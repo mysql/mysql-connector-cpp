@@ -32,10 +32,10 @@
 #include <mysql/cdk/mysqlx.h>
 #include <mysql/cdk/protocol/mysqlx.h>
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
 #include <iostream>
 #include "auth_hash.h"
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 #include "delayed_op.h"
 

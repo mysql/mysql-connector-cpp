@@ -33,4 +33,4 @@ check_headers(${headers})
 
 ADD_HEADERS(${headers})
 ADD_HEADER_CHECKS()
-INSTALL(FILES ${headers} DESTINATION include/mysqlx/devapi/detail COMPONENT XDevAPIDev)
+INSTALL(FILES ${headers} DESTINATION ${INSTALL_INCLUDE_DIR}/mysqlx/devapi/detail COMPONENT XDevAPIDev)

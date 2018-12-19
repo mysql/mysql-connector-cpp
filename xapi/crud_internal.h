@@ -80,7 +80,6 @@ public:
       set_diagnostic(mysqlx_error_struct(m_reply->get_error()));
   }
 
-
   mysqlx_error_struct *get_next_warning();
 
   /*

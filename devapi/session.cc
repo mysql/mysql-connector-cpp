@@ -85,17 +85,8 @@ internal::Settings_detail<internal::Settings_traits>::do_set(
 
   for (auto &opt_val : opts)
   {
-    if (opt_val.first > 0)
-    {
-      process_val(set.key_val(int_to_option(opt_val.first))->scalar(),
-                  opt_val.second);
-    }
-    else
-    {
-      process_val(set.key_val(int_to_client_option(opt_val.first))->scalar(),
-                  opt_val.second);
-    }
-
+    process_val(set.key_val(opt_val.first)->scalar(),
+                opt_val.second);
   }
 
   set.doc_end();

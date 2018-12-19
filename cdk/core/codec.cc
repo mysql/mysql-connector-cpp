@@ -30,12 +30,12 @@
 
 
 #include <mysql/cdk/codec.h>
-#include <sstream>
 #include "../parser/json_parser.h"
 
-PUSH_SYS_WARNINGS
+PUSH_SYS_WARNINGS_CDK
+#include <sstream>
 #include <algorithm>  // std::min
-POP_SYS_WARNINGS
+POP_SYS_WARNINGS_CDK
 
 // Include Protobuf headers needed for decoding float numbers
 

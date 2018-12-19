@@ -417,6 +417,11 @@ public:
     : m_at_end(true)
   {}
 
+  bool operator==(const Iterator &other) const
+  {
+    return (m_at_end && other.m_at_end);
+  }
+
   bool operator !=(const Iterator &other) const
   {
     /*

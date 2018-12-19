@@ -37,7 +37,11 @@ set_property(
 )
 
 if(WIN32)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
+
 endif()
 
 #
