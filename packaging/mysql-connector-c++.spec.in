@@ -204,11 +204,11 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_libdir}/libmysqlcppconn8.so.1*
 
 %files jdbc
-%doc README.txt LICENSE.txt
+%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so.7*
 
 %files devel
-%doc README.txt LICENSE.txt
+%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so

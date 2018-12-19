@@ -63,7 +63,6 @@
   the pool (ms). (No timeout by default)*/                                     \
   OPT_NUM(x,POOL_MAX_IDLE_TIME,4)/*!< time for a connection to be in the pool
   without being used (ms).(Will not expire by default)*/                       \
-  OPT_END(x,LAST,5) // ALWAYS POINTS TO LAST VALUE
   END_LIST
 
 
@@ -92,7 +91,6 @@
 #define OPT_BOOL(X,Y,N) X##_bool(Y,N)
 #define OPT_NUM(X,Y,N) X##_num(Y,N)
 #define OPT_ANY(X,Y,N) X##_any(Y,N)
-#define OPT_END(X,Y,N) X##_end(Y,N)
 
 
 /*

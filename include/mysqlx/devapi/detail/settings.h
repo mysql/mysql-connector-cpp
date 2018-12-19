@@ -52,8 +52,8 @@ class Settings_detail
   : public common::Settings_impl
 {
   using Value      = common::Value;
-  using SOption    = typename Traits::Options;
-  using COption    = typename Traits::CliOptions;
+  using Option    = typename Traits::Options;
+  using COption    = typename Traits::COptions;
   using SSLMode    = typename Traits::SSLMode;
   using AuthMethod = typename Traits::AuthMethod;
 
@@ -82,7 +82,7 @@ protected:
   X(AUTH,AuthMethod)
 
 #define CHECK_OPT(Opt,Type) \
-  if (opt == Option_impl::Opt) \
+  if (opt == Session_option_impl::Opt) \
     throw Error(#Opt "setting requires value of type " #Type);
 
   /*
@@ -90,7 +90,7 @@ protected:
     TODO: More precise type checking using per-option types.
   */
 
-  static Value opt_val(Option_impl opt, Value &&val)
+  static Value opt_val(int opt, Value &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return val;
@@ -106,38 +106,24 @@ protected:
     typename std::enable_if<std::is_convertible<V,string>::value>::type*
     = nullptr
   >
-  static Value opt_val(Option_impl opt, V &&val)
+  static Value opt_val(int opt, V &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
     return string(val);
   }
 
-  template<typename _Rep, typename _Period>
-  static Value opt_val(Option_impl opt,
-                       const std::chrono::duration<_Rep, _Period> &val)
+  static Value opt_val(int opt, SSLMode m)
   {
-    if (opt != Option_impl::CONNECT_TIMEOUT)
-    {
-      std::stringstream err_msg;
-      err_msg << "Option " << option_name(opt) << " does not accept time value";
-      throw_error(err_msg.str().c_str());
-    }
-    return Value(std::chrono::duration_cast<std::chrono::milliseconds>(val)
-                 .count());
-  }
-
-  static Value opt_val(Option_impl opt, SSLMode m)
-  {
-    if (opt != Option_impl::SSL_MODE)
+    if (opt != Session_option_impl::SSL_MODE)
       throw Error(
         "SessionSettings::SSLMode value can only be used on SSL_MODE setting."
       );
     return unsigned(m);
   }
 
-  static Value opt_val(Option_impl opt, AuthMethod m)
+  static Value opt_val(int opt, AuthMethod m)
   {
-    if (opt != Option_impl::AUTH)
+    if (opt != Session_option_impl::AUTH)
       throw Error(
         "SessionSettings::AuthMethod value can only be used on AUTH setting."
       );
@@ -145,10 +131,11 @@ protected:
   }
 
   template<typename _Rep, typename _Period>
-  static Value opt_val(Client_option_impl opt,
+  static Value opt_val(int opt,
                        const std::chrono::duration<_Rep,_Period> &duration)
   {
-    if (opt != Client_option_impl::POOL_QUEUE_TIMEOUT &&
+    if (opt != Session_option_impl::CONNECT_TIMEOUT &&
+        opt != Client_option_impl::POOL_QUEUE_TIMEOUT &&
         opt != Client_option_impl::POOL_MAX_IDLE_TIME)
     {
       std::stringstream err_msg;
@@ -166,7 +153,7 @@ protected:
     typename std::enable_if<std::is_convertible<V,int>::value>::type*
     = nullptr
   >
-  static Value opt_val(Client_option_impl, V &&val)
+  static Value opt_val(int, V &&val)
   {
     //ClientOptions are all bool or int, so convertible to int
     return val;
@@ -188,35 +175,6 @@ protected:
   void do_set(session_opt_list_t&&);
 
   /*
-    ClientOptions and Options are converted to int, one positive and other
-    negative
-  */
-
-  static
-  int option_to_int(Option_impl opt)
-  {
-    return static_cast<int>(opt);
-  }
-
-  static
-  int option_to_int(Client_option_impl opt)
-  {
-    return -static_cast<int>(opt);
-  }
-
-  static
-  Option_impl int_to_option(int opt)
-  {
-    return static_cast<Option_impl>(opt);
-  }
-
-  static
-  Client_option_impl int_to_client_option(int opt)
-  {
-    return static_cast<Client_option_impl>(-opt);
-  }
-
-  /*
     Templates that collect varargs list of options into opt_list_t list
     that can be passed to do_set().
   */
@@ -232,13 +190,14 @@ protected:
     needed: get_options(Option opt, Option opt1, R&... rest).
   */
 
-  template <bool session_only,typename V, typename... Ty>
-  static session_opt_list_t get_options(SOption opt, V&& val, Ty&&... rest)
+  template <bool session_only,typename V, typename... Ty,
+            typename std::enable_if<session_only,int>::type*
+            = nullptr>
+  static session_opt_list_t get_options(Option opt, V&& val, Ty&&... rest)
   {
-    Option_impl oo = (Option_impl)(unsigned)opt;
+    int oo(static_cast<int>(opt));
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
-    opts.emplace_front(
-      option_to_int(oo),
+    opts.emplace_front(oo,
       Settings_detail::opt_val(oo, std::forward<V>(val))
     );
     return opts;
@@ -249,10 +208,10 @@ protected:
             = nullptr>
   static session_opt_list_t get_options(COption opt, V&& val, Ty&&... rest)
   {
-    Client_option_impl oo = (Client_option_impl)(unsigned)opt;
+    int oo(static_cast<int>(opt));
     session_opt_list_t opts = get_options<session_only>(std::forward<Ty>(rest)...);
     opts.emplace_front(
-      option_to_int(oo),
+      oo,
       Settings_detail::opt_val(oo, std::forward<V>(val))
     );
     return opts;
@@ -264,35 +223,16 @@ protected:
     have the same numeric values as common::Settings_impl::Option ones.
   */
 
-  void erase(SOption opt)
+  bool has_option(COption opt) const
   {
-    Settings_impl::erase((Option_impl)(unsigned)opt);
-  }
-
-  void erase(COption opt)
-  {
-    Settings_impl::erase((Client_option_impl)(unsigned)opt);
-  }
-
-  bool has_option(SOption opt)
-  {
-    return Settings_impl::has_option((Option_impl)(unsigned)opt);
-  }
-
-  bool has_option(COption opt)
-  {
-    return Settings_impl::has_option((Client_option_impl)(unsigned)opt);
-  }
-
-  Value get(SOption opt)
-  {
-    return Settings_impl::get((Option_impl)(unsigned)opt);
+    return Settings_impl::has_option(opt);
   }
 
   Value get(COption opt)
   {
-    return Settings_impl::get((Client_option_impl)(unsigned)opt);
+    return Settings_impl::get(opt);
   }
+
 };
 
 

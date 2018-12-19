@@ -231,7 +231,7 @@ unsigned int ssl_mode_to_uint(TLS::Options::SSL_MODE mode)
 const char* opt_name(mysqlx_opt_type_t opt)
 {
   using mysqlx::common::Settings_impl;
-  using Option = Settings_impl::Option_impl;
+  using Option = Settings_impl::Session_option_impl;
   return Settings_impl::option_name(Option(opt));
 }
 
