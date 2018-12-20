@@ -44,10 +44,13 @@
 #include "../common_constants.h"
 #include "value.h"
 
+PUSH_SYS_WARNINGS
 #include <vector>
 #include <map>
 #include <bitset>
 #include <sstream>
+POP_SYS_WARNINGS
+
 
 namespace cdk {
 namespace ds {

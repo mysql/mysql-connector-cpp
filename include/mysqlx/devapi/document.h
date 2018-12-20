@@ -37,6 +37,7 @@
 */
 
 #include "common.h"
+
 #include <memory>
 #include <stdint.h>
 #include <limits>
@@ -49,65 +50,11 @@
 namespace mysqlx {
 
 class Value;
-class Field;
 class DbDoc;
 class DocResult;
 class SessionSettings;
 
-
-// Field class
-// ===========
-
-/*
-  %Field object/values represent fields in a document.
-
-  TODO: _fld suffix
-
-  @ingroup devapi_res
-*/
-
-class Field
-{
-  string m_fld;
-
-public:
-
-  Field(const string &s) : m_fld(s)
-  {}
-
-  // TODO: is it auto generated?
-  Field(string &&s) : m_fld(std::move(s))
-  {}
-
-  Field(const char *s) : m_fld(s)
-  {}
-
-  Field()
-  {}
-
-  operator const string&() const { return m_fld; }
-
-  bool operator <(const Field &other) const
-  {
-    return m_fld < other.m_fld;
-  }
-
-  bool operator >(const Field &other) const
-  {
-    return m_fld > other.m_fld;
-  }
-
-  bool operator ==(const Field &other) const
-  {
-    return m_fld == other.m_fld;
-  }
-
-  bool operator !=(const Field &other) const
-  {
-    return m_fld != other.m_fld;
-  }
-
-};
+using Field = std::string;
 
 
 // Document class
@@ -187,8 +134,16 @@ public:
   */
 
   virtual const Value& operator[](const Field&) const;
-  const Value& operator[](const char *name) const;
-  const Value& operator[](const wchar_t *name) const;
+
+  const Value& operator[](const char *name) const
+  {
+    return this->operator[](Field(name));
+  }
+
+  const Value& operator[](const mysqlx::string &name) const
+  {
+    return this->operator[](Field(name));
+  }
 
 
   /**
@@ -265,6 +220,8 @@ class Value
 {
 public:
 
+  using string = mysqlx::string;
+
   /**
     Possible types of values.
 
@@ -294,13 +251,23 @@ public:
   Value();  ///< Constructs Null value.
   Value(std::nullptr_t); ///< Constructs Null value.
 
+  Value(const mysqlx::string &str);
+  Value(mysqlx::string &&str);
+  //Value(const char16_t *str) : Value(mysqlx::string(str)) {}
+
   Value(const std::string &str);
   Value(std::string &&str);
   Value(const char *str) : Value(std::string(str)) {}
 
-  Value(const std::wstring &str);
-  Value(std::wstring &&str);
-  Value(const wchar_t *str) : Value(std::wstring(str)) {}
+  template <typename C>
+  Value(const std::basic_string<C> &str)
+    : Value(mysqlx::string(str))
+  {}
+
+  template <typename C>
+  Value(const C *str)
+    : Value(mysqlx::string(str))
+  {}
 
   Value(const bytes&);
   Value(int64_t);
@@ -383,17 +350,6 @@ public:
     CATCH_AND_WRAP
   }
 
-private:
-
-  /*
-    Note: Avoid implicit conversion from pointer types to bool.
-    Without this declaration, Value(bool) constructor is invoked
-    for pointer types. Here we declare and hide an explicit constructor
-    for pointer types which prevents compiler to pick Value(bool).
-  */
-
-  template <typename T>
-  Value(const T*);
 
 public:
 
@@ -412,10 +368,16 @@ public:
   operator float() const;
   operator double() const;
 
-  operator bool() const;
+  explicit operator bool() const;
 
-  operator std::wstring() const;
-  operator std::string() const;
+  operator mysqlx::string() const;
+  explicit operator std::string() const;
+
+  template <typename C>
+  explicit operator std::basic_string<C>() const
+  {
+    return this->operator mysqlx::string();
+  }
 
   explicit operator bytes() const;
   operator DbDoc() const;
@@ -469,7 +431,7 @@ public:
   const Value& operator[](const char *name) const
   { return (*this)[Field(name)]; }
 
-  const Value& operator[](const wchar_t *name) const
+  const Value& operator[](const mysqlx::string &name) const
   { return (*this)[Field(name)]; }
 
 
@@ -608,8 +570,8 @@ class Expression
    set_as_expr();
  }
 
- friend Expression expr(string&& s);
- friend Expression expr(const string& s);
+ friend Expression expr(std::string&& s);
+ friend Expression expr(const std::string& s);
 };
 
 
@@ -633,13 +595,13 @@ class Expression
 */
 
 inline
-mysqlx::internal::Expression expr(string&& e)
+mysqlx::internal::Expression expr(std::string&& e)
 {
-  return std::forward<string>(e);
+  return std::forward<std::string>(e);
 }
 
 inline
-mysqlx::internal::Expression expr(const string& e)
+mysqlx::internal::Expression expr(const std::string& e)
 {
   return e;
 }
@@ -667,26 +629,13 @@ Value::Type Value::getType() const
     case common::Value::DOUBLE:   return DOUBLE;
     case common::Value::BOOL:     return BOOL;
     case common::Value::STRING:   return STRING;
-    case common::Value::WSTRING:  return STRING;
+    case common::Value::USTRING:  return STRING;
     case common::Value::RAW:      return RAW;
     case common::Value::EXPR:     return STRING;
     case common::Value::JSON:     return DOCUMENT;
     }
   }
   return VNULL; // quiet compiler warning
-}
-
-
-inline
-const Value& DbDoc::operator[](const char *name) const
-{
-  return (*this)[Field(name)];
-}
-
-inline
-const Value& DbDoc::operator[](const wchar_t *name) const
-{
-  return (*this)[Field(name)];
 }
 
 
@@ -905,6 +854,20 @@ try
 CATCH_AND_WRAP
 
 
+
+inline Value::Value(const mysqlx::string &val)
+try
+  : common::Value(val)
+{}
+CATCH_AND_WRAP
+
+inline Value::Value(mysqlx::string &&val)
+try
+  : common::Value(std::move(val))
+{}
+CATCH_AND_WRAP
+
+
 inline Value::Value(const std::string &val)
 try
   : common::Value(val)
@@ -918,32 +881,14 @@ try
 CATCH_AND_WRAP
 
 
-inline Value::Value(const std::wstring &val)
-try
-  : common::Value(val)
-{}
-CATCH_AND_WRAP
-
-inline Value::Value(std::wstring &&val)
-try
-  : common::Value(std::move(val))
-{}
-CATCH_AND_WRAP
-
 template<>
 inline
 std::wstring Value::get<std::wstring>() const
 {
   try {
-    return get_wstring();
+    return mysqlx::string(this->get_ustring());
   }
   CATCH_AND_WRAP
-}
-
-inline
-Value::operator std::wstring() const
-{
-  return get<std::wstring>();
 }
 
 
@@ -966,17 +911,19 @@ Value::operator std::string() const
 
 template<>
 inline
-string Value::get<string>() const
+mysqlx::string Value::get<mysqlx::string>() const
 {
-  return get<std::wstring>();
+  try {
+    return this->get_ustring();
+  }
+  CATCH_AND_WRAP
 }
 
-// Conversion to mysqlx::string is done via its ctor from common::Value.
-
 inline
-mysqlx::string::string(const Value &val)
-  : string((const common::Value&)val)
-{}
+Value::operator mysqlx::string() const
+{
+  return get<mysqlx::string>();
+}
 
 
 inline Value::Value(const bytes &data)

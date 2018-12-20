@@ -138,4 +138,4 @@ source_group("Protobuf Generated" FILES ${PB_SRCS})
 
 
 
-ADD_SUBDIRECTORY(tests)
+#ADD_SUBDIRECTORY(tests)

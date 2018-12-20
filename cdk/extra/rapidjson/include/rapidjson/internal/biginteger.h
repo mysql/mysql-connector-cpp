@@ -196,7 +196,7 @@ public:
             Type d = a->digits_[i] - borrow;
             if (i < b->count_)
                 d -= b->digits_[i];
-            borrow = (d > a->digits_[i]) ? 1 : 0;
+            borrow = (d > a->digits_[i]) ? 1U : 0U;
             out->digits_[i] = d;
             if (d != 0)
                 out->count_ = i + 1;

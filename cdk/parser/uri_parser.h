@@ -329,10 +329,10 @@ private:
 
   // Error reporting methods.
 
-  void parse_error(const cdk::string&) const;
+  void parse_error(const std::string&) const;
   void invalid_char(char) const;
-  void unexpected(const std::string&, const cdk::string &msg = cdk::string()) const;
-  void unexpected(char, const cdk::string &msg = cdk::string()) const;
+  void unexpected(const std::string&, const std::string &msg = std::string()) const;
+  void unexpected(char, const std::string &msg = std::string()) const;
 
   struct Guard;
 
@@ -345,21 +345,20 @@ private:
 */
 
 class URI_parser::Error
-  : public parser::Error_base<std::string>
+  : public parser::Error_base
 {
 protected:
 
-  Error(const URI_parser *p, const cdk::string &descr = cdk::string())
-  : Error_base<std::string>(p->m_uri, p->get_pos(), descr)
-  {
-  }
+  Error(const URI_parser *p, const std::string &descr = std::string())
+  : Error_base(descr, p->m_uri, p->get_pos())
+  {}
 
   friend URI_parser;
 };
 
 
 inline
-void URI_parser::parse_error(const cdk::string &msg) const
+void URI_parser::parse_error(const std::string &msg) const
 {
   throw Error(this, msg);
 }

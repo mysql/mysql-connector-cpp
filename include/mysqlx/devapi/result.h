@@ -407,7 +407,7 @@ protected:
 
   using Column_detail::Impl;
 
-  Column(const Impl &impl)
+  Column(const Impl *impl)
   try
     : Column_detail(impl)
   {}

@@ -259,7 +259,7 @@ public:
   CollectionList getCollections()
   {
     try {
-      return Collection_src(*this, L"%");
+      return Collection_src(*this, "%");
     }
     CATCH_AND_WRAP
   }
@@ -274,7 +274,7 @@ public:
   StringList getCollectionNames()
   {
     try {
-      return Name_src(*this, COLLECTION, L"%");
+      return Name_src(*this, COLLECTION, "%");
     }
     CATCH_AND_WRAP
   }
@@ -292,7 +292,7 @@ public:
   TableList getTables()
   {
     try {
-      return Table_src(*this, L"%");
+      return Table_src(*this, "%");
     }
     CATCH_AND_WRAP
   }
@@ -310,7 +310,7 @@ public:
   StringList getTableNames()
   {
     try {
-      return Name_src(*this, TABLE, L"%");
+      return Name_src(*this, TABLE, "%");
     }
     CATCH_AND_WRAP
   }
@@ -833,7 +833,7 @@ public:
   uint64_t count()
   {
     try {
-      RowResult cnt = select(L"count(*)").execute();
+      RowResult cnt = select("count(*)").execute();
       return cnt.fetchOne()[0].get<uint64_t>();
     }
     CATCH_AND_WRAP
@@ -1215,7 +1215,7 @@ public:
   SchemaList getSchemas()
   {
     try {
-      return Schema_src(*this, L"%");
+      return Schema_src(*this, "%");
     }
     CATCH_AND_WRAP
   }

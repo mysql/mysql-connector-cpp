@@ -150,6 +150,10 @@ IF(WITH_TESTS)
 
   if (MSVC)
 
+    target_compile_definitions(${TEST} PRIVATE
+      -D_SCL_SECURE_NO_WARNINGS
+    )
+
     target_compile_options(${TEST} PRIVATE
       /W3
       /wd4244
@@ -287,6 +291,7 @@ IF(WITH_TESTS)
       /wd4701
       /wd4018
       /wd4456  # declaration of hides previous local declaration
+      /wd4668  # treat undefined macros as 0
     )
 
     if(STATIC_TESTS_MSVCRT)

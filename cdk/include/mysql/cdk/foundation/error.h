@@ -40,14 +40,13 @@
 */
 
 #include "common.h"
-#include "types.h"
 #include "error_category.h"
 #include "std_error_conditions.h"
 
 PUSH_SYS_WARNINGS_CDK
 #include <ostream>
 #include <stdexcept>
-#include <string.h>
+#include <string>
 POP_SYS_WARNINGS_CDK
 
 /*
@@ -227,21 +226,21 @@ namespace foundation {
 */
 
 void throw_error(const char *descr);
-template <typename S>
-void throw_error(const S &descr);
+//template <typename S>
+void throw_error(const std::string &descr);
 void throw_error(int code, const error_category &ec);
 void throw_error(cdkerrc::code code);
-void throw_error(cdkerrc::code code, const string &prefix);
+void throw_error(cdkerrc::code code, const std::string &prefix);
 void throw_error(const error_code &ec);
-void throw_error(const error_code &ec, const string &prefix);
+void throw_error(const error_code &ec, const std::string &prefix);
 void rethrow_error();
-void rethrow_error(const string &prefix);
+void rethrow_error(const std::string &prefix);
 
 void throw_posix_error();
-void throw_posix_error(const string &prefix);
+void throw_posix_error(const std::string &prefix);
 
 void throw_system_error();
-void throw_system_error(const string &prefix);
+void throw_system_error(const std::string &prefix);
 
 
 /*
@@ -257,7 +256,7 @@ void throw_system_error(const string &prefix);
 
 class Error : public std::system_error
 {
-  static const string m_default_prefix;
+  static const std::string m_default_prefix;
 
 protected:
 
@@ -299,12 +298,7 @@ public:
   {
   }
 
-  /*
-    Note: Type S is mainly either cdk::string or std::string.
-  */
-
-  template <typename S>
-  Error(const error_code &ec, const S &descr)
+  Error(const error_code &ec, const std::string &descr)
     : std::system_error(ec)
     , m_what_prefix(m_default_prefix)
   {
@@ -312,8 +306,7 @@ public:
     m_what->append(descr);
   }
 
-  template <typename S>
-  Error(int _code, const S &descr)
+  Error(int _code, const std::string &descr)
     : std::system_error(_code, generic_error_category())
     , m_what_prefix(m_default_prefix)
   {
@@ -343,7 +336,7 @@ public:
 
   virtual void describe(std::ostream&) const;
 
-  const string description() const
+  const std::string description() const
   {
     if (!m_what)
       description_materialize();
@@ -376,7 +369,7 @@ void Error::describe(std::ostream &out) const
 {
   if (m_what)
   {
-    out <<m_what->substr(m_what_prefix.length());
+    out << m_what->substr(m_what_prefix.length());
     return;
   }
 
@@ -464,8 +457,8 @@ class Generic_error : public Error
 {
 public:
 
-  template <typename S>
-  Generic_error(const S &descr)
+  //template <typename S>
+  Generic_error(const std::string &descr)
     : Error(error_code(cdkerrc::generic_error), descr)
   {}
 
@@ -480,7 +473,7 @@ public:
 class Extended_error : public Error_class<Extended_error>
 {
   const Error *m_base;
-  const string m_prefix;
+  const std::string m_prefix;
 
 public:
 
@@ -493,7 +486,12 @@ public:
     , m_base(e.m_base->clone()), m_prefix(e.m_prefix)
   {}
 
-  Extended_error(const Error &base, const string &prefix =string())
+  Extended_error(const Error &base)
+    : Error_base(NULL, base.code())
+    , m_base(base.clone())
+  {}
+
+  Extended_error(const Error &base, const std::string &prefix)
     : Error_base(NULL, base.code())
     , m_base(base.clone()), m_prefix(prefix)
   {}
@@ -546,15 +544,14 @@ void throw_error(const char *descr)
   throw Generic_error(descr);
 }
 
-template <typename S>
 inline
-void throw_error(const S &descr)
+void throw_error(const std::string &descr)
 {
   throw Generic_error(descr);
 }
 
 inline
-void throw_error(const error_code &ec, const string &prefix)
+void throw_error(const error_code &ec, const std::string &prefix)
 {
   throw Extended_error(Error(ec), prefix);
 }
@@ -579,13 +576,13 @@ void throw_error(cdkerrc::code code)
 }
 
 inline
-void throw_error(cdkerrc::code code, const string &prefix)
+void throw_error(cdkerrc::code code, const std::string &prefix)
 {
   throw_error(error_code(code), prefix);
 }
 
 inline
-void rethrow_error(const string &prefix)
+void rethrow_error(const std::string &prefix)
 {
   try
   {
@@ -599,7 +596,7 @@ void rethrow_error(const string &prefix)
 
 
 inline
-void throw_posix_error(const string &prefix)
+void throw_posix_error(const std::string &prefix)
 {
   try
   {
@@ -612,7 +609,7 @@ void throw_posix_error(const string &prefix)
 }
 
 inline
-void throw_system_error(const string &prefix)
+void throw_system_error(const std::string &prefix)
 {
   try
   {

@@ -31,8 +31,10 @@
 #ifndef SDK_FOUNDATION_TYPES_H
 #define SDK_FOUNDATION_TYPES_H
 
+
 #include "common.h"
 #include "cdk_time.h"
+#include "string.h"
 
 // TODO: Replace with std::variant<> when available.
 #include "variant.h"
@@ -44,11 +46,11 @@ PUSH_SYS_WARNINGS_CDK
 #include <memory>
 POP_SYS_WARNINGS_CDK
 
+#undef byte
 
 namespace cdk {
 namespace foundation {
 
-typedef wchar_t      char_t;
 
 /*
   Note: we do not include error.h from here because this would create
@@ -56,51 +58,6 @@ typedef wchar_t      char_t;
   throw_error() for the THROW() macro, so we declare it here.
 */
 void throw_error(const char*);
-
-
-class string : public std::wstring
-{
-public:
-
-  string() {}
-  string(const wchar_t *str) : std::wstring(str) {}
-  string(const std::wstring &str) : std::wstring(str) {}
-
-  string(const char *str) { set_utf8(str); }
-  string(const std::string &str) { set_utf8(str); }
-
-  // internal -> UTF8 conversion
-  operator std::string() const;
-
-  // UTF8 -> internal conversion
-  string& set_utf8(const std::string&);
-};
-
-inline
-std::ostream& operator<<(std::ostream &out, const string &str)
-{
-  return out << (std::string)str;
-}
-
-
-#ifdef USE_NATIVE_BYTE
-  using ::byte;
-#else
-  typedef unsigned char byte;
-#endif
-
-/*
-  Convenience class to disable copy constructor in a derived class.
-*/
-
-class nocopy
-{
-  nocopy(const nocopy&);
-  nocopy& operator=(const nocopy&);
-
-protected:
-  nocopy() {}
-};
 
 
 class Iterator

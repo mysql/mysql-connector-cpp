@@ -410,6 +410,13 @@ if(WITH_HEADER_CHECKS)
   # have been created while declaring public headers.
   #
 
+  # Dirty trick to speed up cmake set up time.
+
+  file(
+    COPY "${CMAKE_BINARY_DIR}/CMakeFiles/${CMAKE_VERSION}"
+    DESTINATION "${headers_check_base_dir}/CMakeFiles"
+  )
+
   MESSAGE(STATUS "Configuring header checks using cmake generator: ${CMAKE_GENERATOR}")
   EXECUTE_PROCESS(
     COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .

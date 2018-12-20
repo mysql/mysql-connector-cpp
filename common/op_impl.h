@@ -89,7 +89,7 @@ class Op_base
 {
 protected:
 
-  using string = std::wstring;
+  using string = std::string;
   using Shared_session_impl = shared_ptr<Session_impl>;
 
   Shared_session_impl m_sess;
@@ -350,7 +350,7 @@ class Op_bind
 {
 protected:
 
-  using string = std::wstring;
+  using string = std::string;
   using Shared_session_impl = typename Base::Shared_session_impl;
 
   Op_bind(Shared_session_impl sess) : Base(sess)
@@ -358,6 +358,7 @@ protected:
 
   typedef std::map<cdk::string, Value> param_map_t;
   param_map_t m_map;
+
 
   // Parameters
 
@@ -371,15 +372,38 @@ protected:
     }
   }
 
+  void add_param(const string &name, const cdk::string &val)
+  {
+    add_param(name, Value::Access::mk_str(val));
+  }
+
+  void add_param(const string &name, const std::string &val)
+  {
+    add_param(name, Value(val));
+  }
+
+
   void add_param(Value) override
   {
     assert(false);
   }
 
+  void add_param(const cdk::string &val)
+  {
+    add_param(Value::Access::mk_str(val));
+  }
+
+  void add_param(const std::string &val)
+  {
+    add_param(Value(val));
+  }
+
+
   void clear_params() override
   {
     m_map.clear();
   }
+
 
   // cdk::Param_source
 
@@ -496,7 +520,7 @@ protected:
 
   using Shared_session_impl = typename Base::Shared_session_impl;
   using direction_t = typename Base::direction_t;
-  using string = std::wstring;
+  using string = std::string;
 
   struct order_item
   {
@@ -601,7 +625,7 @@ class Op_having
 {
 protected:
 
-  using string = std::wstring;
+  using string = std::string;
 
   string m_having;
 
@@ -655,7 +679,7 @@ class Op_group_by
   : public Base
   , cdk::Expr_list
 {
-  using string = std::wstring;
+  using string = std::string;
   std::vector<string> m_group_by;
 
 public:
@@ -719,7 +743,7 @@ class Op_projection
 {
 protected:
 
-  using string = std::wstring;
+  using string = std::string;
 
   std::vector<string> m_projections;
   string  m_doc_proj;
@@ -862,7 +886,7 @@ class Op_select : public Base
 {
 protected:
 
-  using string = std::wstring;
+  using string = std::string;
   using Shared_session_impl = typename Base::Shared_session_impl;
 
   string m_where_expr;
@@ -937,7 +961,7 @@ public:
 struct Op_sql
   : public Op_base<common::Bind_if>
 {
-  using string = std::wstring;
+  using string = std::string;
 
   string m_query;
 
@@ -1099,7 +1123,7 @@ cdk::Reply* Op_trx<Trx_op::COMMIT>::send_command()
 struct Op_trx_savepoint
   : public Op_base<common::Executable_if>
 {
-  using string = cdk::string;
+  using string = std::string;
 
   string m_name;
 
@@ -1140,8 +1164,8 @@ struct Op_trx<Trx_op::SAVEPOINT_SET>
 
     // Generate savepoint name.
 
-    std::wstringstream savepoint;
-    savepoint << L"SP" << sess->next_savepoint();
+    std::stringstream savepoint;
+    savepoint << "SP" << sess->next_savepoint();
     m_name = savepoint.str();
   }
 
@@ -1213,8 +1237,8 @@ struct Op_create<Object_type::SCHEMA>
     bool reuse = true
   )
     : Op_sql(sess,
-        std::wstring(L"CREATE SCHEMA") + (reuse ? L" IF NOT EXISTS " : L" ")
-        + L"`" + schema.name() + L"`"
+        std::string("CREATE SCHEMA") + (reuse ? " IF NOT EXISTS " : " ")
+        + "`" + schema.name() + "`"
       )
   {}
 };
@@ -1232,10 +1256,10 @@ struct Op_create<Object_type::COLLECTION>
     : Op_admin(sess, "create_collection")
   {
     if (coll.schema())
-      add_param(L"schema", Value(coll.schema()->name()));
+      add_param("schema", Value::Access::mk_str(coll.schema()->name()));
     else
       throw_error("No schema specified for create collection operation");
-    add_param(L"name", Value(coll.name()));
+    add_param("name", Value::Access::mk_str(coll.name()));
     // 1050 = table already exists
     if (reuse)
       skip_error(cdk::server_error(1050));
@@ -1255,7 +1279,7 @@ void create_object(
 )
 {
   Op_create<T> create(sess, std::forward<Ty>(args)...);
-  Result_impl<std::string> res(create.execute());
+  Result_impl res(create.execute());
   res.next_result();
 }
 
@@ -1276,8 +1300,8 @@ struct Op_drop
   {
     if (!obj.schema())
       throw_error("No schema specified for drop collection/table operation");
-    add_param(L"schema", Value(obj.schema()->name()));
-    add_param(L"name", Value(obj.name()));
+    add_param("schema", obj.schema()->name());
+    add_param("name", obj.name());
     // 1051 = collection doesn't exist
     skip_error(cdk::server_error(1051));
   }
@@ -1328,7 +1352,7 @@ struct Op_drop<Object_type::SCHEMA>
 {
   Op_drop(Shared_session_impl sess, const cdk::api::Schema_ref &schema)
     : Op_sql(sess,
-        std::wstring(L"DROP SCHEMA IF EXISTS `") + schema.name() + L"`"
+        std::string("DROP SCHEMA IF EXISTS `") + schema.name() + "`"
       )
   {}
 };
@@ -1346,7 +1370,7 @@ void drop_object(
 )
 {
   Op_drop<T> drop(sess, args...);
-  Result_impl<std::string> res(drop.execute());
+  Result_impl res(drop.execute());
   res.next_result();
 }
 
@@ -1369,9 +1393,9 @@ struct Op_idx_admin
     : Op_admin(sess, cmd)
   {
     assert(coll.schema());
-    add_param(L"schema", coll.schema()->name());
-    add_param(L"collection", coll.name());
-    add_param(L"name", name);
+    add_param("schema", coll.schema()->name());
+    add_param("collection", coll.name());
+    add_param("name", name);
   }
 };
 
@@ -1448,7 +1472,7 @@ const char* obj_name<Object_type::TABLE>() { return "TABLE"; }
 struct Op_list_objects
   : public Op_admin
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Op_list_objects(
     Shared_session_impl sess,
@@ -1457,8 +1481,8 @@ struct Op_list_objects
   )
     : Op_admin(sess, "list_objects")
   {
-    add_param(L"schema", Value(schema.name()));
-    add_param(L"pattern", Value(pattern));
+    add_param("schema", schema.name());
+    add_param("pattern", pattern);
   }
 
   // Static method to filter rows for a given object type.
@@ -1477,7 +1501,7 @@ template <Object_type T>
 struct Op_list
   : public Op_list_objects
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Op_list(
     Shared_session_impl sess,
@@ -1487,7 +1511,7 @@ struct Op_list
     : Op_list_objects(sess, schema, pattern)
   {}
 
-  void init_result(Result_impl_base &res) override
+  void init_result(Result_impl &res) override
   {
     res.m_row_filter = check_type<T>;
   }
@@ -1498,7 +1522,7 @@ template <>
 struct Op_list<Object_type::TABLE>
   : public Op_list_objects
 {
-  using string = std::wstring;
+  using string = std::string;
 
   bool m_include_views;
 
@@ -1512,7 +1536,7 @@ struct Op_list<Object_type::TABLE>
     , m_include_views(include_views)
   {}
 
-  void init_result(Result_impl_base &res) override
+  void init_result(Result_impl &res) override
   {
     /*
       Note: not binding to m_include_views inside lambdas to not make
@@ -1540,15 +1564,15 @@ template <>
 struct Op_list<Object_type::SCHEMA>
   : public Op_sql
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Op_list(
     Shared_session_impl sess,
     const string &pattern
   )
-    : Op_sql(sess, L"SHOW SCHEMAS LIKE ?")
+    : Op_sql(sess, "SHOW SCHEMAS LIKE ?")
   {
-    add_param(Value(pattern));
+    add_param(pattern);
   }
 };
 
@@ -1564,7 +1588,7 @@ bool check_schema_exists(
 )
 {
   Op_list<Object_type::SCHEMA> find(sess, schema.name());
-  Result_impl<std::string> res(find.execute());
+  Result_impl res(find.execute());
   return 0 < res.count();
 }
 
@@ -1577,7 +1601,7 @@ bool check_object_exists(
 {
   assert(obj.schema());
   Op_list<T> find(sess, *obj.schema(), obj.name());
-  Result_impl<std::string> res(find.execute());
+  Result_impl res(find.execute());
   return 0 < res.count();
 }
 
@@ -1612,7 +1636,7 @@ class Op_collection_add
   : public Op_base<common::Collection_add_if>
   , public cdk::Doc_source
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Object_ref    m_coll;
   std::vector<std::string> m_json;  // note: UTF8 JSON strings
@@ -1739,7 +1763,7 @@ struct Insert_id
   // Table_ref (function name)
 
   const cdk::api::Schema_ref* schema() const override { return NULL; }
-  const string name() const override { return L"JSON_INSERT"; }
+  const string name() const override { return "JSON_INSERT"; }
 
 
   void process(cdk::Expression::Processor &prc) const override
@@ -1757,7 +1781,7 @@ struct Insert_id
     auto sprc = safe_prc(prc);
     sprc->list_begin();
     m_doc.process_if(sprc->list_el()); // the document to modify
-    sprc->list_el()->scalar()->val()->str(L"$._id");
+    sprc->list_el()->scalar()->val()->str("$._id");
     sprc->list_el()->scalar()->val()->str(m_id);
     sprc->list_end();
   }
@@ -1821,7 +1845,7 @@ class Op_collection_find
                 Op_base<common::Collection_find_if>
               >>>>>>>
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Object_ref m_coll;
 
@@ -1880,7 +1904,7 @@ class Op_collection_remove
               Op_base<common::Collection_remove_if>
             >>>>
 {
-  using string = std::wstring;
+  using string = std::string;
 
   Object_ref m_coll;
 
@@ -1939,7 +1963,7 @@ class Op_collection_modify
         >>>>
     , public cdk::Update_spec
 {
-  using string = std::wstring;
+  using string = std::string;
   using Impl = common::Collection_modify_if;
 
   Object_ref m_coll;
@@ -2117,15 +2141,15 @@ public:
     const std::string &id,
     const cdk::Expression &doc
   )
-    : Op_collection_modify(sess, coll, L"_id = :id")
+    : Op_collection_modify(sess, coll, "_id = :id")
     , Insert_id(doc, id)
   {
     /*
       Note: treated as expression, *this corresponds
       to JSON_INSERT(doc,"_id",id).
     */
-    add_operation(SET, L"$", *this);
-    add_param(L"id", id);
+    add_operation(SET, "$", *this);
+    add_param("id", id);
   }
 
 };
@@ -2240,7 +2264,7 @@ class Op_table_insert
 {
   using Base = Op_base<common::Table_insert_if<Row_impl<VAL>>>;
   using Value = VAL;
-  using string = std::wstring;
+  using string = std::string;
   using Row_list = std::list < Row_impl<VAL> >;
   using Col_list = std::list < string >;
 
@@ -2393,7 +2417,7 @@ private:
 
   This implementation is built from Op_select<> and Op_projection<>
   templates and it implements the `add_set` method of Table_update_impl
-  implemantation interface. Update requests are stored in m_set_values
+  implementation interface. Update requests are stored in m_set_values
   member and presented to CDK via cdk::Update_spec interface.
 
   It overrides Op_base::send_command() to send table update command
@@ -2416,7 +2440,7 @@ class Op_table_update
                 Op_bind<
                   Op_base<common::Table_update_if>
                 >>>>;
-  using string = std::wstring;
+  using string = std::string;
   typedef std::map<string, Value> SetValues;
 
   Object_ref m_table;
@@ -2544,7 +2568,7 @@ class Op_table_remove
                 Op_bind<
                   Op_base<common::Table_remove_if>
                 >>>>;
-  using string = std::wstring;
+  using string = std::string;
 
   Object_ref m_table;
 

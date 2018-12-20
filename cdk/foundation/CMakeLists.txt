@@ -33,7 +33,8 @@
 
 set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
 
-INCLUDE(CheckCXXSourceCompiles)
+include(CheckCXXSourceCompiles)
+include(CheckTypeSize)
 
 CHECK_CXX_SOURCE_COMPILES(
   "#include <memory>
@@ -63,30 +64,8 @@ if (NOT HAVE_SYSTEM_ERROR)
 endif()
 
 
-CHECK_CXX_SOURCE_COMPILES(
-  "#include <codecvt>
-   void test(std::codecvt_utf8<wchar_t>) {};
-   int main() { return 0; }"
-  HAVE_CODECVT_UTF8
-)
-#message("HAVE_CODECVT_UTF8: ${HAVE_CODECVT_UTF8}")
-ADD_CONFIG(HAVE_CODECVT_UTF8)
-
-#
-# Note: If codecvt_utf8 is not avaliable we use codecvt of the "en_US.utf8"
-# locale hoping that it will cover reasonable range of unicode chars. This seems
-# to be the case for the GNU standard C++ library implementation but it is not
-# clear if it holds also for other implementations (for example, this is not
-# true for MSVC on Windows). Thus, if not using GNU then we insist on having
-# codecvt_utf8.
-#
-
-if (NOT HAVE_CODECVT_UTF8) #AND NOT CMAKE_COMPILER_IS_GNUCXX)
-  message("Type std::codecvt_utf8 not available on this platform, using boost/locale as a fallback.")
-  include(boost)
-  setup_boost()
-endif()
-
+check_type_size("wchar_t" WCHAR_SIZE)
+add_config(WCHAR_SIZE ${WCHAR_SIZE})
 
 #
 # -------------------------------------------
@@ -95,7 +74,7 @@ endif()
 ADD_SUBDIRECTORY(tests)
 
 SET(sources error.cc stream.cc connection_tcpip.cc socket.cc diagnostics.cc
-            string.cc socket_detail.cc connection_openssl.cc)
+            socket_detail.cc connection_openssl.cc)
 
 file(GLOB HEADERS *.h)
 
@@ -109,7 +88,11 @@ target_include_directories(cdk_foundation PUBLIC
   "${PROJECT_BINARY_DIR}/include"  # generated config.h
 )
 
-target_link_libraries(cdk_foundation PRIVATE SSL::ssl)
+target_link_libraries(cdk_foundation
+  PUBLIC RapidJSON::rapidjson
+  PRIVATE SSL::ssl
+)
+
 
 IF(WIN32)
   target_link_libraries(cdk_foundation PRIVATE ws2_32)

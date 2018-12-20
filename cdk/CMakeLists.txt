@@ -113,7 +113,7 @@ add_config(WITH_SSL_WOLFSSL)
 
 if(WIN32)
   add_definitions(-DWIN32)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 #
@@ -289,10 +289,7 @@ IF(0) #WITH_TESTS)
   # (see cmake/testing.cmake)
 
   ADD_TEST_TARGET()
-  ADD_DEPENDENCIES(${target_run_unit_tests} foundation_tests_server)
-  IF(WITH_NGS_MOCKUP)
-  ADD_DEPENDENCIES(${target_run_unit_tests} ngs_mockup)
-  ENDIF()
+
   # Checks for public headers declared with ADD_HEADERS() (see cmake/headers.cmake)
 
   ADD_HEADERS_TEST()

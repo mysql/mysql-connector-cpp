@@ -44,13 +44,14 @@ POP_SYS_WARNINGS_CDK
 namespace cdk {
 namespace foundation {
 
+using std::string;
 
 /*
   Default prefix added to error description in the string returned by
   what().
 */
 
-const string Error::m_default_prefix = L"CDK Error: ";
+const string Error::m_default_prefix = "CDK Error: ";
 
 
 void Error::description_materialize() const

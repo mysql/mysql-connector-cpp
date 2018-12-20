@@ -36,20 +36,23 @@
 */
 
 #include <mysqlx/xdevapi.h>
+
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
-
-#include <map>
-#include <memory>
-#include <stack>
-#include <list>
 
 #include "../global.h"
 #include "../common/result.h"
 #include "../common/op_impl.h"
 
 //#include "result_impl.h"
+
+PUSH_SYS_WARNINGS
+#include <map>
+#include <memory>
+#include <stack>
+#include <list>
+POP_SYS_WARNINGS
 
 
 namespace mysqlx {
@@ -96,6 +99,10 @@ struct Value::Access
 
   static Value mk(cdk::bytes data, common::Format_descr<cdk::TYPE_DOCUMENT>&);
 
+  static cdk::string cdk_str(const Value &val)
+  {
+    return val.m_ustr;
+  }
 
   static void process(
     parser::Parser_mode::value, const Value&, cdk::Expression::Processor&
@@ -181,7 +188,7 @@ void Value::Access::process(
       const char *json = doc.get_json();
       if (json)
       {
-        common::Object_ref f(L"json_unquote");
+        common::Object_ref f("json_unquote");
 
         auto argsprc = safe_prc(prc)->scalar()->call(f);
         if (argsprc)
@@ -363,6 +370,7 @@ public:
 
 
 // --------------------------------------------------------------------
+
 
 /*
   Implementation for a single Row instance.

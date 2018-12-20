@@ -58,10 +58,17 @@ typedef  cdk::JSON::Processor Processor;
 void JSON_parser::process(Expr_base::Processor &prc) const
 {
   rapidjson::Reader m_parser;
-  rapidjson::InsituStringStream ss(const_cast<char*>(m_json.data()));
 
   /*
-    struck to be used has handler on rapidjson parser
+    Note: In-situ parsing could be faster but it would also destroy
+    contents of m_json and we need it for error reporting.
+  */
+
+  rapidjson::GenericStringStream<rapidjson::UTF8<char>>
+  ss(const_cast<char*>(m_json.data()));
+
+  /*
+    struct to be used as handler for rapidjson parser
   */
   struct Processor_cvt
   {
@@ -339,11 +346,7 @@ void JSON_parser::process(Expr_base::Processor &prc) const
 
   Processor_cvt cvt(prc);
 
-  /*
-     kParseInsituFlag is used to reduce memory usage and increase speed.
-  */
-
-  auto error = m_parser.Parse<rapidjson::kParseInsituFlag>(ss, cvt);
+  auto error = m_parser.Parse<>(ss, cvt);
   if (error.IsError())
   {
     throw JSON_parser::Error(m_json,
@@ -352,143 +355,9 @@ void JSON_parser::process(Expr_base::Processor &prc) const
   }
 }
 
-void json_parse(const string &json, Processor &dp)
+void json_parse(const std::string &json, Processor &dp)
 {
   JSON_parser    parser(json);
   parser.process(dp);
 }
-
-
-
-//  Clasify a token as a JSON token.
-
-JSON_token_base::Token_type JSON_token_base::get_jtype(const Token &tok)
-{
-  switch (tok.get_type())
-  {
-  case Token::PLUS:
-    return JSON_token_base::PLUS;
-  case Token::MINUS:
-    return JSON_token_base::MINUS;
-  case Token::NUMBER:
-    return JSON_token_base::NUMBER;
-  case Token::INTEGER:
-    return JSON_token_base::INTEGER;
-
-  // TODO: According to JSON specs only double-quote strings are allowed?
-  case Token::QQSTRING:
-  case Token::QSTRING:
-    return JSON_token_base::STRING;
-
-  case Token::WORD:
-    {
-      // TODO: Are these JSON literals case sensitivie?
-      const string &id = tok.get_text();
-      if (id == L"null") return JSON_token_base::T_NULL;
-      if (id == L"true") return JSON_token_base::T_TRUE;
-      if (id == L"false") return JSON_token_base::T_FALSE;
-    }
-
-  default:
-    return JSON_token_base::OTHER;
-  }
-}
-
-
-
-bool JSON_scalar_parser::do_parse(Processor *vp)
-{
-  if (!tokens_available())
-    return false;
-
-  bool neg = false;
-
-  Token tok = *consume_token();
-  Token_type tt = get_jtype(tok);
-
-  switch (tt)
-  {
-  case STRING:
-    if(vp)
-      vp->str(tok.get_text());
-    return true;
-
-  case MINUS:
-  case PLUS:
-    neg = (MINUS == tt);
-    if (!tokens_available())
-      parse_error(L"Expected number after +/- sign");
-    tok = *consume_token();
-    tt = get_jtype(tok);
-    break;
-
-  case T_NULL:
-    if (vp)
-      vp->null();
-    return true;
-
-  case T_TRUE:
-  case T_FALSE:
-    if (vp)
-      vp->yesno(T_TRUE == tt);
-    return true;
-
-  default:
-    // if none of the above, then it should be a number
-    break;
-  }
-
-  // Numeric value
-
-  switch (tt)
-  {
-  case NUMBER:
-    {
-      if(vp)
-      {
-        double val = strtod(tok.get_text());
-        vp->num(neg ? -val : val);
-      }
-      return true;
-    }
-
-  case INTEGER:
-    try {
-
-      if(vp)
-      {
-        // TODO: Is this logic right? Should we report only negative values
-        // as signed integers?
-
-        uint64_t val = strtoui(tok.get_text());
-        if (val > INTEGER_ABS_MAX)
-        {
-          if (neg)
-            parse_error(L"Numeric value is too large for a signed type");
-          // Unsigned type is only returned for large values
-          vp->num(val);
-        }
-        else
-        {
-          // Absolute values of 9223372036854775808UL can only be negative
-          if (!neg && val == INTEGER_ABS_MAX)
-            parse_error(L"Numeric value is too large for a signed type");
-          // All values ABS(val) < 9223372036854775808UL are treated as signed
-          vp->num(neg ? -(int64_t)val : (int64_t)val);
-        }
-      }
-
-      return true;
-    }
-    catch (const Numeric_conversion_error &e)
-    {
-      parse_error(e.msg());
-    }
-
-  default:
-    parse_error(L"Invalid JSON value");
-    return false; // quiet compile warnings
-  }
-}
-
 

@@ -153,7 +153,7 @@ TEST_F(Sess, url)
   // Test URL containing non-ascii characters.
 
   {
-    mysqlx::string wurl = L"Rafa\u0142";
+    mysqlx::string wurl = u"Rafa\u0142";
     wurl = wurl + string("@") + string(authority);
 
     cout << "Creating session: " << wurl << endl;
@@ -184,7 +184,7 @@ TEST_F(Sess, default_schema)
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
-    SqlResult res = s.sql(L"SELECT DATABASE()").execute();
+    SqlResult res = s.sql("SELECT DATABASE()").execute();
     string db = res.fetchOne()[0];
     EXPECT_EQ(string("test"), db);
   }
@@ -200,7 +200,7 @@ TEST_F(Sess, default_schema)
 
     EXPECT_EQ(string("test"), s.getDefaultSchema().getName());
     EXPECT_EQ(string("test"), s.getDefaultSchemaName());
-    SqlResult res = s.sql(L"SELECT DATABASE()").execute();
+    SqlResult res = s.sql("SELECT DATABASE()").execute();
     string db = res.fetchOne()[0];
     EXPECT_EQ(string("test"), db);
   }

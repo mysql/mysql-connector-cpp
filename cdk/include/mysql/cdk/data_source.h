@@ -56,7 +56,7 @@ class Options : public Base
 public:
 
   Options()
-    : m_usr(L"root"), m_has_pwd(false), m_has_db(false)
+    : m_usr("root"), m_has_pwd(false), m_has_db(false)
   {
   }
 

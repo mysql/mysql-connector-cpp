@@ -45,8 +45,4 @@ target_link_libraries(devapi common)
 add_coverage(devapi)
 
 
-if(0) #CMAKE_COMPILER_IS_GNUCXX)
-  target_compile_options(devapi PRIVATE -Wall -Wextra)
-endif()
-
 add_subdirectory(tests)

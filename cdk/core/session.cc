@@ -248,7 +248,7 @@ Session_builder::operator() (
 )
 {
   throw Error(cdkerrc::generic_error, "Not supported");
-  return false;
+  //return false;
 }
 
 

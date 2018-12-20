@@ -47,6 +47,7 @@
 namespace cdk {
 
   using foundation::char_t;
+  using foundation::invalid_char;
   using foundation::byte;
   using foundation::option_t;
   using foundation::string;

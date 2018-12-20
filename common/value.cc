@@ -52,8 +52,8 @@ void Value::print(std::ostream &out) const
   case DOUBLE: out << m_val.v_double; return;
   case FLOAT: out << m_val.v_float; return;
   case BOOL: out << (m_val.v_bool ? "true" : "false"); return;
-  case STRING: out << (std::string)m_str; return;
-  case WSTRING: out << cdk::string(m_wstr); return;
+  case STRING: out << m_str; return;
+  case USTRING: out << cdk::string(m_ustr); return;
   case RAW: out << "<" << m_str.length() << " raw bytes>"; return;
   default:  out << "<unknown value>"; return;
   }
@@ -88,8 +88,8 @@ void Value::Access::process_val(
     case Value::FLOAT:   prc.num(val.get_float()); break;
     case Value::DOUBLE:  prc.num(val.get_double()); break;
     case Value::BOOL:    prc.yesno(val.get_bool()); break;
-    case Value::STRING:  prc.str(val.get_string()); break;
-    case Value::WSTRING:  prc.str(val.get_wstring()); break;
+    case Value::STRING:  prc.str(val.m_str); break;
+    case Value::USTRING:  prc.str(val.m_ustr); break;
     case Value::RAW:
     {
       size_t size;
@@ -120,7 +120,7 @@ void Value::Access::process(
 {
   if (Value::EXPR == val.get_type())
   {
-    parser::Expression_parser parser{ pm, val.get_wstring() };
+    parser::Expression_parser parser{ pm, val.get_string() };
     parser.process(prc);
     return;
   }
@@ -135,36 +135,36 @@ const std::string& Value::get_string() const
 {
   switch (m_type)
   {
-  case RAW:
-  case STRING:
-    return m_str;
-
-  case WSTRING:
-  case EXPR:
-  case JSON:
+  case USTRING:
 
     // UTF8 conversion
 
     if (!m_val.v_bool)
     {
-      const_cast<Value*>(this)->m_str = cdk::string(m_wstr);
+      const_cast<Value*>(this)->m_str = cdk::string(m_ustr);
       const_cast<Value*>(this)->m_val.v_bool = true;
     }
+
+    FALLTHROUGH;
+
+  case RAW:
+  case STRING:
+  case EXPR:
+  case JSON:
     return m_str;
+
   default:
     throw Error("Value cannot be converted to string");
   }
 }
 
-const std::wstring& Value::get_wstring() const
+
+const std::u16string& Value::get_ustring() const
 {
   switch (m_type)
   {
-  case WSTRING:
   case EXPR:
   case JSON:
-    return m_wstr;
-
   case RAW:
   case STRING:
 
@@ -172,10 +172,14 @@ const std::wstring& Value::get_wstring() const
 
     if (!m_val.v_bool)
     {
-      const_cast<Value*>(this)->m_wstr = cdk::string(m_str);
+      const_cast<Value*>(this)->m_ustr = cdk::string(m_str);
       const_cast<Value*>(this)->m_val.v_bool = true;
     }
-    return m_wstr;
+
+    FALLTHROUGH;
+
+  case USTRING:
+    return m_ustr;
 
   default:
     throw Error("Value cannot be converted to string");

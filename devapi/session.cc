@@ -28,13 +28,17 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <mysqlx/xdevapi.h>
+
 #include <mysql/cdk.h>
 #include <uri_parser.h>
 
+#include <mysqlx/xdevapi.h>
+
+PUSH_SYS_WARNINGS
 #include <iostream>
 #include <sstream>
 #include <list>
+POP_SYS_WARNINGS
 
 #include "impl.h"
 #include "../common/settings.h"
@@ -58,8 +62,9 @@ void process_val(PRC *prc, common::Value &val)
 
   switch (val.get_type())
   {
+  // TODO: avoid unnecessary utf8 conversion
   case common::Value::STRING:  prc->str(val.get_string()); break;
-  case common::Value::WSTRING: prc->str(val.get_wstring()); break;
+  case common::Value::USTRING: prc->str(val.get_string()); break;
   case common::Value::INT64:   prc->num(val.get_sint());   break;
   case common::Value::UINT64:  prc->num(val.get_uint());   break;
   case common::Value::BOOL:  prc->yesno(val.get_bool());   break;
@@ -226,7 +231,7 @@ void internal::Session_detail::drop_schema(const string &name)
 }
 
 
-const std::wstring& internal::Session_detail::get_default_schema_name()
+string internal::Session_detail::get_default_schema_name()
 {
   if (m_impl->m_default_db.empty())
     throw Error("No default schema set for the session");
@@ -238,15 +243,6 @@ const std::wstring& internal::Session_detail::get_default_schema_name()
 /*
   Schema list source.
 */
-
-struct internal::Query_src::Res_impl
-  : public common::Result_impl<string>
-{
-  template <typename... Ty>
-  Res_impl(Ty&&... args)
-    : common::Result_impl<string>(std::forward<Ty>(args)...)
-  {};
-};
 
 
 internal::Query_src::~Query_src()
@@ -340,7 +336,7 @@ internal::Schema_detail::Table_src::iterator_get()
   m_res->get_column(1).get<cdk::TYPE_STRING>()
     .m_codec.from_bytes(row->at(1).data(), type);
 
-  return Table(m_schema, Name_src::iterator_get(), type == L"VIEW");
+  return Table(m_schema, Name_src::iterator_get(), type == "VIEW");
 }
 
 
@@ -368,7 +364,7 @@ string internal::Query_src::iterator_get()
   cdk::string name;
 
   // TDOD: Investigate why we get column type other than STRING.
-  // This is realted to changed default collation in newer servers and logic
+  // This is related to changed default collation in newer servers and logic
   // we have to interpret BYTES columns as STRING for some collations.
   // TODO: use Value to do the conversion?
 
@@ -393,21 +389,63 @@ string internal::Query_src::iterator_get()
     assert(false);
   }
 
-  return name;
+  return cdk::foundation::ustring(name);
 }
 
 // ---------------------------------------------------------------------
+// String conversions.
+//
+// Note: We use cdk::string to perform required conversion.
+//
+
+template <typename C>
+inline
+std::basic_string<C> to_str(const mysqlx::string &other)
+{
+  return (std::basic_string<C>)cdk::string(other);
+}
+
+template <typename C>
+inline
+void from_str(mysqlx::string &to, const std::basic_string<C> &from)
+{
+  to = cdk::string(from);
+}
 
 
 std::string string::Impl::to_utf8(const string &other)
 {
-  return cdk::string(other);
+  return to_str<char>(other);
 }
 
 void string::Impl::from_utf8(string &s, const std::string &other)
 {
-  s = cdk::string(other);
+  from_str(s, other);
 }
+
+std::u32string string::Impl::to_ucs4(const string &other)
+{
+  return to_str<char32_t>(other);
+}
+
+void string::Impl::from_ucs4(string &s, const std::u32string &other)
+{
+  from_str(s, other);
+}
+
+
+std::wstring string::Impl::to_wide(const string &other)
+{
+  return to_str<wchar_t>(other);
+}
+
+void string::Impl::from_wide(string &s, const std::wstring &other)
+{
+  from_str(s, other);
+}
+
+
+// ---------------------------------------------------------------------
 
 
 ostream& operator<<(ostream &out, const Error&)

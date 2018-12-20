@@ -44,7 +44,7 @@
 namespace mysqlx {
 namespace common {
 
-class Result_impl_base;
+class Result_impl;
 class Result_init;
 
 using duration = std::chrono::milliseconds;
@@ -56,6 +56,7 @@ using time_point = std::chrono::time_point<system_clock>;
 */
 class Session_pool;
 using Session_pool_shared = std::shared_ptr<Session_pool>;
+
 
 class Pooled_session
     : public cdk::foundation::api::Async_op<void>
@@ -85,6 +86,7 @@ private:
   friend class Session_pool;
 
 };
+
 
 class Session_pool
 {
@@ -185,7 +187,7 @@ public:
       m_sess->get_error().rethrow();
   }
 
-  Result_impl_base *m_current_result = nullptr;
+  Result_impl *m_current_result = nullptr;
 
   virtual ~Session_impl()
   {
@@ -209,13 +211,13 @@ public:
     is deleted).
   */
 
-  void register_result(Result_impl_base *result)
+  void register_result(Result_impl *result)
   {
     assert(!m_current_result);
     m_current_result = result;
   }
 
-  void deregister_result(Result_impl_base *result)
+  void deregister_result(Result_impl *result)
   {
     if (result == m_current_result)
       m_current_result = nullptr;

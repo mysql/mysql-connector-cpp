@@ -71,12 +71,12 @@ TEST(Errors, basic)
       }
       catch (...)
       {
-        rethrow_error(L"First layer");
+        rethrow_error("First layer");
       }
     }
     catch (...)
     {
-      rethrow_error(L"Second layer");
+      rethrow_error("Second layer");
     }
   }
   catch (const Error &e)
@@ -92,7 +92,7 @@ TEST(Errors, basic)
 
 #define RETHROW(E) \
   try { \
-    try { throw (E); } catch (...) { rethrow_error(L"Wrapped"); } \
+    try { throw (E); } catch (...) { rethrow_error("Wrapped"); } \
   } CATCH_AND_PRINT({})
 
 TEST(Errors, wrap)
@@ -142,14 +142,14 @@ TEST(Errors, posix)
 
   try {
     errno = errc::bad_file_descriptor;
-    throw_posix_error(L"Prefix");
+    throw_posix_error("Prefix");
     FAIL() <<"Should throw error";
   }
   CATCH_AND_PRINT({})
 
   try {
     errno = 0;
-    throw_posix_error(L"Prefix");
+    throw_posix_error("Prefix");
   }
   CATCH_AND_PRINT({
     FAIL() << "Should be no error if errno is zero";
@@ -181,7 +181,10 @@ TEST(Errors, system)
     errno = errc::bad_file_descriptor;
 #endif
 
-    throw_system_error(L"Prefix");
+    // Note: This fails because string conversion clears windows
+    // error set above.
+
+    throw_system_error("Prefix");
     FAIL() <<"Should throw error";
   }
   CATCH_AND_PRINT({})
@@ -194,7 +197,7 @@ TEST(Errors, system)
     errno = 0;
 #endif
 
-    throw_system_error(L"Prefix");
+    throw_system_error("Prefix");
   }
   CATCH_AND_PRINT({
     FAIL() << "Should be no error if errno is zero";
@@ -294,6 +297,7 @@ TEST(Errors, category)
 class Test_error : public Error_class<Test_error>
 {
   typedef Error_class<Test_error> Base;
+  using string = std::string;
 
   string m_name;
   int m_num;
@@ -329,17 +333,17 @@ public:
 TEST(Errors, custom)
 {
   try {
-    throw Test_error(L"foo",7);
+    throw Test_error("foo",7);
   }
   CATCH_AND_PRINT({})
 
   try {
     try {
-      throw Test_error(L"bar",0);
+      throw Test_error("bar",0);
     }
     catch (...)
     {
-      rethrow_error(L"Extended");
+      rethrow_error("Extended");
     }
   }
   CATCH_AND_PRINT({})
@@ -352,7 +356,7 @@ TEST(Errors, rethrow)
   Error  *eptr;
 
   try {
-    throw Test_error(L"baz", 8);
+    throw Test_error("baz", 8);
   }
   catch (Error &e)
   {

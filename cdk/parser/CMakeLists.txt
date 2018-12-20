@@ -38,6 +38,7 @@ add_library(cdk_parser STATIC
   uri_parser.cc
   ${HEADERS}
 )
+source_group(Headers FILES ${HEADERS})
 
 target_link_libraries(cdk_parser PRIVATE cdk_foundation RapidJSON::rapidjson)
 

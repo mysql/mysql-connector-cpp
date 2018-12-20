@@ -365,7 +365,7 @@ Value::Access::mk(
   unsigned i;
   for (i = 0; i < data.size() && std::isspace(*(data.begin() + i)); ++i);
 
-  std::string json(data.begin() + i, data.end());
+  std::string json(data.begin() + i, data.end()-1);
 
   if ('{' == *(data.begin() + i))
     return Value::Access::mk_doc(json);
@@ -407,15 +407,6 @@ void internal::Row_detail::process_one(
   Result_detail
   =============
 */
-
-
-struct internal::Result_detail::Impl
-  : public common::Result_impl<string>
-{
-public:
-
-  using common::Result_impl<string>::Result_impl;
-};
 
 
 internal::Result_detail::Result_detail(common::Result_init &init)
@@ -507,7 +498,7 @@ Warning internal::Result_detail::get_warning(size_t pos)
   return Warning_detail(
       level,
       (uint16_t)it.entry().code().value(),
-      std::wstring(it.entry().description())
+      it.entry().description()
   );
 }
 
@@ -601,7 +592,7 @@ void internal::Columns_detail<Column>::init(
   clear();
   for (col_count_t pos = 0; pos < impl.get_col_count(); ++pos)
   {
-    emplace_back(impl.get_column(pos));
+    emplace_back(&impl.get_column(pos));
   }
 }
 

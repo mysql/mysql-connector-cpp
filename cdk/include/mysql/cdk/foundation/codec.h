@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,111 +33,14 @@
 
 #include "types.h"
 #include "error.h"
+#include "string.h"
 
 PUSH_SYS_WARNINGS_CDK
-
-#ifdef HAVE_CODECVT_UTF8
-#include <codecvt>
-#else
-#include <locale>
-#endif
 
 #include <limits>         // for std::numeric_limits
 #include <string.h>       // for memset
 
 POP_SYS_WARNINGS_CDK
-
-namespace cdk {
-namespace foundation {
-
-
-#ifdef HAVE_CODECVT_UTF8
-
-
-class codecvt_utf8 : public std::codecvt_utf8<char_t>
-{
-public:
-
-  size_t measure(const string&) const
-  {
-    THROW("codecvt_utf8: measure() not yet implemented");
-  }
-
-};
-
-#else
-
-class codecvt_utf8 : public std::codecvt<char_t, char, std::mbstate_t>
-{
-  result do_out( state_type& state,
-               const intern_type* from,
-               const intern_type* from_end,
-               const intern_type*& from_next,
-               extern_type* to,
-               extern_type* to_end,
-               extern_type*& to_next ) const;
-
-  result do_in( state_type& state,
-               const extern_type* from,
-               const extern_type* from_end,
-               const extern_type*& from_next,
-               intern_type* to,
-               intern_type* to_end,
-               intern_type*& to_next ) const;
-
-public:
-
-  size_t measure(const string&) const
-  {
-    THROW("codecvt_utf8: measure() not yet implemented");
-  }
-
-};
-
-#endif
-
-
-class codecvt_ascii : public std::codecvt<char_t, char, std::mbstate_t>
-{
-  result do_out( state_type& state,
-               const intern_type* from,
-               const intern_type* from_end,
-               const intern_type*& from_next,
-               extern_type* to,
-               extern_type* to_end,
-               extern_type*& to_next ) const;
-
-  result do_in( state_type& state,
-               const extern_type* from,
-               const extern_type* from_end,
-               const extern_type*& from_next,
-               intern_type* to,
-               intern_type* to_end,
-               intern_type*& to_next ) const;
-
-  /*
-    Note: At least in VS, dtor of std::ctype<> is protected and for
-    that reason we can not have direct instance of std::ctype<>.
-  */
-
-  struct : public std::ctype< wchar_t >
-  {}
-  m_ctype;
-
-public:
-
-  codecvt_ascii()
-  {}
-
-  size_t measure(const string& str) const
-  {
-    return str.length();
-  }
-
-};
-
-
-}} // cdk::foundation
 
 
 namespace cdk {
@@ -170,7 +73,7 @@ public:
 
   virtual ~String_codec() {}
 
-  virtual size_t measure(const string&) =0;
+  //virtual size_t measure(const string&) =0;
   virtual size_t from_bytes(bytes, string&) =0;
   virtual size_t to_bytes(const string&, bytes) =0;
 };
@@ -178,73 +81,21 @@ public:
 } // api namespace
 
 
-template<class VT>
-class String_codec : public api::String_codec
-{
-  VT m_codec;
 
+template <class ENC>
+class String_codec
+  : api::String_codec
+{
 public:
 
-  String_codec()
-  {}
-
-  typedef cdk::foundation::char_t char_t;
-
-  size_t measure(const string &in)
+  size_t from_bytes(bytes in, string &out) override
   {
-    return m_codec.measure(in);
+    return str_decode<ENC>(in.begin(), in.size(), out);
   }
 
-  size_t from_bytes(bytes in, string &out)
+  size_t to_bytes(const string &in, bytes out) override
   {
-    typename VT::state_type state;
-    const char *in_next;
-    char_t     *out_next;
-
-    if (0 == in.size())
-    {
-      out.clear();
-      return 0;
-    }
-
-    memset(&state, 0, sizeof(state));
-
-    out.resize(in.size()+1);
-    std::codecvt_base::result res=
-      m_codec.in(state, (char*)in.begin(), (char*)in.end(), in_next,
-                        &out[0], &out[in.size()], out_next);
-
-    if (std::codecvt_base::ok != res)
-      throw_error("string conversion error");  // TODO: report errors
-
-    assert(out_next >= &out[0]);
-    out.resize(static_cast<size_t>(out_next - &out[0]));
-
-    assert((byte*)in_next >= in.begin());
-    return static_cast<size_t>((byte*)in_next - in.begin());
-  }
-
-
-  size_t to_bytes(const string &in, bytes out)
-  {
-    typename VT::state_type state;
-    const char_t *in_next;
-    char *out_next;
-
-    if (0 == in.size())
-      return 0;
-
-    memset(&state, 0, sizeof(state));
-
-    std::codecvt_base::result res=
-      m_codec.out(state, &in[0], &in[in.length()], in_next,
-                        (char*)out.begin(), (char*)out.end(), out_next);
-
-    if (std::codecvt_base::ok != res)
-      throw_error("string conversion error");  // TODO: report errors
-
-    assert((byte*)out_next >= out.begin());
-    return static_cast<size_t>((byte*)out_next - out.begin());
+    return str_encode<ENC>(in, out.begin(), out.size());
   }
 
 };
@@ -253,7 +104,8 @@ public:
 // String utf8 codec
 
 template<>
-class Codec<Type::STRING> : public String_codec<codecvt_utf8>
+class Codec<Type::STRING>
+  : public String_codec<String_encoding::UTF8>
 {};
 
 
@@ -402,7 +254,7 @@ static size_t convert(bytes buf, T &val)
 
     // TODO: better error description
     throw_error(cdkerrc::conversion_error,
-                L"Number_codec: no data for conversion");
+                "Number_codec: no data for conversion");
 
     return 0;
   }
@@ -507,7 +359,7 @@ class Number_codec<
   {
     if (buf.size() < 1)
       throw_error(cdkerrc::conversion_error,
-                  L"Number_codec: no data for conversion");
+                  "Number_codec: no data for conversion");
     val= *buf.begin();
     return 1;
   }

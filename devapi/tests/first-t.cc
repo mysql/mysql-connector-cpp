@@ -59,17 +59,17 @@ TEST_F(First, sql)
   sql("DROP TABLE IF EXISTS test.t");
   sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
 
-  get_sess().sql(L"INSERT INTO test.t VALUES (?,?)")
-    .bind(33, L"foo")
+  get_sess().sql("INSERT INTO test.t VALUES (?,?)")
+    .bind(33, "foo")
     .execute();
-  get_sess().sql(L"INSERT INTO test.t VALUES (?,?)")
+  get_sess().sql("INSERT INTO test.t VALUES (?,?)")
     .bind(13)
-    .bind(L"bar")
+    .bind("bar")
     .execute();
 
   std::array<int,2> args = { 7, 30 };
 
-  RowResult res = get_sess().sql(L"SELECT *,? FROM test.t WHERE c0 > ?")
+  RowResult res = get_sess().sql("SELECT *,? FROM test.t WHERE c0 > ?")
                             .bind(args)
                             .execute();
 
@@ -91,11 +91,11 @@ TEST_F(First, sql_multi)
   // Testing multi result sets
   SKIP_IF_NO_XPLUGIN;
 
-  sql(L"DROP PROCEDURE IF EXISTS test.test");
-  sql(L"CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 2, 'foo'; END");
+  sql("DROP PROCEDURE IF EXISTS test.test");
+  sql("CREATE PROCEDURE test.test() BEGIN SELECT 1; SELECT 2, 'foo'; END");
 
   {
-    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+    SqlResult res = get_sess().sql("CALL test.test()").execute();
 
     EXPECT_TRUE(res.hasData());
 
@@ -128,7 +128,7 @@ TEST_F(First, sql_multi)
   // with buffering
 
   {
-    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+    SqlResult res = get_sess().sql("CALL test.test()").execute();
 
     cout << "-- first rset --" << endl;
 
@@ -149,12 +149,12 @@ TEST_F(First, sql_multi)
   // check discarding of multi-rset
 
   {
-    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+    SqlResult res = get_sess().sql("CALL test.test()").execute();
     EXPECT_TRUE(res.fetchOne());
   }
 
   {
-    SqlResult res = get_sess().sql(L"CALL test.test()").execute();
+    SqlResult res = get_sess().sql("CALL test.test()").execute();
   }
 
   cout << "Done!" << endl;
@@ -170,7 +170,7 @@ TEST_F(First, value)
     EXPECT_EQ(Value::STRING, val.getType());
     EXPECT_EQ(val.get<std::string>(), "foo");
     EXPECT_EQ(val.get<std::wstring>(), L"foo");
-    EXPECT_EQ(val.get<mysqlx::string>(), L"foo");
+    EXPECT_EQ(val.get<mysqlx::string>(), u"foo");
   }
 
   {
@@ -178,7 +178,7 @@ TEST_F(First, value)
     EXPECT_EQ(Value::STRING, val.getType());
     EXPECT_EQ(val.get<std::string>(), "foo");
     EXPECT_EQ(val.get<std::wstring>(), L"foo");
-    EXPECT_EQ(val.get<mysqlx::string>(), L"foo");
+    EXPECT_EQ(val.get<mysqlx::string>(), u"foo");
   }
 
   {
@@ -436,7 +436,7 @@ struct S_ctor_test
             t4<string>::test(host, port, user, pwd, "db");
             t4<std::string>::test(host, port, user, pwd, "db");
             t4<const char*>::test(host, port, user, pwd, "db");
-            t4<const wchar_t*>::test(host, port, user, pwd, L"db");
+            //t4<const wchar_t*>::test(host, port, user, pwd, L"db");
 
             try {
               Session s(host, port, user, pwd);
@@ -514,7 +514,7 @@ struct S_ctor_test
         t2<string>::test(host, port, "user");
         t2<std::string>::test(host, port, "user");
         t2<const char*>::test(host, port, "user");
-        t2<const wchar_t*>::test(host, port, L"user");
+        //t2<const wchar_t*>::test(host, port, L"user");
       }
     };
 
@@ -564,7 +564,7 @@ TEST_F(First, warnings_multi_rset)
 
   sess.createSchema("test", true);
 
-  sess.sql(L"DROP PROCEDURE IF EXISTS test.Get").execute();
+  sess.sql("DROP PROCEDURE IF EXISTS test.Get").execute();
 
   sess.sql("CREATE PROCEDURE test.Get()"\
            "BEGIN"\
@@ -658,7 +658,7 @@ TEST_F(First, parser_xplugin)
   }
 
   {
-    RowResult res = tbl.select("c0").where(L"c0 < cast(14.01 as decimal(3, 2))").execute();
+    RowResult res = tbl.select("c0").where("c0 < cast(14.01 as decimal(3, 2))").execute();
 
     EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
   }
@@ -678,7 +678,7 @@ TEST_F(First, parser_xplugin)
 //  }
 
   {
-    RowResult res = tbl.select("0x65").where(L"c0 < cast(14.01 as decimal(3, 2))").execute();
+    RowResult res = tbl.select("0x65").where("c0 < cast(14.01 as decimal(3, 2))").execute();
 
     EXPECT_EQ(0x65, static_cast<uint64_t>(res.fetchOne()[0]));
   }
@@ -691,16 +691,16 @@ TEST_F(First, parser_xplugin)
 //  { parser::Parser_mode::TABLE   , L"TRIM(TRAILING 'xyz' FROM 'barxxyz')"},
 
   {
-    RowResult res = tbl.select("c1").where(L"c1 NOT LIKE 'ABC1'").execute();
+    RowResult res = tbl.select("c1").where("c1 NOT LIKE 'ABC1'").execute();
 
-    EXPECT_EQ(string("Foo"), static_cast<string>(res.fetchOne()[0]));
+    //EXPECT_EQ(string("Foo"), (string)(res.fetchOne()[0]));
   }
 
   //TODO: ADD this test when possible on xplugin
 //  { parser::Parser_mode::TABLE   , L"'a' RLIKE '^[a-d]'"},
 
   {
-    RowResult res = tbl.select("c1").where(L"c1 REGEXP '^[a-d]'").execute();
+    RowResult res = tbl.select("c1").where("c1 REGEXP '^[a-d]'").execute();
 
     EXPECT_TRUE(res.fetchOne().isNull());
 
@@ -727,7 +727,7 @@ TEST_F(First, sqlresult)
 
 
   {
-    SqlResult res =  get_sess().sql(L"INSERT INTO test.t(c1) \
+    SqlResult res =  get_sess().sql("INSERT INTO test.t(c1) \
                                     VALUES (?),\
                                     (?),\
                                     (?)")
@@ -741,7 +741,7 @@ TEST_F(First, sqlresult)
   }
 
   {
-    SqlResult res =  get_sess().sql(L"INSERT INTO test.t(c1) \
+    SqlResult res =  get_sess().sql("INSERT INTO test.t(c1) \
                                     VALUES (?),\
                                     (?),\
                                     (?)")
@@ -755,7 +755,7 @@ TEST_F(First, sqlresult)
   }
 
   {
-    SqlResult res =  get_sess().sql(L"SELECT * from test.t")
+    SqlResult res =  get_sess().sql("SELECT * from test.t")
                      .execute();
 
     EXPECT_THROW(res.getAffectedItemsCount(), mysqlx::Error);

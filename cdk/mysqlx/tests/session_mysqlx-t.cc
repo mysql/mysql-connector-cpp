@@ -31,9 +31,10 @@
 /*
   To use getenv() on Windows, which warns that it is not safe
 */
+
+#undef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <exception.h>
 #include <iostream>
 #include <mysql/cdk.h>
 #include <mysql/cdk/mysqlx.h>
@@ -196,7 +197,7 @@ TEST_F(Session_mysqlx, auth_error)
 
   try {
 
-    cdk::string user = L"bad_user";
+    cdk::string user = "bad_user";
     std::string passwd = "bad_password";
 
     cdk::ds::TCPIP::Options options(user,&passwd);
@@ -242,14 +243,14 @@ TEST_F(Session_mysqlx,sql_basic)
     // No results
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"select * from mysql.user where invalid query :) ;", NULL);
+      rp = s.sql("select * from mysql.user where invalid query :) ;", NULL);
       EXPECT_FALSE(rp.has_results());
     }
 
     for (int i = 0; i >=0 ;i++)
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"select * from mysql.user;", NULL);
+      rp = s.sql("select * from mysql.user;", NULL);
 
       switch (i)
       {
@@ -407,14 +408,14 @@ TEST_F(Session_mysqlx,sql_basic)
       case 6:
         cout <<endl <<"== Case 6 ==" <<endl;
 
-        rp = s.sql(L"drop database if exists xpto", NULL);
+        rp = s.sql("drop database if exists xpto", NULL);
         EXPECT_FALSE(rp.has_results());
 
-        rp = s.sql(L"create database xpto", NULL);
-        rp = s.sql(L"drop table if exists xpto.table_test", NULL);
-        rp = s.sql(L"create table xpto.table_test (id int unsigned not null)", NULL);
+        rp = s.sql("create database xpto", NULL);
+        rp = s.sql("drop table if exists xpto.table_test", NULL);
+        rp = s.sql("create table xpto.table_test (id int unsigned not null)", NULL);
 
-        rp = s.sql(L"insert into xpto.table_test ( id ) values(1),(2),(3)", NULL);
+        rp = s.sql("insert into xpto.table_test ( id ) values(1),(2),(3)", NULL);
 
         EXPECT_FALSE(rp.has_results());
         rp.discard();
@@ -679,7 +680,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
 
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT 27182818284590452353602872e-25 as test_float", NULL);
+      rp = s.sql("SELECT 27182818284590452353602872e-25 as test_float", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
       PrintCompareType<double,double,cdk::TYPE_FLOAT> pt(27182818284590452353602872e-25, sizeof(double), cr);
@@ -690,7 +691,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
 
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT -2718281828 as big_int_neg", NULL);
+      rp = s.sql("SELECT -2718281828 as big_int_neg", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
       PrintCompareType<int64_t, int64_t, cdk::TYPE_INTEGER> pt(-2718281828LL,sizeof(uint64_t)*8, cr);
@@ -701,7 +702,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
 
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
+      rp = s.sql("SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
       PrintCompareType<uint64_t, uint64_t,cdk::TYPE_INTEGER> pt(-1, sizeof(uint64_t)*8, cr);
@@ -719,7 +720,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     try
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT 27182818284590452353602872e-25 as test_float", NULL);
+      rp = s.sql("SELECT 27182818284590452353602872e-25 as test_float", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
 
@@ -740,7 +741,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     try
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
+      rp = s.sql("SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
       PrintCompareType<uint32_t, uint64_t,cdk::TYPE_INTEGER> pt(-1, sizeof(uint64_t)*8, cr);
@@ -760,7 +761,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     try
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT 27182818284590452353602872e-25 as test_float", NULL);
+      rp = s.sql("SELECT 27182818284590452353602872e-25 as test_float", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
 
@@ -781,7 +782,7 @@ TEST_F(Session_mysqlx,sql_type_conv)
     try
     {
       cdk::mysqlx::Reply rp;
-      rp = s.sql(L"SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
+      rp = s.sql("SELECT CAST(-1 AS UNSIGNED) as big_uint ", NULL);
       cdk::mysqlx::Cursor cr(rp);
 
       PrintCompareType<uint64_t, uint64_t,cdk::TYPE_INTEGER> pt(-1, sizeof(uint64_t), cr);

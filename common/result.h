@@ -36,11 +36,14 @@
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
-#include <vector>
 
 #include "../global.h"
 #include "session.h"
 #include "value.h"
+
+PUSH_SYS_WARNINGS
+#include <vector>
+POP_SYS_WARNINGS
 
 
 namespace mysqlx {
@@ -273,13 +276,12 @@ using cdk::row_count_t;
   strings.
 */
 
-template <typename STR = cdk::string>
 class Column_info
   : public Format_info
 {
 public:
 
-  using string = STR;
+  using string = std::string;
 
   string m_name;
   string m_label;
@@ -359,42 +361,17 @@ public:
 
 
 /*
-  Base for Meta_data<STR> template with members that do not depend on the
-  tempalte parameter STR.
-*/
-
-struct Meta_data_base
-{
-  virtual ~Meta_data_base(){}
-
-  col_count_t col_count() const { return m_col_count; }
-
-  virtual const Format_info& get_format(cdk::col_count_t pos) const = 0;
-
-  cdk::Type_info get_type(cdk::col_count_t pos) const
-  {
-    return get_format(pos).m_type;
-  }
-
-protected:
-
-  cdk::col_count_t  m_col_count = 0;
-};
-
-
-/*
   Meta_data<STR> holds type and format information for all columns in
   a result. This information is stored in Column_info<STR> objects. The
   string type STR is used to internally store textual meta-data information.
 */
 
-template <typename STR>
 struct Meta_data
-  : public Meta_data_base
 {
 protected:
 
-  std::map<cdk::col_count_t, Column_info<STR>> m_cols;
+  cdk::col_count_t  m_col_count = 0;
+  std::map<cdk::col_count_t, Column_info> m_cols;
 
 public:
 
@@ -405,13 +382,28 @@ public:
 
   Meta_data(cdk::Meta_data&);
 
+  virtual ~Meta_data(){}
+
+
+  col_count_t col_count() const { return m_col_count; }
+
   /*
     Return meta-data information for the column at the given position.
   */
 
-  const Column_info<STR>& get_column(cdk::col_count_t pos) const
+  const Column_info& get_column(cdk::col_count_t pos) const
   {
     return m_cols.at(pos);
+  }
+
+  const Format_info& get_format(cdk::col_count_t pos) const
+  {
+    return m_cols.at(pos);
+  }
+
+  cdk::Type_info get_type(cdk::col_count_t pos) const
+  {
+    return get_format(pos).m_type;
   }
 
 private:
@@ -430,7 +422,7 @@ private:
     const cdk::Format_info &fi
   )
   {
-    m_cols.emplace(pos, Column_info<STR>(Format_descr<T>(fi)));
+    m_cols.emplace(pos, Column_info(Format_descr<T>(fi)));
     m_cols.at(pos).store_info(ci);
   }
 
@@ -446,17 +438,13 @@ private:
     const cdk::Format_info &fi
   )
   {
-    m_cols.emplace(pos, Column_info<STR>(type, fi));
+    m_cols.emplace(pos, Column_info(type, fi));
     m_cols.at(pos).store_info(ci);
   }
 
-  const Format_info& get_format(cdk::col_count_t pos) const override
-  {
-    return m_cols.at(pos);
-  }
-
-  friend Result_impl_base;
 };
+
+using Shared_meta_data = std::shared_ptr<Meta_data>;
 
 
 /*
@@ -467,9 +455,8 @@ private:
   instances to the m_cols map.
 */
 
-template <typename STR>
 inline
-Meta_data<STR>::Meta_data(cdk::Meta_data &md)
+Meta_data::Meta_data(cdk::Meta_data &md)
 {
   m_col_count = md.col_count();
 
@@ -602,7 +589,7 @@ Value Value::Access::mk(bytes data, common::Format_descr<T> &format)
 
 
 /*
-  Implementation for a single Row instance. It holds a copy of row
+  Implementation for a single Row instance. It holds a copy of
   raw data and a shared pointer to row set meta-data.
 
   It is possible to create an empty Row_impl instance and populate it using
@@ -633,14 +620,14 @@ public:
 
   // Note: row data is copied into Row_impl instance
 
-  Row_impl(const Row_data &data, const std::shared_ptr<Meta_data_base> &md)
+  Row_impl(const Row_data &data, const Shared_meta_data &md)
     : m_data(data), m_mdata(md)
   {}
 
 protected:
 
-  Row_data m_data;
-  std::shared_ptr<Meta_data_base> m_mdata;
+  Row_data          m_data;
+  Shared_meta_data  m_mdata;
   std::map<col_count_t, Value>    m_vals;
   col_count_t                     m_col_count = 0;
 
@@ -767,8 +754,7 @@ private:
 
 class Session_impl;
 using Shared_session_impl = std::shared_ptr<Session_impl>;
-using Shared_meta_data = std::shared_ptr<Meta_data_base>;
-class Result_impl_base;
+class Result_impl;
 
 
 /*
@@ -797,7 +783,7 @@ public:
     being constructed from a Result_init instance.
   */
 
-  virtual void init_result(Result_impl_base&) {} // GCOV_EXCL_LINE
+  virtual void init_result(Result_impl&) {} // GCOV_EXCL_LINE
 };
 
 
@@ -809,13 +795,15 @@ public:
   the result data and meta-data.
 */
 
-class Result_impl_base
+class Result_impl
   : public cdk::Row_processor
   , public cdk::api::Diagnostics
 {
 public:
 
-  virtual ~Result_impl_base();
+  Result_impl(Result_init &init);
+
+  virtual ~Result_impl();
 
   /*
     Prepare for reading (the next) result.
@@ -895,11 +883,24 @@ public:
 
   const std::vector<std::string>& get_generated_ids() const;
 
+  /*
+    Get column information.
+
+    Returns reference to Column_info<STR> object with information about
+    the column. This Column_info<STR> object sits inside and is owned by
+    this Result_impl object.
+  */
+
+  const Column_info& get_column(col_count_t pos) const
+  {
+    if (!m_cursor || !m_mdata)
+      THROW("No result set");
+    return m_mdata->get_column(pos);
+  }
+
 protected:
 
-
-  Result_impl_base(Result_init &init);
-  Result_impl_base(const Result_impl_base&) = delete;
+  Result_impl(const Result_impl&) = delete;
 
 
   /*
@@ -933,7 +934,7 @@ protected:
     takes its ownership.
   */
 
-  virtual Meta_data_base* fetch_meta_data(cdk::Meta_data&) = 0;
+  //Meta_data_base* fetch_meta_data(cdk::Meta_data&) = 0;
 
 
   // -- Result data
@@ -1034,7 +1035,7 @@ private:
 
 
 inline
-col_count_t Result_impl_base::get_col_count() const
+col_count_t Result_impl::get_col_count() const
 {
   if (!m_cursor)
     THROW("No result set");
@@ -1042,7 +1043,7 @@ col_count_t Result_impl_base::get_col_count() const
 }
 
 inline
-cdk::row_count_t Result_impl_base::get_affected_rows() const
+cdk::row_count_t Result_impl::get_affected_rows() const
 {
   if (!m_reply)
     THROW("Attempt to get affected rows count on empty result");
@@ -1050,7 +1051,7 @@ cdk::row_count_t Result_impl_base::get_affected_rows() const
 }
 
 inline
-cdk::row_count_t Result_impl_base::get_auto_increment() const
+cdk::row_count_t Result_impl::get_auto_increment() const
 {
   if (!m_reply)
     THROW("Attempt to get auto increment value on empty result");
@@ -1058,14 +1059,14 @@ cdk::row_count_t Result_impl_base::get_auto_increment() const
 }
 
 inline
-unsigned Result_impl_base::get_warning_count() const
+unsigned Result_impl::get_warning_count() const
 {
-  auto self = const_cast<Result_impl_base*>(this);
+  auto self = const_cast<Result_impl*>(this);
   return self->entry_count(cdk::api::Severity::WARNING);
 }
 
 inline
-const std::vector<std::string>& Result_impl_base::get_generated_ids() const
+const std::vector<std::string>& Result_impl::get_generated_ids() const
 {
   if (!m_reply)
     THROW("Attempt to get generated ids for empty result");
@@ -1073,27 +1074,27 @@ const std::vector<std::string>& Result_impl_base::get_generated_ids() const
 }
 
 inline
-bool Result_impl_base::has_data() const
+bool Result_impl::has_data() const
 {
   return ! m_row_cache.empty() || m_pending_rows;
 }
 
 
 inline
-const Shared_meta_data& Result_impl_base::get_mdata() const
+const Shared_meta_data& Result_impl::get_mdata() const
 {
   return m_mdata;
 }
 
 
 inline
-void Result_impl_base::store()
+void Result_impl::store()
 {
   load_cache();
 }
 
 inline
-row_count_t Result_impl_base::count()
+row_count_t Result_impl::count()
 {
   store();
   if (entry_count() > 0)
@@ -1101,38 +1102,6 @@ row_count_t Result_impl_base::count()
   return m_row_cache_size;
 }
 
-
-template <typename STR>
-class Result_impl
-  : public Result_impl_base
-{
-  Meta_data_base* fetch_meta_data(cdk::Meta_data &md) override
-  {
-    return new Meta_data<STR>(md);
-  }
-
-public:
-
-  Result_impl(Result_init &init)
-    : Result_impl_base(init)
-  {}
-
-  /*
-    Get column information.
-
-    Returns reference to Column_info<STR> object with information about
-    the column. This Column_info<STR> object sits inside and is owned by
-    this Result_impl object.
-  */
-
-  const Column_info<STR>& get_column(col_count_t pos) const
-  {
-    if (!m_cursor || !m_mdata)
-      THROW("No result set");
-    return static_cast<Meta_data<STR>*>(m_mdata.get())->get_column(pos);
-  }
-
-};
 
 
 }}  // mysqlx::common namespace

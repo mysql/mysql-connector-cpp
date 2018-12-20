@@ -28,11 +28,10 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <mysqlx/common.h>
 #include <mysql/cdk.h>
-#include <uuid_gen.h>
 #include <uri_parser.h>
 #include <json_parser.h>
+#include <mysqlx/common.h>
 
 PUSH_SYS_WARNINGS
 #include <chrono>

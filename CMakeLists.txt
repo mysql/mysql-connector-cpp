@@ -272,6 +272,8 @@ endif()
 
 if(MSVC)
 
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
+
   # Disable MSVC unreachable code warnings unless requested.
   add_compile_options(/wd4702)
 

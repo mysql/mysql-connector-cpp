@@ -54,6 +54,7 @@ namespace common {
   class Session_pool;
   using Shared_session_pool = std::shared_ptr<Session_pool>;
   class Result_init;
+  class Result_impl;
 }
 
 namespace internal {
@@ -121,7 +122,7 @@ protected:
 struct PUBLIC_API Query_src
 {
   using Value = string;
-  struct Res_impl;
+  using Res_impl = common::Result_impl;
 
   Res_impl *m_res = nullptr;
   const void *m_row = nullptr;
@@ -325,7 +326,7 @@ struct PUBLIC_API Session_detail
     {}
 
     Schema_src(Session &sess)
-      : Schema_src(sess, L"%")
+      : Schema_src(sess, "%")
     {}
 
     using Name_src::iterator_start;
@@ -373,7 +374,7 @@ protected:
 
   void create_schema(const string &name, bool reuse);
   void drop_schema(const string &name);
-  const std::wstring& get_default_schema_name();
+  string get_default_schema_name();
 
   void start_transaction();
   void commit();

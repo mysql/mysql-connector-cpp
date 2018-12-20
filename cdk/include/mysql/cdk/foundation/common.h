@@ -90,6 +90,7 @@
   PRAGMA_CDK(warning (push,2)) \
   DISABLE_WARNING_CDK(4350) \
   DISABLE_WARNING_CDK(4738) \
+  DISABLE_WARNING_CDK(4996) \
   DISABLE_WARNING_CDK(4548) \
   DISABLE_WARNING_CDK(4365) \
   DISABLE_WARNING_CDK(4774) \
@@ -134,6 +135,26 @@
 #endif
 
 #define POP_PB_WARNINGS   DIAGNOSTIC_POP_CDK
+
+
+#if defined _MSC_VER
+
+/*
+  We want to use functions which trigger this security warning on Windows,
+  for example string::copy().
+*/
+
+#define PUSH_SCL_SECURE_WARNINGS  DIAGNOSTIC_PUSH_CDK \
+  DISABLE_WARNING_CDK(4996)
+
+#else
+
+#define PUSH_SCL_SECURE_WARNINGS
+
+#endif
+
+#define POP_SCL_SECURE_WARNINGS  DIAGNOSTIC_POP_CDK
+
 
 
 /*
@@ -184,6 +205,7 @@ PUSH_SYS_WARNINGS_CDK
 POP_SYS_WARNINGS_CDK
 
 #undef max
+#undef byte
 #undef THROW
 
 /*
@@ -211,12 +233,6 @@ POP_SYS_WARNINGS_CDK
 #endif
 
 
-
-
-
-
-#endif
-
 /*
   Macro to be used to disable "implicit fallthrough" gcc warning
   <https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html>
@@ -243,3 +259,104 @@ POP_SYS_WARNINGS_CDK
 #   define FALLTHROUGH  // FALLTHROUGH
 # endif
 #endif //FALLTHROUGH
+
+#ifdef __cplusplus
+
+namespace cdk {
+namespace foundation {
+
+
+#ifdef USE_NATIVE_BYTE
+  using ::byte;
+#else
+  typedef unsigned char byte;
+#endif
+
+
+/*
+  Convenience class to disable copy constructor in a derived class.
+*/
+
+class nocopy
+{
+  nocopy(const nocopy&);
+  nocopy& operator=(const nocopy&);
+
+protected:
+  nocopy() {}
+};
+
+
+
+#ifndef HAVE_IS_SAME
+
+  template <typename T, typename U>
+  struct is_same
+  {
+    static const bool value = false;
+  };
+
+  template <typename T>
+  struct is_same<T,T>
+  {
+    static const bool value = true;
+  };
+
+#else
+
+  using std::is_same;
+
+#endif
+
+
+/*
+  Convenience for checking numeric limits (to be used when doing numeric
+  casts).
+
+  TODO: Maybe more templates are needed for the case where T is a float/double
+  type and U is an integer type or vice versa.
+*/
+
+
+template <
+  typename T, typename U,
+  typename std::enable_if<std::is_unsigned<U>::value>::type* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  using UT = typename std::make_unsigned<T>::type;
+  return !(val > (UT)std::numeric_limits<T>::max());
+}
+
+template <
+  typename T, typename U,
+  typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  return !(val < 0) && !(val > std::numeric_limits<T>::max());
+}
+
+template <
+  typename T, typename U,
+  typename std::enable_if<!std::is_unsigned<T>::value>::type* = nullptr,
+  typename std::enable_if<!std::is_unsigned<U>::value>::type* = nullptr
+>
+inline
+bool check_num_limits(U val)
+{
+  return
+    !((val > std::numeric_limits<T>::max())
+     || (val < std::numeric_limits<T>::lowest()));
+}
+
+#define ASSERT_NUM_LIMITS_CDK(T,V) assert(cdk::foundation::check_num_limits<T>(V))
+
+}}  // cdk::foundation
+
+#endif
+
+#endif

@@ -51,7 +51,7 @@ using namespace cdk::foundation;
 typedef api::Severity Severity;
 
 void add_diag_entry(Diagnostic_arena &da, Severity::value level,
-                    const string &msg)
+                    const std::string &msg)
 {
   try {
     throw_error(msg);
@@ -67,8 +67,8 @@ TEST(Foundation, Diagnostic_arena)
 try {
   Diagnostic_arena da;
 
-  add_diag_entry(da, Severity::INFO, L"info entry");
-  add_diag_entry(da, Severity::WARNING, L"warning entry");
+  add_diag_entry(da, Severity::INFO, "info entry");
+  add_diag_entry(da, Severity::WARNING, "warning entry");
 
   EXPECT_EQ(1U, da.entry_count(Severity::INFO));
   EXPECT_EQ(1U, da.entry_count(Severity::WARNING));
@@ -80,9 +80,9 @@ try {
      <<"get_error() should throw error when there is no error"
        " in diagnostic arena";
 
-  add_diag_entry(da, Severity::ERROR, L"error entry");
-  add_diag_entry(da, Severity::WARNING, L"second warning entry");
-  add_diag_entry(da, Severity::ERROR, L"second error entry");
+  add_diag_entry(da, Severity::ERROR, "error entry");
+  add_diag_entry(da, Severity::WARNING, "second warning entry");
+  add_diag_entry(da, Severity::ERROR, "second error entry");
 
   EXPECT_EQ(1U, da.entry_count(Severity::INFO));
   EXPECT_EQ(2U, da.entry_count(Severity::WARNING));
@@ -94,7 +94,7 @@ try {
   const Error &err= da.get_error();
 
   cout <<"First error: " <<err <<endl;
-  EXPECT_EQ(string("error entry"), err.description());
+  EXPECT_EQ(std::string("error entry"), err.description());
   EXPECT_EQ(std::string("CDK Error: error entry"), err.what());
 
   unsigned int count;

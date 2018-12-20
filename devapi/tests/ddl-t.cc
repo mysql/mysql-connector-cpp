@@ -77,10 +77,10 @@ TEST_F(Ddl, create_drop)
   //Tables Test
 
   {
-    sql(L"USE schema_to_drop_1");
-    sql(L"CREATE TABLE tb1 (`name` varchar(20), `age` int)");
-    sql(L"CREATE TABLE tb2 (`name` varchar(20), `age` int)");
-    sql(L"CREATE VIEW  view1 AS SELECT `name`, `age` FROM tb1");
+    sql("USE schema_to_drop_1");
+    sql("CREATE TABLE tb1 (`name` varchar(20), `age` int)");
+    sql("CREATE TABLE tb2 (`name` varchar(20), `age` int)");
+    sql("CREATE VIEW  view1 AS SELECT `name`, `age` FROM tb1");
 
     std::list<Table> tables_list = schema.getTables();
 
@@ -88,7 +88,7 @@ TEST_F(Ddl, create_drop)
 
     for (auto tb : tables_list)
     {
-      if (tb.getName().find(L"view") != std::string::npos)
+      if (tb.getName().find(u"view") != std::string::npos)
       {
         EXPECT_TRUE(tb.isView());
 

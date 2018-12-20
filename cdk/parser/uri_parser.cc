@@ -37,6 +37,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <sstream>
 #include <bitset>
 #include <cstdarg>
+#include <locale>
 POP_SYS_WARNINGS_CDK
 
 
@@ -109,12 +110,12 @@ struct Unexpected_error
 };
 
 
-void URI_parser::unexpected(const std::string &what, const cdk::string &msg) const
+void URI_parser::unexpected(const std::string &what, const std::string &msg) const
 {
   throw Unexpected_error(this, what, msg);
 }
 
-void URI_parser::unexpected(char what, const cdk::string &msg) const
+void URI_parser::unexpected(char what, const std::string &msg) const
 {
   throw Unexpected_error(this, what, msg);
 }
@@ -330,7 +331,7 @@ void URI_parser::parse(Processor &prc)
   parse_query(prc);
 
   if (has_more_tokens())
-    parse_error(L"Unexpected characters at the end");
+    parse_error("Unexpected characters at the end");
 }
 
 
@@ -365,7 +366,7 @@ void URI_parser::parse_path(Processor &prc)
 void URI_parser::parse_connection(Processor &prc)
 {
   if (next_token_is(T_AT))
-    parse_error(L"Expected user credentials before '@'");
+    parse_error("Expected user credentials before '@'");
 
   parse_userinfo(prc);
 
@@ -403,7 +404,7 @@ void URI_parser::parse_connection(Processor &prc)
     while (consume_token(T_COMMA));
 
     if (!consume_token(T_SQCLOSE))
-      parse_error(L"Expected ']' to close list of hosts");
+      parse_error("Expected ']' to close list of hosts");
   }
   else
     report_address(prc, opts, 0, host, port);
@@ -514,17 +515,17 @@ void URI_parser::parse_list_entry(Processor &prc)
       if (!(consume_token(T_COMMA)
             && consume_word_ci("priority")
             && consume_token(T_EQ)))
-          parse_error(L"Expected priority specification for a host");
+          parse_error("Expected priority specification for a host");
 
       std::string prio_str;
 
       consume_while(prio_str, TokSet(T_DIGIT));
 
       if (prio_str.empty())
-        parse_error(L"Expected priority value");
+        parse_error("Expected priority value");
 
       if (!consume_token(T_PCLOSE))
-        parse_error(L"Expected ')' to close a host-priority pair");
+        parse_error("Expected ')' to close a host-priority pair");
 
       report_address(prc, opts, 1U + convert_val(prio_str), host, port);
       guard.release();
@@ -657,7 +658,7 @@ void URI_parser::parse_balanced(std::string &chars, bool include_parens)
   static TokSet np_char{ unreserved, gen_delims, T_COMMA };
 
   if (!consume_token(T_POPEN))
-    parse_error(L"Expected opening '('");
+    parse_error("Expected opening '('");
 
   if (include_parens)
     chars.push_back('(');
@@ -670,7 +671,7 @@ void URI_parser::parse_balanced(std::string &chars, bool include_parens)
   consume_while(chars, np_char);
 
   if (!consume_token(T_PCLOSE))
-    parse_error(L"Expected closing ')'");
+    parse_error("Expected closing ')'");
 
   if (include_parens)
     chars.push_back(')');
@@ -838,10 +839,10 @@ unsigned short URI_parser::convert_val(const std::string &port) const
   */
 
   if (val == 0 && end == beg)
-    throw Error(this, L"Expected number");
+    throw Error(this, "Expected number");
 
   if (val > 65535 || val < 0)
-    throw Error(this, L"Invalid value");
+    throw Error(this, "Invalid value");
 
   return static_cast<unsigned short>(val);
 }
@@ -929,7 +930,7 @@ bool URI_parser::check_scheme(bool force)
   {
     m_has_scheme = true;
     if (m_uri.substr(0, pos) != "mysqlx")
-      parse_error(L"Expected URI scheme 'mysqlx'");
+      parse_error("Expected URI scheme 'mysqlx'");
 
     // move to the first token after '://'
     state.m_pos_next = pos + 3;
@@ -946,7 +947,7 @@ bool URI_parser::check_scheme(bool force)
     }
 
     if (force)
-      parse_error(L"URI scheme expected");
+      parse_error("URI scheme expected");
   }
 
   get_token();
@@ -985,7 +986,7 @@ bool URI_parser::get_token()
     char *end = NULL;
     c = strtol(hex.data(), &end, 16);
     if (end != hex.data() + 2 || c < 0 || c > 256)
-      parse_error(L"Invalid pct-encoded character");
+      parse_error("Invalid pct-encoded character");
 
     state.m_tok = Token((char)c, true);
     state.m_pos_next = pos + 3;
@@ -1030,7 +1031,7 @@ bool URI_parser::has_more_tokens() const
 URI_parser::Token URI_parser::consume_token()
 {
   if (at_end())
-    parse_error(L"Expected more characters");
+    parse_error("Expected more characters");
   Token cur_tok(m_state.top().m_tok);
   get_token();
   return cur_tok;

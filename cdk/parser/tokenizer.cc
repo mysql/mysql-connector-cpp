@@ -44,80 +44,95 @@ POP_SYS_WARNINGS_CDK
 
 using namespace parser;
 
-
-namespace {
-
-  std::locale c_loc("C");
-  const std::ctype<char_t> &ctf = std::use_facet<std::ctype<char_t>>(c_loc);
-
-}
+using std::string;
 
 
-bool Tokenizer::cur_char_is_space() const
+bool Tokenizer::iterator::get_next_token()
 {
-  return ctf.is(ctf.space, cur_char());
-}
+  skip_ws();
 
-bool Tokenizer::cur_char_is_word() const
-{
-  if (cur_char_is(L'_'))
-    return true;
-  return ctf.is(ctf.alnum, cur_char());
-}
+  m_pos = char_iterator::cur_pos();
 
-
-void Tokenizer::get_tokens()
-{
-  while (chars_available())
+  if (m_at_end || char_iterator::at_end())
   {
-    if (0 == cur_char())
-      return;
+    m_at_end = true;
+    return false;
+  }
 
-    while (chars_available() && cur_char_is_space())
-      consume_char();
+  if ((unsigned)*m_pos < 127)
+  {
 
-    if (!chars_available())
-      return;
+    switch (*m_pos)
+    {
+    case '"': case '\'':
+      if (parse_string())
+        return true;
+      break;
+    case 'x': case 'X':
+    case '0':
+      if (parse_hex())
+        return true;
+    case '.': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+      if (parse_number())
+        return true;
+      break;
 
-    if (parse_string())
-      continue;
+    default: break;
+    }
 
-    if (parse_hex())
-      continue;
+    assert(!char_iterator::at_end());
 
-    if (parse_number())
-      continue;
+    // check symbol tokens, starting with 2+ char ones
 
-    // check symbol tokens
-
-    set_token_start();
-
+    static struct symb_table_t
+    {
+      std::map<char, std::vector<std::pair<const char*, Token::Type>>> m_map;
+      symb_table_t()
+      {
 #define  symbol_check(T,X) \
-    if (consume_chars(L##X)) \
-    { \
-      add_token(Token::T, L##X); \
-      continue; \
-    } \
+        { \
+          auto &entry = m_map[(X)[0]]; \
+          entry.push_back({X,Token::T}); \
+        }
+        SYMBOL_LIST2(symbol_check)
+      }
+    }
+    symb_table;
 
-    SYMBOL_LIST2(symbol_check)
+    auto it = symb_table.m_map.find((char)*m_pos);
 
+    if (it != symb_table.m_map.end())
+    {
+      for (auto symb : it->second)
+      {
+        if (consume_chars(symb.first)) {
+          set_token(symb.second);
+          return true;
+        }
+      }
+    }
+
+
+    switch (*m_pos)
+    {
 #define  symbol_check1(T,X) \
-    if (c == (L##X)[0]) { consume_char(); add_token(Token::T,L##X); continue; }
+      case (X)[0]: consume_char(*m_pos); set_token(Token::T); return true;
+      SYMBOL_LIST1(symbol_check1)
+      default: break;
+    }
 
-    char_t c = cur_char();
-    SYMBOL_LIST1(symbol_check1)
+  }
 
-    /*
-      Note: it is important to parse word last as some words can qualify as
-      other tokens.
-    */
+  /*
+    Note: it is important to parse word last as some words can qualify as
+    other tokens.
+  */
 
-    if (parse_word())
-      continue;
+  if (parse_word())
+    return true;
 
-    token_error(L"Could not recognize next token");
-
-  } // while
+  return false;
 }
 
 
@@ -146,57 +161,54 @@ void Tokenizer::get_tokens()
     FLOAT ::= DIGIT* '.' DIGIT+ ('E' ('+'|'-')? DIGIT+)? | DIGIT+ 'E' ('+'|'-')? DIGIT+
 */
 
-bool Tokenizer::parse_digits(string *out)
+bool Tokenizer::iterator::parse_digits() noexcept
 {
   bool has_digits = false;
 
-  while (chars_available() && cur_char_in(L"0123456789"))
+  while (!char_iterator::at_end() && cur_char_in("0123456789"))
   {
     has_digits = true;
-
-    if (out)
-      out->push_back(consume_char());
-    else
-      consume_char();
+    next_unit();
   }
 
   return has_digits;
 }
 
-bool Tokenizer::parse_number()
+bool Tokenizer::iterator::parse_number()
 {
+  if (at_end())
+    return false;
+
   bool is_float = false;
   bool exponent = false;
-
-  set_token_start();
 
   /*
     Note: '.' starts NUMBER token only if followed by a digit.
     Otherwise it is a single DOT token.
   */
 
-  if (cur_char_is(L'.') && !next_char_in(L"0123456789"))
+  if (cur_char_is(L'.') && !char_iterator::at_end(1) && !next_char_in("0123456789"))
     return false;
 
   // Parse leading digits, if any
 
-  if (!parse_digits() && !cur_char_is(L'.'))
+  if (!parse_digits() && !cur_char_is('.'))
   {
     return false;
   }
 
   // Handle decimal point, if any
 
-  if (consume_char(L'.'))
+  if (!char_iterator::at_end() && consume_char('.'))
   {
     is_float = true;
     if (!parse_digits())
-      token_error(L"No digits after decimal point");
+      throw_error("No digits after decimal point");
   }
 
   // See if we have exponent (but it is not parsed yet)
 
-  if (consume_char(L"Ee"))
+  if (!char_iterator::at_end() && consume_char("Ee"))
   {
     is_float = true;
     exponent = true;
@@ -210,7 +222,7 @@ bool Tokenizer::parse_number()
 
   if (!is_float)
   {
-    add_token(Token::INTEGER);
+    set_token(Token::INTEGER);
     return true;
   }
 
@@ -218,15 +230,15 @@ bool Tokenizer::parse_number()
 
   if (exponent)
   {
-    consume_char(L"+-");
+    consume_char("+-");
 
     if (!parse_digits())
-      token_error(L"No digits in the exponent");
+      throw_error("No digits in the exponent");
   }
 
   // Report floating number.
 
-  add_token(Token::NUMBER);
+  set_token(Token::NUMBER);
   return true;
 }
 
@@ -240,60 +252,65 @@ bool Tokenizer::parse_number()
 */
 
 
-bool Tokenizer::parse_hex()
+bool Tokenizer::iterator::parse_hex()
 {
-  string val;
+  if (char_iterator::at_end())
+    return false;
 
-  if (!chars_available())
+  if (!cur_char_in("Xx0"))
     return false;
 
   switch (cur_char())
   {
 
-  case L'X': case L'x':
+  case 'X': case 'x':
   {
-    if (!next_char_is(L'\''))
+    if (char_iterator::at_end(1) || !next_char_is('\''))
       return false;
 
-    consume_char();
-    consume_char();
+    next_unit();
+    next_unit();
 
-    if (!parse_hex_digits(val))
-      token_error(L"Unexpected character inside hex literal");
+    pos_type start = char_iterator::cur_pos();
 
-    if (!consume_char(L'\''))
-      token_error(L"Unexpected character inside hex literal");
+    if (!parse_hex_digits())
+      throw_error("Unexpected character inside hex literal");
 
-    break;
+    set_token(Token::HEX, start);
+
+    if (char_iterator::at_end() || !consume_char('\''))
+      throw_error("Unexpected character inside hex literal");
+
+    return true;
   }
 
-  case L'0':
+  case '0':
   {
-    if (!next_char_in(L"Xx"))
+    if (char_iterator::at_end(1) || !next_char_in("Xx"))
       return false;
 
-    consume_char();
-    consume_char();
+    next_unit();
+    next_unit();
 
-    if (!parse_hex_digits(val))
-      token_error(L"No hex digits found after 0x");
+    pos_type start = char_iterator::cur_pos();
 
-    break;
+    if (!parse_hex_digits())
+      throw_error("No hex digits found after 0x");
+
+    set_token(Token::HEX, start);
+
+    return true;
   }
 
   default:
     return false;
   }
-
-  add_token(Token::HEX, val);
-  return true;
 }
 
-bool Tokenizer::parse_hex_digits(string &digits)
+bool Tokenizer::iterator::parse_hex_digits() noexcept
 {
-  bool ret = cur_char_in(L"0123456789ABCDEFabcdef");
-  while (cur_char_in(L"0123456789ABCDEFabcdef"))
-    digits.push_back(consume_char());
+  bool ret = false;
+  for (; !char_iterator::at_end() && consume_char("0123456789ABCDEFabcdef"); ret = true);
   return ret;
 }
 
@@ -305,33 +322,30 @@ bool Tokenizer::parse_hex_digits(string &digits)
   QWORD - word quotted in back-ticks
 */
 
-bool Tokenizer::parse_word()
+bool Tokenizer::iterator::parse_word()
 {
-  if (!chars_available())
+  if (char_iterator::at_end())
     return false;
 
-  set_token_start();
-
-  if (cur_char_is(L'`'))
+  if (cur_char_is('`'))
   {
-    string word;
-    parse_quotted_string(L'`', &word);
-    add_token(Token::QWORD, word);
+    parse_quotted_string('`');
+    set_tok_type(Token::QWORD);
     return true;
   }
 
   bool has_word = false;
 
-  while (chars_available() && cur_char_is_word())
+  while (!char_iterator::at_end() && cur_char_is_word())
   {
-    consume_char();
+    next_unit();
     has_word = true;
   }
 
   if (!has_word)
     return false;
 
-  add_token(Token::WORD);
+  set_token(Token::WORD);
   return true;
 }
 
@@ -343,151 +357,110 @@ bool Tokenizer::parse_word()
   QQSTRING - a string in double quotes
 */
 
-bool Tokenizer::parse_string()
+bool Tokenizer::iterator::parse_string()
 {
-  set_token_start();
-  string val;
   char_t quote = cur_char();
 
-  if (!(L'\"' == quote || L'\'' == quote))
+  if (!(U'\"' == quote || U'\'' == quote))
     return false;
 
-  if (!parse_quotted_string(quote, &val))
+  if (!parse_quotted_string((char)quote))
     return false;
 
-  add_token(L'\"' == quote ? Token::QQSTRING : Token::QSTRING, val);
+  set_tok_type('\"' == quote ? Token::QQSTRING : Token::QSTRING);
   return true;
 }
 
 
-bool Tokenizer::parse_quotted_string(char_t qchar, string *val)
+bool Tokenizer::iterator::parse_quotted_string(char qchar)
 {
   if (!consume_char(qchar))
     return false;
 
+  pos_type start_pos = char_iterator::cur_pos();
+
   // Store first few characters for use in error message.
 
   static const size_t start_len = 8;
-  char_t start[start_len] = { qchar };
-  size_t pos = 1;
+  cdk::string error("Unterminated quoted string starting with ");
+  error.push_back((char_t)qchar);
 
-  while (chars_available())
+  while (!char_iterator::at_end())
   {
     // if we do not have escaped char, look at the end of the string
 
-    if (!consume_char(L'\\'))
+    if (!consume_char('\\'))
     {
-      // if qute char is repeated, then it does not terminate string
-      if (consume_char(qchar) && !cur_char_is(qchar))
+      // if quote char is repeated, then it does not terminate string
+      if (
+        consume_char(qchar) && (char_iterator::at_end() || !cur_char_is(qchar))
+      )
+      {
+        // end of the string, set token extend
+        set_tok_pos(start_pos, char_iterator::cur_pos() - 1);
         return true;
+      }
     }
 
     char_t c = consume_char();
 
-    if (val)
-      val->push_back(c);
+    if (c == invalid_char)
+      throw_error("Invalid utf8 string");
 
-    if (pos < start_len)
-      start[pos++] = c;
+    if (char_iterator::cur_pos() < start_pos + start_len)
+      error.push_back(c);
   }
 
-  if (pos < start_len)
-    start[pos] = '\0';
-  start[start_len - 1] = '\0';
-
-  token_error(
-    string(L"Unterminated quoted string starting with ")
-    + string(start) + string(L"...")
-  );
-
+  throw_error(error + "...");
   return false;  // quiet compile warnings
 }
 
 
-// Constructing token sequence
+/*
+  Low-level character iterator.
+*/
 
 
-size_t Tokenizer::set_token_start()
-{
-  _tok_pos = _in_pos;
-  return _tok_pos;
+namespace {
+
+  // Note: be independent from the system locale settings.
+
+  std::locale c_loc("C");
+  const std::ctype<char> &ctf = std::use_facet<std::ctype<char>>(c_loc);
+
 }
 
-void Tokenizer::add_token(Token::Type tt)
+std::locale char_iterator::m_cloc("C");
+
+
+bytes char_iterator::get_seen(size_t len, bool *complete)
 {
-  assert(_in_pos > _tok_pos);
-  add_token(tt, _input.substr(_tok_pos, _in_pos - _tok_pos));
-  _tok_pos = _in_pos;
-}
+  char_iterator_base it(m_ctx_beg, cur_pos());
 
-void Tokenizer::add_token(Token::Type tt, const string &val)
-{
-  _tokens.emplace_back(tt, val, _tok_pos, _in_pos);
-}
+  while (!it.at_end() && (it.cur_pos() + len <= cur_pos()))
+    it++;
 
+  if (complete)
+    *complete = (it.cur_pos() == get_beg());
 
-// Access underlying sequence of characters
-
-
-bool Tokenizer::chars_available() const
-{
-  return _in_pos < _input.size();
-}
-
-char_t   Tokenizer::cur_char() const
-{
-  if (!chars_available())
-    token_error(L"More characters expected");
-  return _input.at(_in_pos);
-}
-
-size_t Tokenizer::get_char_pos() const
-{
-  return _in_pos;
+  return { (byte*)it.cur_pos(), (byte*)cur_pos() };
 }
 
 
-bool Tokenizer::next_char_is(char_t c, size_t off) const
+bytes char_iterator::get_ahead(size_t len, bool *complete)
 {
-  return _in_pos + off < _input.size() && _input[_in_pos + off] == c;
+  char_iterator_base it(cur_pos(), get_end());
+  const char *pos = it.cur_pos();
+
+  while (!it.at_end() && (it.cur_pos() < cur_pos() + len))
+  {
+    pos = it.cur_pos();
+    it++;
+  }
+
+  if (complete)
+    *complete = (pos == get_end());
+
+  return { (byte*)cur_pos(), (byte*)pos };
 }
 
-bool Tokenizer::next_char_in(const char_t *set, size_t off) const
-{
-  if (_in_pos + off >= _input.size())
-    return false;
-  char_t c = _input[_in_pos + off];
-
-  return (0 != c) && (NULL != std::wcschr(set, c));
-}
-
-
-char_t Tokenizer::consume_char()
-{
-  char_t c = cur_char();
-  _in_pos++;
-  return c;
-}
-
-bool Tokenizer::consume_char(char_t c)
-{
-  if (!cur_char_is(c))
-    return false;
-  consume_char();
-  return true;
-}
-
-char_t Tokenizer::consume_char(const char_t *set)
-{
-  if (!cur_char_in(set))
-    return '\0';
-  return consume_char();
-}
-
-bool Tokenizer::consume_chars(const char_t *str)
-{
-  if (_in_pos != _input.find(str, _in_pos))
-    return false;
-  _in_pos += wcslen(str);
-  return true;
-}
