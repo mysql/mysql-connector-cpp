@@ -52,7 +52,7 @@ endif()
 
 function(add_coverage target)
 
-  if(NOT WTIH_COVERAGE)
+  if(NOT WITH_COVERAGE)
     return()
   endif()
 
@@ -62,19 +62,13 @@ function(add_coverage target)
 endfunction()
 
 
-add_library(Coverage::enable STATIC IMPORTED GLOBAL)
+add_library(coverage-enable-if INTERFACE)
+add_library(Coverage::enable ALIAS coverage-enable-if)
 
-set_property(TARGET Coverage::enable APPEND
-  PROPERTY INTERFACE_COMPILE_DEFINITIONS WITH_COVERAGE
-)
-
-set_property(TARGET Coverage::enable APPEND
-  PROPERTY INTERFACE_COMPILE_OPTIONS -O0;-fprofile-arcs;-ftest-coverage
-)
+target_compile_definitions(coverage-enable-if INTERFACE WITH_COVERAGE)
+target_compile_options(coverage-enable-if INTERFACE -O0 -fprofile-arcs -ftest-coverage)
 
 # TODO: See if gcov is installed on the system
 
-set_property(TARGET Coverage::enable APPEND
-  PROPERTY INTERFACE_LINK_LIBRARIES gcov
-)
+target_link_libraries(coverage-enable-if INTERFACE gcov)
 

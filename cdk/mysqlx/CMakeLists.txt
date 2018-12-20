@@ -48,9 +48,9 @@ ADD_LIBRARY(cdk_mysqlx STATIC
   ${HEADERS}
   )
 
-target_link_libraries(cdk_mysqlx cdk_proto_mysqlx cdk_foundation)
+target_link_libraries(cdk_mysqlx PUBLIC cdk_proto_mysqlx cdk_foundation)
 # this is used by auth_hash.cc
-target_link_libraries(cdk_mysqlx SSL::ssl)
+target_link_libraries(cdk_mysqlx PRIVATE SSL::ssl)
 
 ADD_COVERAGE(cdk_mysqlx)
 

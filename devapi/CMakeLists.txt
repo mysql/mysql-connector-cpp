@@ -40,7 +40,7 @@ add_library(devapi STATIC
   ${HEADERS}
 )
 
-target_link_libraries(devapi common)
+target_link_libraries(devapi PUBLIC common)
 
 add_coverage(devapi)
 

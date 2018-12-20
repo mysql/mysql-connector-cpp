@@ -43,8 +43,8 @@ file(GLOB HEADERS *.h)
 add_library(cdk STATIC ${cdk_sources} ${HEADERS})
 
 target_link_libraries(cdk
-  cdk_mysqlx cdk_parser
-  Protobuf::pb-lite  # required by codecc.cc
+  PUBLIC  cdk_mysqlx cdk_parser
+  PRIVATE Protobuf::pb-lite  # required by codecc.cc
 )
 
 add_coverage(cdk)

@@ -54,7 +54,7 @@ set(_libmysqlx_cc_src
 file(GLOB HEADERS *.h)
 
 add_library(xapi STATIC ${_libmysqlx_cc_src} ${HEADERS})
-target_link_libraries(xapi common)
+target_link_libraries(xapi PUBLIC common)
 add_coverage(xapi)
 
 add_subdirectory(tests)
