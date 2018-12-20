@@ -1569,6 +1569,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   next.insert(Op::BETWEEN);
   next.insert(Op::REGEXP);
   next.insert(Op::SOUNDS_LIKE);
+  next.insert(Op::OVERLAPS);
 
   const Token *t = consume_token(next);
 
@@ -1580,7 +1581,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
   if (!t)
   {
     if (neg)
-      parse_error("Expected IN, (R)LIKE, BETWEEN or REGEXP after NOT");
+      parse_error("Expected IN, (R)LIKE, BETWEEN, OVERLAPS or REGEXP after NOT");
 
     // If prc is NULL return already stored expression.
 
@@ -1650,7 +1651,10 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     if (neg)
       op = Op::NOT_REGEXP;
     break;
-
+  case Op::OVERLAPS:
+      if (neg)
+    op = Op::NOT_OVERLAPS;
+      break;
   default: break;
   }
 
@@ -1744,6 +1748,11 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
     case Op::REGEXP:
     case Op::NOT_REGEXP:
+      parse(COMP, aprc->list_el());
+      break;
+
+    case Op::OVERLAPS:
+    case Op::NOT_OVERLAPS:
       parse(COMP, aprc->list_el());
       break;
 

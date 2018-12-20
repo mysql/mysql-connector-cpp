@@ -2836,3 +2836,60 @@ TEST_F(Crud, PS)
   }
 
 }
+
+TEST_F(Crud, overlaps)
+{
+  SKIP_IF_NO_XPLUGIN;
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 15)
+
+  cout << "Creating collection..." << endl;
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  coll.remove("true").execute();
+
+
+  coll.add("{ \"name\": \"foo\", \"age\": 2, \
+           \"food\": [\"Milk\", \"Soup\"] }")
+      .add("{ \"name\": \"baz\", \"age\": 2, \
+           \"food\": [\"Beer\", \"Soup\"] }")
+      .execute();
+
+  auto res = coll.find(R"(food overlaps ["Soup"])").execute();
+  EXPECT_EQ(2, res.count());
+
+  res = coll.find(R"(food overlaps ["Milk", "Soup"])").execute();
+  EXPECT_EQ(2, res.count());
+
+  res = coll.find(R"(food overlaps ["Milk"])").execute();
+  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(string("foo"),res.fetchOne()["name"]);
+
+  res = coll.find(R"(food overlaps ["Beer"])").execute();
+  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(string("baz"),res.fetchOne()["name"]);
+
+  res = coll.find(R"(food overlaps ["Meat"])").execute();
+  EXPECT_EQ(0, res.count());
+
+  // Not Overlaps tests
+
+  res = coll.find(R"(food not overlaps ["Soup"])").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find(R"(food not overlaps ["Milk", "Soup"])").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find(R"(food not overlaps ["Milk"])").execute();
+  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(string("baz"),res.fetchOne()["name"]);
+
+  res = coll.find(R"(food not overlaps ["Beer"])").execute();
+  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(string("foo"),res.fetchOne()["name"]);
+
+  res = coll.find(R"(food not overlaps ["Meat"])").execute();
+  EXPECT_EQ(2, res.count());
+
+}

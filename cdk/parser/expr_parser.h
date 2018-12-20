@@ -71,6 +71,7 @@ POP_SYS_WARNINGS_CDK
     X(RLIKE, "rlike") \
     X(INTERVAL, "interval") \
     X(REGEXP, "regexp") \
+    X(OVERLAPS, "overlaps")\
     X(ESCAPE, "escape") \
     X(HEX, "hex") \
     X(BIN, "bin") \
@@ -176,7 +177,9 @@ POP_SYS_WARNINGS_CDK
   X(REGEXP, "regexp", {}, {Keyword::REGEXP}) \
   X(NOT_REGEXP, "not_regexp", {}, {}) \
   X(CAST, "cast", {}, {Keyword::CAST}) \
-  X(SOUNDS_LIKE, "sounds like", {}, {Keyword::SOUNDS})
+  X(SOUNDS_LIKE, "sounds like", {}, {Keyword::SOUNDS})\
+  X(OVERLAPS, "overlaps", {}, {Keyword::OVERLAPS}) \
+  X(NOT_OVERLAPS, "not_overlaps", {}, {}) \
 
 
 
