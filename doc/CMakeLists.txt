@@ -90,7 +90,7 @@ FILE(GLOB sources *.txt)
 LIST(APPEND sources doxygen.cfg.in)
 
 
-ADD_CUSTOM_TARGET(build_docs
+ADD_CUSTOM_TARGET(build_docs ALL
   COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   COMMENT "Building project documentation"
