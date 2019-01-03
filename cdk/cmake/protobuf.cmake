@@ -210,7 +210,6 @@ else()
   add_custom_command(OUTPUT ${PROTOBUF_BUILD_STAMP}
     COMMAND ${CMAKE_COMMAND} --build . --config ${CONFIG_EXPR}
     WORKING_DIRECTORY ${WITH_PROTOBUF}
-    COMMENT "Building protobuf using configuration: $(Configuration)"
   )
 endif()
 
