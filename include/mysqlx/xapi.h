@@ -82,6 +82,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
   @addtogroup xapi
@@ -93,10 +94,6 @@ extern "C" {
 #define STDCALL
 
 ///////////////////// COMMON TYPE DECLARATIONS, REMOVE LATER
-
-#ifndef	__cplusplus
-  typedef unsigned char bool;
-#endif
 
 typedef char object_id[16];
 typedef object_id* MYSQLX_GUID;
