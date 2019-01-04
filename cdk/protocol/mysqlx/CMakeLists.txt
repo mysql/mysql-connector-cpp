@@ -49,16 +49,18 @@ endif(DEBUG_PROTOBUF)
 SET(PROTOCOL pb)
 
 SET(proto_mysqlx_defs
-  ${PROTOCOL}/mysqlx.proto
   ${PROTOCOL}/mysqlx_connection.proto
-  ${PROTOCOL}/mysqlx_datatypes.proto
-  ${PROTOCOL}/mysqlx_expr.proto
   ${PROTOCOL}/mysqlx_crud.proto
-  ${PROTOCOL}/mysqlx_sql.proto
+  ${PROTOCOL}/mysqlx_cursor.proto
+  ${PROTOCOL}/mysqlx_datatypes.proto
+  ${PROTOCOL}/mysqlx_expect.proto
+  ${PROTOCOL}/mysqlx_expr.proto
+  ${PROTOCOL}/mysqlx_notice.proto
+  ${PROTOCOL}/mysqlx_prepare.proto
   ${PROTOCOL}/mysqlx_resultset.proto
   ${PROTOCOL}/mysqlx_session.proto
-  ${PROTOCOL}/mysqlx_expect.proto
-  ${PROTOCOL}/mysqlx_notice.proto
+  ${PROTOCOL}/mysqlx_sql.proto
+  ${PROTOCOL}/mysqlx.proto
 )
 
 if(NOT use_full_protobuf)

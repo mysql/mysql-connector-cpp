@@ -355,10 +355,46 @@ TEST_F(Crud, bind)
 
   cout << "Fetching documents..." << endl;
 
-  DocResult docs = coll.find("name like :name and age < :age")
-         .bind("name", "ba%")
-         .bind("age", 3)
-         .execute();
+  auto find = coll.find("name like :name and age < :age");
+  auto find2 = find;
+
+  EXPECT_EQ(6,
+            find.bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(6,
+            find2.bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(5,
+            find.bind("name", "%")
+            .bind("age", 17)
+            .execute().count());
+
+  EXPECT_EQ(3,
+            find2.bind("name", "%")
+            .bind("age", 3)
+            .execute().count());
+
+  //Copying object should not use same prepared statment!
+  auto find3 = find2;
+
+  EXPECT_EQ(string("bar"),
+            find3.sort("name ASC").bind("name", "%")
+            .bind("age", 3)
+            .execute().fetchOne()["name"].get<string>());
+
+  EXPECT_EQ(string("foo"),
+            find2.bind("name", "%")
+            .bind("age", 3)
+            .execute().fetchOne()["name"].get<string>());
+
+  DocResult docs = find
+                   .bind("name", "ba%")
+                   .bind("age", 3)
+                   .execute();
 
   DbDoc doc = docs.fetchOne();
 
@@ -387,6 +423,37 @@ TEST_F(Crud, bind)
   EXPECT_EQ(1, i);
 
 
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find2.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find2.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+  EXPECT_EQ(static_cast<uint64_t>(0),
+            find2.limit(1).offset(10).bind("name", "%")
+            .bind("age", 1000)
+            .execute().count());
+
+
   {
 
     cout << "Fetching documents... using bind Documents" << endl;
@@ -395,6 +462,8 @@ TEST_F(Crud, bind)
     EXPECT_THROW(docs = coll.find("birth like :bday")
                      .bind("bday", DbDoc("{ \"day\": 20, \"month\": \"Apr\" }"))
                      .execute(), mysqlx::Error);
+
+    std::cout << docs.count() << std::endl;
 
     docs = coll.find("birth like { \"day\": 20, \"month\": \"Apr\" }")
                      .execute();
@@ -482,9 +551,9 @@ TEST_F(Crud, bind)
 
   remove.bind(args).execute();
 
-  CollectionFind find(coll, "name like :name and age < :age");
+  CollectionFind find_none(coll, "name like :name and age < :age");
 
-  docs = find.bind(args).execute();
+  docs = find_none.bind(args).execute();
 
   doc = docs.fetchOne();
   EXPECT_FALSE((bool)doc);
@@ -679,11 +748,12 @@ TEST_F(Crud, order_limit)
 
   // Modify the first line (ordered by age) incrementing 1 to the age.
 
+  EXPECT_EQ(1,
   coll.modify("true")
       .set("age",expr("age+1"))
       .sort("age ASC")
       .limit(1)
-      .execute();
+      .execute().getAffectedItemsCount());
 
 
   /*
@@ -2527,3 +2597,86 @@ TEST_F(Crud, merge_patch)
   }
 
 }
+
+TEST_F(Crud, PS)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Creating collection..." << endl;
+
+  Schema sch = getSchema("test");
+  Collection coll = sch.createCollection("c1", true);
+
+  add_data(coll);
+
+  sql("set global max_prepared_stmt_count=100;");
+
+  cout << "Fetching documents..." << endl;
+
+  std::vector<CollectionFind> finds;
+
+  auto create_find = [&finds, &coll]()
+  {
+    for (int i = 0; i < 200; ++i)
+    {
+      finds.push_back(coll.find("name like :name and age < :age"));
+    }
+  };
+
+  auto execute_find = [&finds]()
+  {
+    for (auto &find : finds)
+    {
+      EXPECT_EQ(6,
+                find.bind("name", "%")
+                .bind("age", 1000)
+                .execute().count());
+    }
+
+  };
+
+  for (int i = 0; i < 2; ++i)
+  {
+    create_find();
+
+    auto start_time = std::chrono::system_clock::now();
+
+    //direct_execute
+    execute_find();
+
+    std::cout << "Direct Execute: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now()-start_time).count()
+              << "(ms)" << std::endl;
+    start_time = std::chrono::system_clock::now();
+
+    //prepare+execute
+    execute_find();
+
+    std::cout << "Prepare+Execute PS: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now()-start_time).count()
+              << "(ms)" << std::endl;
+    start_time = std::chrono::system_clock::now();
+
+    //execute prepared
+    execute_find();
+
+    std::cout << "Execute PS: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now()-start_time).count()
+              << "(ms)" << std::endl;
+    start_time = std::chrono::system_clock::now();
+
+    finds.clear();
+
+    //Re-use previously freed stmt_ids
+    create_find();
+    execute_find();
+    execute_find();
+
+  }
+
+
+
+  }

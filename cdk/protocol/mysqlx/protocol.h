@@ -38,16 +38,25 @@
 
 
 PUSH_PB_WARNINGS
+
+#if defined DELETE
+//Remove DELETE macro from windows..
+#undef DELETE
+#endif
+
 #include "protobuf/mysqlx.pb.h"
 #include "protobuf/mysqlx_connection.pb.h"
 #include "protobuf/mysqlx_crud.pb.h"
 #include "protobuf/mysqlx_expect.pb.h"
 #include "protobuf/mysqlx_notice.pb.h"
 #include "protobuf/mysqlx_resultset.pb.h"
+#include "protobuf/mysqlx_prepare.pb.h"
+#include "protobuf/mysqlx_cursor.pb.h"
 #include "protobuf/mysqlx_session.pb.h"
 #include "protobuf/mysqlx_sql.pb.h"
 POP_PB_WARNINGS
 
+#include "builders.h"
 
 namespace google {
 namespace protobuf {
@@ -137,12 +146,20 @@ public:
   /// The side from which we *receive* messages
   Protocol_side m_side;
 
+  Placeholder_conv_imp m_args_conv;
+
+  Mysqlx::Prepare::Execute m_prepare_execute;
+
 protected:
 
   Protocol_impl(Protocol::Stream*, Protocol_side);
   virtual ~Protocol_impl();
 
 public:
+
+  void          start_Pipeline();
+  Protocol::Op& snd_Pipeline();
+  void clear_Pipeline();
 
   /**
     Start async op that sends given message to the other end.
@@ -218,20 +235,34 @@ protected:
     Writing raw message frames
     --------------------------
 
-    Method write_msg() starts asynchronous operation which serializes given
-    message and sends it to the other end after wrapping in correct message
-    frame.
+    Method write_msg() serializes and appends message to the write
+    buffer, also calls write() if no pipeline is used.
+
+    Method write() starts asynchronous operation which sends current write
+    buffer to the other end.
 
     To complete writing operation one has to call method wr_cont() until it
     returns true.
   */
 
+
+  void write();
   void write_msg(msg_type_t, Message&);
   bool wr_cont();
   void wr_wait();
+  byte* wr_buffer()
+  {
+    return m_wr_buf+m_pipeline_size;
+  }
+  size_t wr_size()
+  {
+    return m_wr_size-m_pipeline_size;
+  }
 
   byte   *m_wr_buf;
   size_t  m_wr_size;
+  bool m_pipeline = false;
+  size_t  m_pipeline_size = 0;
   scoped_ptr<Protocol::Stream::Op> m_wr_op;
 
   bool resize_buf(Protocol_side side, size_t new_size);
@@ -263,6 +294,7 @@ private:
   friend class Op_base;
   friend class Op_rcv;
   friend class Op_snd;
+  friend class Op_snd_pipeline;
 };
 
 
@@ -302,6 +334,7 @@ public:
   Impl(Protocol::Stream *str)
     : Protocol_impl(str, SERVER)  // expects messages from server
   {}
+
 };
 
 
@@ -397,6 +430,35 @@ public:
     : Op_base(proto)
   {
     m_proto.write_msg(type, msg);
+  }
+
+  bool do_cont()
+  {
+    if (!m_proto.wr_cont())
+      return false;
+    m_completed= true;
+    return true;
+  }
+
+  void do_wait()
+  {
+    m_proto.wr_wait();
+    m_completed = true;
+  }
+
+  size_t do_get_result()
+  { THROW("not implemented"); }
+};
+
+
+class Op_snd_pipeline : public Op_base
+{
+public:
+
+  Op_snd_pipeline(Protocol_impl &proto)
+    : Op_base(proto)
+  {
+    m_proto.write();
   }
 
   bool do_cont()
@@ -743,6 +805,184 @@ public:
   virtual void doc(const Document&);
 };
 #endif
+
+
+/*
+  Helper class to send Prepare+PrepareExecute protocol messages
+*/
+
+template<msg_type::value T> struct Prepare_traits;
+
+template<>
+struct Prepare_traits<msg_type::cli_StmtExecute>
+{
+  typedef Mysqlx::Sql::StmtExecute msg_type;
+
+  static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
+  {
+    auto &one = *prepare.mutable_stmt();
+    one.set_type(Mysqlx::Prepare::Prepare_OneOfMessage_Type_STMT);
+    one.set_allocated_stmt_execute(&msg);
+  }
+
+  static void release(Mysqlx::Prepare::Prepare &prepare)
+  {
+    prepare.mutable_stmt()->release_stmt_execute();
+  }
+
+};
+
+template<>
+struct Prepare_traits<msg_type::cli_CrudFind>
+{
+  typedef Mysqlx::Crud::Find msg_type;
+
+  static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
+  {
+    auto &one = *prepare.mutable_stmt();
+    one.set_type(Mysqlx::Prepare::Prepare_OneOfMessage_Type_FIND);
+    one.set_allocated_find(&msg);
+  }
+
+  static void release(Mysqlx::Prepare::Prepare &prepare)
+  {
+    prepare.mutable_stmt()->release_find();
+  }
+
+};
+
+template<>
+struct Prepare_traits<msg_type::cli_CrudInsert>
+{
+  typedef Mysqlx::Crud::Insert msg_type;
+
+  static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
+  {
+    auto &one = *prepare.mutable_stmt();
+    one.set_type(Mysqlx::Prepare::Prepare_OneOfMessage_Type_INSERT);
+    one.set_allocated_insert(&msg);
+  }
+
+  static void release(Mysqlx::Prepare::Prepare &prepare)
+  {
+    prepare.mutable_stmt()->release_insert();
+  }
+
+
+};
+
+template<>
+struct Prepare_traits<msg_type::cli_CrudUpdate>
+{
+  typedef Mysqlx::Crud::Update msg_type;
+
+  static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
+  {
+    auto &one = *prepare.mutable_stmt();
+    one.set_type(Mysqlx::Prepare::Prepare_OneOfMessage_Type_UPDATE);
+    one.set_allocated_update(&msg);
+  }
+
+  static void release(Mysqlx::Prepare::Prepare &prepare)
+  {
+    prepare.mutable_stmt()->release_update();
+  }
+
+};
+
+
+template<>
+struct Prepare_traits<msg_type::cli_CrudDelete>
+{
+  typedef Mysqlx::Crud::Delete msg_type;
+
+  static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
+  {
+    auto &one = *prepare.mutable_stmt();
+    one.set_type(Mysqlx::Prepare::Prepare_OneOfMessage_Type_DELETE);
+    one.set_allocated_delete_(&msg);
+  }
+
+  static void release(Mysqlx::Prepare::Prepare &prepare)
+  {
+    prepare.mutable_stmt()->release_delete_();
+  }
+
+};
+
+
+
+template <msg_type::value T>
+class Msg_builder
+{
+  Protocol_impl &m_protocol;
+  Mysqlx::Prepare::Prepare m_prepare;
+  Mysqlx::Prepare::Execute &m_prepare_execute;
+  typedef typename Prepare_traits<T>::msg_type MSG;
+  MSG m_msg;
+
+  Placeholder_conv_imp &m_conv;
+  uint32_t m_stmt_id;
+
+public:
+
+  Msg_builder(Protocol_impl &protocol, uint32_t stmt_id)
+    : m_protocol(protocol)
+    , m_prepare_execute(m_protocol.m_prepare_execute)
+    , m_conv(protocol.m_args_conv)
+    , m_stmt_id(stmt_id)
+  {
+    m_prepare_execute.Clear();
+    m_conv.clear();
+    if (m_stmt_id != 0)
+    {
+      m_prepare.set_stmt_id(m_stmt_id);
+      m_prepare_execute.set_stmt_id(m_stmt_id);
+      Prepare_traits<T>::set_one(m_prepare, m_msg);
+    }
+  }
+
+  ~Msg_builder()
+  {
+    if (m_stmt_id != 0)
+    {
+      Prepare_traits<T>::release(m_prepare);
+    }
+  }
+
+
+  MSG& msg()
+  {
+    return m_msg;
+  }
+
+  Placeholder_conv_imp& conv()
+  {
+    return m_conv;
+  }
+
+
+  void set_limit(const api::Limit *limit);
+
+  void set_args(const api::Args_map *args);
+  void set_args(const api::Any_list *args);
+
+
+  Protocol::Op& send()
+  {
+    if (m_stmt_id != 0)
+    {
+      m_protocol.start_Pipeline();
+      m_protocol.snd_start(m_prepare, msg_type::cli_PreparePrepare).wait();
+      m_protocol.snd_start(m_prepare_execute, msg_type::cli_PrepareExecute)
+          .wait();
+      return m_protocol.snd_Pipeline();
+    }
+    return m_protocol.snd_start(m_msg, T);
+  }
+
+};
+
 
 }}}
 

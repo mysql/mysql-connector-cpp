@@ -90,6 +90,11 @@ public:
   const Error& get_error()
   { return m_da.get_error(); }
 
+  void error()
+  {
+    m_error = true;
+  }
+
 
   /*
       Async (cdk::api::Async_op)

@@ -94,6 +94,9 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
         // Insert=18, upsert=6
         m_data = bytes("18.6");
         break;
+      case Protocol_fields::PREPARED_STATEMENTS:
+        m_data = bytes("40");
+        break;
       default:
         return 0;
     }
@@ -208,7 +211,7 @@ class AuthPlain
 
   virtual bytes auth_response()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_continue(bytes)
@@ -244,12 +247,12 @@ public:
 
   virtual bytes auth_data()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_response()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_continue(bytes data)
@@ -287,7 +290,7 @@ public:
 
   virtual bytes auth_response()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_continue(bytes)
@@ -323,12 +326,12 @@ public:
 
   virtual bytes auth_data()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_response()
   {
-    return bytes((byte*)NULL, (byte*)NULL);
+    return bytes((byte*)nullptr, (byte*)nullptr);
   }
 
   virtual bytes auth_continue(bytes data)
@@ -464,7 +467,22 @@ void Session::check_protocol_fields()
     /* More fields checks will be added here */
     m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
     m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
+    m_proto_fields |= field_checker.is_supported(Protocol_fields::PREPARED_STATEMENTS);
   }
+}
+
+bool Session::has_prepared_statements()
+{
+  check_protocol_fields();
+  return (m_proto_fields & Protocol_fields::PREPARED_STATEMENTS) != 0;
+}
+
+void Session::set_has_prepared_statements(bool x)
+{
+  if (x)
+    m_proto_fields |= Protocol_fields::PREPARED_STATEMENTS;
+  else
+    m_proto_fields &= ~Protocol_fields::PREPARED_STATEMENTS;
 }
 
 
@@ -523,13 +541,14 @@ void Session::register_reply(Reply *reply)
 void Session::deregister_reply(Reply *reply)
 {
   // TODO: Should reply be discared here?
-  m_current_reply = NULL;
+  m_current_reply = nullptr;
 }
 
 
-Reply_init& Session::sql(const string &stmt, Any_list *args)
+Reply_init& Session::sql(uint32_t stmt_id,const string &stmt, Any_list *args)
 {
-  return set_command(new SndStmt(m_protocol, "sql", stmt, args));
+  return set_command(
+        new SndStmt(m_protocol, stmt_id, "sql", stmt, args));
 }
 
 void Session::Doc_args::process(Processor &prc) const
@@ -551,8 +570,7 @@ Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
   m_cmd_args.m_doc = &args;
 
   m_stmt.set_utf8(cmd);
-  m_cmd.reset(new SndStmt(m_protocol, "mysqlx", m_stmt, &m_cmd_args));
-  return *this;
+  return set_command(new SndStmt(m_protocol, 0, "mysqlx", m_stmt, &m_cmd_args));
 }
 
 
@@ -564,7 +582,7 @@ Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
 
 void Session::begin()
 {
-  Reply r(sql("START TRANSACTION", NULL));
+  Reply r(sql(0, "START TRANSACTION", nullptr));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -572,7 +590,7 @@ void Session::begin()
 
 void Session::commit()
 {
-  Reply r(sql("COMMIT", NULL));
+  Reply r(sql(0, "COMMIT", nullptr));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -583,7 +601,7 @@ void Session::rollback(const string &savepoint)
   string qry = "ROLLBACK";
   if (!savepoint.empty())
     qry += " TO `" + savepoint + "`";
-  Reply r(sql(qry, NULL));
+  Reply r(sql(0, qry, nullptr));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -593,7 +611,7 @@ void Session::savepoint_set(const string &savepoint)
 {
   // TODO: some chars in savepoint name need to be quotted.
   string qry = u"SAVEPOINT `" + savepoint + u"`";
-  Reply r(sql(qry, NULL));
+  Reply r(sql(0, qry, nullptr));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
@@ -602,10 +620,36 @@ void Session::savepoint_set(const string &savepoint)
 void Session::savepoint_remove(const string &savepoint)
 {
   string qry = "RELEASE SAVEPOINT `" + savepoint + "`";
-  Reply r(sql(qry, NULL));
+  Reply r(sql(0, qry, nullptr));
   r.wait();
   if (r.entry_count() > 0)
     r.get_error().rethrow();
+}
+
+
+Reply_init& Session::prepared_execute(uint32_t stmt_id,
+                                      const Limit *lim,
+                                      const Param_source *param
+                                      )
+{
+    return set_command(
+                new SndPrepareExecute(m_protocol, stmt_id, lim, param)
+                );
+}
+
+Reply_init& Session::prepared_execute(uint32_t stmt_id,
+                                      const cdk::Any_list *list
+                                     )
+{
+    return set_command(
+                new SndPrepareExecute(m_protocol, stmt_id, list)
+                );
+}
+
+
+Reply_init& Session::prepared_deallocate(uint32_t stmt_id)
+{
+    return set_command(new SndPrepareDeallocate(m_protocol, stmt_id));
 }
 
 
@@ -615,24 +659,26 @@ Reply_init& Session::coll_add(const Table_ref &coll,
                               bool upsert)
 {
   return set_command(
-    new SndInsertDocs(m_protocol, coll, docs, param, upsert)
+    new SndInsertDocs(m_protocol, 0, coll, docs, param, upsert)
   );
 }
 
-Reply_init& Session::coll_remove(const Table_ref &coll,
+Reply_init& Session::coll_remove(uint32_t stmt_id,
+                                 const Table_ref &coll,
                                  const Expression *expr,
                                  const Order_by *order_by,
                                  const Limit *lim,
                                  const Param_source *param)
 {
   return set_command(
-    new SndDelete<protocol::mysqlx::DOCUMENT>(
-          m_protocol, coll, expr,order_by, lim, param
-        )
-  );
+        new SndDelete<protocol::mysqlx::DOCUMENT>(
+          m_protocol, stmt_id,
+          coll, expr,order_by, lim, param)
+        );
 }
 
-Reply_init& Session::coll_find(const Table_ref &coll,
+Reply_init& Session::coll_find(uint32_t stmt_id,
+                               const Table_ref &coll,
                                const View_spec *view,
                                const Expression *expr,
                                const Expression::Document *proj,
@@ -649,10 +695,10 @@ Reply_init& Session::coll_find(const Table_ref &coll,
     throw_error("Row locking is not supported by this version of the server");
 
   SndFind<protocol::mysqlx::DOCUMENT> *find
-    = new SndFind<protocol::mysqlx::DOCUMENT>(
-            m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param, lock_mode, lock_contention
-          );
+      =  new SndFind<protocol::mysqlx::DOCUMENT>(
+           m_protocol, stmt_id, coll, expr, proj,
+           order_by,group_by, having, lim, param, lock_mode, lock_contention
+           );
 
   if (view)
     return set_command(new SndViewCrud<protocol::mysqlx::DOCUMENT>(*view, find));
@@ -660,7 +706,9 @@ Reply_init& Session::coll_find(const Table_ref &coll,
   return set_command(find);
 }
 
-Reply_init& Session::coll_update(const api::Table_ref &coll,
+
+Reply_init& Session::coll_update(uint32_t stmt_id,
+                                 const api::Table_ref &coll,
                                  const Expression *expr,
                                  const Update_spec &us,
                                  const Order_by *order_by,
@@ -668,34 +716,37 @@ Reply_init& Session::coll_update(const api::Table_ref &coll,
                                  const Param_source *param)
 {
   return set_command(
-    new SndUpdate<protocol::mysqlx::DOCUMENT>(
-          m_protocol, coll, expr, us, order_by, lim, param
-        )
-  );
+        new SndUpdate<protocol::mysqlx::DOCUMENT>(
+          m_protocol, stmt_id, coll, expr, us, order_by, lim, param)
+        );
 }
 
-Reply_init& Session::table_insert(const Table_ref &coll, Row_source &rows,
-                                  const api::Columns *cols, const Param_source *param)
+Reply_init& Session::table_insert(uint32_t stmt_id,
+                                  const Table_ref &coll,
+                                  Row_source &rows,
+                                  const api::Columns *cols,
+                                  const Param_source *param)
 {
   return set_command(
-    new SndInsertRows(m_protocol, coll, rows, cols, param)
-  );
+        new SndInsertRows(m_protocol, stmt_id, coll, rows, cols, param)
+        );
 }
 
-Reply_init& Session::table_delete(const Table_ref &coll,
+Reply_init& Session::table_delete(uint32_t stmt_id,
+                                  const Table_ref &coll,
                                   const Expression *expr,
                                   const Order_by *order_by,
                                   const Limit *lim,
                                   const Param_source *param)
 {
   return set_command(
-    new SndDelete<protocol::mysqlx::TABLE>(
-          m_protocol, coll, expr, order_by, lim, param
-        )
-  );
+        new SndDelete<protocol::mysqlx::TABLE>(
+          m_protocol, stmt_id, coll, expr, order_by, lim, param)
+        );
 }
 
-Reply_init& Session::table_select(const Table_ref &coll,
+Reply_init& Session::table_select(uint32_t stmt_id,
+                                  const Table_ref &coll,
                                   const View_spec *view,
                                   const Expression *expr,
                                   const Projection *proj,
@@ -711,19 +762,23 @@ Reply_init& Session::table_select(const Table_ref &coll,
       !(m_proto_fields & Protocol_fields::ROW_LOCKING))
     throw_error("Row locking is not supported by this version of the server");
 
-  SndFind<protocol::mysqlx::TABLE> *find
-    = new SndFind<protocol::mysqlx::TABLE>(
-            m_protocol, coll, expr, proj, order_by,
-            group_by, having, lim, param, lock_mode, lock_contention
-          );
+
+  auto* select_cmd =
+      new SndFind<protocol::mysqlx::TABLE>(
+        m_protocol, stmt_id, coll, expr, proj, order_by,
+        group_by, having, lim, param, lock_mode, lock_contention
+        );
 
   if (view)
-    return set_command(new SndViewCrud<protocol::mysqlx::TABLE>(*view, find));
+    return set_command(
+          new SndViewCrud<protocol::mysqlx::TABLE>(*view, select_cmd)
+          );
 
-  return set_command(find);
+  return set_command(select_cmd);
 }
 
-Reply_init& Session::table_update(const api::Table_ref &coll,
+Reply_init& Session::table_update(uint32_t stmt_id,
+                                  const api::Table_ref &coll,
                                   const Expression *expr,
                                   const Update_spec &us,
                                   const Order_by *order_by,
@@ -731,10 +786,10 @@ Reply_init& Session::table_update(const api::Table_ref &coll,
                                   const Param_source *param)
 {
   return set_command(
-    new SndUpdate<protocol::mysqlx::TABLE>(
-          m_protocol, coll, expr, us, order_by, lim, param
-        )
-  );
+        new SndUpdate<protocol::mysqlx::TABLE>(
+          m_protocol, stmt_id, coll, expr, us, order_by, lim, param)
+        );
+
 }
 
 
@@ -746,13 +801,14 @@ Reply_init& Session::view_drop(const api::Table_ref &view, bool check_existence)
 }
 
 
-Reply_init &Session::set_command(Proto_op *cmd)
+Reply_init &Session::set_command(cdk::mysqlx::Proto_prepare_op *cmd)
 {
   m_cmd.reset(cmd);
 
+  m_prepare_prepare = m_cmd->prepare_prepare();
+
   if (!is_valid())
     throw_error("set_command: invalid session");
-
 
   return *this;
 }
@@ -841,7 +897,7 @@ void Session::add_diagnostics(Severity::value level, unsigned code,
   {
     m_current_reply->m_da.add_entry(level, new Server_error(code, sql_state, msg));
     if (Severity::ERROR == level)
-      m_current_reply->m_error = true;
+        m_current_reply->error();
   }
   else
   {
@@ -850,8 +906,46 @@ void Session::add_diagnostics(Severity::value level, unsigned code,
 }
 
 
+void Session::add_diagnostics(Severity::value level,
+                              const Error *e,
+                              bool report_to_reply)
+{
+  if (m_current_reply)
+  {
+    m_current_reply->m_da.add_entry(level, e);
+    if (Severity::ERROR == level && report_to_reply)
+        m_current_reply->error();
+  }
+  else
+  {
+    m_da.add_entry(level, e);
+  }
+}
+
 void Session::ok(string)
 {}
+
+void Session::Prepare_processor::error(
+      unsigned int code,
+      short severity,
+      protocol::mysqlx::Error_processor::sql_state_t sql_state,
+      const protocol::mysqlx::Processor_base::string &msg)
+{
+  Severity::value level;
+  switch (severity)
+  {
+  case 0: level = Severity::INFO; break;
+  case 1: level = Severity::WARNING; break;
+  case 2:
+  default:
+    level = Severity::ERROR; break;
+  }
+
+  m_session->add_diagnostics(
+        level,
+        new Server_prepare_error(code, sql_state, msg),
+        false);
+}
 
 
 void Session::col_count(col_count_t nr_cols)
@@ -1023,14 +1117,23 @@ void Session::send_cmd()
   m_stmt_stats.clear();
 }
 
-
 void Session::start_reading_result()
 {
+  if (m_prepare_prepare)
+  {
+    //Reade PreparePrepare reply using the prepare_processor.
+    m_reply_op_queue.push_back(
+      shared_ptr<Proto_op>(new RcvReply(m_protocol, m_prepare_prc))
+    );
+    m_prepare_prepare = false;
+  }
+
   m_col_metadata.reset(new Mdata_storage());
   m_executed = false;
   m_reply_op_queue.push_back(
     shared_ptr<Proto_op>(new RcvMetaData(m_protocol, *this))
   );
+
 }
 
 
@@ -1152,7 +1255,7 @@ const cdk::api::Event_info* Session::get_event_info() const
   if (!m_op_queue.empty())
     return m_op_queue.front()->waits_for();
 
-  return NULL;
+  return nullptr;
 }
 
 

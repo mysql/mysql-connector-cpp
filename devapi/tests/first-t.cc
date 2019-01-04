@@ -59,13 +59,16 @@ TEST_F(First, sql)
   sql("DROP TABLE IF EXISTS test.t");
   sql("CREATE TABLE test.t(c0 INT, c1 TEXT)");
 
-  get_sess().sql("INSERT INTO test.t VALUES (?,?)")
-    .bind(33, "foo")
+  auto sql = get_sess().sql("INSERT INTO test.t VALUES (?,?)");
+
+  sql.bind(33, "foo")
     .execute();
-  get_sess().sql("INSERT INTO test.t VALUES (?,?)")
-    .bind(13)
-    .bind("bar")
-    .execute();
+  sql.bind(13)
+      .bind("bar")
+      .execute();
+  sql.bind(1)
+      .bind("baz")
+      .execute();
 
   std::array<int,2> args = { 7, 30 };
 

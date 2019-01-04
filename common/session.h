@@ -165,8 +165,11 @@ public:
 
   using string = cdk::string;
 
-  Pooled_session  m_sess;
-  string        m_default_db;
+  Pooled_session      m_sess;
+  string              m_default_db;
+  std::set<uint32_t>  m_stmt_id;
+  std::set<uint32_t>  m_stmt_id_cleanup;
+  size_t              m_max_pstmt = std::numeric_limits<size_t>::max();
 
   Session_impl(Session_pool_shared &pool)
     : m_sess(pool)
@@ -236,6 +239,88 @@ public:
   {
     return ++m_savepoint;
   }
+
+
+  /*
+    Return a non-used prepared statement id. If possible, re-uses previously
+    allocated ids that are no longer in use.
+
+    Returns 0 if prepared statements are not available at the moment.
+  */
+  uint32_t create_stmt_id()
+  {
+    /*
+      If server doesn't support PS or or we reached server max PS (value set on
+      m_max_pstmt when a error occur on prepare), it will return 0, so no PS
+      possible.
+    */
+    if (!m_sess->has_prepared_statements() ||
+        m_stmt_id.size()>= m_max_pstmt)
+      return  0;
+
+    uint32_t val = 1;
+    if (!m_stmt_id_cleanup.empty())
+    {
+      //Use one that was freed
+      val = *m_stmt_id_cleanup.begin();
+      m_stmt_id.insert(val);
+      m_stmt_id_cleanup.erase(m_stmt_id_cleanup.begin());
+
+      //And clean up the others!
+      clean_up_stmt_id();
+    }
+    else if (m_stmt_id.empty())
+    {
+      m_stmt_id.insert(val);
+    }
+    else
+    {
+      val = (*m_stmt_id.rbegin())+1;
+      m_stmt_id.insert(val);
+    }
+
+    return val;
+  }
+
+
+  /*
+    To be called when given PS id is no longer used.
+  */
+  void release_stmt_id(uint32_t id)
+  {
+    m_stmt_id.erase(id);
+    m_stmt_id_cleanup.insert(id);
+  }
+
+  /*
+    To be called when, while trying to use given PS, we have detected that the
+    server can not handle more PS.
+  */
+  void error_stmt_id(uint32_t id)
+  {
+    m_stmt_id.erase(id);
+    m_max_pstmt = m_stmt_id.size();
+  }
+
+  /*
+    Send commands to server to deallocate PS ids that are no longer in use.
+  */
+  void clean_up_stmt_id()
+  {
+    if (m_stmt_id_cleanup.empty())
+      return;
+
+    m_sess->set_has_prepared_statements(true);
+
+    for (auto id : m_stmt_id_cleanup)
+    {
+      cdk::Reply(m_sess->prepared_deallocate(id)).wait();
+    }
+
+    m_stmt_id_cleanup.clear();
+
+  }
+
 
   void release();
 };

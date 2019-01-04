@@ -406,6 +406,7 @@ public:
 
   BindOperation& bind(const string &parameter, const Value &val)
   {
+    //TODO: Protocol supports Document and Array... but common::Values doesn't!
     if (Value::DOCUMENT == val.getType())
       throw_error("Can not bind a parameter to a document");
 

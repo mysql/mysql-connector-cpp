@@ -86,6 +86,20 @@ struct Cap_builder : api::Any::Document::Processor
   }
 };
 
+void Protocol::start_Pipeline()
+{
+  get_impl().start_Pipeline();
+}
+
+Protocol::Op& Protocol::snd_Pipeline()
+{
+  return get_impl().snd_Pipeline();
+}
+
+void Protocol::clear_Pipeline()
+{
+  get_impl().clear_Pipeline();
+}
 
 Protocol::Op& Protocol::snd_CapabilitiesSet(const api::Any::Document& caps)
 {

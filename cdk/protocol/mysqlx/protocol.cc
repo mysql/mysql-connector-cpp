@@ -190,6 +190,24 @@ private:
   }
 };
 
+void Protocol_impl::start_Pipeline()
+{
+  m_pipeline = true;
+}
+
+Protocol::Op& Protocol_impl::snd_Pipeline()
+{
+  m_snd_op.reset();
+  m_snd_op.reset(new Op_snd_pipeline(*this));
+  return *m_snd_op;
+}
+
+void Protocol_impl::clear_Pipeline()
+{
+  m_pipeline = false;
+  m_pipeline_size = 0;
+}
+
 
 Protocol::Op& Protocol_impl::snd_start(Message &msg, msg_type_t msg_type)
 {
@@ -319,8 +337,8 @@ void Protocol_impl::write_msg(msg_type_t msg_type, Message &msg)
   // Construct message header
 
   HTONSIZE(net_size);
-  memcpy((void*)m_wr_buf, (const void*)&net_size, sizeof(net_size));
-  m_wr_buf[header_length - 1] = (byte)msg_type;
+  memcpy((void*)wr_buffer(), (const void*)&net_size, sizeof(net_size));
+  wr_buffer()[header_length - 1] = (byte)msg_type;
 
   // Convert net_size back to original endian before using it later
 
@@ -330,13 +348,29 @@ void Protocol_impl::write_msg(msg_type_t msg_type, Message &msg)
 
   assert(m_wr_size < (size_t)std::numeric_limits<int>::max());
 
-  if (!msg.SerializeToArray((void*)(m_wr_buf + header_length),
-                            (int)(m_wr_size - header_length)))
+  if (!msg.SerializeToArray((void*)(wr_buffer() + header_length),
+                            (int)(wr_size() - header_length)))
+  {
+    m_pipeline = false;
+    m_pipeline_size = 0;
     throw_error(cdkerrc::protobuf_error, "Serialization error!");
+  }
 
   // Create write operation to send message payload
 
-  m_wr_op.reset(m_str->write(buffers(m_wr_buf, net_size + header_length - 1)));
+
+  m_pipeline_size+=net_size+header_length - 1;
+
+  if (!m_pipeline)
+  {
+    write();
+  }
+}
+
+void Protocol_impl::write()
+{
+  m_wr_op.reset(m_str->write(buffers(m_wr_buf, m_pipeline_size)));
+  clear_Pipeline();
 }
 
 
@@ -434,13 +468,16 @@ bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
   byte*  &buf= (side == SERVER ? m_rd_buf : m_wr_buf);
   size_t &buf_size= (side == SERVER ? m_rd_size : m_wr_size);
 
-  if (requested_size < buf_size)
+  if (side == SERVER ?
+      requested_size < buf_size :
+      requested_size < wr_size())
     return true;
 
-  // Note that since requested_size >= buf_size, the buffer size is
+  // Note that since requested_size >= available space, the available size is
   // at least doubled here.
 
-  size_t new_size= buf_size + requested_size;
+  size_t new_size = buf_size + requested_size;
+
   byte *ptr= (byte*) realloc(buf, new_size);
 
   // If allocating buffer with margin failed, try allocating
@@ -448,7 +485,10 @@ bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
 
   if (!ptr)
   {
-    new_size= requested_size;
+    if (side == CLIENT)
+      new_size= m_pipeline_size+requested_size;
+    else
+      new_size= requested_size;
     ptr= (byte*) realloc(buf, new_size);
   }
 
@@ -810,7 +850,7 @@ public:
 
     Mysqlx::Ok &ok= static_cast<Mysqlx::Ok&>(msg);
     static_cast<Reply_processor&>(*m_prc).ok(ok.msg());
-  };
+  }
 
 };
 

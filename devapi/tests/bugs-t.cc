@@ -288,3 +288,12 @@ TEST_F(Bugs, bug_hang_send_maxpacket)
 
 }
 
+TEST_F(Bugs, modify_clone)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto coll = get_sess().getSchema("test", true).createCollection("modify_clone");
+  CollectionModify cModify = coll.modify("true").set("$.name", "Data_New");
+  //Should not crash
+  Result mod = cModify.execute();
+}

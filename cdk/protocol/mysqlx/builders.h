@@ -1137,6 +1137,56 @@ Having_builder_base::get_args_builder(MSG &msg)
   return m_args_builder.get();
 }
 
+/*
+   Save Arguments and convert them to numeric order.
+*/
+
+class Placeholder_conv_imp
+    : public Args_conv
+{
+  std::map<string, unsigned> m_map;
+  unsigned m_offset = 0;
+public:
+
+  virtual ~Placeholder_conv_imp() {}
+
+  void clear()
+  {
+    m_map.clear();
+    m_offset = 0;
+  }
+
+  void set_offset(unsigned offset)
+  {
+    m_offset = offset;
+  }
+
+  unsigned conv_placeholder(const string &name)
+  {
+    std::map<string, unsigned>::const_iterator it = m_map.find(name);
+    if (it == m_map.end())
+      throw_error("Placeholder converter: Placeholder was not defined on args");
+      //throw Generic_error((boost::format("Placeholder %s was not defined on args.")
+      //                     % name).str());
+
+    return it->second;
+  }
+
+  void add_placeholder(const string &name)
+  {
+    std::map<string, unsigned>::const_iterator it = m_map.find(name);
+    if (it != m_map.end())
+      throw_error("Placeholder converter: Redefined placeholder");
+      //throw Generic_error((boost::format("Redifined placeholder %s.")
+      //                     % name).str());
+    assert((m_map.size()+m_offset) < std::numeric_limits<unsigned>::max());
+    unsigned pos = static_cast<unsigned>(m_map.size()+m_offset);
+    m_map[name] = pos;
+  }
+
+};
+
+
 }}} // cdk::protocol::mysqlx
 
 #endif

@@ -546,7 +546,8 @@ int mysqlx_stmt_struct::set_limit(cdk::row_count_t row_count, cdk::row_count_t o
   LImpl *impl = get_impl<LImpl>(this);
 
   impl->set_limit(row_count);
-  impl->set_offset(offset);
+  if (offset != 0)
+    impl->set_offset(offset);
 
   return RESULT_OK;
 }

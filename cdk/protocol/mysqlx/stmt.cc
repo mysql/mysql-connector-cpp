@@ -75,26 +75,57 @@ struct Arr_msg_traits<Mysqlx::Sql::StmtExecute>
   }
 };
 
+template<>
+struct Arr_msg_traits<Mysqlx::Prepare::Execute>
+{
+  typedef Mysqlx::Prepare::Execute Array;
+  typedef Mysqlx::Datatypes::Any   Msg;
 
-Protocol::Op& Protocol::snd_StmtExecute(const char *ns,
+  static Msg& add_element(Array &arr)
+  {
+    return *arr.add_args();
+  }
+};
+
+template <class MSG> void set_args_(const api::Any_list &args, MSG &msg)
+{
+  Array_builder<Any_builder, MSG> args_builder;
+  args_builder.reset(msg);
+  args.process(args_builder);
+}
+
+template<msg_type::value T>
+void Msg_builder<T>::set_args(const api::Any_list *args)
+{
+  if (args)
+  {
+    if (m_stmt_id != 0)
+      set_args_(*args, m_prepare_execute);
+    else
+    {
+      set_args_(*args, m_msg);
+    }
+  }
+}
+
+
+Protocol::Op& Protocol::snd_StmtExecute(uint32_t stmt_id,
+                                        const char *ns,
                                         const string &stmt,
                                         const api::Any_list *args)
 {
-  Mysqlx::Sql::StmtExecute stmt_exec;
+  Msg_builder<msg_type::msg_type::cli_StmtExecute> stmt_exec(get_impl(), stmt_id);
+
+  stmt_exec.set_args(args);
+
+  auto &msg = stmt_exec.msg();
 
   if (ns)
-    stmt_exec.set_namespace_(ns);
+    msg.set_namespace_(ns);
 
-  stmt_exec.set_stmt(stmt);
+  msg.set_stmt(stmt);
 
-  if (args)
-  {
-    Array_builder<Any_builder, Mysqlx::Sql::StmtExecute> args_builder;
-    args_builder.reset(stmt_exec);
-    args->process(args_builder);
-  }
-
-  return get_impl().snd_start(stmt_exec, msg_type::cli_StmtExecute);
+  return stmt_exec.send();
 }
 
 
@@ -104,82 +135,23 @@ Protocol::Op& Protocol_server::snd_StmtExecuteOk()
   return get_impl().snd_start(ok, msg_type::StmtExecuteOk);
 }
 
-#if 0
 
-Protocol::Op& Protocol::snd_PrepareStmt(stmt_id_t id, const string &stmt)
+Protocol::Op&
+Protocol::snd_PrepareExecute(uint32_t stmt_id,
+                             const api::Any_list *args)
 {
-/*
-  Mysqlx::Sql::PrepareStmt prep_stmt;
+  auto& prepare_execute = get_impl().m_prepare_execute;
 
-  prep_stmt.set_stmt_id(id);
-  prep_stmt.set_stmt(stmt);
+  if (args)
+  {
+    prepare_execute.Clear();
+    set_args_(*args, prepare_execute);
+  }
 
-  return get_impl().snd_message(prep_stmt, msg_type::cli_PrepareStmt);
-*/
+  prepare_execute.set_stmt_id(stmt_id);
 
-  // Code is commented out because of missing prepare statements in .proto files
-  throw_error("Not implemented");
-
-  // this is to keep the compiler happy
-  return get_impl().snd_message(Mysqlx::Sql::StmtExecute(), msg_type::cli_StmtExecute);
+  return get_impl().snd_start(prepare_execute, msg_type::cli_PrepareExecute);
 }
-
-
-// TODO: param_row should be supplied as well
-Protocol::Op& Protocol::snd_PreparedStmtExecute(stmt_id_t id, cursor_id_t cid)
-{
-/*
-  Mysqlx::Sql::PreparedStmtExecute prep_stmt_ex;
-
-  prep_stmt_ex.set_stmt_id(id);
-  prep_stmt_ex.set_cursor_id(cid);
-
-  return get_impl().snd_message(prep_stmt_ex, msg_type::cli_PreparedStmtExecute);
-*/
-
-  // Code is commented out because of missing prepare statements in .proto files
-  throw_error("Not implemented");
-
-  // this is to keep the compiler happy
-  return get_impl().snd_message(Mysqlx::Sql::StmtExecute(), msg_type::cli_StmtExecute);
-}
-
-
-Protocol::Op& Protocol::snd_CursorClose(cursor_id_t cid)
-{
-/*
-  Mysqlx::Sql::CursorClose cur_close;
-  cur_close.set_cursor_id(cid);
-
-  return get_impl().snd_message(cur_close, msg_type::cli_CursorClose);
-*/
-
-  // Code is commented out because of missing prepare statements in .proto files
-  throw_error("Not implemented");
-
-  // this is to keep the compiler happy
-  return get_impl().snd_message(Mysqlx::Sql::StmtExecute(), msg_type::cli_StmtExecute);
-}
-
-
-Protocol::Op& Protocol::snd_PreparedStmtClose(stmt_id_t id)
-{
-/*
-  Mysqlx::Sql::PreparedStmtClose stmt_close;
-  stmt_close.set_stmt_id(id);
-
-  return get_impl().snd_message(stmt_close, msg_type::cli_PreparedStmtClose);
-*/
-
-  // Code is commented out because of missing prepare statements in .proto files
-  throw_error("Not implemented");
-
-  // this is to keep the compiler happy
-  return get_impl().snd_message(Mysqlx::Sql::StmtExecute(), msg_type::cli_StmtExecute);
-
-}
-
-#endif
 
 
 }}}  // cdk::protocol::mysqlx

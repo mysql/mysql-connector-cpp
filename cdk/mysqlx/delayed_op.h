@@ -64,7 +64,7 @@ protected:
 
   Proto_delayed_op(Protocol& protocol)
     : m_protocol(protocol)
-    , op(NULL)
+    , op(nullptr)
   {}
 
 public:
@@ -75,7 +75,7 @@ public:
 
   bool is_completed() const
   {
-    return NULL != op && op->is_completed();
+    return nullptr != op && op->is_completed();
   }
 
 protected:
@@ -84,14 +84,14 @@ protected:
 
   virtual bool do_cont()
   {
-    if (NULL == op)
+    if (nullptr == op)
       op = start();
     return op->cont();
   }
 
   virtual void do_wait()
   {
-    if (op == NULL)
+    if (op == nullptr)
       op = start();
 
     if (op)
@@ -110,7 +110,7 @@ protected:
   {
     if (op)
       return op->waits_for();
-    return NULL;
+    return nullptr;
   }
 
   size_t do_get_result(void)
@@ -118,23 +118,48 @@ protected:
 };
 
 
+class Proto_prepare_op
+    : public Proto_delayed_op
+{
+protected:
+  uint32_t m_stmt_id=0;
+
+public:
+
+  Proto_prepare_op(Protocol& protocol, uint32_t stmt_id=0)
+    : Proto_delayed_op(protocol)
+    , m_stmt_id(stmt_id)
+  {}
+
+  uint32_t stmt_id()
+  {
+    return m_stmt_id;
+  }
+
+  virtual bool prepare_prepare()
+  {
+    return m_stmt_id != 0;
+  }
+
+};
+
 class Crud_op_base
-  : public Proto_delayed_op
+  : public Proto_prepare_op
   , public protocol::mysqlx::api::Db_obj
 {
 protected:
 
-  string m_name;
-  string m_schema;
-  bool  m_has_schema;
+  string   m_name;
+  string   m_schema;
+  bool     m_has_schema;
 
   Crud_op_base(Protocol &proto)
-    : Proto_delayed_op(proto)
+    : Proto_prepare_op(proto)
     , m_has_schema(false)
   {}
 
-  Crud_op_base(Protocol &proto, const api::Object_ref &obj)
-    : Proto_delayed_op(proto)
+  Crud_op_base(Protocol &proto, const api::Object_ref &obj, uint32_t stmt_id = 0)
+    : Proto_prepare_op(proto, stmt_id)
   {
     set(obj);
   }
@@ -142,7 +167,7 @@ protected:
   void set(const api::Object_ref &obj)
   {
     m_name = obj.name();
-    m_has_schema = (NULL != obj.schema());
+    m_has_schema = (nullptr != obj.schema());
     if (m_has_schema)
       m_schema = obj.schema()->name();
   }
@@ -150,7 +175,7 @@ protected:
     // Db_obj
 
   const string& get_name() const { return m_name; }
-  const string* get_schema() const { return m_has_schema ? &m_schema : NULL; }
+  const string* get_schema() const { return m_has_schema ? &m_schema : nullptr; }
 
 };
 
@@ -158,7 +183,7 @@ protected:
 
 
 class SndStmt
-    : public Proto_delayed_op
+    : public Proto_prepare_op
 {
 protected:
 
@@ -171,18 +196,94 @@ protected:
     Any_list_converter conv;
     if (m_args)
       conv.reset(*m_args);
-    return &m_protocol.snd_StmtExecute(m_ns, m_stmt, m_args ? &conv : NULL);
+    return &m_protocol.snd_StmtExecute(m_stmt_id, m_ns, m_stmt, m_args ? &conv : nullptr);
   }
 
 public:
 
-  SndStmt(Protocol& protocol, const char *ns,
+  SndStmt(Protocol& protocol, uint32_t stmt_id, const char *ns,
           const string& stmt, Any_list *args)
-    : Proto_delayed_op(protocol), m_ns(ns)
+    : Proto_prepare_op(protocol, stmt_id)
+    , m_ns(ns)
     , m_stmt(stmt), m_args(args)
   {}
 };
 
+
+// -------------------------------------------------------------------------
+
+class SndPrepareExecute
+    : public Proto_prepare_op
+{
+  const Limit        *m_limit;
+  const Param_source *m_param;
+  const Any_list *m_list;
+
+public:
+  SndPrepareExecute(Protocol& protocol, uint32_t stmt_id,
+                    const cdk::Limit *lim,
+                    const Param_source *param)
+    : Proto_prepare_op(protocol, stmt_id)
+    , m_limit(lim)
+    , m_param(param)
+    , m_list(nullptr)
+  {}
+
+  SndPrepareExecute(Protocol& protocol, uint32_t stmt_id,
+                    const Any_list *list)
+    : Proto_prepare_op(protocol, stmt_id)
+    , m_limit(nullptr)
+    , m_param(nullptr)
+    , m_list(list)
+  {}
+
+  Proto_op* start() override
+  {
+    if (m_list)
+    {
+      Any_list_converter conv;
+      conv.reset(*m_list);
+
+      return &m_protocol.snd_PrepareExecute(
+            m_stmt_id, &conv);
+    }
+    else
+    {
+      Param_converter conv;
+      if (m_param)
+        conv.reset(*m_param);
+
+      return &m_protocol.snd_PrepareExecute(
+            m_stmt_id, m_limit, m_param ? &conv : nullptr);
+    }
+  }
+
+  bool prepare_prepare() override
+  {
+    return false;
+  }
+};
+
+
+class SndPrepareDeallocate
+    : public Proto_prepare_op
+{
+
+public:
+  SndPrepareDeallocate(Protocol& protocol, uint32_t stmt_id)
+    : Proto_prepare_op(protocol, stmt_id)
+  {}
+
+  Proto_op* start() override
+  {
+    return &m_protocol.snd_PrepareDeallocate(m_stmt_id);
+  }
+
+  bool prepare_prepare() override
+  {
+    return false;
+  }
+};
 
 // -------------------------------------------------------------------------
 
@@ -205,8 +306,9 @@ protected:
         param_conv.reset(*m_param);
 
     return &m_protocol.snd_Insert(cdk::protocol::mysqlx::DOCUMENT,
+                                  m_stmt_id,
                                   *this,
-                                  NULL,
+                                  nullptr,
                                   *this,
                                   &param_conv,
                                   m_upsert);
@@ -214,11 +316,13 @@ protected:
 
 public:
 
-  SndInsertDocs(Protocol& protocol, const api::Table_ref &coll,
+  SndInsertDocs(Protocol& protocol,
+                uint32_t stmt_id,
+                const api::Table_ref &coll,
                 cdk::Doc_source &docs,
                 const Param_source *param,
                 bool upsert = false)
-    : Crud_op_base(protocol, coll)
+    : Crud_op_base(protocol, coll, stmt_id)
     , m_docs(docs)
     , m_param(param)
     , m_upsert(upsert)
@@ -270,6 +374,7 @@ protected:
       param_conv.reset(*m_param);
 
     return &m_protocol.snd_Insert(cdk::protocol::mysqlx::TABLE,
+                                  m_stmt_id,
                                   *this,
                                   m_cols,
                                   *this,
@@ -281,11 +386,12 @@ public:
   // TODO: Life-time of rows instance...
 
   SndInsertRows(Protocol& protocol,
+                uint32_t stmt_id,
                 const api::Table_ref &coll,
                 cdk::Row_source &rows,
                 const api::Columns *cols,
                 const Param_source *param)
-    : Crud_op_base(protocol, coll)
+    : Crud_op_base(protocol, coll, stmt_id)
     , m_rows(rows), m_cols(cols), m_param(param)
   {}
 
@@ -335,7 +441,7 @@ public:
   {
     Prc_to::Expr_prc *ep = m_proc->sort_key(dir);
     if (!ep)
-      return NULL;
+      return nullptr;
     m_conv.reset(*ep);
     return &m_conv;
   }
@@ -383,13 +489,14 @@ protected:
 
   Select_op_base(
     Protocol &protocol,
+    uint32_t stmt_id,
     const api::Object_ref &obj,
     const cdk::Expression *expr,
     const cdk::Order_by *order_by,
-    const cdk::Limit *lim = NULL,
-    const cdk::Param_source *param = NULL
+    const cdk::Limit *lim = nullptr,
+    const cdk::Param_source *param = nullptr
   )
-    : Crud_op_base(protocol, obj)
+    : Crud_op_base(protocol, obj, stmt_id)
     , m_expr_conv(expr), m_param_conv(param), m_ord_conv(order_by)
     , m_limit(lim)
   {}
@@ -432,17 +539,19 @@ protected:
 
   Proto_op* start()
   {
-    return &m_protocol.snd_Delete(DM, *this, m_param_conv.get());
+    return &m_protocol.snd_Delete(DM, m_stmt_id, *this, m_param_conv.get());
   }
 
 public:
 
-  SndDelete(Protocol& protocol, const api::Object_ref &obj,
+  SndDelete(Protocol& protocol,
+            uint32_t stmt_id,
+            const api::Object_ref &obj,
             const cdk::Expression *expr,
             const cdk::Order_by *order_by,
-            const cdk::Limit *lim = NULL,
-            const cdk::Param_source *param = NULL)
-    : Select_op_base(protocol, obj, expr, order_by, lim, param)
+            const cdk::Limit *lim = nullptr,
+            const cdk::Param_source *param = nullptr)
+    : Select_op_base(protocol, stmt_id, obj, expr, order_by, lim, param)
   {}
 
 };
@@ -484,11 +593,11 @@ class Doc_proj_prc_converter
   {
     Prc_to::Element_prc *ep = m_proc->list_el();
     if (!ep)
-      return NULL;
+      return nullptr;
     ep->alias(key);
     Prc_to::Element_prc::Expr_prc *expp = ep->expr();
     if (!expp)
-      return NULL;
+      return nullptr;
     m_conv.reset(*expp);
     return &m_conv;
   }
@@ -513,7 +622,7 @@ class Table_proj_prc_converter
   {
     Prc_to::Expr_prc *prc = m_proc->expr();
     if (!prc)
-      return NULL;
+      return nullptr;
     m_conv.reset(*prc);
     return &m_conv;
   }
@@ -582,24 +691,26 @@ protected:
 
   Proto_op* start()
   {
-    return &m_protocol.snd_Find(DM, *this, m_param_conv.get());
+    return &m_protocol.snd_Find(DM, m_stmt_id, *this, m_param_conv.get());
   }
 
 public:
 
   SndFind(
-    Protocol& protocol, const api::Table_ref &coll,
-    const cdk::Expression *expr = NULL,
-    const Projection      *proj = NULL,
-    const cdk::Order_by   *order_by = NULL,
-    const cdk::Expr_list  *group_by = NULL,
-    const cdk::Expression *having = NULL,
-    const cdk::Limit *lim = NULL,
-    const cdk::Param_source *param = NULL,
-    const Lock_mode_value locking = Lock_mode_value::NONE,
-    const Lock_contention_value contention = Lock_contention_value::DEFAULT
-  )
-    : Select_op_base(protocol, coll, expr, order_by, lim, param)
+      Protocol& protocol,
+      uint32_t stmt_id,
+      const api::Table_ref &coll,
+      const cdk::Expression *expr = nullptr,
+      const Projection      *proj = nullptr,
+      const cdk::Order_by   *order_by = nullptr,
+      const cdk::Expr_list  *group_by = nullptr,
+      const cdk::Expression *having = nullptr,
+      const cdk::Limit      *lim = nullptr,
+      const cdk::Param_source *param = nullptr,
+      const Lock_mode_value locking = Lock_mode_value::NONE,
+      const Lock_contention_value contention = Lock_contention_value::DEFAULT
+                                               )
+    : Select_op_base(protocol, stmt_id, coll,  expr, order_by, lim, param)
     , m_proj_conv(proj)
     , m_group_by_conv(group_by), m_having_conv(having)
     , m_lock_mode(locking)
@@ -635,6 +746,7 @@ private:
 
   friend class SndViewCrud<DM>;
 };
+
 
 
 // -------------------------------------------------------------------------
@@ -714,7 +826,7 @@ class SndViewCrud
 
       Options::Processor* options()
       {
-        return NULL;
+        return nullptr;
       }
 
       List_processor* columns()
@@ -732,7 +844,7 @@ class SndViewCrud
   protocol::mysqlx::api::Columns*
   get_cols()
   {
-    return m_has_cols ? this : NULL;
+    return m_has_cols ? this : nullptr;
   }
 
   // View_options
@@ -760,7 +872,7 @@ class SndViewCrud
 
       List_processor* columns()
       {
-        return NULL;
+        return nullptr;
       }
     }
     vprc;
@@ -772,7 +884,7 @@ class SndViewCrud
   protocol::mysqlx::api::View_options*
   get_opts()
   {
-    return m_has_opts ? this : NULL;
+    return m_has_opts ? this : nullptr;
   }
 
   const protocol::mysqlx::api::Args_map*
@@ -798,13 +910,13 @@ class SndViewCrud
                                         m_find->m_param_conv.get());
     default:
       assert(false);
-      return NULL;  // quiet compile warnings
+      return nullptr;  // quiet compile warnings
     }
   }
 
 public:
 
-  SndViewCrud(const View_spec &view, SndFind<DM> *find = NULL)
+  SndViewCrud(const View_spec &view, SndFind<DM> *find = nullptr)
     : Crud_op_base(find->m_protocol)
     , m_view(&view), m_find(find), m_type(CREATE)
     , m_has_cols(false), m_has_opts(false)
@@ -840,13 +952,13 @@ private:
       Note: we do not process columns here, it is done above when this
       object acts as protocol Columns specification.
     */
-    return NULL;
+    return nullptr;
   }
 
   Options::Processor* options()
   {
     m_has_opts = true;
-    return NULL;
+    return nullptr;
   }
 
 };
@@ -914,7 +1026,7 @@ public:
 
     const string* get_schema() const
     {
-      return m_has_schema ? &m_schema_name : NULL;
+      return m_has_schema ? &m_schema_name : nullptr;
     }
 
   } m_table;
@@ -985,7 +1097,7 @@ public:
                                      : protocol::mysqlx::update_op::SET);
 
     if (!prc)
-      return NULL;
+      return nullptr;
 
     m_conv.reset(*prc);
     return &m_conv;
@@ -1000,7 +1112,7 @@ public:
       = m_proc->update_op(protocol::mysqlx::update_op::ARRAY_INSERT);
 
     if (!prc)
-      return NULL;
+      return nullptr;
 
     m_conv.reset(*prc);
     return &m_conv;
@@ -1014,7 +1126,7 @@ public:
       = m_proc->update_op(protocol::mysqlx::update_op::ARRAY_APPEND);
 
     if (!prc)
-      return NULL;
+      return nullptr;
 
     m_conv.reset(*prc);
     return &m_conv;
@@ -1026,7 +1138,7 @@ public:
       = m_proc->update_op(protocol::mysqlx::update_op::MERGE_PATCH);
 
     if (!prc)
-      return NULL;
+      return nullptr;
 
     m_conv.reset(*prc);
     return &m_conv;
@@ -1079,19 +1191,25 @@ protected:
 
   Proto_op* start()
   {
-    return &m_protocol.snd_Update(DM, *this, m_upd_conv, m_param_conv.get());
+    return &m_protocol.snd_Update(DM,
+                                  m_stmt_id,
+                                  *this,
+                                  m_upd_conv,
+                                  m_param_conv.get()
+                                  );
   }
 
 public:
 
   SndUpdate(Protocol& protocol,
+            uint32_t stmt_id,
             const api::Table_ref &table,
             const cdk::Expression *expr,
             const cdk::Update_spec &us,
             const cdk::Order_by *order_by,
-            const cdk::Limit *lim = NULL,
-            const cdk::Param_source *param = NULL)
-    : Select_op_base(protocol, table, expr, order_by, lim, param)
+            const cdk::Limit *lim = nullptr,
+            const cdk::Param_source *param = nullptr)
+    : Select_op_base(protocol, stmt_id, table, expr, order_by, lim, param)
     , m_upd_conv(DM, us)
   {}
 
@@ -1142,6 +1260,30 @@ protected:
 public:
   RcvStmtReply(Protocol& protocol,
                Stmt_processor& prc)
+    : Proto_delayed_op(protocol)
+    , m_prc(prc)
+  {}
+
+};
+
+
+class RcvReply
+    : public Proto_delayed_op
+{
+  typedef protocol::mysqlx::Reply_processor Reply_processor;
+
+protected:
+
+  Reply_processor& m_prc;
+
+  Proto_op* start()
+  {
+    return &m_protocol.rcv_Reply(m_prc);
+  }
+
+public:
+  RcvReply(Protocol& protocol,
+           Reply_processor& prc)
     : Proto_delayed_op(protocol)
     , m_prc(prc)
   {}

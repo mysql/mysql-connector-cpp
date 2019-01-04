@@ -87,9 +87,48 @@ template <class MSG> void set_data_model(Data_model dm, MSG &msg)
   Helper function template to set `limit` field inside message of type MSG.
 */
 
-template <class MSG> void set_limit(const api::Limit &lim, MSG &msg)
-{
 
+void set_arg_scalar(Mysqlx::Datatypes::Scalar &msg, row_count_t val)
+{
+  msg.set_type( Mysqlx::Datatypes::Scalar_Type::Scalar_Type_V_UINT);
+  msg.set_v_unsigned_int(val);
+}
+
+void set_arg_scalar(Mysqlx::Datatypes::Any &msg, row_count_t val)
+{
+  msg.set_type(::Mysqlx::Datatypes::Any_Type::Any_Type_SCALAR);
+  set_arg_scalar(*msg.mutable_scalar(), val);
+}
+
+
+
+
+template <class MSG,
+          class MSG_Params>
+void set_limit_(const api::Limit &lim,
+                MSG &msg,
+                MSG_Params &msg_args)
+{
+  auto limit = msg.mutable_limit_expr();
+  auto row_count_msg = limit->mutable_row_count();
+
+  row_count_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
+  row_count_msg->set_position(0);
+  set_arg_scalar(*msg_args.add_args(), lim.get_row_count());
+
+  if (lim.get_offset())
+  {
+    auto offset_msg = limit->mutable_offset();
+    offset_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
+    offset_msg->set_position(1);
+    set_arg_scalar(*msg_args.add_args(), *lim.get_offset());
+  }
+}
+
+template <class MSG>
+void set_limit_(const api::Limit &lim,
+                MSG &msg)
+{
   Mysqlx::Crud::Limit *proto_lim = msg.mutable_limit();
 
   proto_lim->set_row_count(lim.get_row_count());
@@ -97,6 +136,21 @@ template <class MSG> void set_limit(const api::Limit &lim, MSG &msg)
 
   if (lim_offset)
     proto_lim->set_offset(*lim_offset);
+}
+
+template<class MSG,
+         class MSG_Params>
+void set_limit_(const api::Limit &limit,
+                MSG &msg,
+                Placeholder_conv_imp &conv,
+                MSG_Params &msg_args)
+{
+  if (limit.get_offset())
+    conv.set_offset(2);
+  else
+    conv.set_offset(1);
+
+  set_limit_(limit, msg, msg_args);
 }
 
 
@@ -131,8 +185,6 @@ void set_select(const Select_spec &sel, MSG &msg, Args_conv &conv)
   if (sel.order())
     set_order_by(*sel.order(), msg, conv);
 
-  if (sel.limit())
-    set_limit(*sel.limit(), msg);
 }
 
 // -------------------------------------------------------------------------
@@ -150,7 +202,7 @@ struct Projection_builder
 {
   Expr_builder m_expr_builder;
 
-  void reset(Message &msg, Args_conv *conv = NULL)
+  void reset(Message &msg, Args_conv *conv = nullptr)
   {
     Builder_base::reset(msg, conv);
     m_expr_builder.reset(*msg.mutable_source(), conv);
@@ -204,7 +256,7 @@ struct Order_builder
 {
   Expr_builder m_expr_builder;
 
-  void reset(Message &msg, Args_conv *conv = NULL)
+  void reset(Message &msg, Args_conv *conv = nullptr)
   {
     Builder_base::reset(msg, conv);
     m_expr_builder.reset(*msg.mutable_expr(), conv);
@@ -292,39 +344,6 @@ public:
 };
 
 
-class Placeholder_conv_imp
-    : public Args_conv
-{
-  map<string, unsigned> m_map;
-
-public:
-
-  virtual ~Placeholder_conv_imp() {}
-
-  unsigned conv_placeholder(const string &name)
-  {
-    map<string, unsigned>::const_iterator it = m_map.find(name);
-    if (it == m_map.end())
-      throw_error("Placeholder converter: Placeholder was not defined on args");
-      //throw Generic_error((boost::format("Placeholder %s was not defined on args.")
-      //                     % name).str());
-
-    return it->second;
-  }
-
-  void add_placeholder(const string &name)
-  {
-    map<string, unsigned>::const_iterator it = m_map.find(name);
-    if (it != m_map.end())
-      throw_error("Placeholder converter: Redefined placeholder");
-      //throw Generic_error((boost::format("Redifined placeholder %s.")
-      //                     % name).str());
-    assert(m_map.size() < std::numeric_limits<unsigned>::max());
-    unsigned pos = static_cast<unsigned>(m_map.size());
-    m_map[name] = pos;
-  }
-
-};
 
 template <class MSG>
 class Param_builder
@@ -335,15 +354,28 @@ class Param_builder
   Placeholder_conv_imp &m_conv;
   Any_to_Scalar_builder m_builder;
 
+
 public:
   Param_builder(MSG &msg, Placeholder_conv_imp &conv)
     : m_msg(msg)
     , m_conv(conv)
   {}
 
+
+  Mysqlx::Datatypes::Scalar& get_scalar(Mysqlx::Datatypes::Scalar &arg)
+  {
+    return arg;
+  }
+
+  Mysqlx::Datatypes::Scalar& get_scalar(Mysqlx::Datatypes::Any &arg)
+  {
+    arg.set_type(Mysqlx::Datatypes::Any_Type_SCALAR);
+    return *arg.mutable_scalar();
+  }
+
   virtual Any_prc* key_val(const string &key)
   {
-    m_builder.reset(*m_msg.add_args());
+    m_builder.reset(get_scalar(*m_msg.add_args()));
 
     m_conv.add_placeholder(key);
 
@@ -360,11 +392,46 @@ public:
   stores name->position map in the map argument.
 */
 
-template <class MSG> void set_args(const api::Args_map &args, MSG &msg,
-                                   Placeholder_conv_imp &map)
+template <class MSG> void set_args_(const api::Args_map &args, MSG &msg,
+                                    Placeholder_conv_imp &map)
 {
   Param_builder<MSG> param_builder(msg, map);
   args.process(param_builder);
+}
+
+
+
+/*
+  MessageBuilder implementation
+*/
+
+template<msg_type::value T>
+void Msg_builder<T>::set_args(const api::Args_map *args)
+{
+  if (args)
+  {
+    if (m_stmt_id != 0)
+      set_args_(*args, m_prepare_execute, m_conv);
+    else
+    {
+      set_args_(*args, m_msg, m_conv);
+    }
+  }
+}
+
+
+
+template<msg_type::value T>
+void Msg_builder<T>::set_limit(const api::Limit *limit)
+{
+  if (limit)
+  {
+    if (m_stmt_id != 0)
+      set_limit_(*limit, m_msg, m_conv, m_prepare_execute);
+    else
+      set_limit_(*limit, m_msg);
+  }
+
 }
 
 // -------------------------------------------------------------------------
@@ -413,6 +480,7 @@ void set_doc_path(Mysqlx::Expr::ColumnIdentifier *p_col_id,
 }
 
 
+
 // -------------------------------------------------------------------------
 
 
@@ -439,14 +507,10 @@ struct Group_by_traits
 };
 
 void set_find(Mysqlx::Crud::Find &msg,
-              Data_model dm, const Find_spec &fs, const api::Args_map *args)
+              Data_model dm, const Find_spec &fs, Placeholder_conv_imp &conv)
 {
-  Placeholder_conv_imp conv;
 
   set_data_model(dm, msg);
-
-  if (args)
-    set_args(*args, msg, conv);
 
   set_select(fs, msg, conv);
 
@@ -503,14 +567,19 @@ void set_find(Mysqlx::Crud::Find &msg,
 
 
 Protocol::Op&
-Protocol::snd_Find(Data_model dm, const Find_spec &fs, const api::Args_map *args)
+Protocol::snd_Find(Data_model dm,  uint32_t stmt_id, const Find_spec &fs, const api::Args_map *args)
 {
-  Mysqlx::Crud::Find find;
+  Msg_builder<msg_type::cli_CrudFind> find(get_impl(), stmt_id);
 
-  set_find(find, dm, fs, args);
+  find.set_limit(fs.limit());
+  find.set_args(args);
 
-  return get_impl().snd_start(find, msg_type::cli_CrudFind);
+  set_find(find.msg(), dm, fs, find.conv());
+
+  return find.send();
 }
+
+
 
 
 // -------------------------------------------------------------------------
@@ -566,26 +635,17 @@ struct Proj_traits
   }
 };
 
-
-
-Protocol::Op&
-Protocol::snd_Insert(
-    Data_model dm,
-    api::Db_obj &db_obj,
-    const api::Columns *columns,
-    Row_source &rs,
-    const api::Args_map *args,
-    bool upsert)
+void set_insert(Mysqlx::Crud::Insert &insert,
+                 Data_model dm,
+                 api::Db_obj &db_obj,
+                 const api::Columns *columns,
+                 Row_source &rs,
+                 Placeholder_conv_imp& conv,
+                 bool upsert)
 {
-  Mysqlx::Crud::Insert insert;
-
-  Placeholder_conv_imp conv;
 
   set_db_obj(db_obj, insert);
   set_data_model(dm, insert);
-
-  if (args)
-    set_args(*args, insert, conv);
 
   if (columns)
   {
@@ -605,8 +665,25 @@ Protocol::snd_Insert(
   }
 
   insert.set_upsert(upsert);
+}
 
-  return get_impl().snd_start(insert, msg_type::cli_CrudInsert);
+Protocol::Op&
+Protocol::snd_Insert(
+    Data_model dm,
+    uint32_t stmt_id,
+    api::Db_obj &db_obj,
+    const api::Columns *columns,
+    Row_source &rs,
+    const api::Args_map *args,
+    bool upsert)
+{
+  Msg_builder<msg_type::cli_CrudInsert> insert(get_impl(), stmt_id);
+
+  insert.set_args(args);
+
+  set_insert(insert.msg(), dm, db_obj, columns, rs, insert.conv(), upsert);
+
+  return insert.send();
 }
 
 
@@ -661,7 +738,7 @@ public:
     switch(type)
     {
     case update_op::ITEM_REMOVE:
-      return NULL; //Doesn't have value;
+      return nullptr; //Doesn't have value;
 
     case update_op::SET:
     case update_op::ITEM_SET:
@@ -680,21 +757,14 @@ public:
 
 };
 
-
-
-Protocol::Op& Protocol::snd_Update(
-    Data_model dm,
-    const Select_spec &sel,
-    Update_spec &us,
-    const api::Args_map *args)
+void set_update(Mysqlx::Crud::Update &update,
+                 Data_model dm,
+                 const Select_spec &sel,
+                 Update_spec &us,
+                 Placeholder_conv_imp &conv)
 {
-  Mysqlx::Crud::Update update;
-  Placeholder_conv_imp conv;
 
   set_data_model(dm, update);
-
-  if (args)
-    set_args(*args, update, conv);
 
   set_select(sel, update, conv);
 
@@ -703,28 +773,102 @@ Protocol::Op& Protocol::snd_Update(
     Update_builder prc(*update.add_operation(), conv);
     us.process(prc);
   }
-
-  return get_impl().snd_start(update, msg_type::cli_CrudUpdate);
 }
+
+Protocol::Op& Protocol::snd_Update(
+    Data_model dm,
+    uint32_t stmt_id,
+    const Select_spec &sel,
+    Update_spec &us,
+    const api::Args_map *args)
+{
+  Msg_builder<msg_type::cli_CrudUpdate> update(get_impl(), stmt_id);
+
+  update.set_limit(sel.limit());
+
+  update.set_args(args);
+
+  set_update(update.msg(), dm, sel, us, update.conv());
+
+  return update.send();
+}
+
 
 
 // -------------------------------------------------------------------------
 
 
-Protocol::Op&
-Protocol::snd_Delete(Data_model dm, const Select_spec &sel, const api::Args_map *args)
+void set_delete(Mysqlx::Crud::Delete &del,
+                Data_model dm,
+                const Select_spec &sel,
+                Placeholder_conv_imp &conv)
 {
-  Mysqlx::Crud::Delete del;
-  Placeholder_conv_imp conv;
 
   set_data_model(dm, del);
 
-  if (args)
-    set_args(*args, del, conv);
 
   set_select(sel, del, conv);
 
-  return get_impl().snd_start(del, msg_type::cli_CrudDelete);
+}
+
+Protocol::Op&
+Protocol::snd_Delete(Data_model dm,
+                     uint32_t stmt_id,
+                     const Select_spec &sel,
+                     const api::Args_map *args)
+{
+  Msg_builder<msg_type::cli_CrudDelete> del(get_impl(), stmt_id);
+
+  del.set_limit(sel.limit());
+
+  del.set_args(args);
+
+  set_delete(del.msg(),dm, sel, del.conv());
+
+  return del.send();
+}
+
+
+// -------------------------------------------------------------------------
+
+Protocol::Op&
+Protocol::snd_PrepareExecute(uint32_t stmt_id,
+                             const api::Limit *lim,
+                             const api::Args_map *args)
+{
+  auto& prepare_execute = get_impl().m_prepare_execute;
+  auto& conv = get_impl().m_args_conv;
+
+  if (lim || args)
+  {
+    conv.clear();
+    prepare_execute.Clear();
+  }
+
+  if (lim)
+  {
+    set_arg_scalar(*prepare_execute.add_args(), lim->get_row_count());
+    if (lim->get_offset())
+      set_arg_scalar(*prepare_execute.add_args(), *lim->get_offset());
+  }
+
+  if (args)
+  {
+    set_args_(*args, prepare_execute, conv);
+  }
+
+  prepare_execute.set_stmt_id(stmt_id);
+
+  return get_impl().snd_start(prepare_execute, msg_type::cli_PrepareExecute);
+}
+
+
+Protocol::Op&
+Protocol::snd_PrepareDeallocate(uint32_t id)
+{
+  Mysqlx::Prepare::Deallocate deallocate;
+  deallocate.set_stmt_id(id);
+  return get_impl().snd_start(deallocate, msg_type::cli_PrepareDealocate);
 }
 
 
@@ -859,7 +1003,14 @@ Protocol::snd_CreateView(
   if (opts)
     set_view_options(view, *opts);
 
-  set_find(*view.mutable_stmt(), dm, query, args);
+  Placeholder_conv_imp conv;
+  auto stmt = *view.mutable_stmt();
+  if (args)
+  {
+    set_args_(*args, stmt, conv);
+  }
+
+  set_find(stmt, dm, query, conv);
   return get_impl().snd_start(view, msg_type::cli_CreateView);
 }
 
@@ -882,7 +1033,15 @@ Protocol::snd_ModifyView(
   if (opts)
     set_view_options(modify, *opts);
 
-  set_find(*modify.mutable_stmt(), dm, query, args);
+  auto stmt = *modify.mutable_stmt();
+
+  Placeholder_conv_imp conv;
+  if (args)
+  {
+    set_args_(*args, stmt, conv);
+  }
+
+  set_find(stmt, dm, query, conv);
 
   return get_impl().snd_start(modify, msg_type::cli_ModifyView);
 }
@@ -895,5 +1054,6 @@ Protocol::Op& Protocol::snd_DropView(const api::Db_obj &obj, bool check_exists)
   drop.set_if_exists(!check_exists);
   return get_impl().snd_start(drop, msg_type::cli_DropView);
 }
+
 
 }}}  // cdk::protocol::mysqlx

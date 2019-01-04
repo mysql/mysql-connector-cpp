@@ -106,6 +106,23 @@ public:
 };
 
 
+class Server_prepare_error
+    : public Error_class<Server_prepare_error>
+{
+public:
+
+  typedef protocol::mysqlx::sql_state_t sql_state_t;
+
+  Server_prepare_error(unsigned num, sql_state_t, const string& desc = string()) throw()
+    : Error_base(NULL, server_error(static_cast<int>(num)), desc)
+  {
+    assert(num < (unsigned)std::numeric_limits<int>::max());
+  }
+
+  virtual ~Server_prepare_error() throw() {}
+
+};
+
 
 }}  // cdk::mysql
 

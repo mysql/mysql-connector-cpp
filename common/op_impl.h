@@ -100,8 +100,11 @@ protected:
   */
   cdk::scoped_ptr<cdk::Reply> m_reply;
 
+  uint32_t m_stmt_id = 0;
   bool m_inited = false;
   bool m_completed = false;
+  bool m_re_prepare = true;
+  bool m_executed = false;
 
 public:
 
@@ -121,12 +124,75 @@ public:
   {}
 
   virtual ~Op_base()
-  {}
+  {
+    if (m_stmt_id != 0)
+    {
+      m_sess->release_stmt_id(m_stmt_id);
+    }
+  }
 
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
     return *(m_sess->m_sess);
+  }
+
+  uint32_t create_stmt_id()
+  {
+    if (m_stmt_id == 0)
+    {
+      assert(m_sess);
+      m_stmt_id = m_sess->create_stmt_id();
+    }
+    return m_stmt_id;
+  }
+
+  void release_stmt_id()
+  {
+    if (m_stmt_id != 0)
+      m_sess->release_stmt_id(m_stmt_id);
+    m_stmt_id = 0;
+  }
+
+
+  /*
+    Clears operation state and, if stmt_id != 0, informe session about error on
+    PS
+  */
+
+  void reset_state()
+  {
+    if (m_stmt_id != 0)
+      get_session()->error_stmt_id(m_stmt_id);
+    m_stmt_id = 0;
+    m_reply.reset();
+    m_inited = false;
+    m_completed = false;
+  }
+
+  uint32_t get_stmt_id()
+  {
+    return m_stmt_id;
+  }
+
+  bool get_re_prepare()
+  {
+    return m_re_prepare;
+  }
+
+  void set_re_prepare(bool x)
+  {
+    m_re_prepare = x;
+  }
+
+  bool get_executed()
+  {
+    return m_executed;
+  }
+
+  void set_executed(bool x)
+  {
+    m_executed = x;
   }
 
   // Async execution
@@ -185,7 +251,19 @@ public:
     if (m_reply)
     {
       m_reply->cont();
-      check_errors();
+      try {
+        check_errors();
+
+      } catch (cdk::mysqlx::Server_prepare_error&)
+      {
+        /*
+          If we are executing prepare + execute pipeline and prepare step
+          failed, try again, this time executing without prepare.
+          reset_state will set stmt_id= 0 which will trigger the direct execute
+        */
+        reset_state();
+        cont();
+      }
     }
   }
 
@@ -199,7 +277,20 @@ public:
     if (m_reply)
     {
       m_reply->wait();
-      check_errors();
+      try {
+        check_errors();
+
+      } catch (cdk::mysqlx::Server_prepare_error&)
+      {
+        /*
+          If we are executing prepare + execute pipeline and prepare step
+          failed, try again, this time executing without prepare.
+          reset_state will set stmt_id= 0 which will trigger the direct execute
+        */
+        reset_state();
+        wait();
+      }
+
     }
   }
 
@@ -226,10 +317,10 @@ public:
 protected:
 
   /*
-    This method should be overriden by derived class to send a command to
+    For PS operations, do_send_command should be overriden to send a command to
     the server and return a cdk object representing server's reply to that
-    command. The Op_base instance takes ownership of the returned reply
-    object.
+    command. For non-PS, send_command should then be overriden. The Op_base
+    instance takes ownership of the returned reply object.
 
     TODO: Currently send_command() allocates new cdk::Reply object on heap
     and then passes it to result object which takes ownership. Avoid dynamic
@@ -239,6 +330,45 @@ protected:
   */
 
   virtual cdk::Reply* send_command() = 0;
+
+  virtual cdk::Reply* do_send_command()
+  {
+    assert(false);
+    return nullptr;
+  }
+
+  /*
+    Either call do_send_command() to send (and possibly prepare) a command or,
+    if there is an up-to-date prepared statement for the original command, send
+    command that executes this prepared statement.
+  */
+
+  cdk::Reply* send_prepared_command(const cdk::Limit* limit,
+                           const cdk::Param_source* param
+                           )
+  {
+    if (use_prepared_statement())
+    {
+      return new cdk::Reply(get_cdk_session().prepared_execute(
+                              get_stmt_id(),
+                              limit,
+                              param
+                              ));
+    }
+    return do_send_command();
+  }
+
+  cdk::Reply* send_prepared_command(const cdk::Any_list* list)
+  {
+    if (use_prepared_statement())
+    {
+      return new cdk::Reply(get_cdk_session().prepared_execute(
+                              get_stmt_id(),
+                              list
+                              ));
+    }
+    return do_send_command();
+  }
 
 
   /*
@@ -330,6 +460,42 @@ protected:
     */
 
     return m_reply.release();
+  }
+
+private:
+
+  /*
+    Returns true if the statement has been prepared before and that prepared
+    statement should be used for execution, false if we need to execute and
+    prepare the original statement (either for the first time, or because it has
+    been modified).
+  */
+  bool use_prepared_statement()
+  {
+    auto prepare = get_re_prepare();
+
+    /*
+      Upon first execution, get_executed() and get_re_prepare() are false and
+      get_stmt_id() is 0. The new statement id is not allocated yet and function
+      returns false, meaning that the statement will be executed directly
+      without preparing.
+
+      On next execution, get_executed() and get_re_prepare() are true. Then new
+      PS id is allocated and function returns false, meaning that the statement
+      gets prepared and executed. Also, the re-prepare flag is cleared.
+
+      On 3rd and following executions, if re-prepare flag stays false, this
+      function will return true meaning that the prepared statement should be
+      used.
+    */
+
+    if (get_executed())
+      create_stmt_id();
+
+    set_re_prepare(!get_executed());
+    set_executed(true);
+
+    return (get_stmt_id() != 0 && !prepare);
   }
 };
 
@@ -427,6 +593,10 @@ public:
     return m_map.empty() ? nullptr : this;
   }
 
+  cdk::Reply* send_command() override
+  {
+    return Base::send_prepared_command(nullptr, get_params());
+  }
 };
 
 
@@ -459,24 +629,34 @@ protected:
 
   void set_limit(unsigned lm) override
   {
+
+    if (!m_has_limit)
+      Base::set_re_prepare(true);
     m_has_limit = true;
     m_limit = lm;
   }
 
   void clear_limit() override
   {
+    if (m_has_limit)
+      Base::set_re_prepare(true);
     m_has_limit = false;
   }
 
 
   void set_offset(unsigned offset) override
   {
+    if (!m_has_offset)
+      Base::set_re_prepare(true);
+
     m_has_offset = true;
     m_offset = offset;
   }
 
   void clear_offset() override
   {
+    if (m_has_offset)
+      Base::set_re_prepare(true);
     m_has_offset = false;
   }
 
@@ -487,6 +667,12 @@ protected:
   }
 
 
+  cdk::Reply* send_command() override
+  {
+    return Base::send_prepared_command(get_limit(), Base::get_params());
+  }
+
+
   // cdk::Limit interface
 
   row_count_t get_row_count() const override
@@ -494,7 +680,7 @@ protected:
 
   const row_count_t* get_offset() const override
   {
-    return m_has_offset ? &m_offset : NULL;
+    return m_has_offset ? &m_offset : nullptr;
   }
 
 };
@@ -544,6 +730,7 @@ protected:
 
   void add_sort(const string &expr, direction_t dir) override
   {
+    Base::set_re_prepare(true);
     m_order.emplace_back(expr, dir);
   }
 
@@ -638,6 +825,7 @@ public:
 
   void set_having(const string &having) override
   {
+    Base::set_re_prepare(true);
     m_having = having;
   }
 
@@ -758,16 +946,19 @@ public:
   void set_proj(const string& doc) override
   {
     m_doc_proj = doc;
+    Base::set_re_prepare(true);
   }
 
   void add_proj(const string& field) override
   {
     m_projections.push_back(field);
+    Base::set_re_prepare(true);
   }
 
   void clear_proj() override
   {
     m_projections.clear();
+    Base::set_re_prepare(true);
   }
 
   cdk::Projection* get_tbl_proj()
@@ -801,13 +992,13 @@ private:
         Scalar_prc* scalar()
         {
           throw_error("Scalar expression can not be used as projection");
-          return NULL;
+          return nullptr;
         }
 
         List_prc* arr()
         {
           throw_error("Array expression can not be used as projection");
-          return NULL;
+          return nullptr;
         }
 
         // Report that any value is a document.
@@ -917,6 +1108,7 @@ public:
   {
     m_where_expr = expr;
     m_where_set = true;
+    Base::set_re_prepare(true);
   }
 
   void set_lock_mode(Lock_mode lm, Lock_contention contention) override
@@ -925,12 +1117,14 @@ public:
     // common::Select_if::Lock_mode.
     m_lock_mode = cdk::Lock_mode_value(lm);
     m_lock_contention = cdk::Lock_contention_value(int(contention));
+    Base::set_re_prepare(true);
   }
 
   void clear_lock_mode() override
   {
     m_lock_mode = cdk::api::Lock_mode::NONE;
     m_lock_contention = cdk::api::Lock_contention::DEFAULT;
+    Base::set_re_prepare(true);
   }
 
   cdk::Expression* get_where() const
@@ -939,7 +1133,7 @@ public:
     {
       if (m_where_set)
         throw_error("Invalid selection criteria");
-      return NULL;
+      return nullptr;
     }
 
     auto *self = const_cast<Op_select*>(this);
@@ -962,6 +1156,8 @@ struct Op_sql
   : public Op_base<common::Bind_if>
 {
   using string = std::string;
+
+  using Base = Op_base<common::Bind_if>;
 
   string m_query;
 
@@ -1021,6 +1217,11 @@ struct Op_sql
     m_params.m_values.clear();
   }
 
+  cdk::Any_list* get_params()
+  {
+    return m_params.m_values.empty() ? nullptr : &m_params;
+  }
+
 
   Executable_if* clone() const override
   {
@@ -1034,12 +1235,17 @@ struct Op_sql
 
   cdk::Reply* send_command() override
   {
+    return Base::send_prepared_command(get_params());
+  }
+
+  cdk::Reply* do_send_command() override
+  {
     return new cdk::Reply(
-      get_cdk_session().sql(
-        m_query,
-        m_params.m_values.empty() ? NULL : &m_params
-      )
-    );
+          get_cdk_session().sql(
+            get_stmt_id(),
+            m_query,
+            get_params()
+            ));
   }
 };
 
@@ -1706,13 +1912,13 @@ public:
     // Do nothing if no documents were specified.
 
     if (!m_expr && m_json.empty())
-      return NULL;
+      return nullptr;
 
     // Issue coll_add statement where documents are described by list
     // of expressions defined by this instance.
 
     return new cdk::Reply(
-      get_cdk_session().coll_add(m_coll, *this, NULL, m_upsert)
+      get_cdk_session().coll_add(m_coll, *this, nullptr, m_upsert)
     );
   }
 
@@ -1762,7 +1968,7 @@ struct Insert_id
 
   // Table_ref (function name)
 
-  const cdk::api::Schema_ref* schema() const override { return NULL; }
+  const cdk::api::Schema_ref* schema() const override { return nullptr; }
   const string name() const override { return "JSON_INSERT"; }
 
 
@@ -1854,8 +2060,7 @@ public:
   Op_collection_find(Shared_session_impl sess, const cdk::api::Object_ref &coll)
     : Op_select(sess)
     , m_coll(coll)
-  {
-  }
+  {}
 
   Op_collection_find(
     Shared_session_impl sess, const cdk::api::Object_ref &coll, const string &expr
@@ -1870,22 +2075,22 @@ public:
     return new Op_collection_find(*this);
   }
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
-    return
-      new cdk::Reply(get_cdk_session().coll_find(
-                          m_coll,
-                          NULL,           // view spec
-                          get_where(),
-                          get_doc_proj(),
-                          get_order_by(),
-                          get_group_by(),
-                          get_having(),
-                          get_limit(),
-                          get_params(),
-                          m_lock_mode,
-                          m_lock_contention
-                    ));
+    return new cdk::Reply(get_cdk_session().coll_find(
+                            get_stmt_id(),
+                            m_coll,
+                            nullptr,           // view spec
+                            get_where(),
+                            get_doc_proj(),
+                            get_order_by(),
+                            get_group_by(),
+                            get_having(),
+                            get_limit(),
+                            get_params(),
+                            m_lock_mode,
+                            m_lock_contention
+                            ));
   }
 
 };
@@ -1929,16 +2134,16 @@ public:
   }
 
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
-    return
-      new cdk::Reply(get_cdk_session().coll_remove(
+    return new cdk::Reply(get_cdk_session().coll_remove(
+                            get_stmt_id(),
                             m_coll,
                             get_where(),
                             get_order_by(),
                             get_limit(),
                             get_params()
-                    ));
+                            ));
   }
 };
 
@@ -2001,8 +2206,7 @@ class Op_collection_modify
   };
 
   std::list<Field_Op> m_update;
-  std::list<Field_Op>::const_iterator m_update_it = m_update.end();
-
+  std::list<Field_Op>::const_iterator m_update_it;
 
 public:
 
@@ -2024,22 +2228,24 @@ public:
     return new Op_collection_modify(*this);
   }
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
     // Do nothing if no update specifications were added
 
     if (m_update.empty())
-      return NULL;
+      return nullptr;
 
-    return
-      new cdk::Reply(get_cdk_session().coll_update(
-                       m_coll,
-                       get_where(),
-                       *this,
-                       get_order_by(),
-                       get_limit(),
-                       get_params()
-                     ));
+    m_update_it = m_update.end();
+
+    return new cdk::Reply(get_cdk_session().coll_update(
+                            get_stmt_id(),
+                            m_coll,
+                            get_where(),
+                            *this,
+                            get_order_by(),
+                            get_limit(),
+                            get_params()
+                            ));
   }
 
 
@@ -2208,22 +2414,22 @@ class Op_table_select
   Object_ref m_table;
   const cdk::View_spec *m_view = nullptr;
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
-    return
-        new cdk::Reply(get_cdk_session().table_select(
-                         m_table,
-                         m_view,           // view spec
-                         get_where(),
-                         get_tbl_proj(),
-                         get_order_by(),
-                         get_group_by(),
-                         get_having(),
-                         get_limit(),
-                         get_params(),
-                         m_lock_mode,
-                         m_lock_contention
-                       ));
+    return new cdk::Reply(get_cdk_session().table_select(
+                            get_stmt_id(),
+                            m_table,
+                            m_view,           // view spec
+                            get_where(),
+                            get_tbl_proj(),
+                            get_order_by(),
+                            get_group_by(),
+                            get_having(),
+                            get_limit(),
+                            get_params(),
+                            m_lock_mode,
+                            m_lock_contention
+                            ));
   }
 
   void set_view(const cdk::View_spec *view)
@@ -2303,6 +2509,7 @@ public:
   {
     m_cols.emplace_back(column);
     m_col_count++;
+    Base::set_re_prepare(true);
   }
 
   void clear_columns() override
@@ -2314,22 +2521,26 @@ public:
     clear_rows();
     m_cols.clear();
     m_col_count = 0;
+    Base::set_re_prepare(true);
   }
 
   void add_row(const Row_impl<VAL> &row) override
   {
     m_rows.emplace_back(row);
+    Base::set_re_prepare(true);
   }
 
   void clear_rows() override
   {
     m_rows.clear();
+    Base::set_re_prepare(true);
   }
 
   void clear()
   {
     clear_columns();
     clear_rows();
+    Base::set_re_prepare(true);
   }
 
 private:
@@ -2340,27 +2551,28 @@ private:
 
   cdk::Reply* send_command() override
   {
+    return Base::send_prepared_command(nullptr, nullptr);
+  }
+
+  cdk::Reply* do_send_command() override
+  {
     // Do nothing if no rows were specified.
 
     if (m_rows.empty())
-      return NULL;
+      return nullptr;
 
     // Prepare iterators to make a pass through m_rows list.
     m_started = false;
 
-    /*
-      Note: gcc complained if get_cdk_session() was used without Base:: prefix.
-      I actually do not understand why...
-    */
+    return new cdk::Reply(Base::get_cdk_session().table_insert(
+                            Base::get_stmt_id(),
+                            m_table,
+                            *this,
+                            m_cols.empty() ? nullptr : this,
+                            nullptr
+                            )
+                          );
 
-    return new cdk::Reply(
-      Base::get_cdk_session().table_insert(
-        m_table,
-        *this,
-        m_cols.empty() ? nullptr : this,
-        nullptr
-      )
-    );
   }
 
 
@@ -2467,11 +2679,13 @@ public:
   void add_set(const string &field, const Value &val) override
   {
     m_set_values.emplace(field, val);
+    Base::set_re_prepare(true);
   }
 
   void clear_modifications() override
   {
     m_set_values.clear();
+    Base::set_re_prepare(true);
   }
 
 protected:
@@ -2481,19 +2695,19 @@ protected:
     return new Op_table_update(*this);
   }
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
     m_set_it = m_set_values.end();
 
-    return
-        new cdk::Reply(Base::get_cdk_session().table_update(
-                        m_table,
-                        get_where(),
-                        *this,
-                        get_order_by(),
-                        get_limit(),
-                        get_params()
-                      ));
+    return new cdk::Reply(Base::get_cdk_session().table_update(
+                            get_stmt_id(),
+                            m_table,
+                            get_where(),
+                            *this,
+                            get_order_by(),
+                            get_limit(),
+                            get_params()
+                            ));
   }
 
 
@@ -2523,7 +2737,7 @@ protected:
     prc.column(*this);
 
     auto *vprc
-      = prc.set(m_table_field->has_path() ? m_table_field.get() : NULL);
+      = prc.set(m_table_field->has_path() ? m_table_field.get() : nullptr);
     if (vprc)
       Value::Access::process(
         parser::Parser_mode::TABLE, m_set_it->second, *vprc
@@ -2586,16 +2800,16 @@ protected:
     return new Op_table_remove(*this);
   }
 
-  cdk::Reply* send_command() override
+  cdk::Reply* do_send_command() override
   {
-    return
-        new cdk::Reply(Base::get_cdk_session().table_delete(
-                          m_table,
-                          get_where(),
-                          get_order_by(),
-                          get_limit(),
-                          get_params()
-                      ));
+    return new cdk::Reply(Base::get_cdk_session().table_delete(
+                            get_stmt_id(),
+                            m_table,
+                            get_where(),
+                            get_order_by(),
+                            get_limit(),
+                            get_params()
+                            ));
   }
 
 };
