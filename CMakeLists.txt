@@ -71,7 +71,7 @@ include(cmake/setup.cmake)
 include(platform)
 include(dependency)      # find_dependency()
 include(config_options)  # add_config_option()
-include(libutils)        # merge_static_library()
+include(libutils)        # merge_libraries()
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
