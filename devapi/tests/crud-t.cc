@@ -2873,6 +2873,9 @@ TEST_F(Crud, overlaps)
   res = coll.find(R"(food overlaps ["Meat"])").execute();
   EXPECT_EQ(0, res.count());
 
+  res = coll.find(R"(food overlaps "Meat")").execute();
+  EXPECT_EQ(0, res.count());
+
   // Not Overlaps tests
 
   res = coll.find(R"(food not overlaps ["Soup"])").execute();
@@ -2891,5 +2894,22 @@ TEST_F(Crud, overlaps)
 
   res = coll.find(R"(food not overlaps ["Meat"])").execute();
   EXPECT_EQ(2, res.count());
+
+  res = coll.find(R"(food not overlaps "Meat")").execute();
+  EXPECT_EQ(2, res.count());
+
+  try {
+    coll.find(R"(food not overlaps and "Meat")").execute();
+    FAIL() << "No error thrown";
+  } catch (Error& e) {
+    std::cout << "Expected: " << e << std::endl;
+  }
+
+  try {
+    coll.find(R"(food and overlaps "Meat")").execute();
+    FAIL() << "No error thrown";
+  } catch (Error& e) {
+    std::cout << "Expected: " << e << std::endl;
+  }
 
 }
