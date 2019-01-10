@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -890,6 +890,7 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not in ('foo%', 'bar%')"},
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not between 'foo%' AND 'bar%'"},
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not regexp 'foo.*'"},
+  { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or docName not overlaps [foo, bar]"},
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5 >> 6 & 7 >= 8 and true or Schema.Table.docName = null"},
   { parser::Parser_mode::DOCUMENT, "not (name <= 'foo' or not bar)"},
   { parser::Parser_mode::DOCUMENT, "colName.Xpto[1].a[*].* + .1e-2"},
@@ -911,6 +912,9 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::TABLE   , "CHARSET(CHAR(0x65))"},
   { parser::Parser_mode::TABLE   , "'abc' NOT LIKE 'ABC1'"},
   { parser::Parser_mode::TABLE   , "'a' REGEXP '^[a-d]'"},
+  { parser::Parser_mode::TABLE   , "'a' OVERLAPS [a,d]"},
+  { parser::Parser_mode::TABLE   , "`overlaps` oVeRlApS [foo, bar]"},
+  { parser::Parser_mode::TABLE   , R"("overlaps" not OvErLaPs [foo, bar])"},
   { parser::Parser_mode::TABLE   , "'a' NOT RLIKE '^[a-d]'"},
   { parser::Parser_mode::TABLE   , "POSITION('bar' IN 'foobarbar')"},
   { parser::Parser_mode::TABLE   , "TRIM('barxxyz')"},
@@ -923,6 +927,9 @@ const Expr_Test exprs[] =
   { parser::Parser_mode::DOCUMENT, "$.field1 IN $.field2"},
   { parser::Parser_mode::DOCUMENT, "$.field1 NOT IN $.field2"},
   { parser::Parser_mode::DOCUMENT, "a IN (b)"},
+  //Commented untill WL12774 fixes it:
+//  { parser::Parser_mode::DOCUMENT, "`overlaps` oVeRlApS [foo, bar]"},
+//  { parser::Parser_mode::DOCUMENT, "`like` NOT LIKE :like"},
   { parser::Parser_mode::TABLE   , "cast(column as json) IN doc->'$.field.array'"},
   { parser::Parser_mode::TABLE   , "cast(column as json) NOT IN doc->'$.field.array'"},
   { parser::Parser_mode::TABLE   , "column->'$.field' IN [1,2,3]"},
@@ -1131,7 +1138,12 @@ const Expr_Test negative_exprs[] =
   { parser::Parser_mode::TABLE, "$.a**[0]"                   },
   { parser::Parser_mode::TABLE, "$.a**[*]"                   },
   { parser::Parser_mode::TABLE, "$.a**.bar"                  },
-  { parser::Parser_mode::TABLE, "$.a**.foo"                  }
+  { parser::Parser_mode::TABLE, "$.a**.foo"                  },
+
+  //Operators
+  { parser::Parser_mode::DOCUMENT, "overlaps [a,b,c]"        },
+  { parser::Parser_mode::DOCUMENT, "not overlaps [a,b,c]"    },
+  { parser::Parser_mode::DOCUMENT, "[a,b,c] not overlaps"    },
 };
 
 
