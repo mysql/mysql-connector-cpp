@@ -34,7 +34,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cppconn/sqlstring.h>
 
-//#include "binding_config.h"
+#include "binding_config.h"
 
 #ifdef MYSQLCLIENT_STATIC_BINDING
 /* MySQL client library is linked */
