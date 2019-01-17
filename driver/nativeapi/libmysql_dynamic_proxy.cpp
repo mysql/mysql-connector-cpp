@@ -440,7 +440,7 @@ LibmysqlDynamicProxy::options(MYSQL * mysql, enum mysql_option option, const voi
 int
 LibmysqlDynamicProxy::get_option(MYSQL * mysql, enum mysql_option option, const void *arg)
 {
-  ptr2mysql_get_option ptr2_get_option = symbol_safe_cast<ptr2mysql_options4>(GetProcAddr("mysql_get_option"));
+  ptr2mysql_get_option ptr2_get_option = symbol_safe_cast<ptr2mysql_options>(GetProcAddr("mysql_get_option"));
   if (ptr2_get_option != NULL) {
     if (((*ptr2_get_option)(mysql, option, arg))) {
       throw sql::InvalidArgumentException("Unsupported option provided to mysql_get_option()");
@@ -819,7 +819,7 @@ LibmysqlDynamicProxy::stmt_free_result(MYSQL_STMT * stmt)
 {
         ptr2mysql_stmt_free_result ptr2_stmt_free_result = symbol_safe_cast<ptr2mysql_stmt_free_result>(GetProcAddr("mysql_stmt_free_result"));
 
-        return (*ptr2_stmt_next_result)(stmt);
+        return (*ptr2_stmt_free_result)(stmt);
 }
 /* }}} */
 
