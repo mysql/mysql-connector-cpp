@@ -165,6 +165,18 @@ function(main)
     NO_DEFAULT_PATH
   )
 
+  find_library(MYSQL_DLL
+    NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
+    PATHS ${MYSQL_LIB_DIR}
+    NO_DEFAULT_PATH
+  )
+
+  find_library(MYSQL_DLL_DEBUG
+    NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
+    PATHS "${MYSQL_LIB_DIR}/debug"
+    NO_DEFAULT_PATH
+  )
+
   #message("-- static lib: ${MYSQL_LIB}")
   #message("-- debug lib: ${MYSQL_LIB_DEBUG}")
 
@@ -186,6 +198,14 @@ function(main)
       set(MYSQL_LIB "${MYSQL_LIB_DEBUG}")
     endif()
 
+    if (NOT MYSQL_DLL_DEBUG)
+      set(MYSQL_DLL_DEBUG "${MYSQL_DLL}")
+    endif()
+
+    if (NOT MYSQL_DLL)
+      set(MYSQL_DLL "${MYSQL_DLL_DEBUG}")
+    endif()
+
   endif()
 
 
@@ -201,6 +221,13 @@ function(main)
     IMPORTED_LOCATION_DEBUG "${MYSQL_LIB_DEBUG}"
   )
 
+  add_library(MySQL::client-shared SHARED IMPORTED GLOBAL)
+
+  set_target_properties(MySQL::client-shared PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${MYSQL_INCLUDE_DIR}"
+    IMPORTED_LOCATION "${MYSQL_DLL}"
+    IMPORTED_LOCATION_DEBUG "${MYSQL_DLL_DEBUG}"
+  )
 
   # Define alias MySQL::client pointing to -static or -shared library,
   # depending on MYSQL_LIB_STATIC setting.
@@ -210,6 +237,10 @@ function(main)
   # that depends on the final imported library.
 
   add_library(mysql-client-if INTERFACE)
+
+  set_target_properties(mysql-client-if PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${MYSQL_INCLUDE_DIR}"
+      )
 
   if(MYSQL_LIB_STATIC)
     target_link_libraries(mysql-client-if INTERFACE MySQL::client-static)
@@ -235,6 +266,10 @@ function(main)
     PROPERTY VERSION ${MYSQL_VERSION}
   )
 
+  set_property(TARGET MySQL::client-shared
+    PROPERTY VERSION ${MYSQL_VERSION}
+  )
+
   #
   # Detect shared libraries on which MySQL client lib depends (if possible).
   # Stores result in MYSQL_EXTERNAL_DEPENDENCIES.
@@ -256,6 +291,9 @@ function(main)
 
   if(NOT MSVC)
     set_property(TARGET MySQL::client-static
+      PROPERTY INTERFACE_LINK_LIBRARIES "-L${MYSQL_DIR}/lib"
+    )
+    set_property(TARGET MySQL::client-shared
       PROPERTY INTERFACE_LINK_LIBRARIES "-L${MYSQL_DIR}/lib"
     )
   endif()

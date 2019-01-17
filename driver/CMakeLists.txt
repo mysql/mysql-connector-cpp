@@ -47,6 +47,17 @@ else(MYSQLCLIENT_STATIC_BINDING)
   message(STATUS "Using dynamic libmysql binding")
 endif(MYSQLCLIENT_STATIC_BINDING)
 
+IF(NOT MYSQLCLIENT_STATIC_BINDING)
+  IF(NOT WIN32)
+    CHECK_INCLUDE_FILES(dlfcn.h HAVE_DLFCN_H)
+    # We are not on windows and don't have dlfcn.h - so we need static binding
+    IF(NOT HAVE_DLFCN_H)
+      MESSAGE(FATAL_ERROR "Dynamic binding has been requested but we cannot find dlfcn.h!")
+      SET(MYSQLCLIENT_STATIC_BINDING 1)
+    ENDIF(NOT HAVE_DLFCN_H)
+  ENDIF(NOT WIN32)
+ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
+
 #-----------------
 
 if(0)
@@ -76,9 +87,9 @@ endif()
 
 #-----------------
 
-#configure_file(nativeapi/binding_config.h.cm
-#               nativeapi/binding_config.h)
-#include_directories(${CMAKE_CURRENT_BINARY_DIR}/nativeapi)
+configure_file(nativeapi/binding_config.h.cm
+               nativeapi/binding_config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/nativeapi)
 
 SET(MYSQLCPPCONN_SOURCES
   mysql_art_resultset.cpp
@@ -177,7 +188,12 @@ ENDIF(WIN32)
 add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 
 target_link_libraries(jdbc PUBLIC Boost::boost)
-target_link_libraries(jdbc PRIVATE MySQL::client)
+
+if (MYSQLCLIENT_STATIC_BINDING)
+  target_link_libraries(jdbc PRIVATE MySQL::client)
+else()
+  target_include_directories(jdbc PRIVATE ${MYSQL_INCLUDE_DIR})
+endif()
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(jdbc PRIVATE -DCPPCONN_LIB_BUILD)

@@ -85,9 +85,10 @@ if(jdbc_stand_alone)
 endif(jdbc_stand_alone)
 
 
-# TODO: support dynamic binding
-#add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable static binding")
-set(MYSQLCLIENT_STATIC_BINDING ON CACHE INTENRAL "only static biniding supported for now" FORCE)
+
+add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static linking")
+add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static binding")
+
 
 
 if(BUILD_STATIC)
@@ -134,10 +135,14 @@ include(./install_layout.cmake)
 
 include(dependency)
 
-if(MYSQLCLIENT_STATIC_BINDING)
+if(MYSQLCLIENT_STATIC_LINKING)
   # Arrange for MySQL::client to refer to the static library
   set(MYSQL_LIB_STATIC ON)
+else()
+  # Arrange for MySQL::client to refer to the dynamic library
+  set(MYSQL_LIB_STATIC OFF)
 endif()
+
 
 find_dependency(MySQL)
 find_dependency(Boost)
