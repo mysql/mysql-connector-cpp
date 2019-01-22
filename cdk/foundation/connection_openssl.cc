@@ -153,6 +153,12 @@ static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!R
                                         "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
                                         "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
 
+static const char tls_cipher_suites[] ="TLS_AES_128_GCM_SHA256:"
+                                       "TLS_AES_256_GCM_SHA384:"
+                                       "TLS_CHACHA20_POLY1305_SHA256:"
+                                       "TLS_AES_128_CCM_SHA256:"
+                                       "TLS_AES_128_CCM_8_SHA256:";
+
 static void throw_openssl_error_msg(const char* msg)
 {
   throw cdk::foundation::Error(cdk::foundation::cdkerrc::tls_error,
@@ -290,6 +296,8 @@ void connection_TLS_impl::do_connect()
     cipher_list.append(tls_ciphers_list);
 
     SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
+    //TLSv1.3
+    SSL_CTX_set_ciphersuites(m_tls_ctx, tls_cipher_suites);
 
     if (m_options.ssl_mode()
         >=
