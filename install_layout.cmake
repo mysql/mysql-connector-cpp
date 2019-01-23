@@ -70,7 +70,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LIBDIR)
 
-  if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  if(FREEBSD)
     set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING
       "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
   elseif(IS64BIT OR SUNPRO)
