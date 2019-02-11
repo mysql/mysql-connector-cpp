@@ -65,9 +65,8 @@ protected:
 
 typedef struct mysqlx_error_struct mysqlx_error_t;
 
-class Mysqlx_diag_base
+struct Mysqlx_diag_base
 {
-public:
   virtual mysqlx_error_t * get_error() = 0;
 };
 
@@ -80,17 +79,23 @@ typedef struct mysqlx_error_struct : public Mysqlx_diag_base
   mysqlx_error_struct() : m_error_num(0), m_is_warning(false)
   {}
 
-  mysqlx_error_struct(const char *m, unsigned int n, bool is_warning = false) : m_is_warning(is_warning)
+  mysqlx_error_struct(const char *m, unsigned int n,
+                      bool is_warning = false) :
+                      m_is_warning(is_warning)
   {
     set(m, n);
   }
 
-  mysqlx_error_struct(const cdk::Error* cdk_error, bool is_warning = false) : m_is_warning(is_warning)
+  mysqlx_error_struct(const cdk::Error* cdk_error,
+                      bool is_warning = false) :
+                      m_is_warning(is_warning)
   {
     set(cdk_error);
   }
 
-  mysqlx_error_struct(const cdk::Error &cdk_error, bool is_warning = false) : m_is_warning(is_warning)
+  mysqlx_error_struct(const cdk::Error &cdk_error,
+                      bool is_warning = false) :
+                      m_is_warning(is_warning)
   {
     set(&cdk_error);
   }
@@ -149,6 +154,12 @@ typedef struct mysqlx_error_struct : public Mysqlx_diag_base
   virtual ~mysqlx_error_struct()
   {}
 } mysqlx_error_t;
+
+
+struct mysqlx_dyn_error_struct : public mysqlx_error_struct
+{
+  using mysqlx_error_struct::mysqlx_error_struct;
+};
 
 class Mysqlx_diag : public Mysqlx_diag_base
 {
