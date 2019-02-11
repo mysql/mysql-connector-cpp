@@ -536,7 +536,6 @@ void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 
     if (el != m_pool.end())
       try {
-      el->first->reset();
       el->second = system_clock::now() + m_time_to_live;
     }
     catch (...) {
@@ -577,6 +576,7 @@ std::shared_ptr<cdk::Session> Session_pool::get_session()
     if (it->first.unique())
     {
       try {
+        it->first->reset();
         if(!it->first->is_valid())
         {
           throw "Remove this";
