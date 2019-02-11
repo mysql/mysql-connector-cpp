@@ -220,7 +220,7 @@ typedef struct mysqlx_client_struct mysqlx_client_t;
   and can be manipulated using related functions.
 
   @see mysqlx_get_session_from_options(), mysqlx_session_options_new(),
-  mysqlx_session_option_set(), mysqlx_free_options().
+  mysqlx_session_option_set(), mysqlx_free().
 */
 
 typedef struct mysqlx_session_options_struct mysqlx_session_options_t;
@@ -266,6 +266,8 @@ typedef struct mysqlx_table_struct mysqlx_table_t;
 */
 
 typedef struct mysqlx_stmt_struct mysqlx_stmt_t;
+
+typedef struct Mysqlx_diag_base mysqlx_object_t;
 
 
 /**
@@ -515,24 +517,25 @@ mysqlx_lock_contention_t;
 
   @param conn_string    connection string
   @param client_opts    client options in the form of a JSON string.
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code  if error happens during connect the error code
+  @param[out] error     if error happens during connect the error object
                         is returned through this parameter
 
   @return client handle if client could be created, otherwise NULL
   is returned and the error information is returned through
-  the out_error and err_code output parameters.
+  the error output parameter.
 
   @note The client returned by the function must be properly closed using
         `mysqlx_client_close()`.
+
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 
   @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_client_t *
 mysqlx_get_client_from_url(const char *conn_string, const char *client_opts,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
+                           mysqlx_error_t **error);
 
 
 /**
@@ -568,25 +571,25 @@ mysqlx_get_client_from_url(const char *conn_string, const char *client_opts,
 
   @param opt  handle to client configuration data
   @param client_opts    client options in the form of a JSON string.
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
+  @param[out] error     if error happens during connect the error object
                         is returned through this parameter
 
   @return client handle if client could be created, otherwise NULL
   is returned and the error information is returned through
-  the out_error and err_code output parameters.
+  the error output parameter.
 
   @note The client returned by the function must be properly closed using
         `mysqlx_client_close()`.
+
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 
   @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_client_t *
 mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
-                               char out_error[MYSQLX_MAX_ERROR_LEN],
-                               int *err_code);
+                               mysqlx_error_t **error);
 
 /**
   Close the client pool and all sessions created by them.
@@ -614,19 +617,16 @@ PUBLIC_API void mysqlx_client_close(mysqlx_client_t *client);
   Create a new session
 
   @param client     client pool to get session from
-  @param[out] out_error if error happens during getting the session handle from
-                        the pool, the error message is returned through this
-                        parameter
-  @param[out] err_code if error happens during getting the session handle from
-                       the pool, the error code is returned through this
-                       parameter
+  @param[out] error if error happens during connect the error object
+                    is returned through this parameter
 
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 */
 
 PUBLIC_API mysqlx_session_t *
-mysqlx_get_session_from_client(mysqlx_client_t *client,
-                               char out_error[MYSQLX_MAX_ERROR_LEN],
-                               int *err_code);
+mysqlx_get_session_from_client(mysqlx_client_t *cli,
+                               mysqlx_error_t **error);
 
 /**
   Create a new session.
@@ -636,26 +636,26 @@ mysqlx_get_session_from_client(mysqlx_client_t *client,
   @param user       user name
   @param password   password
   @param database   default database name
-  @param[out] out_error if error happens during connect the error message
-                    is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
+  @param[out] error if error happens during connect the error object
                     is returned through this parameter
 
   @return session handle if session could be created, otherwise NULL
           is returned and the error information is returned through
-          the out_error and err_code output parameters.
+          output error parameter.
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
   @note This function always establishes connection with SSL enabled
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 
   @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
 mysqlx_get_session(const char *host, int port, const char *user,
-                     const char *password, const char *database,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
+                   const char *password, const char *database,
+                   mysqlx_error_t **error);
 
 
 /**
@@ -673,49 +673,48 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
   Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
 
-  @param conn_string    connection string
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code  if error happens during connect the error code
-                        is returned through this parameter
+  @param conn_string  connection string
+  @param[out] error   if error happens during connect the error object
+                      is returned through this parameter
 
   @return session handle if session could be created, otherwise NULL
   is returned and the error information is returned through
-  the out_error and err_code output parameters.
+  the error output parameter.
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 
   @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_url(const char *conn_string,
-                     char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
-
+                            mysqlx_error_t **error);
 
 /**
   Create a session using session configuration data.
 
-  @param opt  handle to session configuration data
-  @param[out] out_error if error happens during connect the error message
-                        is returned through this parameter
-  @param[out] err_code if error happens during connect the error code
-                        is returned through this parameter
+  @param opt        handle to session configuration data
+  @param[out] error if error happens during connect the error object
+                    is returned through this parameter
 
   @return session handle if session could be created, otherwise NULL
   is returned and the error information is returned through
-  the out_error and err_code output parameters.
+  the error output parameter.
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
+  @note If an error object returned through the output parameter it must be
+        freed using `mysqlx_free()`.
 
   @ingroup xapi_sess
 */
 
 PUBLIC_API mysqlx_session_t *
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
-                       char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code);
+                                mysqlx_error_t **error);
 
 
 
@@ -1018,7 +1017,7 @@ mysqlx_rollback_to(  mysqlx_session_t *sess, const char *name);
   @return handle to the newly allocated configuration data
 
   @note The allocated object must be eventually freed by
-        `mysqlx_free_options()` to prevent memory leaks
+        `mysqlx_free()` to prevent memory leaks
 
   @ingroup xapi_sess
 */
@@ -1031,6 +1030,8 @@ PUBLIC_API mysqlx_session_options_t * mysqlx_session_options_new();
 
   @param opt handle to sessin configuartion data object
              that has to be freed
+
+  @note This function is DEPRECATED. Use `mysqlx_free()` instead.
 
   @ingroup xapi_sess
 */
@@ -2214,7 +2215,7 @@ PUBLIC_API int mysqlx_set_update_values(mysqlx_stmt_t *stmt, ...);
            `mysqlx_free()`) or until another call to `mysqlx_execute()`
            on the same statement handle is made. It is also possible to close
            a result handle and free all resources used by it earlier with
-           `mysqlx_result_free()` call.
+           `mysqlx_free()` call.
            On error NULL is returned. The statement is set to an error state and
            errors can be examined using the statement handle.
 
@@ -2491,17 +2492,28 @@ PUBLIC_API int
 mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking, int contention);
 
 /**
-  Free the statement handle explicitly.
+  Free the allocated handle explicitly.
 
-  @note Statement handles are also freed automatically when
-  statement's session is closed.
+  After calling this function on a handle it becomes invalid and
+  should not be used any more.
 
-  @param stmt statement handle
+  @note Statement, result, schema, collection, table and some error
+        handles are also freed automatically when the session is closed.
+
+  @note Only errors that originate from an already established session are
+        freed automatically when that session is closed.
+        Errors reported from one of the following functions when they
+        fail to create a new session or a new client must be freed explicitly:
+        `mysqlx_get_session()`, `mysqlx_get_session_from_url()`,
+        `mysqlx_get_session_from_options()`, `mysqlx_get_session_from_client()`,
+        `mysqlx_get_client_from_url()` and `mysqlx_get_client_from_options()`.
+
+  @param obj object handle
 
   @ingroup xapi_stmt
 */
 
-PUBLIC_API void mysqlx_free(mysqlx_stmt_t *stmt);
+PUBLIC_API void mysqlx_free(void *obj);
 
 
 /*
@@ -2798,6 +2810,8 @@ mysqlx_get_double(mysqlx_row_t* row, uint32_t col, double *val);
 
 /**
   Free the result explicitly.
+
+  @note This function is DEPRECATED. Use `mysqlx_free()` instead.
 
   @note Results are also freed automatically when the corresponding
   statement handle is freed.

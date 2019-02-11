@@ -388,16 +388,12 @@ TEST_F(xapi, lock_contention)
   /*
     First session lock the rows, second one, tries to read/write values
   */
-  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
-  int conn_err_code;
-
   auto s_nolock = mysqlx_get_session(m_xplugin_host,
                               m_port,
                               m_xplugin_usr,
                               m_xplugin_pwd,
                               NULL,
-                              conn_error,
-                              &conn_err_code);
+                              NULL);
 
   EXPECT_TRUE((sch_nolock = mysqlx_get_schema(s_nolock, "test", 1)) != NULL);
 
@@ -413,7 +409,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(1, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
 //  mysqlx_free(stmt);
 
   stmt2 = mysqlx_table_select_new(tbl_nolock);
@@ -421,7 +417,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(9, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_collection_find_new(coll_nolock);
@@ -429,21 +425,21 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(9, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_table_select_new(tbl_nolock);
   mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_NOWAIT);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_ERROR,mysqlx_store_result(res, &res_num));
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_collection_find_new(coll_nolock);
   mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_NOWAIT);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_ERROR,mysqlx_store_result(res, &res_num));
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   mysqlx_free(stmt);
@@ -466,7 +462,7 @@ TEST_F(xapi, lock_contention)
   EXPECT_TRUE(NULL != res);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(1, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt);
 
   stmt2 = mysqlx_table_select_new(tbl_nolock);
@@ -474,7 +470,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(10, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_collection_find_new(coll_nolock);
@@ -482,7 +478,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(10, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_table_select_new(tbl_nolock);
@@ -490,7 +486,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(10, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   stmt2 = mysqlx_collection_find_new(coll_nolock);
@@ -498,7 +494,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
   EXPECT_EQ(10, res_num);
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt2);
 
   //Should timeout!
@@ -1435,19 +1431,18 @@ TEST_F(xapi, param_safety_test)
     printf("\nExpected error: %s", mysqlx_error_message(row));
   }
 
-  char out_err[MYSQLX_MAX_ERROR_LEN] = {0};
   /* We don't know for sure if it will connect, but it should not crash*/
-  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, out_err, NULL);
+  session = mysqlx_get_session(NULL, 0, NULL, NULL, NULL, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_session_from_url(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_url(NULL, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_session_from_url(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_url(NULL, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_session_from_options(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_options(NULL, NULL);
   mysqlx_session_close(session);
-  session = mysqlx_get_session_from_options(NULL, out_err, NULL);
+  session = mysqlx_get_session_from_options(NULL, NULL);
   mysqlx_session_close(session);
 
   stmt = mysqlx_collection_add_new(collection);
@@ -1493,7 +1488,7 @@ TEST_F(xapi, param_safety_test)
   printf("\nExpected error: %s", mysqlx_error_message(stmt));
   EXPECT_TRUE(mysqlx_execute(stmt) == NULL);
 
-  mysqlx_free_options(opt);
+  mysqlx_free(opt);
 }
 
 
@@ -2227,7 +2222,7 @@ TEST_F(xapi_bugs, myc_293_double_free)
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {}
 
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt);
 }
 
@@ -2275,7 +2270,7 @@ TEST_F(xapi_bugs, myc_338_update_null)
     EXPECT_EQ(RESULT_NULL, mysqlx_get_bytes(row, 1, 0, buf, &len));
   }
 
-  mysqlx_result_free(res);
+  mysqlx_free(res);
   mysqlx_free(stmt);
 }
 
@@ -3089,16 +3084,12 @@ TEST_F(xapi_bugs, session_invalid_password_deadlock)
 {
   SKIP_IF_NO_XPLUGIN
 
-  char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
-  int conn_err_code;
-
   auto sess = mysqlx_get_session(m_xplugin_host,
                               m_port,
                               m_xplugin_usr,
                               "bal_xplugin_pwd",
                               NULL,
-                              conn_error,
-                              &conn_err_code);
+                              NULL);
 
   EXPECT_EQ(NULL, sess);
 }
