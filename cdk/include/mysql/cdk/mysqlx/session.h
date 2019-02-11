@@ -550,6 +550,7 @@ public:
   void check_protocol_fields();
   bool has_prepared_statements();
   void set_has_prepared_statements(bool);
+  bool has_keep_open();
 
   /*
     Clear diagnostic information that accumulated for the session.
@@ -562,7 +563,6 @@ public:
   { m_da.clear(); }
 
   void reset();
-
   void close();
 
   /*
