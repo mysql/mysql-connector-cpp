@@ -35,6 +35,42 @@ endif()
 INCLUDE_DIRECTORIES("${WOLFSSL_SOURCE_DIR}")
 
 
+#
+# Determine WolfSSL version
+#
+
+set(GETWOLFSSLVERSION_SOURCEFILE "${CMAKE_CURRENT_BINARY_DIR}/getwolfsslversion.c")
+file(WRITE "${GETWOLFSSLVERSION_SOURCEFILE}"
+       "#include <stdio.h>\n"
+       "#include <wolfssl/ssl.h>\n"
+       "int main() {\n"
+       "  printf(\"%s\",LIBWOLFSSL_VERSION_STRING);\n"
+       "}\n"
+)
+
+# Compile and run the created executable, store output in MYSQL_VERSION
+try_run(_run_result _compile_result
+  "${CMAKE_BINARY_DIR}"
+  "${GETWOLFSSLVERSION_SOURCEFILE}"
+  CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${WOLFSSL_SOURCE_DIR}"
+  RUN_OUTPUT_VARIABLE _WOLFSSL_VERSION
+)
+
+UNSET(OPENSSL_VERSION_GLOBAL CACHE)
+IF (_WOLFSSL_VERSION)
+  SET(WOLFSSL_VERSION_GLOBAL ${_WOLFSSL_VERSION} CACHE INTERNAL "WolfSSL Version")
+ENDIF()
+
+
+if (${WOLFSSL_VERSION_GLOBAL} VERSION_GREATER "3.15.6")
+    set(WOLFSSL_HAS_TLS13 true)
+    MESSAGE(STATUS "WOLFSSL TLSv1.3 enabled")
+else()
+    set(WOLFSSL_HAS_TLS13 false)
+    MESSAGE(STATUS "WOLFSSL TLSv1.3 disabled")
+endif()
+
+
 CHECK_TYPE_SIZE("long"      SIZEOF_LONG)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LONG})
@@ -63,6 +99,25 @@ ADD_DEFINITIONS(
   -DWOLFSSL_CERT_GEN
 )
 
+if (WOLFSSL_HAS_TLS13)
+  ADD_DEFINITIONS(
+    -DWOLFSSL_TLS13
+    -DHAVE_TLS_EXTENSIONS
+    -DHAVE_SUPPORTED_CURVES
+    -DHAVE_FFDHE_2048
+    -DHAVE_HKDF
+    -DWC_RSA_PSS
+    -DHAVE_POLY1305
+    -DHAVE_ONE_TIME_AUTH
+    -DHAVE_CHACHA
+    -DHAVE_AESGCM
+    -DHAVE_AESCCM
+    -DSESSION_CERTS
+    )
+
+endif()
+
+
 SET(WOLFSSL_SOURCES ${WOLFSSL_SOURCE_DIR}/src/crl.c
                     ${WOLFSSL_SOURCE_DIR}/src/internal.c
                     ${WOLFSSL_SOURCE_DIR}/src/keys.c
@@ -71,6 +126,10 @@ SET(WOLFSSL_SOURCES ${WOLFSSL_SOURCE_DIR}/src/crl.c
                     ${WOLFSSL_SOURCE_DIR}/src/wolfio.c
                     ${WOLFSSL_SOURCE_DIR}/src/ocsp.c
                     ${WOLFSSL_SOURCE_DIR}/src/ssl.c )
+
+if (WOLFSSL_HAS_TLS13)
+  list(APPEND WOLFSSL_SOURCES ${WOLFSSL_SOURCE_DIR}/src/tls13.c)
+endif()
 
 add_library(wolfssl STATIC ${WOLFSSL_SOURCES})
 
@@ -175,29 +234,3 @@ add_library(wolfcrypto STATIC ${WOLFCRYPT_SOURCES})
 target_link_libraries(wolfssl INTERFACE wolfcrypto)
 
 
-#
-# Determine WolfSSL version
-#
-
-set(GETWOLFSSLVERSION_SOURCEFILE "${CMAKE_CURRENT_BINARY_DIR}/getwolfsslversion.c")
-file(WRITE "${GETWOLFSSLVERSION_SOURCEFILE}"
-       "#include <stdio.h>\n"
-       "#include <ssl.h>\n"
-       "int main() {\n"
-       "  printf(\"%s\", LIBWOLFSSL_VERSION_STRING);\n"
-       "}\n"
-)
-
-# Compile and run the created executable, store output in MYSQL_VERSION
-try_run(_run_result _compile_result
-  "${CMAKE_BINARY_DIR}"
-  "${GETWOLFSSLVERSION_SOURCEFILE}"
-  CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${SSL_INCLUDES}"
-  RUN_OUTPUT_VARIABLE _WOLFSSL_VERSION
-)
-
-
-UNSET(OPENSSL_VERSION_GLOBAL CACHE)
-IF (_WOLFSSL_VERSION)
-  SET(WOLFSSL_VERSION_GLOBAL ${_WOLFSSL_VERSION} CACHE INTERNAL "WolfSSL Version")
-ENDIF()
