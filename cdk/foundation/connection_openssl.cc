@@ -41,7 +41,8 @@ PUSH_SYS_WARNINGS_CDK
 #ifdef _WIN32
 #undef close
 #endif
-
+// Wolfssl needs this include because of the NID_commonName enum
+#include <wolfssl/wolfcrypt/asn.h>
 #else
 #include <openssl/err.h>
 #endif
@@ -152,6 +153,12 @@ static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!R
                                         "!DHE-DSS-DES-CBC3-SHA:!DHE-RSA-DES-CBC3-SHA:"
                                         "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
                                         "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
+
+static const char tls_cipher_suites[] ="TLS_AES_128_GCM_SHA256:"
+                                       "TLS_AES_256_GCM_SHA384:"
+                                       "TLS_CHACHA20_POLY1305_SHA256:"
+                                       "TLS_AES_128_CCM_SHA256:"
+                                       "TLS_AES_128_CCM_8_SHA256:";
 
 static void throw_openssl_error_msg(const char* msg)
 {
@@ -275,6 +282,7 @@ void connection_TLS_impl::do_connect()
 #ifndef WITH_SSL_WOLFSSL
     const
 #endif
+
     SSL_METHOD* method = SSLv23_client_method();
 
     if (!method)
@@ -288,8 +296,18 @@ void connection_TLS_impl::do_connect()
     std::string cipher_list;
     cipher_list.append(tls_cipher_blocked);
     cipher_list.append(tls_ciphers_list);
+#ifdef WITH_SSL_WOLFSSL
+    cipher_list.append(tls_cipher_suites);
+#endif
 
     SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
+
+#if !defined (WITH_SSL_WOLFSSL) && (OPENSSL_VERSION_NUMBER>=0x1010100fL)
+    //OpenSSL TLSv1.3
+    SSL_CTX_set_ciphersuites(m_tls_ctx, tls_cipher_suites);
+#endif
+
+
 
     if (m_options.ssl_mode()
         >=
@@ -436,6 +454,7 @@ void connection_TLS_impl::verify_server_cert()
   subject= X509_get_subject_name((X509 *) server_cert);
   // Find the CN location in the subject
   cn_loc= X509_NAME_get_index_by_NID(subject, NID_commonName, -1);
+
   if (cn_loc < 0)
   {
     throw_openssl_error_msg("Failed to get CN location in the certificate subject");
@@ -458,7 +477,7 @@ void connection_TLS_impl::verify_server_cert()
 #if OPENSSL_VERSION_NUMBER > 0x10100000L
   cn= ASN1_STRING_get0_data(cn_asn1);
 #else
-  cn= ASN1_STRING_data(cn_asn1);
+  cn= (const unsigned char*)(ASN1_STRING_data(cn_asn1));
 #endif
 
   // There should not be any NULL embedded in the CN
