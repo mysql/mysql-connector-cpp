@@ -1235,14 +1235,14 @@ struct Op_sql
 
   cdk::Reply* send_command() override
   {
-    return Base::send_prepared_command(get_params());
+    return do_send_command();
   }
 
   cdk::Reply* do_send_command() override
   {
     return new cdk::Reply(
           get_cdk_session().sql(
-            get_stmt_id(),
+            0,
             m_query,
             get_params()
             ));
@@ -2551,7 +2551,7 @@ private:
 
   cdk::Reply* send_command() override
   {
-    return Base::send_prepared_command(nullptr, nullptr);
+    return do_send_command();
   }
 
   cdk::Reply* do_send_command() override
@@ -2565,7 +2565,7 @@ private:
     m_started = false;
 
     return new cdk::Reply(Base::get_cdk_session().table_insert(
-                            Base::get_stmt_id(),
+                            0,
                             m_table,
                             *this,
                             m_cols.empty() ? nullptr : this,
