@@ -54,6 +54,7 @@ function(main)
     if(EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h)
       message(STATUS "Using WolfSSL implementation of SSL")
       use_wolfssl()
+      check_x509_functions()
       return()
     endif()
 
@@ -115,6 +116,8 @@ function(main)
 
   endif()
 
+  check_x509_functions()
+
   if(WIN32 AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/applink.c")
 
     message("-- Handling applink.c")
@@ -133,6 +136,28 @@ function(main)
   endif()
 
 endfunction(main)
+
+
+function(check_x509_functions)
+    SET(CMAKE_REQUIRED_LIBRARIES SSL::ssl)
+
+    CHECK_SYMBOL_EXISTS(X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS "openssl/x509v3.h"
+                        HAVE_X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS)
+    CHECK_SYMBOL_EXISTS(SSL_get0_param "openssl/ssl.h"
+                        HAVE_SSL_GET0_PARAM)
+    CHECK_SYMBOL_EXISTS(X509_VERIFY_PARAM_set_hostflags "openssl/x509v3.h"
+                        HAVE_X509_VERIFY_PARAM_SET_HOSTFLAGS)
+    CHECK_SYMBOL_EXISTS(X509_VERIFY_PARAM_set1_host "openssl/x509v3.h"
+                        HAVE_X509_VERIFY_PARAM_SET1_HOST)
+
+    IF(HAVE_SSL_GET0_PARAM AND HAVE_X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS AND
+       HAVE_X509_VERIFY_PARAM_SET_HOSTFLAGS AND HAVE_X509_VERIFY_PARAM_SET1_HOST)
+      SET(HAVE_REQUIRED_X509_FUNCTIONS ON CACHE INTERNAL 
+          "Indicates the presence of required X509 functionality")
+      message("-- found required X509 extensions")
+      ADD_CONFIG(HAVE_REQUIRED_X509_FUNCTIONS)
+    ENDIF()
+endfunction(check_x509_functions)
 
 
 #
@@ -337,7 +362,6 @@ function(use_wolfssl)
   add_library(SSL::crypto ALIAS wolfcrypto)
 
   set(WITH_SSL_WOLFSSL ON CACHE INTERNAL "Tells whether WolfSSL implementation is used")
-
 endfunction(use_wolfssl)
 
 

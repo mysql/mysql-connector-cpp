@@ -305,7 +305,8 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     if (TLS_options::SSL_MODE::VERIFY_IDENTITY == opts.get_tls().ssl_mode())
     {
       TLS_options tls = opts.get_tls();
-      tls.set_cn(host);
+
+      tls.set_host_name(host);
       opts.set_tls(tls);
     }
 #endif
