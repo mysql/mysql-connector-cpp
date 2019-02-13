@@ -44,6 +44,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 /**
   An error, warning or other diagnostic information reported by server
@@ -73,7 +74,7 @@ public:
 private:
 
   Warning(Level level, uint16_t code, const string &msg)
-    : Warning_detail(byte(level),code,msg)
+    : Warning_detail(byte(level), code, msg)
   {
   }
 
@@ -146,6 +147,7 @@ void internal::Warning_detail::print(std::ostream &out) const
 }
 
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

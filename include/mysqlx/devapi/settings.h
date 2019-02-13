@@ -41,7 +41,7 @@
 
 
 namespace mysqlx {
-
+MYSQLX_ABI_BEGIN(2,0)
 
 
 /*
@@ -67,8 +67,8 @@ class SessionOption
 
 public:
 
-  enum Enum{
-  SESSION_OPTION_LIST(SESS_OPT_ENUM)
+  enum Enum {
+    SESSION_OPTION_LIST(SESS_OPT_ENUM)
     LAST
   };
 
@@ -96,7 +96,7 @@ public:
 
   operator int()
   {
-   return m_opt;
+    return m_opt;
   }
 
 protected:
@@ -109,7 +109,7 @@ protected:
 */
 
 class ClientOption
-    : protected SessionOption
+  : protected SessionOption
 {
 
 #define CLIENT_OPT_ENUM_any(X,N) X = -N,
@@ -123,7 +123,7 @@ public:
   using SessionEnum = SessionOption::Enum;
 
 
-  enum Enum{
+  enum Enum {
     CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
   };
 
@@ -187,13 +187,13 @@ std::string OptionName(ClientOption opt)
 #define SESS_OPT_NAME_str(X,N) SESS_OPT_NAME_any(X,N)
 
 
-  switch(opt)
+  switch (opt)
   {
     CLIENT_OPTION_LIST(CLT_OPT_NAME)
     SESSION_OPTION_LIST(SESS_OPT_NAME)
 
-    default:
-      throw_error("Unexpected Option"); return "";
+  default:
+    throw_error("Unexpected Option"); return "";
   };
 }
 
@@ -230,10 +230,10 @@ std::string SSLModeName(SSLMode m)
 {
 #define MODE_NAME(X,N) case SSLMode::X: return #X;
 
-  switch(m)
+  switch (m)
   {
     SSL_MODE_LIST(MODE_NAME)
-    default:
+  default:
     {
       std::ostringstream buf;
       buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
@@ -264,10 +264,10 @@ std::string AuthMethodName(AuthMethod m)
 {
 #define AUTH_NAME(X,N) case AuthMethod::X: return #X;
 
-  switch(m)
+  switch (m)
   {
     AUTH_METHOD_LIST(AUTH_NAME)
-    default:
+  default:
     {
       std::ostringstream buf;
       buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
@@ -317,10 +317,11 @@ void
 internal::Settings_detail<internal::Settings_traits>::
 do_set(session_opt_list_t &&opts);
 
+
 template<typename Option, typename base_iterator>
 class iterator
-    : public std::iterator<std::input_iterator_tag,
-                           std::pair<Option, mysqlx::Value>>
+  : public std::iterator<std::input_iterator_tag,
+                         std::pair<Option, mysqlx::Value>>
 {
   base_iterator m_it;
   std::pair<Option, mysqlx::Value> m_pair;
@@ -475,10 +476,12 @@ public:
     by default.
   */
 
-  SessionSettings(const std::string &host, unsigned port,
-                  const string  &user,
-                  const char *pwd = NULL,
-                  const string &db = string())
+  SessionSettings(
+    const std::string &host, unsigned port,
+    const string  &user,
+    const char *pwd = NULL,
+    const string &db = string()
+  )
   {
     set(
       SessionOption::HOST, host,
@@ -493,10 +496,12 @@ public:
       set(SessionOption::DB, db);
   }
 
-  SessionSettings(const std::string &host, unsigned port,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string &db = string())
+  SessionSettings(
+    const std::string &host, unsigned port,
+    const string  &user,
+    const std::string &pwd,
+    const string &db = string()
+  )
     : SessionSettings(host, port, user, pwd.c_str(), db)
   {}
 
@@ -507,17 +512,21 @@ public:
     by default.
   */
 
-  SessionSettings(const std::string &host,
-                  const string  &user,
-                  const char    *pwd = NULL,
-                  const string  &db = string())
+  SessionSettings(
+    const std::string &host,
+    const string  &user,
+    const char    *pwd = NULL,
+    const string  &db = string()
+  )
     : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
-  SessionSettings(const std::string &host,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string  &db = string())
+  SessionSettings(
+    const std::string &host,
+    const string  &user,
+    const std::string &pwd,
+    const string  &db = string()
+  )
     : SessionSettings(host, DEFAULT_MYSQLX_PORT, user, pwd, db)
   {}
 
@@ -528,17 +537,21 @@ public:
     by default.
   */
 
-  SessionSettings(unsigned port,
-                  const string  &user,
-                  const char    *pwd = NULL,
-                  const string  &db = string())
+  SessionSettings(
+    unsigned port,
+    const string  &user,
+    const char    *pwd = NULL,
+    const string  &db = string()
+  )
     : SessionSettings("localhost", port, user, pwd, db)
   {}
 
-  SessionSettings(unsigned port,
-                  const string  &user,
-                  const std::string &pwd,
-                  const string  &db = string())
+  SessionSettings(
+    unsigned port,
+    const string  &user,
+    const std::string &pwd,
+    const string  &db = string()
+  )
     : SessionSettings("localhost", port, user, pwd.c_str(), db)
   {}
 
@@ -559,7 +572,7 @@ public:
       std::is_constructible<SessionSettings, HOST, PORT, USER, const char*, T...>::value
     >::type* = nullptr
   >
-  SessionSettings(HOST h, PORT p, USER u ,long , T... args)
+  SessionSettings(HOST h, PORT p, USER u, long, T... args)
     : SessionSettings(h, p, u, nullptr, args...)
   {}
 
@@ -572,7 +585,7 @@ public:
       std::is_constructible<SessionSettings, PORT, USER, const char*, T...>::value
     >::type* = nullptr
   >
-  SessionSettings(PORT p, USER u ,long , T... args)
+  SessionSettings(PORT p, USER u, long, T... args)
     : SessionSettings(p, u, nullptr, args...)
   {}
 
@@ -609,7 +622,7 @@ public:
   /*
     Return an iterator pointing to the first element of the SessionSettings.
   */
-  using iterator = internal::iterator<SessionOption,Settings_detail::iterator>;
+  using iterator = internal::iterator<SessionOption, Settings_detail::iterator>;
 
   iterator begin()
   {
@@ -732,7 +745,7 @@ private:
  */
 
 class ClientSettings
-    : private internal::Settings_detail<internal::Settings_traits>
+  : private internal::Settings_detail<internal::Settings_traits>
 {
 
 public:
@@ -744,7 +757,7 @@ public:
     Return an iterator pointing to the first element of the SessionSettings.
   */
 
-  using iterator = internal::iterator<ClientOption,Settings_detail::iterator>;
+  using iterator = internal::iterator<ClientOption, Settings_detail::iterator>;
 
   iterator begin()
   {
@@ -907,7 +920,7 @@ public:
 
   template<typename...R>
   ClientSettings(const string &uri, mysqlx::ClientOption opt, R... rest)
-    try
+  try
     : ClientSettings(uri)
   {
     // set<false> means that both SessionOption and ClientOption can be used
@@ -957,7 +970,7 @@ public:
     host, all have to be specified in the same `set()` call.
    */
 
-  template<typename OPT,typename... R>
+  template<typename OPT, typename... R>
   void set(OPT opt, R&&... rest)
   {
     try {
@@ -1023,6 +1036,7 @@ private:
 };
 
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

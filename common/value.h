@@ -38,6 +38,8 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace common {
 
 using cdk::string;
@@ -122,6 +124,8 @@ public:
 };
 
 
-}}  // mysqlx::internal namespace
+}  // internal
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
 
 #endif

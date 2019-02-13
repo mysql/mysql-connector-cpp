@@ -43,6 +43,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 using std::ostream;
 
@@ -163,6 +164,7 @@ public:
 };
 
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

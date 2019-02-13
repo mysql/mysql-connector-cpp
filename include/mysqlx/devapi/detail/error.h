@@ -42,10 +42,11 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace internal {
 
 class Result_detail;
-
 
 class Warning_detail
   : public virtual common::Printable
@@ -70,6 +71,7 @@ protected:
 
 
 }  // internal namespace
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

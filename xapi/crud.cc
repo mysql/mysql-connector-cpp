@@ -33,8 +33,7 @@
 #include "../common/op_impl.h"
 
 using std::string;
-using common::throw_error;
-using common::Value;
+using namespace mysqlx::common;
 
 
 Value get_value(int64_t type, va_list &args)
@@ -154,7 +153,7 @@ int mysqlx_stmt_struct::sql_bind(cdk::string s)
 
 int mysqlx_stmt_struct::param_bind(va_list &args)
 {
-  using BImpl = common::Bind_if;
+  using BImpl = Bind_if;
 
   BImpl *impl = get_impl<BImpl>(this);
 
@@ -230,7 +229,7 @@ int mysqlx_stmt_struct::add_row(bool get_columns, va_list &args)
   int64_t type;
   char *col_name_utf8 = NULL;
 
-  common::Row_impl<> row;
+  Row_impl<> row;
   cdk::col_count_t col = 0;
 
   /*
@@ -265,7 +264,7 @@ int mysqlx_stmt_struct::add_projections(va_list &args)
     return RESULT_ERROR;
   }
 
-  auto *impl = get_impl<common::Proj_if>(this);
+  auto *impl = get_impl<Proj_if>(this);
 
   // TODO: Error if no projections passed?
 
@@ -296,7 +295,7 @@ int mysqlx_stmt_struct::add_coll_modify_values(va_list &args, mysqlx_modify_op m
     return RESULT_ERROR;
   }
 
-  using MImpl = common::Collection_modify_if;
+  using MImpl = Collection_modify_if;
 
   MImpl *impl = get_impl<MImpl>(this);
 
@@ -355,7 +354,7 @@ int mysqlx_stmt_struct::add_table_update_values(va_list &args)
     return RESULT_ERROR;
   }
 
-  using UImpl = common::Table_update_if;
+  using UImpl = Table_update_if;
 
   UImpl *impl = get_impl<UImpl>(this);
 
@@ -428,8 +427,8 @@ void set_row_locking_helper(
   if (ROW_LOCK_NONE == row_locking)
     return impl->clear_lock_mode();
 
-  impl->set_lock_mode(common::Lock_mode(unsigned(row_locking)),
-                      common::Lock_contention(unsigned(locking_contention)));
+  impl->set_lock_mode(Lock_mode(unsigned(row_locking)),
+                      Lock_contention(unsigned(locking_contention)));
 }
 
 
@@ -470,7 +469,7 @@ int mysqlx_stmt_struct::add_group_by(va_list &args)
     }
   }
 
-  using GImpl = common::Group_by_if;
+  using GImpl = Group_by_if;
   GImpl *impl = get_impl<GImpl>(this);
   cdk::string group_by(group_by_utf8);
 
@@ -510,7 +509,7 @@ int mysqlx_stmt_struct::set_having(const char *having_expr_utf8)
   if (!having_expr_utf8 || !*having_expr_utf8)
     throw Mysqlx_exception("Empty having expression");
 
-  using HImpl = common::Having_if;
+  using HImpl = Having_if;
   HImpl *impl = get_impl<HImpl>(this);
   cdk::string having_expr(having_expr_utf8);
 
@@ -542,7 +541,7 @@ int mysqlx_stmt_struct::set_limit(cdk::row_count_t row_count, cdk::row_count_t o
     throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
   }
 
-  using LImpl = common::Limit_if;
+  using LImpl = Limit_if;
   LImpl *impl = get_impl<LImpl>(this);
 
   impl->set_limit(row_count);
@@ -576,7 +575,7 @@ int mysqlx_stmt_struct::add_order_by(va_list &args)
     throw Mysqlx_exception(MYSQLX_ERROR_OP_NOT_SUPPORTED);
   }
 
-  using SImpl = common::Sort_if;
+  using SImpl = Sort_if;
   SImpl *impl = get_impl<SImpl>(this);
 
   char *item_utf8 = NULL;

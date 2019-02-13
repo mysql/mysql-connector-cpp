@@ -97,6 +97,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Session;
 
@@ -389,7 +390,7 @@ public:
   using string = mysqlx::string;
 
   /**
-     Get database object name
+    Get database object name
   */
 
   const string& getName() const
@@ -407,7 +408,7 @@ public:
   }
 
   /**
-     Get schema object
+    Get schema object
   */
 
   const Schema& getSchema() const
@@ -419,7 +420,7 @@ protected:
 
   std::shared_ptr<common::Session_impl> get_session();
 
-  internal::Schema_detail& get_schema()
+  Schema_detail& get_schema()
   {
     return m_schema;
   }
@@ -1053,7 +1054,6 @@ uint64_t Collection::count()
 }
 
 
-
 using SqlStatement = internal::SQL_statement;
 
 
@@ -1456,12 +1456,9 @@ public:
   @see ClientSettings
 */
 
-
-
 class Client : public internal::Client_detail
 {
-  public:
-
+public:
 
   Client(ClientSettings settings)
   try
@@ -1523,6 +1520,7 @@ Client getClient(P...p)
   return Client(p...);
 }
 
+
 /*
    Schema class implementation
 */
@@ -1551,6 +1549,8 @@ internal::Sch_object<Base>::get_session()
   return m_schema.m_sess->m_impl;
 }
 
+
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

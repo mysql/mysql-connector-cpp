@@ -42,6 +42,8 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace internal {
 
 
@@ -244,13 +246,13 @@ protected:
   template <typename... T>
   static void add_columns(Impl *impl, T... args)
   {
-    Args_processor<Add_column,Impl*>::process_args(impl, args...);
+    Args_processor<Add_column, Impl*>::process_args(impl, args...);
   }
 
   template <typename... T>
   static void add_rows(Impl *impl, T... args)
   {
-    Args_processor<Add_row,Impl*>::process_args(impl, args...);
+    Args_processor<Add_row, Impl*>::process_args(impl, args...);
   }
 
   template <typename... T>
@@ -270,6 +272,9 @@ protected:
 
 using Table_select_detail = Proj_detail;
 
-}}  // mysqlx::internal
+}  // internal
+
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
 
 #endif

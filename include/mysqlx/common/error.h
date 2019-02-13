@@ -36,6 +36,7 @@
   needs to be done. Current code is just a temporary hack.
 */
 
+#include "api.h"
 #include "util.h"
 
 PUSH_SYS_WARNINGS
@@ -50,6 +51,7 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 namespace common {
 
@@ -88,9 +90,9 @@ void throw_error(const char *msg)
   throw Error(msg);
 }
 
-}  // internal namespace
+}  // common
 
-
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 

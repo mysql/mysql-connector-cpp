@@ -44,6 +44,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 using std::ostream;
 
@@ -216,7 +217,6 @@ private:
   friend class Executable;
   friend Collection;
 };
-
 
 
 // Row based results
@@ -529,7 +529,7 @@ row_count_t internal::Row_result_detail<Columns>::row_count();
 */
 
 class RowResult
-    : public internal::Result_common<internal::Row_result_detail<Columns>>
+  : public internal::Result_common<internal::Row_result_detail<Columns>>
 {
 public:
 
@@ -836,11 +836,11 @@ private:
   {}
 
   friend DbDoc;
-  template <class Res,class Op>
+  template <class Res, class Op>
   friend class Executable;
 };
 
-
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

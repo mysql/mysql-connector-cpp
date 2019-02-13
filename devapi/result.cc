@@ -43,9 +43,8 @@
   Implementation of Result and Row interfaces.
 */
 
+using namespace ::mysqlx::internal;
 using namespace ::mysqlx;
-using mysqlx::col_count_t;
-using mysqlx::row_count_t;
 
 using std::endl;
 
@@ -63,7 +62,7 @@ public:
 */
 
 
-void internal::Column_detail::print(std::ostream &out) const
+void Column_detail::print(std::ostream &out) const
 {
   if (!get_impl().m_schema_name.empty())
     out << "`" << get_impl().m_schema_name << "`.";
@@ -83,7 +82,7 @@ void internal::Column_detail::print(std::ostream &out) const
 
 Type get_api_type(cdk::Type_info, const common::Format_info &);
 
-unsigned internal::Column_detail::get_type() const
+unsigned Column_detail::get_type() const
 {
   return unsigned(get_api_type(get_impl().m_type, get_impl()));
 }
@@ -157,43 +156,43 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 }
 
 
-string internal::Column_detail::get_name() const
+string Column_detail::get_name() const
 {
   return get_impl().m_name;
 }
 
-string internal::Column_detail::get_label() const
+string Column_detail::get_label() const
 {
   return get_impl().m_label;
 }
 
-string internal::Column_detail::get_schema_name() const
+string Column_detail::get_schema_name() const
 {
   return get_impl().m_schema_name;
 }
 
-string internal::Column_detail::get_table_name() const
+string Column_detail::get_table_name() const
 {
   return get_impl().m_table_name;
 }
 
-string internal::Column_detail::get_table_label() const
+string Column_detail::get_table_label() const
 {
   return get_impl().m_table_label;
 }
 
-unsigned long internal::Column_detail::get_length() const
+unsigned long Column_detail::get_length() const
 {
   return get_impl().m_length;
 }
 
-unsigned short internal::Column_detail::get_decimals() const
+unsigned short Column_detail::get_decimals() const
 {
   return get_impl().m_decimals;
 }
 
 
-bool internal::Column_detail::is_signed() const
+bool Column_detail::is_signed() const
 {
   if (cdk::TYPE_INTEGER != get_impl().m_type)
     return false;
@@ -203,7 +202,7 @@ bool internal::Column_detail::is_signed() const
   return !fd.m_format.is_unsigned();
 }
 
-bool internal::Column_detail::is_padded() const
+bool Column_detail::is_padded() const
 {
   return get_impl().m_padded;
 }
@@ -237,7 +236,7 @@ const CollationInfo& collation_from_id(cdk::collation_id_t id)
 }
 
 
-const CollationInfo& internal::Column_detail::get_collation() const
+const CollationInfo& Column_detail::get_collation() const
 {
   try {
 
@@ -264,7 +263,7 @@ const CollationInfo& internal::Column_detail::get_collation() const
   CATCH_AND_WRAP
 }
 
-CharacterSet internal::Column_detail::get_charset() const
+CharacterSet Column_detail::get_charset() const
 {
   // TODO: Better use cdk encoding format information
   //const Format_descr<cdk::TYPE_STRING> &fd = m_impl->get<cdk::TYPE_STRING>();
@@ -324,19 +323,20 @@ CDK_CS_LIST(COLL_DEFS)
 */
 
 
-internal::Row_detail::Impl& internal::Row_detail::get_impl()
+Row_detail::Impl& Row_detail::get_impl()
 {
   if (!m_impl)
     THROW("Attempt to use null Row instance");
   return *m_impl;
 }
 
-void internal::Row_detail::ensure_impl()
+void Row_detail::ensure_impl()
 {
   if (!m_impl)
     m_impl = std::make_shared<Impl>();
 }
 
+using common::Format_descr;
 
 /*
   Decoding document values from raw bytes representation.
@@ -346,9 +346,7 @@ void internal::Row_detail::ensure_impl()
 */
 
 Value
-Value::Access::mk(
-  cdk::bytes data, common::Format_descr<cdk::TYPE_DOCUMENT>&
-)
+Value::Access::mk(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 {
   /*
     Note: this assumes that document is represented as json string
@@ -374,26 +372,26 @@ Value::Access::mk(
 }
 
 
-col_count_t internal::Row_detail::col_count() const
+col_count_t Row_detail::col_count() const
 {
   return get_impl().col_count();
 }
 
 
-bytes internal::Row_detail::get_bytes(col_count_t pos) const
+bytes Row_detail::get_bytes(col_count_t pos) const
 {
   cdk::bytes data = get_impl().m_data.at(pos).data();
   return mysqlx::bytes::Access::mk(data);
 }
 
 
-mysqlx::Value& internal::Row_detail::get_val(mysqlx::col_count_t pos)
+mysqlx::Value& Row_detail::get_val(mysqlx::col_count_t pos)
 {
   return get_impl().get(pos);
 }
 
 
-void internal::Row_detail::process_one(
+void Row_detail::process_one(
   std::pair<Impl*,col_count_t> *data, const Value &val
 )
 {
@@ -408,15 +406,16 @@ void internal::Row_detail::process_one(
   =============
 */
 
+using common::Result_init;
 
-internal::Result_detail::Result_detail(common::Result_init &init)
+Result_detail::Result_detail(Result_init &init)
 {
   m_owns_impl = true;
   m_impl = new Impl(init);
 }
 
 
-internal::Result_detail::~Result_detail()
+Result_detail::~Result_detail()
 {
   try {
     if (m_owns_impl)
@@ -426,7 +425,7 @@ internal::Result_detail::~Result_detail()
 }
 
 
-auto internal::Result_detail::operator=(internal::Result_detail &&other)
+auto Result_detail::operator=(Result_detail &&other)
 -> Result_detail&
 {
   if (m_impl && m_owns_impl)
@@ -446,7 +445,7 @@ auto internal::Result_detail::operator=(internal::Result_detail &&other)
 }
 
 
-auto internal::Result_detail::get_impl() -> Impl&
+auto Result_detail::get_impl() -> Impl&
 {
   if (!m_impl)
     THROW("Invalid result set");
@@ -454,7 +453,7 @@ auto internal::Result_detail::get_impl() -> Impl&
 }
 
 
-void internal::Result_detail::check_result() const
+void Result_detail::check_result() const
 {
   if (!get_impl().has_data())
     THROW("No result set");
@@ -462,13 +461,13 @@ void internal::Result_detail::check_result() const
 
 
 unsigned
-internal::Result_detail::get_warning_count() const
+Result_detail::get_warning_count() const
 {
   return get_impl().get_warning_count();
 }
 
 
-Warning internal::Result_detail::get_warning(size_t pos)
+auto Result_detail::get_warning(size_t pos) -> Warning
 {
   if (!common::check_num_limits<unsigned>(pos))
     throw std::out_of_range("No diagnostic entry at position ...");
@@ -503,29 +502,29 @@ Warning internal::Result_detail::get_warning(size_t pos)
 }
 
 
-uint64_t internal::Result_detail::get_affected_rows() const
+auto Result_detail::get_affected_rows() const -> uint64_t
 {
   return get_impl().get_affected_rows();
 }
 
-uint64_t internal::Result_detail::get_auto_increment() const
+auto Result_detail::get_auto_increment() const -> uint64_t
 {
   return get_impl().get_auto_increment();
 }
 
 
-auto internal::Result_detail::get_generated_ids() const -> DocIdList
+auto Result_detail::get_generated_ids() const -> DocIdList
 {
   return get_impl().get_generated_ids();
 }
 
 
-bool internal::Result_detail::has_data() const
+bool Result_detail::has_data() const
 {
   return get_impl().has_data();
 }
 
-bool internal::Result_detail::next_result()
+bool Result_detail::next_result()
 {
   return get_impl().next_result();
 }
@@ -538,7 +537,7 @@ bool internal::Result_detail::next_result()
 
 
 template<>
-bool internal::Row_result_detail<Columns>::iterator_next()
+bool Row_result_detail<Columns>::iterator_next()
 {
   auto &impl = get_impl();
   const common::Row_data *row = impl.get_row();
@@ -555,29 +554,29 @@ bool internal::Row_result_detail<Columns>::iterator_next()
 
 
 template<>
-col_count_t internal::Row_result_detail<Columns>::col_count() const
+col_count_t Row_result_detail<Columns>::col_count() const
 {
   return get_impl().get_col_count();
 }
 
 
 template<>
-internal::Row_result_detail<Columns>::Row_result_detail(common::Result_init &init)
-  : internal::Result_detail(init)
+Row_result_detail<Columns>::Row_result_detail(Result_init &init)
+  : Result_detail(init)
 {
   next_result();
 }
 
 
 template<>
-auto internal::Row_result_detail<Columns>::get_column(col_count_t pos) const
+auto Row_result_detail<Columns>::get_column(col_count_t pos) const
 -> const Column&
 {
   return m_cols.at(pos);
 }
 
 template<>
-auto internal::Row_result_detail<Columns>::get_columns() const
+auto Row_result_detail<Columns>::get_columns() const
 -> const Columns&
 {
   return m_cols;
@@ -585,9 +584,7 @@ auto internal::Row_result_detail<Columns>::get_columns() const
 
 
 template<>
-void internal::Columns_detail<Column>::init(
-  const internal::Result_detail::Impl &impl
-)
+void Columns_detail<Column>::init(const Result_detail::Impl &impl)
 {
   clear();
   for (col_count_t pos = 0; pos < impl.get_col_count(); ++pos)
@@ -598,7 +595,7 @@ void internal::Columns_detail<Column>::init(
 
 
 template<>
-row_count_t internal::Row_result_detail<Columns>::row_count()
+row_count_t Row_result_detail<Columns>::row_count()
 {
   auto cnt = get_impl().count();
   ASSERT_NUM_LIMITS(row_count_t, cnt);
@@ -612,7 +609,7 @@ row_count_t internal::Row_result_detail<Columns>::row_count()
 */
 
 
-bool internal::Doc_result_detail::iterator_next()
+bool Doc_result_detail::iterator_next()
 {
   auto &impl = get_impl();
   const common::Row_data *row = impl.get_row();
@@ -630,7 +627,7 @@ bool internal::Doc_result_detail::iterator_next()
 }
 
 
-uint64_t internal::Doc_result_detail::count()
+uint64_t Doc_result_detail::count()
 {
   auto cnt = get_impl().count();
   if (get_impl().entry_count() > 0)

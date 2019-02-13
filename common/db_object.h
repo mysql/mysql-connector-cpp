@@ -32,9 +32,11 @@
 #define MYSQLX_COMMON_DB_OBJECT_H
 
 #include <mysql/cdk.h>
+#include <mysqlx/common.h>
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 // --------------------------------------------------------------------
 
@@ -84,6 +86,8 @@ namespace common {
   };
 
 } // common
+
+MYSQLX_ABI_END(2,0)
 } // mysqlx
 
 #endif

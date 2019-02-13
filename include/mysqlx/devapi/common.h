@@ -56,16 +56,8 @@ POP_SYS_WARNINGS
   { throw ::mysqlx::Error("Unknown exception"); } \
 
 
-namespace cdk {
-namespace foundation {
-
-class bytes;
-class string;
-
-}}  // cdk::foundation
-
-
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 using std::out_of_range;
 
@@ -104,7 +96,7 @@ public:
 inline
 void throw_error(const char *msg)
 {
-  throw ::mysqlx::Error(msg);
+  throw Error(msg);
 }
 
 
@@ -339,7 +331,6 @@ public:
 };
 
 
-
 /*
   Infrastructure for type-agnostic handling of lists
   ==================================================
@@ -379,14 +370,14 @@ namespace internal {
   implementation object of some type Impl. It is assumed that Impl
   has the following methods:
 
-   void iterator_start() - puts iterator in "before begin" position;
-   bool iterator_next() - moves iterator to next position, returns
-                          false if it was not possible;
-   Value_type iterator_get() - gets current value.
+  void iterator_start() - puts iterator in "before begin" position;
+  bool iterator_next() - moves iterator to next position, returns
+                        false if it was not possible;
+  Value_type iterator_get() - gets current value.
 
-   An implementation object must be passed to iterator constructor. Iterator
-   stores only a pointer to this implementation (so it must exist as long as
-   iterator is used).
+  An implementation object must be passed to iterator constructor. Iterator
+  stores only a pointer to this implementation (so it must exist as long as
+  iterator is used).
 */
 
 template<
@@ -505,7 +496,7 @@ public:
         U, const iterator&, const iterator&
       >::type* = nullptr
     , typename std::enable_if<
-        ! std::is_same< U, std::initializer_list<typename U::value_type> >::value
+        !std::is_same< U, std::initializer_list<typename U::value_type> >::value
       >::type* = nullptr
   >
   operator U()
@@ -669,11 +660,11 @@ class Array_source
     >
 {
   using Base = List_source<
-      Array_src_impl<Impl, Value_type>,
-      Value_type,
-      Distance,
-      Pointer,
-      Reference
+    Array_src_impl<Impl, Value_type>,
+    Value_type,
+    Distance,
+    Pointer,
+    Reference
   >;
 
   using Base::m_impl;
@@ -682,11 +673,11 @@ public:
 
   using
   List_source<
-      Array_src_impl<Impl, Value_type>,
-      Value_type,
-      Distance,
-      Pointer,
-      Reference
+    Array_src_impl<Impl, Value_type>,
+    Value_type,
+    Distance,
+    Pointer,
+    Reference
   >::List_source;
 
   Value_type operator[](size_t pos)
@@ -700,7 +691,7 @@ public:
   }
 };
 
-}
+}  // internal
 
 
 /*
@@ -801,7 +792,7 @@ public:
   {
     template <typename X>
     static std::true_type
-    test(decltype(Base::process_one(*(D*)nullptr,*(X*)nullptr))*);
+    test(decltype(Base::process_one(*(D*)nullptr, *(X*)nullptr))*);
 
     template <typename X>
     static std::false_type test(...);
@@ -884,7 +875,7 @@ private:
 
 }  // internal namespace
 
-
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 
