@@ -106,32 +106,11 @@ public:
 
   const std::string &get_ca() const { return m_ca; }
   const std::string &get_ca_path() const { return m_ca_path; }
+  const std::string &get_host_name() const { return m_host_name; }
 
-  void set_cn(const std::string &cn)
+  void set_host_name(const std::string &host_name)
   {
-    m_cn = cn;
-  }
-
-  void set_verify_cn(const std::function<bool(const std::string&)> &pred)
-  {
-      m_verify_cn = pred;
-  }
-
-  bool verify_cn(const std::string& cn) const
-  {
-    /*
-      Note: if CN verification was requested but neither expected CN nor
-      verification routine were set with set_cn()/set_verify_cn()
-      the verification fails.
-    */
-
-    if (m_verify_cn)
-      return m_verify_cn(cn);
-
-    if (!m_cn.empty())
-      return cn == m_cn;
-
-    return false;
+    m_host_name = host_name;
   }
 
 protected:
@@ -140,8 +119,7 @@ protected:
   std::string m_key;
   std::string m_ca;
   std::string m_ca_path;
-  std::string m_cn;
-  std::function<bool(const std::string&)> m_verify_cn;
+  std::string m_host_name;
 
 };
 
