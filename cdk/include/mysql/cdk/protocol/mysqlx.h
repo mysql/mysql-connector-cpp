@@ -460,7 +460,8 @@ struct Protocol_fields
     Enum values will be used as binary flags,
     so they must be as 2^N
   */
-  enum value { ROW_LOCKING = 1 , UPSERT = 2, PREPARED_STATEMENTS = 4 };
+  enum value { ROW_LOCKING = 1 , UPSERT = 2, PREPARED_STATEMENTS = 4,
+               KEEP_OPEN = 8 };
 };
 
 }  // api namespace
@@ -533,8 +534,12 @@ public:
   Op& snd_CapabilitiesSet(const api::Any::Document& caps);
   Op& snd_AuthenticateStart(const char* mechanism, bytes data, bytes response);
   Op& snd_AuthenticateContinue(bytes data);
-  Op& snd_SessionReset();
-  Op& snd_Close();
+  // Depending on whether the server supports keep_open in
+  // SESS_RESET message the session close has to be handled
+  // differently.
+  Op& snd_SessionReset(bool keep_open = false);
+  Op& snd_SessionClose();
+  Op& snd_ConnectionClose();
 
   /**
     Send protocol command which executes a statement.

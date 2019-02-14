@@ -82,6 +82,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
   @addtogroup xapi
@@ -93,10 +94,6 @@ extern "C" {
 #define STDCALL
 
 ///////////////////// COMMON TYPE DECLARATIONS, REMOVE LATER
-
-#ifndef	__cplusplus
-  typedef unsigned char bool;
-#endif
 
 typedef char object_id[16];
 typedef object_id* MYSQLX_GUID;
@@ -483,10 +480,10 @@ mysqlx_lock_contention_t;
 
   Possible connection options are:
 
-  - `ssl-enable` : use TLS connection
+  - `ssl-mode` : TLS connection mode
   - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
 
-  Specifying `ssl-ca` option implies `ssl-enable`.
+  Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
 
   Client options are expressed in a JSON string format. Here is an example:
   ~~~~~~
@@ -504,7 +501,7 @@ mysqlx_lock_contention_t;
                 disabled, session created from pool are the same as created
                 directly without client handle.
                 Enabled by default.
-  - `mazSize` : integer that defines the max pooling sessions possible. If uses
+  - `maxSize` : integer that defines the max pooling sessions possible. If uses
                 tries to get session from pool when maximum sessions are used,
                 it will wait for an available session untill `queueTimeout`.
                 Defaults to 25.
@@ -557,7 +554,7 @@ mysqlx_get_client_from_url(const char *conn_string, const char *client_opts,
                 disabled, session created from pool are the same as created
                 directly without client handle.
                 Enabled by default.
-  - `mazSize` : integer that defines the max pooling sessions possible. If uses
+  - `maxSize` : integer that defines the max pooling sessions possible. If uses
                 tries to get session from pool when maximum sessions are used,
                 it will wait for an available session untill `queueTimeout`.
                 Defaults to 25.
@@ -671,10 +668,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
   Possible connection options are:
 
-  - `ssl-enable` : use TLS connection
+  - `ssl-mode` : TLS connection mode
   - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
 
-  Specifying `ssl-ca` option implies `ssl-enable`.
+  Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
 
   @param conn_string    connection string
   @param[out] out_error if error happens during connect the error message
@@ -2839,7 +2836,9 @@ mysqlx_column_get_type(mysqlx_result_t *res, uint32_t pos);
   @param res result handle
   @param pos zero-based column number
 
-  @return column collation number. TODO: specify these
+  @return column collation number. The number matches the ID
+          in the INFORMATION_SCHEMA.COLLATIONS table.
+  @see https://dev.mysql.com/doc/mysql/en/collations-table.html
 
   @ingroup xapi_md
 */

@@ -70,7 +70,10 @@ endif()
 
 if(NOT CMAKE_INSTALL_LIBDIR)
 
-  if(IS64BIT OR SUNPRO)
+  if(FREEBSD)
+    set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING
+      "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
+  elseif(IS64BIT OR SUNPRO)
     set(CMAKE_INSTALL_LIBDIR "lib64" CACHE STRING
       "Library Install location (Relative to CMAKE_INSTALL_PREFIX)")
   else()
