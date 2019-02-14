@@ -2609,7 +2609,7 @@ TEST_F(Crud, PS)
 
   add_data(coll);
 
-  sql("set global max_prepared_stmt_count=100;");
+  sql("set global max_prepared_stmt_count=199;");
 
   cout << "Fetching documents..." << endl;
 
@@ -2623,12 +2623,19 @@ TEST_F(Crud, PS)
     }
   };
 
-  auto execute_find = [&finds]()
+  auto execute_find = [&finds](int limit, int offset, int expected)
   {
     for (auto &find : finds)
     {
-      EXPECT_EQ(6,
-                find.bind("name", "%")
+      if (limit != 0)
+        find.limit(limit);
+      if(offset != 0)
+        find.offset(offset);
+
+
+      EXPECT_EQ(expected,
+                find
+                .bind("name", "%")
                 .bind("age", 1000)
                 .execute().count());
     }
@@ -2642,7 +2649,7 @@ TEST_F(Crud, PS)
     auto start_time = std::chrono::system_clock::now();
 
     //direct_execute
-    execute_find();
+    execute_find(0, 0, 6);
 
     std::cout << "Direct Execute: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2651,7 +2658,8 @@ TEST_F(Crud, PS)
     start_time = std::chrono::system_clock::now();
 
     //prepare+execute
-    execute_find();
+    //Even if limit/offset changes, it will not fallback to the direct execute
+    execute_find(6,0,6);
 
     std::cout << "Prepare+Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2660,7 +2668,7 @@ TEST_F(Crud, PS)
     start_time = std::chrono::system_clock::now();
 
     //execute prepared
-    execute_find();
+    execute_find(6, 0, 6);
 
     std::cout << "Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2668,15 +2676,28 @@ TEST_F(Crud, PS)
               << "(ms)" << std::endl;
     start_time = std::chrono::system_clock::now();
 
-    finds.clear();
 
     //Re-use previously freed stmt_ids
+    finds.clear();
     create_find();
-    execute_find();
-    execute_find();
+    //Execute
+    execute_find(0, 0, 6);
+    //Prepare+Execute
+    execute_find(0, 0, 6);
+    //ExecutePrepared
+    execute_find(0, 0, 6);
+    //Prepare+Execute
+    execute_find(0, 5, 1);
+    //ExecutePrepared
+    execute_find(1, 0, 1);
+    //ExecutePrepared
+    execute_find(1, 1, 1);
+    //ExecutePrepared
+    execute_find(1, 1, 1);
 
+    //clean upp the finds for next round
+    finds.clear();
+    create_find();
   }
-
-
 
   }
