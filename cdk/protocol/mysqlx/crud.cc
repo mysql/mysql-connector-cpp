@@ -116,13 +116,12 @@ void set_limit_(const api::Limit &lim,
   row_count_msg->set_position(0);
   set_arg_scalar(*msg_args.add_args(), lim.get_row_count());
 
-  if (lim.get_offset())
-  {
-    auto offset_msg = limit->mutable_offset();
-    offset_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
-    offset_msg->set_position(1);
-    set_arg_scalar(*msg_args.add_args(), *lim.get_offset());
-  }
+  auto offset_msg = limit->mutable_offset();
+  offset_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
+  offset_msg->set_position(1);
+  set_arg_scalar(*msg_args.add_args(),
+                 lim.get_offset() ? *lim.get_offset() : 0);
+
 }
 
 template <class MSG>
@@ -145,10 +144,7 @@ void set_limit_(const api::Limit &limit,
                 Placeholder_conv_imp &conv,
                 MSG_Params &msg_args)
 {
-  if (limit.get_offset())
-    conv.set_offset(2);
-  else
-    conv.set_offset(1);
+  conv.set_offset(2);
 
   set_limit_(limit, msg, msg_args);
 }
@@ -848,8 +844,8 @@ Protocol::snd_PrepareExecute(uint32_t stmt_id,
   if (lim)
   {
     set_arg_scalar(*prepare_execute.add_args(), lim->get_row_count());
-    if (lim->get_offset())
-      set_arg_scalar(*prepare_execute.add_args(), *lim->get_offset());
+    set_arg_scalar(*prepare_execute.add_args(),
+                   lim->get_offset()? *lim->get_offset() : 0);
   }
 
   if (args)
