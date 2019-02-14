@@ -34,6 +34,7 @@
 #include "socket_detail.h"
 PUSH_SYS_WARNINGS_CDK
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 #ifdef WITH_SSL_WOLFSSL
 
 // Wolfssl redefines close, which causes compiler errors in VS.
@@ -41,10 +42,12 @@ PUSH_SYS_WARNINGS_CDK
 #ifdef _WIN32
 #undef close
 #endif
-
+// Wolfssl needs this include because of the NID_commonName enum
+#include <wolfssl/wolfcrypt/asn.h>
 #else
 #include <openssl/err.h>
 #endif
+#include <iostream>
 POP_SYS_WARNINGS_CDK
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_openssl.h>
@@ -152,6 +155,12 @@ static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!R
                                         "!DHE-DSS-DES-CBC3-SHA:!DHE-RSA-DES-CBC3-SHA:"
                                         "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
                                         "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
+
+static const char tls_cipher_suites[] ="TLS_AES_128_GCM_SHA256:"
+                                       "TLS_AES_256_GCM_SHA384:"
+                                       "TLS_CHACHA20_POLY1305_SHA256:"
+                                       "TLS_AES_128_CCM_SHA256:"
+                                       "TLS_AES_128_CCM_8_SHA256:";
 
 static void throw_openssl_error_msg(const char* msg)
 {
@@ -275,6 +284,7 @@ void connection_TLS_impl::do_connect()
 #ifndef WITH_SSL_WOLFSSL
     const
 #endif
+
     SSL_METHOD* method = SSLv23_client_method();
 
     if (!method)
@@ -288,8 +298,18 @@ void connection_TLS_impl::do_connect()
     std::string cipher_list;
     cipher_list.append(tls_cipher_blocked);
     cipher_list.append(tls_ciphers_list);
+#ifdef WITH_SSL_WOLFSSL
+    cipher_list.append(tls_cipher_suites);
+#endif
 
     SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
+
+#if !defined (WITH_SSL_WOLFSSL) && (OPENSSL_VERSION_NUMBER>=0x1010100fL)
+    //OpenSSL TLSv1.3
+    SSL_CTX_set_ciphersuites(m_tls_ctx, tls_cipher_suites);
+#endif
+
+
 
     if (m_options.ssl_mode()
         >=
@@ -324,14 +344,27 @@ void connection_TLS_impl::do_connect()
 
     SSL_set_fd(m_tls, static_cast<int>(fd));
 
+#ifdef HAVE_REQUIRED_X509_FUNCTIONS
+    /*
+      The new way of server certificate verification
+      (OpenSSL version >= 1.0.2)
+      sets the verification options before a connection is established
+    */
+    verify_server_cert();
+#endif
+
     if(SSL_connect(m_tls) != 1)
       throw_openssl_error();
 
-    if (m_options.ssl_mode()
-        ==
-        cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY
-        )
-      verify_server_cert();
+#ifndef HAVE_REQUIRED_X509_FUNCTIONS
+    /*
+      The old way of server certificate verification
+      (OpenSSL version < 1.0.2)
+      can be only done after a connection is established
+    */
+    verify_server_cert();
+#endif
+
 
   }
   catch (...)
@@ -355,94 +388,78 @@ void connection_TLS_impl::do_connect()
 
 
 /*
-  Class used to safely delete allocated X509 cert.
+  Class used to safely delete allocated X509 objects.
   This way, no need to test cert on each possible return/throw.
 */
-class safe_cert
+template <typename X>
+class safe_X509
 {
-  X509* m_cert;
+  X* m_X509;
 
 public:
-  safe_cert(X509 *cert = NULL)
-    : m_cert(cert)
+  safe_X509(X *obj = NULL)
+    : m_X509(obj)
   {}
 
-  ~safe_cert()
+  ~safe_X509()
   {
-    if (m_cert)
-      X509_free(m_cert);
+    if (std::is_same<X, X509>::value)
+    {
+      X509_free((X509*)m_X509);
+    }
+    else if (std::is_same<X, X509_VERIFY_PARAM>::value)
+    {
+      // for X509_VERIFY_PARAM* it must not be freed by a caller
+      // X509_VERIFY_PARAM_free((X509_VERIFY_PARAM*)m_X509);
+    }
   }
 
   operator bool()
   {
-    return m_cert != NULL;
+    return m_X509 != NULL;
   }
 
-  safe_cert& operator = (X509 *cert)
+  operator X*() const
   {
-    m_cert = cert;
-    return *this;
-  }
-
-  safe_cert& operator = (safe_cert& cert)
-  {
-    m_cert = cert.m_cert;
-    cert.m_cert = NULL;
-    return *this;
-  }
-
-  operator X509 *() const
-  {
-    return m_cert;
+    return m_X509;
   }
 };
 
-
-void connection_TLS_impl::verify_server_cert()
+const unsigned char * get_cn(ASN1_STRING *cn_asn1)
 {
-  safe_cert server_cert;
-  const unsigned char *cn= NULL;
-  int cn_loc= -1;
-  ASN1_STRING *cn_asn1= NULL;
-  X509_NAME_ENTRY *cn_entry= NULL;
-  X509_NAME *subject= NULL;
+  const unsigned char *cn = NULL;
+#if OPENSSL_VERSION_NUMBER > 0x10100000L
+  cn = ASN1_STRING_get0_data(cn_asn1);
+#else
+  cn = (const unsigned char*)(ASN1_STRING_data(cn_asn1));
+#endif
 
+  // There should not be any NULL embedded in the CN
+  if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(reinterpret_cast<const char*>(cn)))
+    return NULL;
 
-  server_cert = SSL_get_peer_certificate(m_tls);
+  return cn;
+}
 
-  if (!server_cert)
-  {
-    throw_openssl_error_msg("Could not get server certificate");
-  }
+bool matches_common_name(const std::string &host_name, const X509 *server_cert)
+{
+  const unsigned char *cn = NULL;
+  int cn_loc = -1;
+  ASN1_STRING *cn_asn1 = NULL;
+  X509_NAME_ENTRY *cn_entry = NULL;
+  X509_NAME *subject = NULL;
 
-  if (X509_V_OK != SSL_get_verify_result(m_tls))
-  {
-    throw_openssl_error_msg("Failed to verify the server certificate");
-  }
-  /*
-    We already know that the certificate exchanged was valid; the SSL library
-    handled that. Now we need to verify that the contents of the certificate
-    are what we expect.
-  */
-
-  /*
-   Some notes for future development
-   We should check host name in alternative name first and then if needed check in common name.
-   Currently yssl doesn't support alternative name.
-   openssl 1.0.2 support X509_check_host method for host name validation, we may need to start using
-   X509_check_host in the future.
-  */
-
-  subject= X509_get_subject_name((X509 *) server_cert);
+  subject = X509_get_subject_name((X509 *)server_cert);
   // Find the CN location in the subject
-  cn_loc= X509_NAME_get_index_by_NID(subject, NID_commonName, -1);
+  cn_loc = X509_NAME_get_index_by_NID(subject, NID_commonName, -1);
+
   if (cn_loc < 0)
   {
-    throw_openssl_error_msg("Failed to get CN location in the certificate subject");
+    throw_openssl_error_msg("SSL certificate validation failure");
   }
 
   // Get the CN entry for given location
-  cn_entry= X509_NAME_get_entry(subject, cn_loc);
+  cn_entry = X509_NAME_get_entry(subject, cn_loc);
   if (cn_entry == NULL)
   {
     throw_openssl_error_msg("Failed to get CN entry using CN location");
@@ -455,24 +472,105 @@ void connection_TLS_impl::verify_server_cert()
     throw_openssl_error_msg("Failed to get CN from CN entry");
   }
 
-#if OPENSSL_VERSION_NUMBER > 0x10100000L
-  cn= ASN1_STRING_get0_data(cn_asn1);
-#else
-  cn= ASN1_STRING_data(cn_asn1);
-#endif
-
+  cn = get_cn(cn_asn1);
   // There should not be any NULL embedded in the CN
-  if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(reinterpret_cast<const char*>(cn)))
+  if (cn == NULL)
   {
     throw_openssl_error_msg("NULL embedded in the certificate CN");
   }
 
-
-  if (!m_options.verify_cn(reinterpret_cast<const char*>(cn)))
+  std::string s_cn = reinterpret_cast<const char*>(cn);
+  if (host_name == s_cn)
   {
-    throw_openssl_error_msg("SSL certificate validation failure");
+    return true;
   }
 
+  return false;
+}
+
+
+bool matches_alt_name(const std::string &host_name, const X509 *server_cert)
+{
+  int i, alt_names_num;
+  STACK_OF(GENERAL_NAME) *alt_names;
+  bool result = false;
+
+  // Extract names from Subject Alternative Name extension (SAN)
+  alt_names = (STACK_OF(GENERAL_NAME)*)
+                X509_get_ext_d2i((X509*)server_cert,
+                                 NID_subject_alt_name,
+                                 NULL, NULL);
+  if (alt_names == NULL)
+    return false;  // No SAN is present
+
+  alt_names_num = sk_GENERAL_NAME_num(alt_names);
+  for (i = 0; i < alt_names_num; ++i)
+  {
+    GENERAL_NAME *gen_name = sk_GENERAL_NAME_value(alt_names, i);
+    if (gen_name->type == GEN_DNS)
+    {
+      const unsigned char* dns_name;
+
+      dns_name = get_cn(gen_name->d.dNSName);
+
+      // There should not be any NULL embedded in the CN
+      if (dns_name == NULL)
+      {
+        result = false; // Exit the loop, wrong length
+        break;
+      }
+
+      std::string s_dns_name = reinterpret_cast<const char*>(dns_name);
+      if (host_name == s_dns_name)
+      {
+        result = true;
+        break;
+      }
+    }
+  }
+
+  sk_GENERAL_NAME_pop_free(alt_names, GENERAL_NAME_free);
+  return result;
+}
+
+
+void connection_TLS_impl::verify_server_cert()
+{
+  if (cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_IDENTITY ==
+      m_options.ssl_mode())
+  {
+
+#ifdef HAVE_REQUIRED_X509_FUNCTIONS
+    safe_X509<X509_VERIFY_PARAM> safe_param(SSL_get0_param(m_tls));
+
+    X509_VERIFY_PARAM_set_hostflags(safe_param, X509_CHECK_FLAG_NO_WILDCARDS);
+
+    if (X509_VERIFY_PARAM_set1_host(safe_param, m_options.get_host_name().c_str(),
+                                     m_options.get_host_name().length()) != 1)
+    {
+      throw_openssl_error_msg("Could not verify the server certificate");
+    }
+    SSL_set_verify(m_tls, SSL_VERIFY_PEER, NULL);
+#else
+    safe_X509<X509> server_cert(SSL_get_peer_certificate(m_tls));
+
+    if (!server_cert)
+    {
+      throw_openssl_error_msg("Could not get server certificate");
+    }
+
+    if (X509_V_OK != SSL_get_verify_result(m_tls))
+    {
+      throw_openssl_error_msg("Failed to verify the server certificate");
+    }
+
+    if (!matches_alt_name(m_options.get_host_name(), server_cert) &&
+        !matches_common_name(m_options.get_host_name(), server_cert))
+    {
+      throw_openssl_error_msg("Could not verify the server certificate");
+    }
+#endif
+  }
 }
 
 

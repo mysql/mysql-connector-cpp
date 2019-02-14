@@ -305,7 +305,8 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     if (TLS_options::SSL_MODE::VERIFY_IDENTITY == opts.get_tls().ssl_mode())
     {
       TLS_options tls = opts.get_tls();
-      tls.set_cn(host);
+
+      tls.set_host_name(host);
       opts.set_tls(tls);
     }
 #endif
@@ -536,7 +537,6 @@ void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 
     if (el != m_pool.end())
       try {
-      el->first->reset();
       el->second = system_clock::now() + m_time_to_live;
     }
     catch (...) {
@@ -577,6 +577,7 @@ std::shared_ptr<cdk::Session> Session_pool::get_session()
     if (it->first.unique())
     {
       try {
+        it->first->reset();
         if(!it->first->is_valid())
         {
           throw "Remove this";

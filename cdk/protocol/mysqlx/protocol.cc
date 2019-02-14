@@ -855,13 +855,20 @@ public:
 };
 
 
-Protocol::Op& Protocol::snd_SessionReset()
+Protocol::Op& Protocol::snd_SessionReset(bool keep_open)
 {
   Mysqlx::Session::Reset reset;
+  reset.set_keep_open(keep_open);
   return get_impl().snd_start(reset, msg_type::cli_SessionReset);
 }
 
-Protocol::Op& Protocol::snd_Close()
+Protocol::Op& Protocol::snd_SessionClose()
+{
+  Mysqlx::Session::Close close;
+  return get_impl().snd_start(close, msg_type::cli_SessionClose);
+}
+
+Protocol::Op& Protocol::snd_ConnectionClose()
 {
   Mysqlx::Connection::Close close;
   return get_impl().snd_start(close, msg_type::cli_Close);
@@ -939,7 +946,6 @@ Protocol::Op& Protocol_server::rcv_Command(Cmd_processor &prc)
 {
   return get_impl().rcv_start<Rcv_command>(prc);
 }
-
 
 // ------------------------------------------------------------
 

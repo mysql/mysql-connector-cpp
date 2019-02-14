@@ -60,7 +60,7 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
     unsigned int m_code = 0;
 
     void error(unsigned int code, short int,
-                cdk::protocol::mysqlx::sql_state_t, const string &)
+               cdk::protocol::mysqlx::sql_state_t, const string &)
     {
       m_code = code;
     }
@@ -79,26 +79,29 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
   }
 
   /*
-    This method sets the expectation and returns
-    the field flag if it is supported, otherwise 0 is returned.
+  This method sets the expectation and returns
+  the field flag if it is supported, otherwise 0 is returned.
   */
   uint64_t is_supported(Protocol_fields::value v)
   {
     switch (v)
     {
-      case Protocol_fields::ROW_LOCKING:
-        // Find=17, locking=12
-        m_data = bytes("17.12");
-        break;
-      case Protocol_fields::UPSERT:
-        // Insert=18, upsert=6
-        m_data = bytes("18.6");
-        break;
-      case Protocol_fields::PREPARED_STATEMENTS:
-        m_data = bytes("40");
-        break;
-      default:
-        return 0;
+    case Protocol_fields::ROW_LOCKING:
+      // Find=17, locking=12
+      m_data = bytes("17.12");
+      break;
+    case Protocol_fields::UPSERT:
+      // Insert=18, upsert=6
+      m_data = bytes("18.6");
+      break;
+    case Protocol_fields::PREPARED_STATEMENTS:
+      m_data = bytes("40");
+      break;
+    case Protocol_fields::KEEP_OPEN:
+      m_data = bytes("6.1");
+      break;
+    default:
+      return 0;
     }
     m_proto.snd_Expect_Open(*this, false).wait();
 
@@ -109,8 +112,8 @@ struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
     if (prc.m_code == 0 || prc.m_code == 5168)
     {
       /*
-        The expectation block needs to be closed if no error
-        or expectation failed error (5168)
+      The expectation block needs to be closed if no error
+      or expectation failed error (5168)
       */
       m_proto.snd_Expect_Close().wait();
       m_proto.rcv_Reply(prc).wait();
@@ -346,6 +349,7 @@ private:
 
 };
 
+
 /*
    Class Session
 */
@@ -457,17 +461,18 @@ option_t Session::is_valid()
 
 void Session::check_protocol_fields()
 {
+  wait();
+  if (0 < entry_count())
+    get_error().rethrow();
   if (m_proto_fields == UINT64_MAX)
   {
-    wait();
-    if (0 < entry_count())
-      get_error().rethrow();
     Proto_field_checker field_checker(m_protocol);
     m_proto_fields = 0;
     /* More fields checks will be added here */
     m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
     m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
     m_proto_fields |= field_checker.is_supported(Protocol_fields::PREPARED_STATEMENTS);
+    m_proto_fields |= field_checker.is_supported(Protocol_fields::KEEP_OPEN);
   }
 }
 
@@ -485,6 +490,12 @@ void Session::set_has_prepared_statements(bool x)
     m_proto_fields &= ~Protocol_fields::PREPARED_STATEMENTS;
 }
 
+bool Session::has_keep_open()
+{
+  check_protocol_fields();
+  return (m_proto_fields & Protocol_fields::KEEP_OPEN) != 0;
+}
+
 
 option_t Session::check_valid()
 {
@@ -495,21 +506,23 @@ option_t Session::check_valid()
 
 void Session::reset()
 {
+  check_protocol_fields(); // This will be used for lazy checks
   clear_errors();
 
   m_reply_op_queue.clear();
 
   if (is_valid())
   {
-    m_protocol.snd_SessionReset().wait();
+    m_protocol.snd_SessionReset(has_keep_open()).wait();
+
     m_protocol.rcv_Reply(*this).wait();
 
-    m_isvalid = false;
-
-    // Re-authenticate
-    send_auth();
+    if (!has_keep_open())
+    {
+      m_isvalid = false;
+      send_auth();  // Re-authenticate for servers not supporting keep-open
+    }
   }
-
 }
 
 
@@ -519,7 +532,7 @@ void Session::close()
 
   if (is_valid())
   {
-    m_protocol.snd_Close().wait();
+    m_protocol.snd_ConnectionClose().wait();
     m_protocol.rcv_Reply(*this).wait();
   }
   m_isvalid = false;
