@@ -1,39 +1,45 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License, version 2.0, as
-# published by the Free Software Foundation.
+# it under the terms of the GNU General Public License, version 2.0,
+# as published by the Free Software Foundation.
 #
 # This program is also distributed with certain software (including
 # but not limited to OpenSSL) that is licensed under separate terms,
 # as designated in a particular file or component or in included license
-# documentation.  The authors of MySQL hereby grant you an
-# additional permission to link the program and your derivative works
-# with the separately licensed software that they have included with
-# MySQL.
+# documentation.  The authors of MySQL hereby grant you an additional
+# permission to link the program and your derivative works with the
+# separately licensed software that they have included with MySQL.
 #
-# Without limiting anything contained in the foregoing, this file,
-# which is part of MySQL Connector/C++, is also subject to the
-# Universal FOSS Exception, version 1.0, a copy of which can be found at
-# http://oss.oracle.com/licenses/universal-foss-exception.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License, version 2.0, for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License, version 2.0, for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-# The files in protobuf-2.6.1/ are unmodified versions of google source files.
-# To save some space and time, we have remove directories which are not
-# needed by MySQL:
-#   protobuf-2.6.1/gtest/
-#   protobuf-2.6.1/java/
-#   protobuf-2.6.1/python/
-#   protobuf-2.6.1/m4/
-#   protobuf-2.6.1/vsprojects/
+# The files in protobuf-3.6.1/ are almost unmodified versions of google
+# source files taken from protobuf-cpp-3.6.1.tar.gz archive.
+# Changes:
+# - remove directories and files
+#    protobuf-3.6.1/benchmarks/
+#    protobuf-3.6.1/conformance/
+#    protobuf-3.6.1/editors/
+#    protobuf-3.6.1/examples/
+#    protobuf-3.6.1/objectivec/
+#    protobuf-3.6.1/third_party/
+#    protobuf-3.6.1/python/
+#    protobuf-3.6.1/util/
+#    protobuf-3.6.1/ar-lib
+#    protobuf-3.6.1/test-driver
+# - disable configuration check of cmake's mimimum version
+# - disable configuration zlib check
+# - disable installation script
+# - fix minor compilation issues on SunPro 5.14.0
+# - fix minor issues to satisfy UBSAN
+
 
 cmake_minimum_required(VERSION 2.8)
 PROJECT(Protobuf)
@@ -168,6 +174,8 @@ if(WIN32)
     /wd4800
     /wd4355
     /wd4267
+    /wd4506
+    /wd4146
   )
 
 endif()
@@ -191,7 +199,7 @@ endif()
 
 
 SET(PROTO_SRC_DIR
-  "${PROJECT_SOURCE_DIR}/protobuf-2.6.1/src")
+  "${PROJECT_SOURCE_DIR}/protobuf-3.6.1/src")
 
 
 file(WRITE "${PROJECT_BINARY_DIR}/exports.cmake"
@@ -212,12 +220,15 @@ INCLUDE_DIRECTORIES(
 
 SET(LIBPROTOBUF_LITE_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/stubs/common.cc
-  ${PROTO_SRC_DIR}/google/protobuf/stubs/once.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/hash.h
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/int128.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/map_util.h
-  ${PROTO_SRC_DIR}/google/protobuf/stubs/shared_ptr.h
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/status.cc
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/stringpiece.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/stringprintf.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/stringprintf.h
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/structurally_valid.cc
+  ${PROTO_SRC_DIR}/google/protobuf/arena.cc
   ${PROTO_SRC_DIR}/google/protobuf/extension_set.cc
   ${PROTO_SRC_DIR}/google/protobuf/generated_message_util.cc
   ${PROTO_SRC_DIR}/google/protobuf/message_lite.cc
@@ -227,33 +238,21 @@ SET(LIBPROTOBUF_LITE_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/io/coded_stream_inl.h
   ${PROTO_SRC_DIR}/google/protobuf/io/zero_copy_stream.cc
   ${PROTO_SRC_DIR}/google/protobuf/io/zero_copy_stream_impl_lite.cc
+  ${PROTO_SRC_DIR}/google/protobuf/implicit_weak_message.cc
 )
-
-IF(MSVC)
-
-  list(APPEND LIBPROTOBUF_LITE_SOURCES
-       ${PROTO_SRC_DIR}/google/protobuf/stubs/atomicops_internals_x86_msvc.cc)
-
-ELSEIF(NOT APPLE)
-
-  # Platforms such as FreeBSD require this file even though we build with clang
-  # Only on OSX the file is not used (and generates empty object file compiler
-  # warnings)
-
-  list(APPEND LIBPROTOBUF_LITE_SOURCES
-       ${PROTO_SRC_DIR}/google/protobuf/stubs/atomicops_internals_x86_gcc.cc)
-
-ENDIF()
 
 ADD_LIBRARY(protobuf-lite STATIC ${LIBPROTOBUF_LITE_SOURCES})
 SET_PROPERTY(TARGET protobuf-lite PROPERTY EXCLUDE_FROM_ALL TRUE)
 pb_export(protobuf-lite)
 
 SET(LIBPROTOBUF_SOURCES
+  ${PROTO_SRC_DIR}/google/protobuf/any.cc
+
   ${PROTO_SRC_DIR}/google/protobuf/stubs/strutil.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/strutil.h
   ${PROTO_SRC_DIR}/google/protobuf/stubs/substitute.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/substitute.h
+
   ${PROTO_SRC_DIR}/google/protobuf/stubs/structurally_valid.cc
   ${PROTO_SRC_DIR}/google/protobuf/descriptor.cc
   ${PROTO_SRC_DIR}/google/protobuf/descriptor.pb.cc
@@ -261,6 +260,7 @@ SET(LIBPROTOBUF_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/dynamic_message.cc
   ${PROTO_SRC_DIR}/google/protobuf/extension_set_heavy.cc
   ${PROTO_SRC_DIR}/google/protobuf/generated_message_reflection.cc
+  ${PROTO_SRC_DIR}/google/protobuf/map_field.cc
   ${PROTO_SRC_DIR}/google/protobuf/message.cc
   ${PROTO_SRC_DIR}/google/protobuf/reflection_ops.cc
   ${PROTO_SRC_DIR}/google/protobuf/service.cc
@@ -271,6 +271,8 @@ SET(LIBPROTOBUF_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/io/strtod.cc
   ${PROTO_SRC_DIR}/google/protobuf/io/tokenizer.cc
   ${PROTO_SRC_DIR}/google/protobuf/io/zero_copy_stream_impl.cc
+  ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_map_field.cc
+  ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_padding_optimizer.cc
   ${PROTO_SRC_DIR}/google/protobuf/compiler/importer.cc
   ${PROTO_SRC_DIR}/google/protobuf/compiler/parser.cc
 )
@@ -319,12 +321,14 @@ SET(LIBPROTOC_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_service.h
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_string_field.cc
   ${PROTO_SRC_DIR}/google/protobuf/compiler/cpp/cpp_string_field.h
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/io_win32.cc
 )
 
 ADD_LIBRARY(protoclib STATIC ${LIBPROTOC_SOURCES})
 TARGET_LINK_LIBRARIES(protoclib protobuf)
 
 ADD_EXECUTABLE(protoc ${PROTO_SRC_DIR}/google/protobuf/compiler/main.cc)
+TARGET_COMPILE_DEFINITIONS(protoc PRIVATE OPENSOURCE_PROTOBUF_CPP_BOOTSTRAP)
 TARGET_LINK_LIBRARIES(protoc protoclib)
 
 pb_export(protoc)
