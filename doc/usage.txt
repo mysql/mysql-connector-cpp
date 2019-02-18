@@ -57,7 +57,7 @@ Depending on the platform, the shared Connector/C++ library is named:
 - `libmysqlcppconn8.so` on Unix platforms (soname `libmysqlcppconn8.so.1`)
 - `libmysqlcppconn8.dylib` on the OSX platform (link name `libmysqlcppconn8.1.dylib`)
 - `mysqlcppconn8-1-vsXX.dll` on Windows platforms
-  (with import library vsXX/mysqlcppconn8.lib, see [Windows Notes](@ref usage_win) for more details)
+  (with import library vsXX/mysqlcppconn8.lib)
 
 This library implements the new X DevAPI and X DevAPI for C. Connector/C++ 8.0
 also includes the legacy connector library `libmsysqlcppconn(.so/.dylib/.dll)`
@@ -133,11 +133,10 @@ Connector/C++ libraries built by MySQL depend on OpenSSL libraries. The latter
 must be installed on the system in order to run code that links against
 Connector/C++ libraries. Another option is to put OpenSSL libraries in the same
 location as Connector/C++. In this case the dynamic linker should find them
-next to the connector library. See also [Windows Notes](@ref usage_win) and
-[macOS Notes](@ref usage_macos).
+next to the connector library.
 
 @note
-It is possible to build Connector/C++ libraries without OpenSSL, using internal
+It is possible to build Connector/C++ libraries without OpenSSL, using WolfSSL
 implementation of TLS connections. In this case the OpenSSL libraries are not
 required at runtime.
 
@@ -159,7 +158,7 @@ define `STATIC_CONCPP` macro before including Connector/C++ public headers.
 This macro adjusts API declarations in the headers for usage with
 the static library.
 
-@note For the legacy API, one defines `CPPCONN_PUBLIC_FUNC` as empty macro
+@note For the legacy API, one can define `CPPCONN_PUBLIC_FUNC` as empty macro
 instead (the same way as when using static Connector/C++ 1.1 library)
 
 The static library names are:
@@ -190,7 +189,7 @@ g++ -std=c++11 -DSTATIC_CONCPP -I .../include  app.cc  .../lib64/libmysqlcppconn
 
 @note For linking against the legacy C++ JDBC4 library the library name is
 `-lmysqlcppconn`. Also, the option `-std=c++11` could be omitted unless the user
-code utilizes C++11.
+code requires C++11.
 
 Note that we need to add to the compile line the OpenSSL libraries and
 the pthread library on which Connector/C++ code depends. Otherwise linker
@@ -253,102 +252,9 @@ final executable will depend on the C++ runtime which must be installed on the
 target computer on which the application will run.
 
 
-macOS Notes                                              @anchor usage_macos
------------
-
-The binary distribution of Connector/C++ for macOS is compiled using the macOS
-native `clang` compiler. For that reason an application that uses the connector
-should be built with the same `clang` compiler.
-
-The `clang` compiler can use two different implementations of the C++ runtime
-library: either the native `libc++` or the GNU `libstdc++` library. It is
-important that an application uses the same runtime implementation
-as Connector/C++, that is, the native `libc++`. To ensure that, the
-`-stdlib=libc++` option should be passed to the compiler and the linker
-invocations.
-
-An example `Makefile` for macOS build is shown below.
-
-~~~~~~~
-MYSQL_CONCPP_DIR= ...
-CPPFLAGS = -I $(MYSQL_CONCPP_DIR)/include -L $(MYSQL_CONCPP_DIR)/lib64
-LDLIBS = -lmysqlcppconn8
-CXX = clang++ -stdlib=libc++
-CXXFLAGS = -std=c++11
-
-app : app.cc
-~~~~~~~
-
-Binary packages for macOS include OpenSSL libraries which are required by code
-linked with the connector. These libraries are installed
-in the same location as the connector libraries and should be found there by
-the dynamic linker.
-
-
-Windows Notes                                            @anchor usage_win
--------------
-
-On Windows applications can be built in different modes (also called build
-configurations) which determine the type of the runtime library that is
-used by the final executable. An application can be built in a debug or
-a release mode. Then it can be built in a 32-bit or a 64-bit mode. Also, one
-can choose between the static (`/MT`) or the dynamic (`/MD`) runtime. Different
-versions of the MSVC compiler also use different versions of the runtime.
-
-It is important to ensure that the compiler version and the build mode of
-an application matches the same parameters used when building the connector
-library. This is to ensure that the runtime library used by the connector
-and the application are the same.
-
-The binary distribution of Connector/C++ 8.0 ships libraries built in the
-release mode using dynamic runtime (`/MD`). The libraries are built with
-MSVC 2015 (the exact compiler version can be found in `INFO_BIN` file
-included in the package). Consequently the code that uses these libraries must
-be built with the same version of MSVC and in the '/MD' mode. To build your
-code in different mode you must build the connector library in the same mode
-first.
-
-@note
-When linking dynamically, it is possible to build your code in the debug mode
-even though the connector libraries are built in the release mode. In that case
-it will not be possible to step inside connector code during a debug session.
-To be able to do that, or to build in debug mode while linking to the connector
-statically, you must built the connector in the debug mode first (see ...).
-
-
-There are separate 32-bit and 64-bit packages, each keeping libraries in
-`lib/` and `lib64/` folder, respectively. Package name also contains `-vs14`
-suffix to indicate that the library is built with MSVC 2015 compiler. The same
-`vsNN` convention is used in library names to enable using libraries built with
-different versions of MSVC on the same system.
-
-The dynamic connector library has name `mysqlcppconn8-1-vs14.dll` with import
-library `vs14/mysqlcppconn8.lib` in the `vs14/` sub-folder. This sub-folder
-also contains the static version of the library `vs14/mysqlcppconn8-static.lib`.
-The `1` in the dynamic library name is the major ABI version number (in the
-future this will help using compatibility libraries with old ABI together with
- new libraries having a different ABI). The legacy connector library has name
-`mysqlcppconn-7-vs14.dll` with import library `vs14/mysqlcppconn.lib` and
-static version `vs14/mysqlcppconn-static.lib`.
-
-
-When building code that uses Connector/C++ libraries add
-`$MYSQL_CPPCONN_DIR/include` as additional include folder and
-`$MYSQL_CPPCONN_DIR/{lib,lib64}/vs14` as additional library folder in
-the project configuration. To use the dynamic library add `mysqlcppconn8.lib`
-to linker inputs (`mysqlcppconn.lib` for legacy code). For static linking add
-`mysqlcppconn8-static.lib` instead (`mysqlcppconn-static.lib` for legacy code).
-If linking statically, the linker must find the import libraries for the required
-OpenSSL libraries. They are present in the `$MYSQL_CPPCONN_DIR/{lib,lib64}/vs14`
-folder if the connector was installed from the binary package provided by MySQL
-and the corresponding OpenSSL DLLs are present in the main library folder, next
-to the connector DLLs.
-
-
-@note An application which uses the shared connector library must be able
-to locate it, as well as its dependencies such as OpenSSL, at the runtime.
-The common way of arranging this is to put the required DLLs in the same
-location as the executable.
+For more information on building code that uses Connector/C++ consult our
+[online documentation]
+(https://dev.mysql.com/doc/connector-cpp/8.0/en/connector-cpp-apps.html).
 
 
 <!--
