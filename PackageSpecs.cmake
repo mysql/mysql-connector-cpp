@@ -126,7 +126,7 @@ endif()
 # Licenses for binary packages
 # ======================================================================
 
-if (0)
+#if (0)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
   set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
@@ -142,23 +142,34 @@ else()
   set(newline UNIX)
 endif()
 
-set(info_files README ${LIC_FILE})
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/README.txt")
+  set(info_files README ${LIC_FILE})
+  set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
+else()
+  set(info_files README.md CONTRIBUTING.md ${LIC_FILE})
+  set(CPACK_RESOURCE_FILE_README  "README.md")
+endif()
 
 foreach(file ${info_files})
-
-  set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
-  set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
+  if (${file} MATCHES "[.]*\\.md")
+    set(file_src "${CMAKE_SOURCE_DIR}/${file}")
+    set(file_bin "${CMAKE_BINARY_DIR}/${file}")
+  else()
+    set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
+    set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
+  endif()
 
   configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
   install(FILES "${file_bin}" DESTINATION ${INSTALL_DOC_DIR} COMPONENT Readme)
+  message("Installing README files: ${file_bin}")
 
 endforeach()
 
-set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
 set(CPACK_RESOURCE_FILE_LICENSE "${LIC_FILE}${info_ext}")
 #set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
 
-endif()
+#endif()
 
 # ======================================================================
 # Specs for source package
