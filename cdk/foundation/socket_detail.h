@@ -85,10 +85,11 @@ enum Shutdown_mode
 };
 
 
-enum Select_mode
+enum Poll_mode
 {
-  SELECT_MODE_READ,
-  SELECT_MODE_WRITE
+  POLL_MODE_CONNECT,
+  POLL_MODE_READ,
+  POLL_MODE_WRITE
 };
 
 
@@ -312,14 +313,14 @@ Socket listen_and_accept(unsigned short port);
   @param[in] timeout_usec
     Timeout in microsedonds
   @return
-    Same as POSIX `select` function.
+    Same as POSIX `poll` function.
 
   @throw cdk::foundation::Error
     If after testing socket is in an erroneous state, function throws.
 */
 
-int select_one(Socket socket, Select_mode mode, bool wait,
-               uint64_t timeout_usec = 0);
+int poll_one(Socket socket, Poll_mode mode, bool wait,
+             uint64_t timeout_usec = 0);
 
 /**
   Get the number of bytes pending read.

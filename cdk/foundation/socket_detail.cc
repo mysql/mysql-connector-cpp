@@ -48,6 +48,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <arpa/inet.h>
 #include <signal.h>
 #include <sys/un.h>
+#include <poll.h>
 #endif
 POP_SYS_WARNINGS_CDK
 
@@ -606,7 +607,7 @@ Socket connect(const char *host_name, unsigned short port,
         if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       #endif
         {
-          int select_result = select_one(socket, SELECT_MODE_WRITE, true,
+          int select_result = poll_one(socket, POLL_MODE_CONNECT,true,
                                          (uint64_t)duration_cast<microseconds>(
                                            deadline - system_clock::now()).count());
 
@@ -677,7 +678,7 @@ Socket connect(const char *path, uint64_t timeout_usec)
     {
       if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       {
-        int select_result = select_one(socket, SELECT_MODE_WRITE, true,
+        int select_result = poll_one(socket, POLL_MODE_CONNECT, true,
                                        timeout_usec);
         if (select_result == 0 && (timeout_usec > 0) &&
           (system_clock::now() >= deadline))
@@ -726,7 +727,7 @@ Socket listen_and_accept(unsigned short port)
       throw_socket_error();
     }
 
-    int select_result = select_one(acceptor, SELECT_MODE_READ, true);
+    int select_result = poll_one(acceptor, POLL_MODE_CONNECT, true);
 
     if (select_result > 0)
     {
@@ -758,14 +759,9 @@ Socket listen_and_accept(unsigned short port)
   return client;
 }
 
-int select_one(Socket socket, Select_mode mode, bool wait,
+int poll_one(Socket socket, Poll_mode mode, bool wait,
                uint64_t timeout_usec)
 {
-  timeval timeout_val = {};
-
-  // Pre-initialize pointer with zero timeval structure
-  // to make select() return immediately
-  timeval *select_timeout = &timeout_val;
 
 DIAGNOSTIC_PUSH_CDK
 
@@ -775,38 +771,42 @@ DIAGNOSTIC_PUSH_CDK
   DISABLE_WARNING_CDK(4548)
 #endif
 
-  fd_set socket_set;
-  FD_ZERO(&socket_set);
-  FD_SET(socket, &socket_set);
+  struct pollfd fds = {};
+  fds.fd = socket;
+  switch(mode)
+  {
+  case POLL_MODE_CONNECT:
+    fds.events = POLLIN | POLLOUT;
+    break;
+  case POLL_MODE_READ:
+    fds.events = POLLIN;
+    break;
+  case POLL_MODE_WRITE:
+    fds.events = POLLOUT;
+    break;
+  }
 
-  fd_set except_set;
-  FD_ZERO(&except_set);
-  FD_SET(socket, &except_set);
 
 DIAGNOSTIC_POP_CDK
 
-  if (wait)
+  //milliseconds
+  int timeout = -1;
+
+  if (wait && timeout_usec > 0)
   {
-    if (timeout_usec > 0)
-    {
-      // If timeout is specified we will use it
-      select_timeout->tv_sec = (long)timeout_usec / 1000000;
-      select_timeout->tv_usec = (long)(timeout_usec % 1000000);
-    }
-    else
-    {
-      // Otherwise wait until socket becomes available
-      select_timeout = NULL;
-    }
+    // If timeout is specified we will use it
+    timeout = static_cast<int>(timeout_usec / 1000);
   }
 
-  int result = ::select((int)socket + 1,
-    mode == SELECT_MODE_READ ? &socket_set : NULL,
-    mode == SELECT_MODE_WRITE ? &socket_set : NULL,
-    &except_set, select_timeout);
+#ifdef _WIN32
+  int result = ::WSAPoll(&fds, 1, timeout);
+#else
+  int result = ::poll(&fds, 1,  timeout);
+ #endif
 
-  if (result > 0 && FD_ISSET(socket, &except_set))
-    check_socket_error(socket);
+  if (fds.revents & (POLLERR | POLLHUP | POLLNVAL))
+       check_socket_error(socket);
+
 
   return result;
 }
@@ -869,7 +869,7 @@ size_t recv_some(Socket socket, byte *buffer, size_t buffer_size, bool wait)
 
   size_t bytes_received = 0;
 
-  int select_result = select_one(socket, SELECT_MODE_READ, wait);
+  int select_result = poll_one(socket, POLL_MODE_READ, wait);
 
   if (select_result > 0)
   {
@@ -928,7 +928,7 @@ size_t send_some(Socket socket, const byte *buffer, size_t buffer_size, bool wai
 
   size_t bytes_sent = 0;
 
-  int select_result = select_one(socket, SELECT_MODE_WRITE, wait);
+  int select_result = poll_one(socket, POLL_MODE_WRITE, wait);
 
   if (select_result > 0)
   {
