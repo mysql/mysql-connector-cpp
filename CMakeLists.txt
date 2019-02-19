@@ -28,7 +28,7 @@
 
 
 PROJECT(MYSQLCPPCONN)
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 if(POLICY CMP0003)
   cmake_policy(SET CMP0003 NEW)
@@ -269,6 +269,14 @@ install(TARGETS connector-jdbc
   RUNTIME DESTINATION "${INSTALL_LIB_DIR}" COMPONENT JDBCDll
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT JDBCDll
 )
+
+if(MSVC AND NOT BUILD_STATIC)
+  install(FILES $<TARGET_PDB_FILE:connector-jdbc>
+    CONFIGURATIONS Debug RelWithDebInfo
+    DESTINATION "${INSTALL_LIB_DIR}"
+    COMPONENT Debuginfo
+  )
+endif()
 
 # Install some MySQL specific headers
 SET(MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS
