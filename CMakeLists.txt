@@ -72,50 +72,54 @@ ENDIF()
 
 #-----------------
 
-#if(jdbc_stand_alone)
+if(jdbc_stand_alone)
 
   add_config_option(BUILD_STATIC BOOL DEFAULT OFF
     "Build static connector library instead of dynamic one"
   )
 
-  if(BUILD_STATIC)
-    set(BUILD_SHARED_LIBS OFF)
-  else()
-    set(BUILD_SHARED_LIBS ON)
-  endif()
-
-  set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
-
-
   add_config_option(BUNDLE_DEPENDENCIES BOOL ADVANCED DEFAULT OFF
     "copy dependencies to install location"
   )
 
-  # TODO: support dynamic binding
-  #add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable static binding")
-  set(MYSQLCLIENT_STATIC_BINDING ON CACHE INTENRAL "only static biniding supported for now" FORCE)
+endif(jdbc_stand_alone)
 
-#endif(jdbc_stand_alone)
+
+# TODO: support dynamic binding
+#add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable static binding")
+set(MYSQLCLIENT_STATIC_BINDING ON CACHE INTENRAL "only static biniding supported for now" FORCE)
+
+
+if(BUILD_STATIC)
+  set(BUILD_SHARED_LIBS OFF)
+else()
+  set(BUILD_SHARED_LIBS ON)
+endif()
+
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
 
 
 #-----------------
 #  Version info
 #
 
-if(NOT EXISTS "${PROJECT_BINARY_DIR}/VersionInfo.cmake")
+if(jdbc_stand_alone)
+
+  message(WARNING "Using fake version info for legacy Connector/C++")
 
   set(CONCPP_VERSION_MAJOR 8)
   set(CONCPP_VERSION_MINOR 0)
-  set(CONCPP_VERSION_MICRO 14)
+  set(CONCPP_VERSION_MICRO 0)
   set(CONCPP_VERSION_LEVEL "")
   set(JDBC_ABI_VERSION_MAJOR 7)
 
-  configure_file(
-    "VersionInfo.cmake.in"
-    "${PROJECT_BINARY_DIR}/VersionInfo.cmake"
-    @ONLY
-  )
-endif()
+endif(jdbc_stand_alone)
+
+configure_file(
+  "VersionInfo.cmake.in"
+  "${PROJECT_BINARY_DIR}/VersionInfo.cmake"
+  @ONLY
+)
 
 INCLUDE("${PROJECT_BINARY_DIR}/VersionInfo.cmake")
 
