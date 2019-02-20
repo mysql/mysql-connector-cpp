@@ -570,7 +570,6 @@ mysqlx_get_client_from_url(const char *conn_string, const char *client_opts,
                     By default it doesn't cleans sessions.
 
   @param opt  handle to client configuration data
-  @param client_opts    client options in the form of a JSON string.
   @param[out] error     if error happens during connect the error object
                         is returned through this parameter
 
@@ -1741,9 +1740,9 @@ PUBLIC_API int mysqlx_set_modify_array_delete(mysqlx_stmt_t *stmt, ...);
 /**
   Return a number of rows in a table
 
-  @param table table handle
-  @param[out] the number of rows in a given table is returned
-          through the parameter
+  @param table       table handle
+  @param[out] count  the number of rows in a given table is returned
+                     through the parameter
 
   @return `RESULT_OK` - on success; `RESULT_ERR` - on error
 

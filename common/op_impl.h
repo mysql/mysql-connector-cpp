@@ -88,6 +88,15 @@ class Op_base
   : public IF
   , protected Result_init
 {
+public:
+
+  enum Prepare_state
+  {
+    PS_EXECUTE,
+    PS_PREPARE_EXECUTE,
+    PS_EXECUTE_PREPARED
+  };
+
 protected:
 
   using string = std::string;
@@ -102,10 +111,9 @@ protected:
   cdk::scoped_ptr<cdk::Reply> m_reply;
 
   uint32_t m_stmt_id = 0;
+  Prepare_state  m_prepare_state = PS_EXECUTE;
   bool m_inited = false;
   bool m_completed = false;
-  bool m_re_prepare = true;
-  bool m_executed = false;
 
 public:
 
@@ -166,6 +174,7 @@ public:
     if (m_stmt_id != 0)
       get_session()->error_stmt_id(m_stmt_id);
     m_stmt_id = 0;
+    m_prepare_state = PS_EXECUTE;
     m_reply.reset();
     m_inited = false;
     m_completed = false;
@@ -176,24 +185,14 @@ public:
     return m_stmt_id;
   }
 
-  bool get_re_prepare()
+  Prepare_state get_prepare_state()
   {
-    return m_re_prepare;
+    return m_prepare_state;
   }
 
-  void set_re_prepare(bool x)
+  void set_prepare_state(Prepare_state x)
   {
-    m_re_prepare = x;
-  }
-
-  bool get_executed()
-  {
-    return m_executed;
-  }
-
-  void set_executed(bool x)
-  {
-    m_executed = x;
+     m_prepare_state = x;
   }
 
   // Async execution
@@ -473,7 +472,7 @@ private:
   */
   bool use_prepared_statement()
   {
-    auto prepare = get_re_prepare();
+    auto prepare = get_prepare_state();
 
     /*
       Upon first execution, get_executed() and get_re_prepare() are false and
@@ -490,13 +489,27 @@ private:
       used.
     */
 
-    if (get_executed())
+    if (prepare != PS_EXECUTE )
       create_stmt_id();
+    else
+    {
+      release_stmt_id();
+    }
 
-    set_re_prepare(!get_executed());
-    set_executed(true);
+    switch(prepare)
+    {
+    case PS_EXECUTE:
+      set_prepare_state(PS_PREPARE_EXECUTE);
+      break;
+    case PS_PREPARE_EXECUTE:
+      set_prepare_state(PS_EXECUTE_PREPARED);
+      break;
+    case PS_EXECUTE_PREPARED:
+      break;
+    }
 
-    return (get_stmt_id() != 0 && !prepare);
+    return prepare == PS_EXECUTE_PREPARED &&
+        get_stmt_id()!=0;
   }
 };
 
@@ -622,33 +635,62 @@ protected:
   {}
 
   row_count_t m_limit = 0;
-  bool m_has_limit = false;
   row_count_t m_offset = 0;
+  bool m_has_limit = false;
   bool m_has_offset = false;
 
   // Limit and offset
 
   void set_limit(unsigned lm) override
   {
+    /*
+      Setting limit is not treated as changing the statement
+      completely. Re-prepare is needed only if the statement
+      was already prepared without any limits.
+    */
 
-    if (!m_has_limit)
-      Base::set_re_prepare(true);
+    if (nullptr == get_limit() &&
+        Base::get_prepare_state() == Base::PS_EXECUTE_PREPARED)
+    {
+      Base::set_prepare_state(Base::PS_PREPARE_EXECUTE);
+    }
+
     m_has_limit = true;
     m_limit = lm;
   }
 
   void clear_limit() override
   {
-    if (m_has_limit)
-      Base::set_re_prepare(true);
+    /*
+      Clearing limit is not treated as changing the statement
+      completely. Re-prepare is needed only if the statement
+      was already prepared with limits and now it will have
+      no limits (because no offset was set).
+    */
+
+    if (nullptr != get_limit() && !m_has_offset &&
+        Base::get_prepare_state() == Base::PS_EXECUTE_PREPARED)
+    {
+      Base::set_prepare_state(Base::PS_PREPARE_EXECUTE);
+    }
+
     m_has_limit = false;
   }
 
 
   void set_offset(unsigned offset) override
   {
-    if (!m_has_offset)
-      Base::set_re_prepare(true);
+    /*
+      Setting offset is not treated as changing the statement
+      completely. Re-prepare is needed only if the statement
+      was already prepared without any limits.
+    */
+
+    if (nullptr == get_limit() &&
+        Base::get_prepare_state() == Base::PS_EXECUTE_PREPARED)
+    {
+      Base::set_prepare_state(Base::PS_PREPARE_EXECUTE);
+    }
 
     m_has_offset = true;
     m_offset = offset;
@@ -656,8 +698,19 @@ protected:
 
   void clear_offset() override
   {
-    if (m_has_offset)
-      Base::set_re_prepare(true);
+    /*
+      Clearing offset is not treated as changing the statement
+      completely. Re-prepare is needed only if the statement
+      was already prepared with limits and now it will have
+      no limits (because no row limit was set).
+    */
+
+    if (nullptr != get_limit() && !m_has_limit &&
+        Base::get_prepare_state() == Base::PS_EXECUTE_PREPARED)
+    {
+      Base::set_prepare_state(Base::PS_PREPARE_EXECUTE);
+    }
+
     m_has_offset = false;
   }
 
@@ -677,7 +730,7 @@ protected:
   // cdk::Limit interface
 
   row_count_t get_row_count() const override
-  { return m_has_limit ? m_limit : 0; }
+  { return m_has_limit ? m_limit : std::numeric_limits<row_count_t>::max(); }
 
   const row_count_t* get_offset() const override
   {
@@ -731,7 +784,7 @@ protected:
 
   void add_sort(const string &expr, direction_t dir) override
   {
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
     m_order.emplace_back(expr, dir);
   }
 
@@ -826,7 +879,7 @@ public:
 
   void set_having(const string &having) override
   {
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
     m_having = having;
   }
 
@@ -947,19 +1000,19 @@ public:
   void set_proj(const string& doc) override
   {
     m_doc_proj = doc;
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void add_proj(const string& field) override
   {
     m_projections.push_back(field);
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void clear_proj() override
   {
     m_projections.clear();
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   cdk::Projection* get_tbl_proj()
@@ -1109,7 +1162,7 @@ public:
   {
     m_where_expr = expr;
     m_where_set = true;
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void set_lock_mode(Lock_mode lm, Lock_contention contention) override
@@ -1118,14 +1171,14 @@ public:
     // common::Select_if::Lock_mode.
     m_lock_mode = cdk::Lock_mode_value(lm);
     m_lock_contention = cdk::Lock_contention_value(int(contention));
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void clear_lock_mode() override
   {
     m_lock_mode = cdk::api::Lock_mode::NONE;
     m_lock_contention = cdk::api::Lock_contention::DEFAULT;
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   cdk::Expression* get_where() const
@@ -1236,14 +1289,14 @@ struct Op_sql
 
   cdk::Reply* send_command() override
   {
-    return Base::send_prepared_command(get_params());
+    return do_send_command();
   }
 
   cdk::Reply* do_send_command() override
   {
     return new cdk::Reply(
           get_cdk_session().sql(
-            get_stmt_id(),
+            0,
             m_query,
             get_params()
             ));
@@ -2511,7 +2564,7 @@ public:
   {
     m_cols.emplace_back(column);
     m_col_count++;
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void clear_columns() override
@@ -2523,26 +2576,26 @@ public:
     clear_rows();
     m_cols.clear();
     m_col_count = 0;
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void add_row(const Row_impl<VAL> &row) override
   {
     m_rows.emplace_back(row);
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void clear_rows() override
   {
     m_rows.clear();
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   void clear()
   {
     clear_columns();
     clear_rows();
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
 private:
@@ -2553,7 +2606,7 @@ private:
 
   cdk::Reply* send_command() override
   {
-    return Base::send_prepared_command(nullptr, nullptr);
+    return do_send_command();
   }
 
   cdk::Reply* do_send_command() override
@@ -2567,7 +2620,7 @@ private:
     m_started = false;
 
     return new cdk::Reply(Base::get_cdk_session().table_insert(
-                            Base::get_stmt_id(),
+                            0,
                             m_table,
                             *this,
                             m_cols.empty() ? nullptr : this,
@@ -2681,13 +2734,13 @@ public:
   void add_set(const string &field, const Value &val) override
   {
     m_set_values.emplace(field, val);
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(PS_EXECUTE);
   }
 
   void clear_modifications() override
   {
     m_set_values.clear();
-    Base::set_re_prepare(true);
+    Base::set_prepare_state(PS_EXECUTE);
   }
 
 protected:

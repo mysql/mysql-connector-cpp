@@ -271,7 +271,7 @@ function(mysqlx_protobuf_generate_cpp SRCS HDRS)
       COMMAND Protobuf::protoc
       ARGS --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
            -I ${ABS_PATH} ${ABS_FIL}
-           --proto_path=${PROJECT_SOURCE_DIR}/protobuf/protobuf-2.6.1/src
+           --proto_path=${PROJECT_SOURCE_DIR}/protobuf/protobuf-3.6.1/src
       DEPENDS ${ABS_FIL} #${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM
