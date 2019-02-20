@@ -41,11 +41,13 @@
   in the connector.
 */
 
+#include "api.h"
 #include "../common_constants.h"
 #include <string>
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 namespace common {
 
 class Value;
@@ -343,6 +345,7 @@ struct Table_update_if : public Table_remove_if
 };
 
 }  // internal
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

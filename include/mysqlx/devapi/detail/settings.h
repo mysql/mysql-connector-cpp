@@ -39,6 +39,8 @@
 #include <chrono>
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace internal {
 
 /*
@@ -51,22 +53,19 @@ template <typename Traits>
 class Settings_detail
   : public common::Settings_impl
 {
-  using Value      = common::Value;
-  using Option    = typename Traits::Options;
-  using COption    = typename Traits::COptions;
-  using SSLMode    = typename Traits::SSLMode;
-  using AuthMethod = typename Traits::AuthMethod;
+  using Value       = common::Value;
+  using Option      = typename Traits::Options;
+  using COption     = typename Traits::COptions;
+  using SSLMode     = typename Traits::SSLMode;
+  using AuthMethod  = typename Traits::AuthMethod;
 
 public:
 
-
-
-  template <bool session_only,typename OPT,typename... Ty>
+  template <bool session_only, typename OPT, typename... Ty>
   void set(OPT opt, Ty&&... rest)
   {
     do_set(get_options<session_only>(opt, std::forward<Ty>(rest)...));
   }
-
 
 protected:
 
@@ -103,7 +102,7 @@ protected:
 
   template <
     typename V,
-    typename std::enable_if<std::is_convertible<V,string>::value>::type*
+    typename std::enable_if<std::is_convertible<V, string>::value>::type*
     = nullptr
   >
   static Value opt_val(int opt, V &&val)
@@ -131,8 +130,9 @@ protected:
   }
 
   template<typename _Rep, typename _Period>
-  static Value opt_val(int opt,
-                       const std::chrono::duration<_Rep,_Period> &duration)
+  static Value opt_val(
+    int opt, const std::chrono::duration<_Rep, _Period> &duration
+  )
   {
     if (opt != Session_option_impl::CONNECT_TIMEOUT &&
         opt != Client_option_impl::POOL_QUEUE_TIMEOUT &&
@@ -150,7 +150,7 @@ protected:
 
   template <
     typename V,
-    typename std::enable_if<std::is_convertible<V,int>::value>::type*
+    typename std::enable_if<std::is_convertible<V, int>::value>::type*
     = nullptr
   >
   static Value opt_val(int, V &&val)
@@ -158,9 +158,6 @@ protected:
     //ClientOptions are all bool or int, so convertible to int
     return val;
   }
-
-
-
 
   using session_opt_val_t = std::pair<int, Value>;
   using session_opt_list_t = std::list<session_opt_val_t>;
@@ -190,9 +187,10 @@ protected:
     needed: get_options(Option opt, Option opt1, R&... rest).
   */
 
-  template <bool session_only,typename V, typename... Ty,
-            typename std::enable_if<session_only,int>::type*
-            = nullptr>
+  template <
+    bool session_only, typename V, typename... Ty,
+    typename std::enable_if<session_only, int>::type* = nullptr
+  >
   static session_opt_list_t get_options(Option opt, V&& val, Ty&&... rest)
   {
     int oo(static_cast<int>(opt));
@@ -203,9 +201,10 @@ protected:
     return opts;
   }
 
-  template <bool session_only,typename V, typename... Ty,
-            typename std::enable_if<!session_only,int>::type*
-            = nullptr>
+  template <
+    bool session_only, typename V, typename... Ty,
+    typename std::enable_if<!session_only, int>::type* = nullptr
+  >
   static session_opt_list_t get_options(COption opt, V&& val, Ty&&... rest)
   {
     int oo(static_cast<int>(opt));
@@ -237,6 +236,8 @@ protected:
 
 
 }  // internal namespace
+
+MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
 
 #endif

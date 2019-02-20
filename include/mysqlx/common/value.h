@@ -42,6 +42,8 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace common {
 
 class Value_conv;
@@ -203,7 +205,7 @@ public:
     if (INT64 == m_type && 0 > m_val.v_sint)
       throw Error("Converting negative integer to unsigned value");
 
-    uint64_t val = (UINT64 == m_type ? m_val.v_uint: (uint64_t)m_val.v_sint);
+    uint64_t val = (UINT64 == m_type ? m_val.v_uint : (uint64_t)m_val.v_sint);
 
     return val;
   }
@@ -229,7 +231,7 @@ public:
     case UINT64: return 1.0F*m_val.v_uint;
     case FLOAT:  return m_val.v_float;
     default:
-        throw Error("Value cannot be converted to float number");
+      throw Error("Value cannot be converted to float number");
     }
   }
 
@@ -263,7 +265,7 @@ public:
     case USTRING:
       if (!m_ustr.empty())
       {
-        if(size)
+        if (size)
           *size = m_ustr.size() * sizeof(char16_t);
         return (const byte*)m_ustr.data();
       }
@@ -313,6 +315,8 @@ public:
   friend Access;
 };
 
-}}  // mysqlx::internal namespace
+}  // common
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
 
 #endif

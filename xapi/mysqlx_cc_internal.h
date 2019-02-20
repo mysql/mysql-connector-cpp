@@ -44,18 +44,16 @@
 #include "error_internal.h"
 #include "crud_internal.h"
 
-using common::throw_error;
-using mysqlx::common::Schema_ref;
+
+using namespace mysqlx::common;
 using Db_obj_ref = mysqlx::common::Object_ref;
 
 class Diag_info_list;
 
 
-
-
 struct mysqlx_session_options_struct
   : public Mysqlx_diag
-  , common::Settings_impl
+  , Settings_impl
 {
 public:
 
@@ -156,7 +154,7 @@ struct mysqlx_session_struct
 
 public:
 
-  std::shared_ptr<mysqlx::common::Session_impl> m_impl;
+  std::shared_ptr<Session_impl> m_impl;
 
   Stmt_cache                         m_stmts;
   Db_obj_cache<mysqlx_schema_struct> m_schema_map;
@@ -200,7 +198,7 @@ public:
   {}
 
 
-  mysqlx::common::Session_impl& get_impl()
+  Session_impl& get_impl()
   {
     assert(m_impl);
     return *m_impl.get();
@@ -240,21 +238,18 @@ public:
     return new_stmt<OP_LIST_SCHEMAS>(pattern)->exec();
   }
 
-
-  using Object_type = common::Object_type;
-
   void create_schema(const char *name)
   {
     assert(name && *name);
     Schema_ref schema(name);
-    common::create_object<Object_type::SCHEMA>(m_impl, schema);
+    create_object<Object_type::SCHEMA>(m_impl, schema);
   }
 
   void drop_schema(const char *name)
   {
     assert(name && *name);
     Schema_ref schema(name);
-    common::drop_object<Object_type::SCHEMA>(m_impl, schema);
+    drop_object<Object_type::SCHEMA>(m_impl, schema);
   }
 
 
@@ -277,12 +272,12 @@ public:
 struct mysqlx_client_struct
     : public Mysqlx_diag
 {
-  std::shared_ptr<mysqlx::common::Session_pool> m_impl;
+  std::shared_ptr<Session_pool> m_impl;
 
   mysqlx_client_struct(const char *conn_str, const char *client_opt);
   mysqlx_client_struct(mysqlx_session_options_t *opt);
 
-  std::shared_ptr<mysqlx::common::Session_pool>& get_impl()
+  std::shared_ptr<Session_pool>& get_impl()
   {
     return m_impl;
   }
@@ -301,11 +296,9 @@ bool mysqlx_stmt_struct::session_valid()
 
 struct mysqlx_schema_struct
   : public Mysqlx_diag
-  , public common::Schema_ref
+  , public Schema_ref
 {
 private:
-
-  using Object_type = common::Object_type;
 
   Db_obj_cache<mysqlx_collection_struct> m_collection_map;
   Db_obj_cache<mysqlx_table_struct>      m_table_map;
@@ -315,13 +308,13 @@ private:
 public:
 
   mysqlx_schema_struct(mysqlx_session_struct &session, cdk::string name)
-    : common::Schema_ref(name)
+    : Schema_ref(name)
     , m_session(session)
   {}
 
   bool exists()
   {
-    return common::check_schema_exists(m_session.m_impl, *this);
+    return check_schema_exists(m_session.m_impl, *this);
   }
 
   mysqlx_session_struct& get_session() { return m_session; }
@@ -359,7 +352,7 @@ public:
   {
     assert(name && *name);
     Db_obj_ref coll(this->name(), name);
-    common::create_object<Object_type::COLLECTION>(
+    create_object<Object_type::COLLECTION>(
       m_session.m_impl, coll, reuse
     );
   }
@@ -369,7 +362,7 @@ public:
   {
     assert(name && *name);
     Db_obj_ref obj(this->name(), name);
-    common::drop_object<T>(m_session.m_impl, obj);
+    mysqlx::common::drop_object<T>(m_session.m_impl, obj);
   }
 
   void drop_collection(const char *name)
@@ -382,7 +375,7 @@ public:
 
 struct mysqlx_collection_struct
   : public Mysqlx_diag
-  , public common::Object_ref
+  , public Object_ref
 {
 private:
 
@@ -391,7 +384,7 @@ private:
 public:
 
   mysqlx_collection_struct(mysqlx_schema_struct &schema, cdk::string name)
-    : common::Object_ref(schema.name(), name)
+    : Object_ref(schema.name(), name)
     , m_sess(schema.get_session())
   {}
 
@@ -400,7 +393,7 @@ public:
   bool exists()
   {
     return
-      common::check_object_exists<common::Object_type::COLLECTION>(
+      check_object_exists<Object_type::COLLECTION>(
         m_sess.m_impl, *this
       );
   }
@@ -442,7 +435,7 @@ public:
 
 struct mysqlx_table_struct
   : public Mysqlx_diag
-  , public common::Object_ref
+  , public Object_ref
 {
 private:
 
@@ -451,7 +444,7 @@ private:
 public:
 
   mysqlx_table_struct(mysqlx_schema_struct &schema, cdk::string name)
-    : common::Object_ref(schema.name(), name)
+    : Object_ref(schema.name(), name)
     , m_sess(schema.get_session())
   {}
 
@@ -460,7 +453,7 @@ public:
   bool exists()
   {
     return
-      common::check_object_exists<common::Object_type::TABLE>(
+      check_object_exists<Object_type::TABLE>(
         m_sess.m_impl, *this
       );
   }
@@ -476,9 +469,9 @@ public:
 
 struct mysqlx_row_struct
   : public Mysqlx_diag
-  , public mysqlx::common::Row_impl<>
+  , public Row_impl<>
 {
-  using mysqlx::common::Row_impl<>::Row_impl;
+  using Row_impl<>::Row_impl;
 };
 
 

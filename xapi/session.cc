@@ -34,13 +34,12 @@
 #include <algorithm>
 #include <string>
 
-using std::string;
-
+using namespace mysqlx::common;
 
 mysqlx_session_struct::mysqlx_session_struct( mysqlx_client_t *cli)
 {
   if (cli)
-    m_impl = std::make_shared<common::Session_impl>(cli->get_impl());
+    m_impl = std::make_shared<Session_impl>(cli->get_impl());
   else
     throw_error("Invalid client pool");
 }
@@ -52,13 +51,13 @@ mysqlx_session_struct::mysqlx_session_struct(
 {
   cdk::ds::Multi_source ds;
   opt->get_data_source(ds);
-  m_impl = std::make_shared<common::Session_impl>(ds);
+  m_impl = std::make_shared<Session_impl>(ds);
 }
 
 
 mysqlx_session_struct::mysqlx_session_struct(
   const std::string &host, unsigned short port,
-  const string &usr, const std::string *pwd,
+  const std::string &usr, const std::string *pwd,
   const std::string *db
 )
   : mysqlx_session_struct(mysqlx_session_options_struct(host, port, usr, pwd, db))
@@ -133,7 +132,7 @@ void mysqlx_session_struct::transaction_rollback(const char *sp)
 {
   stmt_traits<OP_TRX_ROLLBACK>::Impl stmt(
     m_impl,
-    sp ? string(sp) : string()
+    sp ? std::string(sp) : std::string()
   );
   stmt.execute();
 }
@@ -142,7 +141,7 @@ const char * mysqlx_session_struct::savepoint_set(const char *sp)
 {
   stmt_traits<OP_TRX_SAVEPOINT_SET>::Impl stmt(
     m_impl,
-    sp ? string(sp) : string()
+    sp ? std::string(sp) : std::string()
   );
 
   stmt.execute();
@@ -154,7 +153,7 @@ void mysqlx_session_struct::savepoint_remove(const char *sp)
 {
   if (!sp || !sp[0])
     throw_error("Invalid empty save point name");
-  stmt_traits<OP_TRX_SAVEPOINT_RM>::Impl stmt(m_impl, string(sp));
+  stmt_traits<OP_TRX_SAVEPOINT_RM>::Impl stmt(m_impl, std::string(sp));
   stmt.execute();
 }
 
@@ -172,7 +171,7 @@ mysqlx_client_struct::mysqlx_client_struct(const char *conn_str,
     opt.set_client_opts(client_opt);
   cdk::ds::Multi_source ds;
   opt.get_data_source(ds);
-  m_impl.reset(new  mysqlx::common::Session_pool(ds));
+  m_impl.reset(new  Session_pool(ds));
   m_impl->set_pool_opts(opt);
 }
 
@@ -181,7 +180,7 @@ mysqlx_client_struct::mysqlx_client_struct(mysqlx_session_options_t *opt)
 {
   cdk::ds::Multi_source ds;
   opt->get_data_source(ds);
-  m_impl.reset(new  mysqlx::common::Session_pool(ds));
+  m_impl.reset(new  Session_pool(ds));
   m_impl->set_pool_opts(*opt);
 }
 
@@ -230,14 +229,12 @@ unsigned int ssl_mode_to_uint(TLS::Options::SSL_MODE mode)
 
 const char* opt_name(mysqlx_opt_type_t opt)
 {
-  using mysqlx::common::Settings_impl;
   using Option = Settings_impl::Session_option_impl;
   return Settings_impl::option_name(Option(opt));
 }
 
 const char* ssl_mode_name(mysqlx_ssl_mode_t m)
 {
-  using mysqlx::common::Settings_impl;
   using SSL_mode = Settings_impl::SSL_mode;
   return Settings_impl::ssl_mode_name(SSL_mode(m));
 }

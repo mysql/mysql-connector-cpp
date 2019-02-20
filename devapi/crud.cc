@@ -39,6 +39,7 @@ POP_SYS_WARNINGS
 
 #include "impl.h"
 
+using namespace mysqlx::internal;
 using namespace mysqlx;
 using namespace uuid;
 
@@ -49,7 +50,7 @@ using namespace uuid;
 */
 
 
-auto internal::Crud_factory::mk_sql(mysqlx::Session &sess, const string &query)
+auto Crud_factory::mk_sql(Session &sess, const string &query)
 -> Impl*
 {
   return new common::Op_sql(sess.m_impl, query);
@@ -65,7 +66,7 @@ auto internal::Crud_factory::mk_sql(mysqlx::Session &sess, const string &query)
 */
 
 
-auto internal::Crud_factory::mk_add(Collection &coll) -> Impl*
+auto Crud_factory::mk_add(Collection &coll) -> Impl*
 {
   return new common::Op_collection_add(
     coll.get_session(), Object_ref(coll)
@@ -73,7 +74,7 @@ auto internal::Crud_factory::mk_add(Collection &coll) -> Impl*
 }
 
 
-auto internal::Crud_factory::mk_remove(
+auto Crud_factory::mk_remove(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
@@ -83,7 +84,7 @@ auto internal::Crud_factory::mk_remove(
 }
 
 
-auto internal::Crud_factory::mk_find(Collection &coll) -> Impl*
+auto Crud_factory::mk_find(Collection &coll) -> Impl*
 {
   return new common::Op_collection_find(
     coll.get_session(), Object_ref(coll)
@@ -91,7 +92,7 @@ auto internal::Crud_factory::mk_find(Collection &coll) -> Impl*
 }
 
 
-auto internal::Crud_factory::mk_find(
+auto Crud_factory::mk_find(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
@@ -101,7 +102,7 @@ auto internal::Crud_factory::mk_find(
 }
 
 
-auto internal::Crud_factory::mk_modify(
+auto Crud_factory::mk_modify(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
@@ -316,7 +317,7 @@ struct Value_expr_check_id
 
 
 Result
-internal::Collection_detail::add_or_replace_one(
+Collection_detail::add_or_replace_one(
   const string &id, Value &&doc, bool replace
 )
 {
@@ -346,7 +347,7 @@ internal::Collection_detail::add_or_replace_one(
 }
 
 
-void internal::Collection_detail::index_drop(const string &name)
+void Collection_detail::index_drop(const string &name)
 {
   Object_ref coll(get_schema().m_name, m_name);
   common::Op_idx_drop cmd(m_sess, coll, name);
@@ -354,7 +355,7 @@ void internal::Collection_detail::index_drop(const string &name)
 }
 
 void
-internal::Collection_detail::index_create(const string &name, Value &&spec)
+Collection_detail::index_create(const string &name, Value &&spec)
 {
   switch (spec.getType())
   {
@@ -380,7 +381,7 @@ internal::Collection_detail::index_create(const string &name, Value &&spec)
 */
 
 
-auto internal::Crud_factory::mk_insert(Table &table) -> Impl*
+auto Crud_factory::mk_insert(Table &table) -> Impl*
 {
   return new common::Op_table_insert<Value>(
     table.get_session(), Object_ref(table)
@@ -388,7 +389,7 @@ auto internal::Crud_factory::mk_insert(Table &table) -> Impl*
 }
 
 
-auto internal::Crud_factory::mk_select(Table &table) -> Impl*
+auto Crud_factory::mk_select(Table &table) -> Impl*
 {
   return new common::Op_table_select(
     table.get_session(), Object_ref(table)
@@ -396,7 +397,7 @@ auto internal::Crud_factory::mk_select(Table &table) -> Impl*
 }
 
 
-auto internal::Crud_factory::mk_update(Table &table) -> Impl*
+auto Crud_factory::mk_update(Table &table) -> Impl*
 {
   return new common::Op_table_update(
     table.get_session(), Object_ref(table)
@@ -404,7 +405,7 @@ auto internal::Crud_factory::mk_update(Table &table) -> Impl*
 }
 
 
-auto internal::Crud_factory::mk_remove(Table &table) -> Impl*
+auto Crud_factory::mk_remove(Table &table) -> Impl*
 {
   return new common::Op_table_remove(
     table.get_session(), Object_ref(table)

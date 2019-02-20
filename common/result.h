@@ -47,6 +47,7 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 namespace common {
 
 // TODO: Use std::variant when available
@@ -382,7 +383,7 @@ public:
 
   Meta_data(cdk::Meta_data&);
 
-  virtual ~Meta_data(){}
+  virtual ~Meta_data() {}
 
 
   col_count_t col_count() const { return m_col_count; }
@@ -546,7 +547,7 @@ Value convert(cdk::bytes data, Format_descr<T>&)
     Note: Trailing '\0' byte is used for NULL value detection and is not
     part of the data
   */
-  return{ data.begin(), data.size()-1 };
+  return { data.begin(), data.size() - 1 };
 }
 
 
@@ -580,7 +581,7 @@ Value Value::Access::mk(bytes data, common::Format_descr<T> &format)
       Note: Trailing '\0' byte is used for NULL value detection and is not
       part of the data
     */
-    val.m_str.assign(data.begin(), data.end()-1);
+    val.m_str.assign(data.begin(), data.end() - 1);
     break;
   }
 
@@ -615,6 +616,7 @@ class Row_impl
 public:
 
   using Value = VAL;
+  using bytes = cdk::bytes;
 
   Row_impl() {};
 
@@ -981,7 +983,7 @@ public:
   // -- Diagnostic information
 
   // Return number of diagnostic entries with given error level (defaults to ERROR).
-  unsigned int entry_count(Severity::value level=Severity::ERROR) override
+  unsigned int entry_count(Severity::value level = Severity::ERROR) override
   {
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
@@ -993,7 +995,7 @@ public:
   // (for example, if level is WARNING then iterates over all warnings and errors).
   // By default returns iterator over errors only. The Error_iterator interface extends
   // Iterator interface with single Error_iterator::error() method that returns the current error entry from the sequence.
-  Iterator& get_entries(Severity::value level=Severity::ERROR) override
+  Iterator& get_entries(Severity::value level = Severity::ERROR) override
   {
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
@@ -1076,7 +1078,7 @@ const std::vector<std::string>& Result_impl::get_generated_ids() const
 inline
 bool Result_impl::has_data() const
 {
-  return ! m_row_cache.empty() || m_pending_rows;
+  return !m_row_cache.empty() || m_pending_rows;
 }
 
 
@@ -1103,7 +1105,9 @@ row_count_t Result_impl::count()
 }
 
 
+} // common
 
-}}  // mysqlx::common namespace
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
 
 #endif

@@ -61,6 +61,9 @@ class Multi_source;
 
 
 namespace mysqlx {
+
+MYSQLX_ABI_BEGIN(2,0)
+
 namespace common {
 
 
@@ -80,10 +83,10 @@ public:
 #define SETTINGS_OPT_ENUM_num(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_any(X,N)  X = N,
 
-  enum Session_option_impl{
+  enum Session_option_impl {
     SESSION_OPTION_LIST(SETTINGS_OPT_ENUM)
     LAST
-  } ;
+  };
 
 
 
@@ -96,7 +99,7 @@ public:
 #define CLIENT_OPT_IMPL_ENUM_num(X,N)  X = -N,
 #define CLIENT_OPT_IMPL_ENUM_any(X,N)  X = -N,
 
-  enum Client_option_impl{
+  enum Client_option_impl {
     CLIENT_OPTION_LIST(CLIENT_OPT_IMPL_ENUM)
   };
 
@@ -275,8 +278,8 @@ const common::Value& Settings_impl::get(int opt) const
   using std::find_if;
 
   auto it = find_if(m_data.m_options.crbegin(), m_data.m_options.crend(),
-                    [opt](opt_val_t el) -> bool { return el.first == opt; }
-      );
+    [opt](opt_val_t el) -> bool { return el.first == opt; }
+  );
 
   static Value null_value;
 
@@ -291,9 +294,9 @@ inline
 bool Settings_impl::has_option(int opt) const
 {
   return m_data.m_options.cend() !=
-      find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
-              [opt](opt_val_t el) -> bool { return el.first == opt; }
-      );
+    find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
+      [opt](opt_val_t el) -> bool { return el.first == opt; }
+    );
 }
 
 
@@ -312,7 +315,7 @@ inline
 void Settings_impl::Data::erase(int opt)
 {
   remove_from(m_options,
-              [opt](opt_val_t el) -> bool
+    [opt](opt_val_t el) -> bool
   {
     return el.first == opt;
   }
@@ -325,32 +328,35 @@ void Settings_impl::Data::erase(int opt)
 
   switch (opt)
   {
-    case Session_option_impl::HOST:
-      m_host_cnt = 0;
-      FALLTHROUGH;
-    case Session_option_impl::PORT:
-      if (0 == m_host_cnt)
-        m_tcpip = false;
-      break;
-    case Session_option_impl::SOCKET:
-      m_sock = false;
-      break;
-    case Session_option_impl::PRIORITY:
-      m_user_priorities = false;
-      break;
-    case Session_option_impl::SSL_CA:
-      m_ssl_ca = false;
-      break;
-    case Session_option_impl::SSL_MODE:
-      m_ssl_mode = SSL_mode::LAST;
-      break;
-    default:
-      break;
+  case Session_option_impl::HOST:
+    m_host_cnt = 0;
+    FALLTHROUGH;
+  case Session_option_impl::PORT:
+    if (0 == m_host_cnt)
+      m_tcpip = false;
+    break;
+  case Session_option_impl::SOCKET:
+    m_sock = false;
+    break;
+  case Session_option_impl::PRIORITY:
+    m_user_priorities = false;
+    break;
+  case Session_option_impl::SSL_CA:
+    m_ssl_ca = false;
+    break;
+  case Session_option_impl::SSL_MODE:
+    m_ssl_mode = SSL_mode::LAST;
+    break;
+  default:
+    break;
   }
 }
 
 
 }  // common namespace
+
+MYSQLX_ABI_END(2,0)
+
 }  // mysqlx namespace
 
 #endif

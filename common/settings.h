@@ -43,6 +43,7 @@ PUSH_SYS_WARNINGS
 POP_SYS_WARNINGS
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 namespace common {
 
 /*
@@ -77,7 +78,8 @@ class Settings_impl::Setter
     {
       m_inside_client_opts = true;
       return 0;
-    } else if (m_inside_client_opts)
+    }
+    else if (m_inside_client_opts)
     {
       if (upper_key == "ENABLED")
         return Client_option_impl::POOLING;
@@ -106,7 +108,7 @@ public:
   void set_client_opts(const Settings_impl &opts)
   {
     Setter set(*this);
-    for(auto &opt_val : opts.m_data.m_options)
+    for (auto &opt_val : opts.m_data.m_options)
     {
       set.add_option(opt_val.first, opt_val.second);
     }
@@ -196,7 +198,7 @@ private:
   template <int OPT, typename T>
   void set_option(const T &val)
   {
-    if (OPT==Session_option_impl::CONNECT_TIMEOUT)
+    if (OPT == Session_option_impl::CONNECT_TIMEOUT)
       throw_error("The connection timeout value must be a positive integer (including 0)");
 
     add_option(OPT, val);
@@ -489,7 +491,7 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SSL_CA>(
 )
 {
 #ifndef WITH_SSL
-    throw_error("SSL_CA option specified but SSL is not supported")
+  throw_error("SSL_CA option specified but SSL is not supported")
 #endif
 
   switch (m_data.m_ssl_mode)
@@ -614,8 +616,9 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::URI>(
 
 template<>
 inline void
-Settings_impl::Setter::set_cli_option<Settings_impl::Client_option_impl::POOL_MAX_SIZE>(
- const uint64_t &val)
+Settings_impl::Setter::set_cli_option<
+  Settings_impl::Client_option_impl::POOL_MAX_SIZE
+>(const uint64_t &val)
 {
   if (val == 0)
     throw_error("Max pool size has to be greater than 0");
@@ -633,7 +636,7 @@ void Settings_impl::Setter::add_option(int opt, const T &val)
   auto &options = m_data.m_options;
   m_prev_option = opt;
 
-  switch(opt)
+  switch (opt)
   {
   case Session_option_impl::HOST:
   case Session_option_impl::SOCKET:
@@ -712,7 +715,7 @@ void Settings_impl::Setter::str(const string &val)
   {
     SESSION_OPTION_LIST(SET_OPTION_STR)
 
-    default:
+  default:
     throw_error("Option ... could not be processed.");
   }
 
@@ -770,7 +773,7 @@ void Settings_impl::Setter::null()
     throw_error("Option ... can not be unset");
     break;
   case Session_option_impl::LAST:
-      break;
+    break;
   default:
     m_data.erase(m_cur_opt);
   }
@@ -785,7 +788,7 @@ void Settings_impl::Setter::yesno(bool b)
   {
   case Client_option_impl::POOLING:
     add_option(m_cur_opt, b);
-      return;
+    return;
   default: break;
   }
   throw_error("Option ... can not be bool");
@@ -818,7 +821,7 @@ void Settings_impl::Setter::host(
 {
   set_option<Session_option_impl::HOST>(host);
   if (0 < priority)
-    set_option<Session_option_impl::PRIORITY>(priority-1);
+    set_option<Session_option_impl::PRIORITY>(priority - 1);
 }
 
 inline
@@ -831,7 +834,7 @@ void Settings_impl::Setter::host(
   set_option<Session_option_impl::HOST>(host);
   set_option<Session_option_impl::PORT>(port);
   if (0 < priority)
-    set_option<Session_option_impl::PRIORITY>(priority-1);
+    set_option<Session_option_impl::PRIORITY>(priority - 1);
 }
 
 inline
@@ -839,7 +842,7 @@ void Settings_impl::Setter::socket(unsigned short priority, const std::string &p
 {
   set_option<Session_option_impl::SOCKET>(path);
   if (0 < priority)
-    set_option<Session_option_impl::PRIORITY>(priority-1);
+    set_option<Session_option_impl::PRIORITY>(priority - 1);
 }
 
 inline
@@ -900,6 +903,7 @@ Settings_impl::Setter::get_uri_option(const std::string &name)
 
 
 }  // internal namespace
+MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
 
 #endif

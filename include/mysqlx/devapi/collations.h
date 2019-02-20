@@ -43,6 +43,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 /*
   Enumeration of known character sets. For each character set CS listed
@@ -187,6 +188,7 @@ static PUBLIC_API const CollationInfo COLL_CONST_NAME(COLL,CASE);
 
 CDK_CS_LIST(COLL_DECL)
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

@@ -169,12 +169,10 @@ protected:
     if (m_status)
       FAIL() << m_status;
 
-    char conn_error[MYSQLX_MAX_ERROR_LEN] = { 0 };
-    int conn_err_code = 0;
-
     const char *xplugin_usr = usr ? usr : m_xplugin_usr;
     const char *xplugin_pwd = pwd ? pwd : m_xplugin_pwd;
     const char *xplugin_host = m_xplugin_host;
+    mysqlx_error_t *error = NULL;
 
     mysqlx_session_close(m_sess);
     m_sess = NULL;
@@ -183,13 +181,15 @@ protected:
       xplugin_host, m_port,
       xplugin_usr, xplugin_pwd,
       nullptr,
-      conn_error, &conn_err_code
+      &error
     );
 
     if (!m_sess)
     {
-      FAIL() << "Could not connect to xplugin at " << m_port << std::endl << conn_error <<
-             " ERROR CODE: " << conn_err_code;
+      FAIL() << "Could not connect to xplugin at " << m_port << std::endl <<
+                mysqlx_error_message(error) <<
+             " ERROR CODE: " << mysqlx_error_num(error);
+      mysqlx_free(error);
     }
     cout << "Connected to xplugin..." << endl;
 

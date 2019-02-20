@@ -42,7 +42,9 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
+class Session;
 class Collection;
 class Table;
 
@@ -77,7 +79,6 @@ struct PUBLIC_API Crud_factory
 
 
 }  // internal
-}  // mysqlx
 
 
 /*
@@ -105,10 +106,10 @@ struct PUBLIC_API Crud_factory
 */
 
 
-namespace mysqlx {
-
 /**
-  @brief The LockContention  enum defines constants for defining the row locking contention for `Set_lock::lockExclusive()` and `Set_lock::lockShared()` methods.
+  @brief The LockContention  enum defines constants for defining
+  the row locking contention for `Set_lock::lockExclusive()`
+  and `Set_lock::lockShared()` methods.
   @see https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html#innodb-locking-reads-nowait-skip-locked
 */
 
@@ -497,6 +498,8 @@ protected:
 };
 
 
-}}  // mysqlx::internal
+}   // internal
+MYSQLX_ABI_END(2,0)
+} // mysqlx
 
 #endif
