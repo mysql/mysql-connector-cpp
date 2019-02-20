@@ -66,6 +66,27 @@ ELSEIF(DEB_CODENAME STREQUAL "sid")
   SET (DEB_PLATFORMRELEASE "debianunstable")
 ELSEIF(DEB_CODENAME STREQUAL "xenial")
   SET (DEB_PLATFORMRELEASE "ubuntu16.04")
+  # Generate debug symbol packages (this is done automatically in Debian9+)
+  SET (DEB_RULES_STRIP
+"
+override_dh_strip:
+	dh_strip -plibmysqlcppconn7 --dbg-package=libmysqlcppconn7-dbgsym
+	dh_strip -plibmysqlcppconn8-2 --dbg-package=libmysqlcppconn8-2-dbgsym
+")
+  SET (DEB_CONTROL_DBGSYM
+"
+Package: libmysqlcppconn7-dbgsym
+Architecture: any
+Section: debug
+Depends: libmysqlcppconn7 (=\${binary:Version}), \${misc:Depends}
+Description: Debugging symbols for compat library
+
+Package: libmysqlcppconn8-2-dbgsym
+Architecture: any
+Section: debug
+Depends: libmysqlcppconn8-2 (= \${binary:Version}), \${misc:Depends}
+Description: Debugging symbols for main library
+")
 ELSEIF(DEB_CODENAME STREQUAL "bionic")
   SET (DEB_PLATFORMRELEASE "ubuntu18.04")
 ELSEIF(DEB_CODENAME STREQUAL "cosmic")
