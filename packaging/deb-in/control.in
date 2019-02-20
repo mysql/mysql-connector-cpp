@@ -35,3 +35,5 @@ Depends: libmysqlcppconn@JDBC_ABI_VERSION_MAJOR@ (= ${binary:Version}), libmysql
 Description: Development header files and libraries for MySQL C++ client applications
  This package contains the development header files and libraries necessary
  to develop MySQL client applications in C++.
+
+@DEB_CONTROL_DBGSYM@
