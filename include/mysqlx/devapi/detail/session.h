@@ -42,6 +42,7 @@ namespace cdk {
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Value;
 class Session;
@@ -64,6 +65,7 @@ using Client_impl = common::Session_pool;
 using Shared_client_impl = std::shared_ptr<Client_impl>;
 using Session_impl = common::Session_impl;
 using Shared_session_impl = std::shared_ptr<common::Session_impl>;
+
 
 /*
   Base class for database objects. Can't be used alone.
@@ -260,6 +262,7 @@ struct SQL_statement
   }
 };
 
+
 struct Session_detail;
 
 struct PUBLIC_API Client_detail
@@ -273,7 +276,7 @@ struct PUBLIC_API Client_detail
 
 
   Client_detail(common::Settings_impl &settings);
-//  Client_detail(common::Settings_impl &&settings);
+  //Client_detail(common::Settings_impl &&settings);
 
   void close();
 
@@ -296,6 +299,7 @@ protected:
 
   friend Session;
 };
+
 
 struct PUBLIC_API Session_detail
 {
@@ -407,7 +411,11 @@ public:
   /// @endcond
 };
 
+
 }  // internal namespace
+
+MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
+
 
 #endif

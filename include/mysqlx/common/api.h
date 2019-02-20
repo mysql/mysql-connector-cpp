@@ -33,6 +33,94 @@
 
 
 /*
+  X DevAPI ABI version and revision
+  =================================
+
+  All public symbols inside mysqlx namespace should be defined inside
+  MYSQLX_ABI_BEGIN(X,Y) ... MYSQLX_ABI_END(X,Y) block, where X.Y is the
+  ABI version of the symbol. This puts the symbol inside mysqlx::abiX::rY
+  namespace.
+
+  The current ABI version is determined by MYSQLX_ABI_X_Y macros below. Using
+  inline namespace ensures that symbol reference mysqlx::foo resolves
+  to mysqlx::abiX::rY::foo, where X.Y is the current ABI version.
+
+  Declarations below ensure, that each ABI revision namespace includes all
+  symbols from previous revisions (via using namespace declaration).
+
+  If the same symbol is defined for several revisions of the ABI, the latest
+  one will shadow other definitions but earlier revisions will be also present
+  to be used by old code. This way backward ABI compatibility can be maintained.
+*/
+
+/*
+  When new ABI version or revision is added, the corresponding
+  MYSQLX_ABI_MAJOR/MINOR_X macro needs to be added below. The macros for the
+  latest ABI version and revision should expand to "inline", other MSQLX_ABI_*
+  macros should have empty expansion. For example,
+  after adding revision ABI 2.1 these macros should look as follows:
+
+    #define MYSQLX_ABI_MAJOR_2  inline  // current ABI version
+    #define MYSQLX_ABI_MINOR_0
+    #define MYSQLX_ABI_MINOR_1  inline  // current ABI revision
+
+  TODO: Auto-generate this based on information in version.cmake
+*/
+
+#define MYSQLX_ABI_MAJOR_2  inline     // current ABI version
+#define MYSQLX_ABI_MINOR_0  inline     // current ABI revision
+
+
+#define MYSQLX_ABI_BEGIN(X,Y) \
+  MYSQLX_ABI_MAJOR_ ## X namespace abi ## X { \
+  MYSQLX_ABI_MINOR_ ## Y namespace r ## Y {
+
+#define MYSQLX_ABI_END(X,Y)   }}
+
+
+#ifdef __cplusplus
+
+namespace mysqlx {
+
+
+MYSQLX_ABI_BEGIN(2,0)
+
+  namespace internal {
+  }
+
+  namespace common {
+  }
+
+MYSQLX_ABI_END(2,0)
+
+/*
+  When new revision 1 of the current ABI 2 is added, the following declarations
+  should be added. They import all revision 0 symbols into revision 1. Symbols
+  that have changed should be defined inside
+  MYSQLX_ABI_BEGIN(2,1) ... MYSQLX_ABI_END(2,1) and they will
+  shadow the corresponding revision 0 symbol.
+
+    MYSQLX_ABI_BEGIN(2,1)
+
+    using namespace r0;
+
+    namespace internal {
+      using namespace r0::internal;
+    }
+
+    namespace common {
+      using namespace r0::common;
+    }
+
+    MYSQLX_ABI_END(2,1)
+*/
+
+}
+
+#endif  //  __cplusplus
+
+
+/*
   Macros for declaring public API
   ===============================
 

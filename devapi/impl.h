@@ -56,7 +56,7 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
-
+MYSQLX_ABI_BEGIN(2,0)
 
 struct Value::Access
 {
@@ -272,7 +272,6 @@ struct Object_ref : public common::Object_ref
 };
 
 
-
 // --------------------------------------------------------------------
 
 
@@ -420,7 +419,7 @@ struct internal::Session_detail::Impl
   using common::Session_impl::Session_impl;
 };
 
-
-}
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
 
 #endif

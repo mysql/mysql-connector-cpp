@@ -47,7 +47,9 @@
 #undef min
 #undef max
 
+
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Value;
 class DbDoc;
@@ -394,7 +396,7 @@ public:
     try {
       size_t len;
       const byte *ptr = get_bytes(&len);
-      return{ ptr, len };
+      return { ptr, len };
     }
     CATCH_AND_WRAP
   }
@@ -513,7 +515,6 @@ public:
 
   ///@cond IGNORE
   friend mysqlx::string;
-  template <class Base> friend class Bind_parameters;
   ///@endcond IGNORE
 
   struct INTERNAL Access;
@@ -551,27 +552,27 @@ namespace internal {
 */
 
 class Expression
-: public mysqlx::Value
+  : public mysqlx::Value
 {
- Expression()
- {}
+  Expression()
+  {}
 
- template <typename V>
- Expression(V&& val)
- : Value(std::forward<V>(val))
- {
-   set_as_expr();
- }
+  template <typename V>
+  Expression(V&& val)
+    : Value(std::forward<V>(val))
+  {
+    set_as_expr();
+  }
 
- template <typename V>
- Expression(const V& val)
- : Value(val)
- {
-   set_as_expr();
- }
+  template <typename V>
+  Expression(const V& val)
+    : Value(val)
+  {
+    set_as_expr();
+  }
 
- friend Expression expr(std::string&& s);
- friend Expression expr(const std::string& s);
+  friend Expression expr(std::string&& s);
+  friend Expression expr(const std::string& s);
 };
 
 
@@ -595,13 +596,13 @@ class Expression
 */
 
 inline
-mysqlx::internal::Expression expr(std::string&& e)
+internal::Expression expr(std::string&& e)
 {
   return std::forward<std::string>(e);
 }
 
 inline
-mysqlx::internal::Expression expr(const std::string& e)
+internal::Expression expr(const std::string& e)
 {
   return e;
 }
@@ -1031,6 +1032,7 @@ size_t Value::elementCount() const
 }
 
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 

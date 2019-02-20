@@ -76,6 +76,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Session;
 class Collection;
@@ -231,7 +232,7 @@ class CollectionRemove;
 namespace internal {
 
 struct Collection_remove_cmd
-  : public Executable<Result,CollectionRemove>
+  : public Executable<Result, CollectionRemove>
 {};
 
 struct Collection_remove_base
@@ -298,13 +299,13 @@ class CollectionFind;
 namespace internal {
 
 struct Collection_find_cmd
- : public Executable<DocResult, CollectionFind>
+  : public Executable<DocResult, CollectionFind>
 {};
 
 struct Collection_find_base
- : public Group_by< Having< Sort< Limit< Offset< Bind_parameters<
-            Set_lock< Collection_find_cmd, common::Collection_find_if >
-          > > > > > >
+  : public Group_by< Having< Sort< Limit< Offset< Bind_parameters<
+      Set_lock< Collection_find_cmd, common::Collection_find_if >
+    > > > > > >
 {};
 
 }  // internal namespace
@@ -386,7 +387,7 @@ public:
     CATCH_AND_WRAP
   }
 
- protected:
+protected:
 
   using Impl = common::Collection_find_if;
 
@@ -577,9 +578,7 @@ protected:
 
 };
 
-
-
-
+MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
 
 #endif

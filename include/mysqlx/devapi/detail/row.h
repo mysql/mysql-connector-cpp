@@ -44,6 +44,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Columns;
 
@@ -98,7 +99,7 @@ protected:
     Args_prc::process_args(&data, args...);
   }
 
-  static void process_one(std::pair<Impl*,col_count_t>*, const Value &val);
+  static void process_one(std::pair<Impl*, col_count_t>*, const Value &val);
 
   friend Table_insert_detail;
   friend Row_result_detail<Columns>;
@@ -107,6 +108,7 @@ protected:
 
 
 }  // internal namespace
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

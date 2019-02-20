@@ -47,7 +47,9 @@ POP_SYS_WARNINGS
 
 const unsigned max_priority = 100;
 
+using namespace ::mysqlx::internal;
 using namespace ::mysqlx;
+using std::ostream;
 
 
 /*
@@ -76,8 +78,7 @@ void process_val(PRC *prc, common::Value &val)
 
 template<>
 void
-internal::Settings_detail<internal::Settings_traits>::do_set(
-    session_opt_list_t &&opts)
+Settings_detail<Settings_traits>::do_set(session_opt_list_t &&opts)
 {
   Setter set(*this);
 
@@ -98,7 +99,7 @@ internal::Settings_detail<internal::Settings_traits>::do_set(
   ======================
 */
 
-internal::Client_detail::Client_detail(common::Settings_impl &settings)
+Client_detail::Client_detail(common::Settings_impl &settings)
 {
   cdk::ds::Multi_source source;
   settings.get_data_source(source);
@@ -108,13 +109,13 @@ internal::Client_detail::Client_detail(common::Settings_impl &settings)
 
 
 common::Shared_session_pool&
-internal::Client_detail::get_session_pool()
+Client_detail::get_session_pool()
 {
   return m_impl;
 }
 
 
-void internal::Client_detail::close()
+void Client_detail::close()
 {
   auto p = get_session_pool();
   if (p)
@@ -127,7 +128,7 @@ void internal::Client_detail::close()
   ======================
 */
 
-internal::Session_detail::Session_detail(common::Settings_impl &settings)
+Session_detail::Session_detail(common::Settings_impl &settings)
 {
   try {
 
@@ -140,13 +141,13 @@ internal::Session_detail::Session_detail(common::Settings_impl &settings)
 }
 
 
-internal::Session_detail::Session_detail(common::Shared_session_pool &pool)
+Session_detail::Session_detail(common::Shared_session_pool &pool)
 {
   m_impl = std::make_shared<Impl>(pool);
 }
 
 
-cdk::Session& internal::Session_detail::get_cdk_session()
+cdk::Session& Session_detail::get_cdk_session()
 {
   if (!m_impl)
     throw Error("Session closed");
@@ -155,14 +156,14 @@ cdk::Session& internal::Session_detail::get_cdk_session()
 }
 
 
-void internal::Session_detail::prepare_for_cmd()
+void Session_detail::prepare_for_cmd()
 {
   assert(m_impl);
   m_impl->prepare_for_cmd();
 }
 
 
-void internal::Session_detail::close()
+void Session_detail::close()
 {
   get_cdk_session().rollback();
   m_impl->release();
@@ -177,34 +178,34 @@ void internal::Session_detail::close()
   Transactions.
 */
 
-void internal::Session_detail::start_transaction()
+void Session_detail::start_transaction()
 {
   common::Op_trx<common::Trx_op::BEGIN> cmd(m_impl);
   cmd.execute();
 }
 
 
-void internal::Session_detail::commit()
+void Session_detail::commit()
 {
   common::Op_trx<common::Trx_op::COMMIT> cmd(m_impl);
   cmd.execute();
 }
 
 
-void internal::Session_detail::rollback(const string &sp)
+void Session_detail::rollback(const string &sp)
 {
   common::Op_trx<common::Trx_op::ROLLBACK> cmd(m_impl, sp);
   cmd.execute();
 }
 
-string internal::Session_detail::savepoint_set(const string &sp)
+string Session_detail::savepoint_set(const string &sp)
 {
   common::Op_trx<common::Trx_op::SAVEPOINT_SET> cmd(m_impl, sp);
   cmd.execute();
   return cmd.get_name();
 }
 
-void internal::Session_detail::savepoint_remove(const string &sp)
+void Session_detail::savepoint_remove(const string &sp)
 {
   common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE> cmd(m_impl, sp);
   cmd.execute();
@@ -217,21 +218,21 @@ void internal::Session_detail::savepoint_remove(const string &sp)
 using common::Object_type;
 
 
-void internal::Session_detail::create_schema(const string &name, bool reuse)
+void Session_detail::create_schema(const string &name, bool reuse)
 {
   Schema_ref schema(name);
   common::create_object<Object_type::SCHEMA>(m_impl, schema, reuse);
 }
 
 
-void internal::Session_detail::drop_schema(const string &name)
+void Session_detail::drop_schema(const string &name)
 {
   Schema_ref schema(name);
   common::drop_object<Object_type::SCHEMA>(m_impl, schema);
 }
 
 
-string internal::Session_detail::get_default_schema_name()
+string Session_detail::get_default_schema_name()
 {
   if (m_impl->m_default_db.empty())
     throw Error("No default schema set for the session");
@@ -245,13 +246,13 @@ string internal::Session_detail::get_default_schema_name()
 */
 
 
-internal::Query_src::~Query_src()
+Query_src::~Query_src()
 {
   delete m_res;
 }
 
 
-internal::Session_detail::Name_src::Name_src(
+Session_detail::Name_src::Name_src(
   const Session &sess, const string &pattern
 )
   : m_sess(sess)
@@ -261,7 +262,7 @@ internal::Session_detail::Name_src::Name_src(
 }
 
 
-auto internal::Session_detail::Schema_src::iterator_get() -> Schema
+auto Session_detail::Schema_src::iterator_get() -> Schema
 {
   return { const_cast<Session&>(m_sess), Name_src::iterator_get() };
 }
@@ -275,14 +276,14 @@ auto internal::Session_detail::Schema_src::iterator_get() -> Schema
 */
 
 
-void internal::Schema_detail::create_collection(const string &name, bool reuse)
+void Schema_detail::create_collection(const string &name, bool reuse)
 {
   Object_ref coll(m_name, name);
   common::create_object<Object_type::COLLECTION>(m_sess, coll, reuse);
 }
 
 
-void internal::Schema_detail::drop_collection(const mysqlx::string& name)
+void Schema_detail::drop_collection(const mysqlx::string& name)
 {
   Object_ref coll(m_name, name);
   common::drop_object<Object_type::COLLECTION>(m_sess, coll);
@@ -290,7 +291,7 @@ void internal::Schema_detail::drop_collection(const mysqlx::string& name)
 
 
 
-internal::Schema_detail::Name_src::Name_src(
+Schema_detail::Name_src::Name_src(
   const Schema &sch,
   Obj_type type,
   const string &pattern
@@ -320,13 +321,13 @@ internal::Schema_detail::Name_src::Name_src(
 
 
 Collection
-internal::Schema_detail::Collection_src::iterator_get()
+Schema_detail::Collection_src::iterator_get()
 {
   return Collection(m_schema, Name_src::iterator_get());
 }
 
 Table
-internal::Schema_detail::Table_src::iterator_get()
+Schema_detail::Table_src::iterator_get()
 {
   auto *row = static_cast<const common::Row_data*>(m_row);
   assert(1 < row->size());
@@ -346,7 +347,7 @@ internal::Schema_detail::Table_src::iterator_get()
 */
 
 
-bool internal::Query_src::iterator_next()
+bool Query_src::iterator_next()
 {
   assert(m_res);
   m_row = m_res->get_row();
@@ -354,7 +355,7 @@ bool internal::Query_src::iterator_next()
 }
 
 
-string internal::Query_src::iterator_get()
+string Query_src::iterator_get()
 {
   assert(m_row);
   auto *row = static_cast<const common::Row_data*>(m_row);
@@ -447,9 +448,3 @@ void string::Impl::from_wide(string &s, const std::wstring &other)
 
 // ---------------------------------------------------------------------
 
-
-ostream& operator<<(ostream &out, const Error&)
-{
-  out <<"MYSQLX Error!";
-  return out;
-}

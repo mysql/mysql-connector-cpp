@@ -42,6 +42,7 @@
 #include <condition_variable>
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 namespace common {
 
 class Result_impl;
@@ -59,8 +60,8 @@ using Session_pool_shared = std::shared_ptr<Session_pool>;
 
 
 class Pooled_session
-    : public cdk::foundation::api::Async_op<void>
-    , public std::shared_ptr<cdk::Session>
+  : public cdk::foundation::api::Async_op<void>
+  , public std::shared_ptr<cdk::Session>
 {
   Session_pool_shared m_sess_pool;
   time_point m_deadline;
@@ -142,7 +143,7 @@ protected:
   duration m_timeout = duration::max();
   duration m_time_to_live = duration::max();
 
-  std::map<cdk::shared_ptr<cdk::Session>,time_point> m_pool;
+  std::map<cdk::shared_ptr<cdk::Session>, time_point> m_pool;
   std::recursive_mutex m_pool_mutex;
   std::mutex m_reelase_mutex;
   std::condition_variable m_release_cond;
@@ -255,7 +256,7 @@ public:
       possible.
     */
     if (!m_sess->has_prepared_statements() ||
-        m_stmt_id.size()>= m_max_pstmt)
+      m_stmt_id.size() >= m_max_pstmt)
       return  0;
 
     uint32_t val = 1;
@@ -275,7 +276,7 @@ public:
     }
     else
     {
-      val = (*m_stmt_id.rbegin())+1;
+      val = (*m_stmt_id.rbegin()) + 1;
       m_stmt_id.insert(val);
     }
 
@@ -327,6 +328,7 @@ public:
 
 
 }  // internal namespace
+MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
 
 

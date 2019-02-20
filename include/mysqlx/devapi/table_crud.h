@@ -66,6 +66,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class Table;
 
@@ -229,8 +230,8 @@ namespace internal {
 
   struct Table_select_base
     : public Group_by < Having < Order_by < Limit < Offset< Bind_parameters<
-              Set_lock< Table_select_cmd, common::Table_select_if >
-             > > > > > >
+        Set_lock< Table_select_cmd, common::Table_select_if >
+      > > > > > >
   {};
 
 }
@@ -260,7 +261,7 @@ public:
 
   TableSelect(Table &table)
   {
-    try{
+    try {
       reset(internal::Crud_factory::mk_select(table));
     }
     CATCH_AND_WRAP
@@ -345,13 +346,13 @@ namespace internal {
 */
 
 class TableUpdate
-: public internal::Table_update_base
+  : public internal::Table_update_base
 {
   using Operation = internal::Table_update_base;
 
   TableUpdate(Table& table)
   {
-    try{
+    try {
       reset(internal::Crud_factory::mk_update(table));
     }
     CATCH_AND_WRAP
@@ -505,6 +506,7 @@ protected:
 };
 
 
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

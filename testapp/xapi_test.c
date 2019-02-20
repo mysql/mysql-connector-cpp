@@ -68,11 +68,7 @@ int main(int argc, const char* argv[])
 
   const char   *url = (argc > 1 ? argv[1] : "mysqlx://root@127.0.0.1");
 
-
-
-  char conn_error[MYSQLX_MAX_ERROR_LEN];
-  int conn_err_code;
-
+  mysqlx_error_t *error;
   int64_t v_sint = -17;
   uint64_t v_uint = 101;
   float v_float = 3.31f;
@@ -88,10 +84,12 @@ int main(int argc, const char* argv[])
     Connect and create session.
   */
 
-  sess = mysqlx_get_session_from_url(url, conn_error, &conn_err_code);
+  sess = mysqlx_get_session_from_url(url, &error);
   if (!sess)
   {
-    printf("\nError! %s. Error Code: %d", conn_error, conn_err_code);
+    printf("\nError! %s. Error Code: %d", mysqlx_error_message(error),
+           mysqlx_error_num(error));
+    mysqlx_free(error);
     return -1;
   }
 
@@ -117,7 +115,7 @@ int main(int argc, const char* argv[])
 
     major_version = atoi(buffer);
 
-    mysqlx_result_free(res);
+    mysqlx_free(res);
 
     if (major_version < 8)
     {

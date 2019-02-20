@@ -71,40 +71,21 @@ using common::throw_error;
 #define SAFE_EXCEPTION_SILENT_END(ERR) } catch(...) { return ERR; }
 
 
-#define MYSQLX_HANDLE_ERROR(OBJ,CODE,MSG) \
-    if (out_error) \
-    { \
-      size_t cpy_len = strlen(MSG); \
-      if (cpy_len >= MYSQLX_MAX_ERROR_LEN - 1 ) \
-        cpy_len = MYSQLX_MAX_ERROR_LEN - 1; \
-       memcpy(out_error, MSG, cpy_len); \
-       out_error[cpy_len] = '\0'; \
-    } \
-    if (err_code) \
-      *err_code = CODE; \
+#define HANDLE_SESSION_ERROR(OBJ,CODE,MSG) \
+    if (error) \
+      *error = new mysqlx_dyn_error_struct(MSG, CODE); \
     if (OBJ) { delete OBJ; OBJ = NULL; } \
 
 
-#define HANDLE_SESSION_EXCEPTIONS \
+#define HANDLE_EXCEPTIONS(OBJ) \
   catch(const cdk::Error &e) \
-  { MYSQLX_HANDLE_ERROR(sess, e.code().value(), e.what()); } \
+  { HANDLE_SESSION_ERROR(OBJ, e.code().value(), e.what()); } \
   catch(const Mysqlx_exception &e) \
-  { MYSQLX_HANDLE_ERROR(sess, e.code(), e.message().c_str()); } \
+  { HANDLE_SESSION_ERROR(OBJ, e.code(), e.message().c_str()); } \
   catch(const std::exception &e) \
-  { MYSQLX_HANDLE_ERROR(sess, 0, e.what()); } \
+  { HANDLE_SESSION_ERROR(OBJ, 0, e.what()); } \
   catch(...) \
-  { MYSQLX_HANDLE_ERROR(sess, 0, "Unknown error"); }
-
-
-#define HANDLE_CLIENT_EXCEPTIONS \
-  catch(const cdk::Error &e) \
-  { MYSQLX_HANDLE_ERROR(cli, e.code().value(), e.what()); } \
-  catch(const Mysqlx_exception &e) \
-  { MYSQLX_HANDLE_ERROR(cli, e.code(), e.message().c_str()); } \
-  catch(const std::exception &e) \
-  { MYSQLX_HANDLE_ERROR(cli, 0, e.what()); } \
-  catch(...) \
-  { MYSQLX_HANDLE_ERROR(cli, 0, "Unknown error"); }
+  { HANDLE_SESSION_ERROR(OBJ, 0, "Unknown error"); }
 
 
 #define PARAM_NULL_EMPTY_CHECK(PARAM, HANDLE, ERR_MSG, ERR) if (!PARAM || !(*PARAM)) \
@@ -128,20 +109,20 @@ using common::throw_error;
 
 static mysqlx_client_struct *
 _get_client(const char *conn_str, const char *client_opt,
-            char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+            mysqlx_error_t **error)
 {
   mysqlx_client_struct *cli = NULL;
   try
   {
     cli = new mysqlx_client_struct(conn_str, client_opt);
   }
-  HANDLE_CLIENT_EXCEPTIONS
+  HANDLE_EXCEPTIONS(cli)
   return cli;
 }
 
 static mysqlx_client_struct *
 _get_client(mysqlx_session_options_t *opt,
-            char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+            mysqlx_error_t **error)
 {
   mysqlx_client_struct *cli = NULL;
   try
@@ -152,14 +133,14 @@ _get_client(mysqlx_session_options_t *opt,
     }
     cli = new mysqlx_client_struct(opt);
   }
-  HANDLE_CLIENT_EXCEPTIONS
+  HANDLE_EXCEPTIONS(cli)
   return cli;
 }
 
 static mysqlx_session_struct *
 _get_session(const char *host, unsigned short port, const char *user,
              const char *password, const char *database, const char *conn_str,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+             mysqlx_error_t **error)
 {
   mysqlx_session_struct *sess = NULL;
   try
@@ -187,14 +168,14 @@ _get_session(const char *host, unsigned short port, const char *user,
         throw *err;
     }
   }
-  HANDLE_SESSION_EXCEPTIONS
+  HANDLE_EXCEPTIONS(sess)
   return sess;
 }
 
 
 static mysqlx_session_struct *
 _get_session_opt(mysqlx_session_options_t *opt,
-             char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+                 mysqlx_error_t **error)
 {
   mysqlx_session_struct *sess = NULL;
   try
@@ -214,7 +195,7 @@ _get_session_opt(mysqlx_session_options_t *opt,
         throw *err;
     }
   }
-  HANDLE_SESSION_EXCEPTIONS
+  HANDLE_EXCEPTIONS(sess)
   return sess;
 }
 
@@ -224,10 +205,10 @@ _get_session_opt(mysqlx_session_options_t *opt,
 
 mysqlx_client_struct * STDCALL
 mysqlx_get_client_from_url(const char *conn_string,
-                            const char *client_opts,
-                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+                           const char *client_opts,
+                           mysqlx_error_t **error)
 {
-  return _get_client(conn_string, client_opts, out_error, err_code);
+  return _get_client(conn_string, client_opts, error);
 }
 
 /*
@@ -236,10 +217,9 @@ mysqlx_get_client_from_url(const char *conn_string,
 
 mysqlx_client_struct * STDCALL
 mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
-                               char out_error[MYSQLX_MAX_ERROR_LEN],
-                               int *err_code)
+                               mysqlx_error_t **error)
 {
-  return _get_client(opt, out_error, err_code);
+  return _get_client(opt, error);
 }
 
 /*
@@ -248,8 +228,7 @@ mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
 
 mysqlx_session_t * STDCALL
 mysqlx_get_session_from_client(mysqlx_client_t *cli,
-                               char out_error[MYSQLX_MAX_ERROR_LEN],
-                               int *err_code)
+                               mysqlx_error_t **error)
 {
   mysqlx_session_t *sess = nullptr;
   try
@@ -259,9 +238,10 @@ mysqlx_get_session_from_client(mysqlx_client_t *cli,
       sess = new mysqlx_session_t(cli);
     }
   }
-  HANDLE_SESSION_EXCEPTIONS
+  HANDLE_EXCEPTIONS(sess)
   return sess;
 }
+
 
 /*
    Close client pool
@@ -284,11 +264,11 @@ void mysqlx_client_close(mysqlx_client_t *cli)
 
 mysqlx_session_struct * STDCALL
 mysqlx_get_session(const char *host, int port, const char *user,
-               const char *password, const char *database,
-               char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+                   const char *password, const char *database,
+                   mysqlx_error_t **error)
 {
   return _get_session(host, port, user, password, database,
-                      NULL, out_error, err_code);
+                      NULL, error);
 }
 
 
@@ -298,10 +278,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
 
 mysqlx_session_struct * STDCALL
 mysqlx_get_session_from_url(const char *conn_string,
-                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+                            mysqlx_error_t **error)
 {
   return _get_session(NULL, 0, NULL, NULL, NULL,
-                      conn_string, out_error, err_code);
+                      conn_string, error);
 }
 
 
@@ -311,9 +291,9 @@ mysqlx_get_session_from_url(const char *conn_string,
 
 mysqlx_session_struct * STDCALL
 mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
-                   char out_error[MYSQLX_MAX_ERROR_LEN], int *err_code)
+                                mysqlx_error_t **error)
 {
-  return _get_session_opt(opt, out_error, err_code);
+  return _get_session_opt(opt, error);
 }
 
 
@@ -1197,14 +1177,34 @@ uint64_t STDCALL mysqlx_get_affected_count(mysqlx_result_struct *res)
 
 
 /*
-  Free the statement explicitly, otherwise it will be done automatically
-  when session is closed
+  Free the objects such as statement, session options,
+  error and result.
 */
 
-void STDCALL mysqlx_free(mysqlx_stmt_struct *stmt)
+void STDCALL mysqlx_free(void *objs)
 {
-  if (stmt)
-    stmt->get_session().rm_stmt(stmt);
+  if (objs)
+  {
+    Mysqlx_diag_base *obj = (Mysqlx_diag_base*)objs;
+    if (typeid(*obj) == typeid(mysqlx_stmt_struct))
+    {
+      mysqlx_stmt_struct *stmt = (mysqlx_stmt_struct*)obj;
+      stmt->get_session().rm_stmt(stmt);
+    }
+    else if (typeid(*obj) == typeid(mysqlx_dyn_error_struct))
+    {
+      mysqlx_dyn_error_struct *err = (mysqlx_dyn_error_struct*)obj;
+      delete err;
+    }
+    else if (typeid(*obj) == typeid(mysqlx_session_options_struct))
+    {
+      mysqlx_free_options((mysqlx_session_options_struct*)obj);
+    }
+    else if (typeid(*obj) == typeid(mysqlx_result_struct))
+    {
+      mysqlx_result_free((mysqlx_result_struct*)obj);
+    }
+  }
 }
 
 
@@ -2132,7 +2132,6 @@ mysqlx_collection_drop_index(
   return RESULT_OK;
   SAFE_EXCEPTION_END(coll, RESULT_ERROR)
 }
-
 
 #ifdef _WIN32
 BOOL WINAPI DllMain(

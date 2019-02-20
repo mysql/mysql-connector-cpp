@@ -47,6 +47,7 @@
 
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 class RowResult;
 class Column;
@@ -459,7 +460,9 @@ protected:
   friend iterator;
 };
 
+
 }  // internal namespace
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

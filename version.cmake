@@ -44,8 +44,11 @@ set(CONCPP_VERSION
 #
 #  ABI versions
 #
+# Note: When updating ABI version, a corresponding MYSQLX_ABI_X_Y macro
+# needs to be added in include/mysqlx/common/api.h (see comments there).
+#
 
-set(ABI_VERSION_MAJOR 1 CACHE INTERNAL "version info")
+set(ABI_VERSION_MAJOR 2 CACHE INTERNAL "version info")
 set(ABI_VERSION_MINOR 0 CACHE INTERNAL "version info")
 set(
   ABI_VERSION "${ABI_VERSION_MAJOR}.${ABI_VERSION_MINOR}"

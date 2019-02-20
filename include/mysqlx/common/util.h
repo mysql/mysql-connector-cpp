@@ -31,6 +31,8 @@
 #ifndef MYSQLX_COMMON_UTIL_H
 #define MYSQLX_COMMON_UTIL_H
 
+#include "api.h"
+
 /*
   Macros used to disable warnings for fragments of code.
 */
@@ -272,7 +274,10 @@ POP_SYS_WARNINGS
 #define END_LIST
 
 
+#ifdef __cplusplus
+
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 
 namespace common {
 
@@ -283,8 +288,6 @@ namespace common {
   TODO: Maybe more templates are needed for the case where T is a float/double
   type and U is an integer type or vice versa.
 */
-
-#ifdef __cplusplus
 
 template <
   typename T, typename U,
@@ -321,9 +324,8 @@ bool check_num_limits(U val)
      || (val < std::numeric_limits<T>::lowest()));
 }
 
-#define ASSERT_NUM_LIMITS(T,V) assert(mysqlx::common::check_num_limits<T>(V))
+#define ASSERT_NUM_LIMITS(T,V) assert(::mysqlx::common::check_num_limits<T>(V))
 
-#endif
 
 
 inline
@@ -404,8 +406,9 @@ void remove_from(CONT &cont, PRED pred)
 
 
 }  // common
-
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
+#endif  //  __cplusplus
 
 #endif

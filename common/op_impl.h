@@ -48,6 +48,7 @@
 */
 
 namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
 namespace common {
 
 enum class Object_type
@@ -2526,6 +2527,7 @@ class Op_table_insert
   using string = std::string;
   using Row_list = std::list < Row_impl<VAL> >;
   using Col_list = std::list < string >;
+  using Object_ref = mysqlx::common::Object_ref;
 
   Object_ref m_table;
 
@@ -2869,6 +2871,7 @@ protected:
 
 
 }  // internal
+MYSQLX_ABI_END(2,0)
 }  // mysqlx
 
 #endif

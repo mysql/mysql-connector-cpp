@@ -20,12 +20,5 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-usr/lib/*/libmysqlcppconn8.so.1*
-
-# Build info
-/usr/INFO_SRC /usr/share/doc/libmysqlcppconn8-1
-/usr/INFO_BIN /usr/share/doc/libmysqlcppconn8-1
-
-# Legal
-usr/LICENSE.txt /usr/share/doc/libmysqlcppconn8-1
-usr/README.txt /usr/share/doc/libmysqlcppconn8-1
+# Additional license file is needed so overriding this warning
+libmysqlcppconn8-2: extra-license-file

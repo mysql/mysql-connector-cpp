@@ -31,12 +31,13 @@
 #include <mysqlx/xapi.h>
 #include "mysqlx_cc_internal.h"
 
+using namespace mysqlx::common;
 
 /*
   Convert CDK type and encoding information into XAPI type constant.
 */
 
-uint32_t get_type(const common::Format_info &fi)
+uint32_t get_type(const Format_info &fi)
 {
   switch (fi.m_type)
   {
