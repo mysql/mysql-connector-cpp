@@ -357,7 +357,7 @@ if(MYSQL_EXTERNAL_DEPENDENCIES)
   foreach(lib ${MYSQL_EXTERNAL_DEPENDENCIES})
 
     #message("-- looking for: ${MYSQL_LIB_DIR}/*${lib}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    file(GLOB _bundled "${MYSQL_LIB_DIR}/*${lib}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    file(GLOB _bundled "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
     if(_bundled)
 
