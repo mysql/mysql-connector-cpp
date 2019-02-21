@@ -991,7 +991,7 @@ TEST_F(Sess, failover)
     std::stringstream uri;
 
     uri << "[(address=localhost:" << get_port() <<",priority=0)";
-    uri << ",127.0.0.1:65535" << get_port();
+    uri << ",not_good:65535" << get_port();
     uri << "]";
     EXPECT_THROW(
       mysqlx::Session s(uri.str())
@@ -1010,7 +1010,7 @@ TEST_F(Sess, failover)
 
     uri << "@["
            "localhost6,"
-           "127.0.1.250:65535,"
+           "wont_work:65535,"
            "[::1]:65535,";
     uri << "127.0.0.1";
     if (get_port() != 0)
@@ -1056,7 +1056,7 @@ TEST_F(Sess, failover)
                       SessionOption::PWD, get_password() ? get_password() : nullptr,
                       SessionOption::HOST, "server.example.com",
                       SessionOption::PRIORITY, 1,
-                      SessionOption::HOST, "192.0.2.11",
+                      SessionOption::HOST, "rubish",
                       SessionOption::PORT, 65535,
                       SessionOption::PRIORITY, 99,
                       SessionOption::HOST, "[::1]",
@@ -1098,10 +1098,10 @@ TEST_F(Sess, failover)
 
     settings.set(SessionOption::HOST, "server.example.com",
                  SessionOption::PRIORITY, 1,
-                 SessionOption::HOST, "192.0.2.11",
+                 SessionOption::HOST, "away",
                  SessionOption::PORT, 65535,
                  SessionOption::PRIORITY, 98,
-                 SessionOption::HOST, "[2001:db8:85a3:8d3:1319:8a2e:370:7348]",
+                 SessionOption::HOST, "to_far_away",
                  SessionOption::PRIORITY, 2,
                  SessionOption::HOST, "::1",
                  SessionOption::PORT, get_port(),
@@ -1135,7 +1135,7 @@ TEST_F(Sess, failover)
                                get_password() :
                                nullptr);
 
-    settings.set(SessionOption::HOST, "192.168.1.254",
+    settings.set(SessionOption::HOST, "looking_for_it",
                  SessionOption::DB, "test"
                  );
 
@@ -1155,7 +1155,7 @@ TEST_F(Sess, failover)
     // Error because first host was not explicit.
 
     EXPECT_THROW(
-      settings.set(SessionOption::HOST, "192.0.2.11",
+      settings.set(SessionOption::HOST, "not_found",
                    SessionOption::PORT, 33060),
       Error);
   }
