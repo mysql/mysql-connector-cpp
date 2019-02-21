@@ -270,12 +270,21 @@ install(TARGETS connector-jdbc
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT JDBCDll
 )
 
+
 if(MSVC AND NOT BUILD_STATIC)
+
   install(FILES $<TARGET_PDB_FILE:connector-jdbc>
-    CONFIGURATIONS Debug RelWithDebInfo
+    CONFIGURATIONS RelWithDebInfo
     DESTINATION "${INSTALL_LIB_DIR}"
     COMPONENT Debuginfo
   )
+
+  install(FILES $<TARGET_PDB_FILE:connector-jdbc>
+    CONFIGURATIONS Debug
+    DESTINATION "${INSTALL_LIB_DIR}/debug"
+    COMPONENT Debuginfo
+  )
+
 endif()
 
 # Install some MySQL specific headers
