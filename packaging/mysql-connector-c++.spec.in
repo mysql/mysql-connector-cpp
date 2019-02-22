@@ -31,7 +31,6 @@
 #
 #  mysql_dir     Path to the MySQL installation, where to find the client lib
 #  commercial    If set, is a commercial build
-#  cmake_path    Path to the "cmake" executable
 
 %{?mysql_dir:    %global mysql_opt -DMYSQL_DIR=%{mysql_dir}}
 %{!?commercial:  %global license_type GPLv2}
@@ -57,12 +56,10 @@ License:        %{license_type}
 URL:            https://dev.mysql.com/doc/connector-cpp/en/
 Source0:        https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++%{?product_suffix}-%{version}-src.tar.gz
 #BuildRequires:  boost-devel
-%if 0%{!?cmake_path:1}
-%if 0%{?fedora} || 0%{?rhel}
+%if 0%{?rhel}
 BuildRequires:  cmake3
 %else
 BuildRequires:  cmake
-%endif
 %endif
 %if 0%{?fedora} || 0%{?suse_version}
 BuildRequires:  gcc
@@ -137,14 +134,10 @@ test suite for MySQL Connector/C++
 %global __cmake_explicit_opts -DCMAKE_INSTALL_PREFIX="%_prefix" -DCMAKE_C_FLAGS:STRING="%optflags" -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt}
 
-%if 0%{?cmake_path:1}
-%global __cmake_cmd %{cmake_path} %{__cmake_common_opts} %{__cmake_explicit_opts} ..
-%else
-%if 0%{?fedora} || 0%{?rhel}
-%global __cmake_cmd %cmake3 %{__cmake_common_opts} ..
+%if 0%{?rhel}
+%global __cmake_cmd cmake3 %{__cmake_common_opts} %{__cmake_explicit_opts} ..
 %else
 %global __cmake_cmd cmake %{__cmake_common_opts} %{__cmake_explicit_opts} ..
-%endif
 %endif
 
 mkdir build-dynamic && pushd build-dynamic
@@ -230,6 +223,10 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %endif
 
 %changelog
+* Fri Feb 15 2019 Bjorn Munch <bjorm.munch@oracle.com> - 8.0.16-1
+- CMake 3 should not be used on Fedora, only on Oracle Linux or Red Hat
+- Removed use of cmake_path as it is no longer needed
+
 * Thu Feb 14 2019 Rafal Somla <rafal.somla@oracle.com>
 - Use ABI version number taken from version.cmake in %files patterns
 
