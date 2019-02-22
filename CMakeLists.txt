@@ -236,9 +236,11 @@ file(WRITE "${INFO}" "Connector/C++ build information.\n\n")
 set(INFO_PREFIX "jdbc-")
 
 merge_libraries(connector-jdbc jdbc)
+target_link_libraries(connector-jdbc PUBLIC Boost::boost)
 
 if(MAINTAINER_MODE)
   merge_libraries(connector-jdbc-static STATIC jdbc)
+  target_link_libraries(connector-jdbc-static PUBLIC Boost::boost)
 endif()
 
 
@@ -304,6 +306,13 @@ SET(MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS
 INSTALL(FILES ${MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS}
   DESTINATION "${INSTALL_INCLUDE_DIR}"
   COMPONENT JDBCDev
+)
+
+# Note: Copy to build location so that test code can use headers without
+# installing them first.
+
+file(COPY ${MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS}
+  DESTINATION "${CMAKE_BINARY_DIR}/include/jdbc"
 )
 
 if(TARGET connector-jdbc-static)

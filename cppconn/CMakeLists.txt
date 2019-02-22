@@ -65,7 +65,7 @@ CONFIGURE_FILE(version_info.h.cmake version_info.h @ONLY)
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
     build_config.h
-    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+    "${CMAKE_CURRENT_BINARY_DIR}/config.h"
     connection.h
     datatype.h
     driver.h
@@ -78,11 +78,18 @@ SET(MYSQLCPPCONN_INSTALL_HEADERS
     statement.h
     sqlstring.h
     warning.h
-    ${CMAKE_CURRENT_BINARY_DIR}/version_info.h
+    "${CMAKE_CURRENT_BINARY_DIR}/version_info.h"
     variant.h)
 
 INSTALL(
   FILES ${MYSQLCPPCONN_INSTALL_HEADERS}
-  DESTINATION ${INSTALL_INCLUDE_DIR}/cppconn
+  DESTINATION "${INSTALL_INCLUDE_DIR}/cppconn"
   COMPONENT JDBCDev
+)
+
+# Note: Copy to build location so that test code can use headers without
+# installing them first.
+
+file(COPY ${MYSQLCPPCONN_INSTALL_HEADERS}
+  DESTINATION "${CMAKE_BINARY_DIR}/include/jdbc/cppconn"
 )
