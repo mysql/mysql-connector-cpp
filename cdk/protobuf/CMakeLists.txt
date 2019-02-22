@@ -222,6 +222,7 @@ SET(LIBPROTOBUF_LITE_SOURCES
   ${PROTO_SRC_DIR}/google/protobuf/stubs/common.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/hash.h
   ${PROTO_SRC_DIR}/google/protobuf/stubs/int128.cc
+  ${PROTO_SRC_DIR}/google/protobuf/stubs/io_win32.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/map_util.h
   ${PROTO_SRC_DIR}/google/protobuf/stubs/status.cc
   ${PROTO_SRC_DIR}/google/protobuf/stubs/stringpiece.cc
