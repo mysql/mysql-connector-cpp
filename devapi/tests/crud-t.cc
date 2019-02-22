@@ -2623,14 +2623,32 @@ TEST_F(Crud, PS)
     }
   };
 
+  //-1 means not set
   auto execute_find = [&finds](int limit, int offset, int expected)
   {
     for (auto &find : finds)
     {
-      if (limit != 0)
+      if (limit != -1)
         find.limit(limit);
-      if(offset != 0)
+      if(offset != -1)
         find.offset(offset);
+
+
+      EXPECT_EQ(expected,
+                find
+                .bind("name", "%")
+                .bind("age", 1000)
+                .execute().count());
+    }
+
+  };
+
+  auto execute_find_sort = [&finds](bool set_sort, int expected)
+  {
+    for (auto &find : finds)
+    {
+      if (set_sort)
+        find.sort("name DESC");
 
 
       EXPECT_EQ(expected,
@@ -2649,7 +2667,7 @@ TEST_F(Crud, PS)
     auto start_time = std::chrono::system_clock::now();
 
     //direct_execute
-    execute_find(0, 0, 6);
+    execute_find(-1, -1, 6);
 
     std::cout << "Direct Execute: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2659,7 +2677,7 @@ TEST_F(Crud, PS)
 
     //prepare+execute
     //Even if limit/offset changes, it will not fallback to the direct execute
-    execute_find(6,0,6);
+    execute_find(6,-1,6);
 
     std::cout << "Prepare+Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2668,7 +2686,7 @@ TEST_F(Crud, PS)
     start_time = std::chrono::system_clock::now();
 
     //execute prepared
-    execute_find(6, 0, 6);
+     execute_find(6, -1, 6);
 
     std::cout << "Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2681,13 +2699,13 @@ TEST_F(Crud, PS)
     finds.clear();
     create_find();
     //Execute
-    execute_find(0, 0, 6);
+    execute_find(-1, -1, 6);
     //Prepare+Execute
-    execute_find(0, 0, 6);
+    execute_find(-1, -1, 6);
     //ExecutePrepared
-    execute_find(0, 0, 6);
+    execute_find(-1, -1, 6);
     //Prepare+Execute
-    execute_find(0, 5, 1);
+    execute_find(-1, 5, 1);
     //ExecutePrepared
     execute_find(1, 0, 1);
     //ExecutePrepared
@@ -2695,9 +2713,52 @@ TEST_F(Crud, PS)
     //ExecutePrepared
     execute_find(1, 1, 1);
 
+    //SET SORT
+    //Execute
+    execute_find_sort(true, 1);
+    //Prepare+Execute
+    execute_find_sort(false, 1);
+    //ExecutePrepared
+    execute_find_sort(false, 1);
+
     //clean upp the finds for next round
     finds.clear();
     create_find();
   }
 
+  //Modify prepare
+  {
+    auto modify = coll.modify("name like :name").set("age","age+1");
+    modify.bind("name","foo");
+    //Execute
+    modify.execute();
+    //Prepare+Execute
+    modify.execute();
+    //ExecutePrepared
+    modify.execute();
+    //Execute
+    modify.limit(1).execute();
+    //Prepare+Execute
+    modify.execute();
+    //ExecutePrepared
+    modify.execute();
   }
+
+  //Remove prepare
+  {
+    auto modify = coll.remove("age > 10");
+    //Execute
+    modify.execute();
+    //Prepare+Execute
+    modify.execute();
+    //ExecutePrepared
+    modify.execute();
+    //Execute
+    modify.limit(1).execute();
+    //Prepare+Execute
+    modify.execute();
+    //ExecutePrepared
+    modify.execute();
+  }
+
+}
