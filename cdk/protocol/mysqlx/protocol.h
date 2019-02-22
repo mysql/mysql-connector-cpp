@@ -837,6 +837,8 @@ struct Prepare_traits<msg_type::cli_CrudFind>
 {
   typedef Mysqlx::Crud::Find msg_type;
 
+  static const bool has_offset = true;
+
   static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
   {
     auto &one = *prepare.mutable_stmt();
@@ -855,6 +857,8 @@ template<>
 struct Prepare_traits<msg_type::cli_CrudInsert>
 {
   typedef Mysqlx::Crud::Insert msg_type;
+
+  static const bool has_offset = true;
 
   static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
   {
@@ -876,6 +880,8 @@ struct Prepare_traits<msg_type::cli_CrudUpdate>
 {
   typedef Mysqlx::Crud::Update msg_type;
 
+  static const bool has_offset = false;
+
   static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
   {
     auto &one = *prepare.mutable_stmt();
@@ -895,6 +901,8 @@ template<>
 struct Prepare_traits<msg_type::cli_CrudDelete>
 {
   typedef Mysqlx::Crud::Delete msg_type;
+
+  static const bool has_offset = false;
 
   static void set_one(Mysqlx::Prepare::Prepare &prepare, msg_type &msg)
   {

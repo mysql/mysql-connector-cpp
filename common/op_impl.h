@@ -790,11 +790,14 @@ protected:
 
   void add_sort(const string &sort) override
   {
+    Base::set_prepare_state(Base::PS_EXECUTE);
     m_order.emplace_back(sort);
   }
 
   void clear_sort() override
   {
+    if (get_order_by())
+      Base::set_prepare_state(Base::PS_EXECUTE);
     m_order.clear();
   }
 
@@ -885,6 +888,8 @@ public:
 
   void clear_having() override
   {
+    if (get_having())
+      Base::set_prepare_state(Base::PS_EXECUTE);
     m_having.clear();
   }
 
@@ -930,11 +935,14 @@ public:
 
   void add_group_by(const string &group_by) override
   {
+    Base::set_prepare_state(Base::PS_EXECUTE);
     m_group_by.push_back(group_by);
   }
 
   void clear_group_by() override
   {
+    if (get_group_by())
+      Base::set_prepare_state(Base::PS_EXECUTE);
     m_group_by.clear();
   }
 
@@ -1011,8 +1019,9 @@ public:
 
   void clear_proj() override
   {
+    if (get_tbl_proj())
+      Base::set_prepare_state(Base::PS_EXECUTE);
     m_projections.clear();
-    Base::set_prepare_state(Base::PS_EXECUTE);
   }
 
   cdk::Projection* get_tbl_proj()

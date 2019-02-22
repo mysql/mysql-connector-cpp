@@ -100,10 +100,7 @@ void set_arg_scalar(Mysqlx::Datatypes::Any &msg, row_count_t val)
   set_arg_scalar(*msg.mutable_scalar(), val);
 }
 
-
-
-
-template <class MSG,
+template <bool enable_offset,class MSG,
           class MSG_Params>
 void set_limit_(const api::Limit &lim,
                 MSG &msg,
@@ -116,9 +113,15 @@ void set_limit_(const api::Limit &lim,
   row_count_msg->set_position(0);
   set_arg_scalar(*msg_args.add_args(), lim.get_row_count());
 
-  auto offset_msg = limit->mutable_offset();
-  offset_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
-  offset_msg->set_position(1);
+  if (enable_offset)
+  {
+    auto offset_msg = limit->mutable_offset();
+    offset_msg->set_type(Mysqlx::Expr::Expr::PLACEHOLDER);
+    offset_msg->set_position(1);
+  }
+  //set_arg_scalar is out of enable_offset because the offset ARG is always sent
+  //on the PrepareExecute, becaus ethere we don't know which type of message we
+  //are executing
   set_arg_scalar(*msg_args.add_args(),
                  lim.get_offset() ? *lim.get_offset() : 0);
 
@@ -137,7 +140,7 @@ void set_limit_(const api::Limit &lim,
     proto_lim->set_offset(*lim_offset);
 }
 
-template<class MSG,
+template<bool enable_offset,class MSG,
          class MSG_Params>
 void set_limit_(const api::Limit &limit,
                 MSG &msg,
@@ -146,7 +149,7 @@ void set_limit_(const api::Limit &limit,
 {
   conv.set_offset(2);
 
-  set_limit_(limit, msg, msg_args);
+  set_limit_<enable_offset>(limit, msg, msg_args);
 }
 
 
@@ -423,7 +426,7 @@ void Msg_builder<T>::set_limit(const api::Limit *limit)
   if (limit)
   {
     if (m_stmt_id != 0)
-      set_limit_(*limit, m_msg, m_conv, m_prepare_execute);
+      set_limit_<Prepare_traits<T>::has_offset>(*limit, m_msg, m_conv, m_prepare_execute);
     else
       set_limit_(*limit, m_msg);
   }
