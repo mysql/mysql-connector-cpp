@@ -26,17 +26,11 @@ and reads the result from the server. The source file can be found in
 testapp/jdbc_test.cc in the source distribution of Connector/C++ 8.0.
 See @ref usage for instructions on how to build the sample code.
 
-Each program which uses the legacy C++ API has to include the following
-headers:
+Each program which uses the legacy C++ API has to include this header:
 
 @dontinclude jdbc_test.cc
-@skip #include <jdbc/mysql_connection.h>
-@until #include <jdbc/mysql_driver.h>
-
-These headers are needed for using the `ResultSet` and `Statement` classes:
-
-@skip #include <jdbc/cppconn/resultset.h>
-@until #include <jdbc/cppconn/statement.h>
+@skip #include <mysql/jdbc.h>
+@until #include <mysql/jdbc.h>
 
 Define the credentials for connecting, process command line parameters and
 other housekeeping:
