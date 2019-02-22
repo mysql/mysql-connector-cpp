@@ -48,10 +48,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <jdbc/mysql_connection.h>
-#include <jdbc/mysql_driver.h>
-#include <jdbc/cppconn/resultset.h>
-#include <jdbc/cppconn/statement.h>
+#include <mysql/jdbc.h>
 
 #define DEFAULT_URI "tcp://127.0.0.1"
 #define EXAMPLE_USER "root"

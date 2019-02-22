@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -28,23 +28,22 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <iostream>
-#include <mysql/jdbc.h>
-
-
-using ::std::cout;
-using ::std::endl;
-
-
-int main()
-try {
-  cout << "Done!" << endl;
-}
-catch (std::exception &ex)
-{
-  cout <<"STD EXCEPTION: " <<ex.what() <<endl;
-}
-catch (const char *ex)
-{
-  cout <<"EXCEPTION: " <<ex <<endl;
-}
+#include "../jdbc/mysql_connection.h"
+#include "../jdbc/mysql_driver.h"
+#include "../jdbc/mysql_error.h"
+#include "../jdbc/cppconn/build_config.h"
+#include "../jdbc/cppconn/config.h"
+#include "../jdbc/cppconn/connection.h"
+#include "../jdbc/cppconn/datatype.h"
+#include "../jdbc/cppconn/driver.h"
+#include "../jdbc/cppconn/exception.h"
+#include "../jdbc/cppconn/metadata.h"
+#include "../jdbc/cppconn/parameter_metadata.h"
+#include "../jdbc/cppconn/prepared_statement.h"
+#include "../jdbc/cppconn/resultset.h"
+#include "../jdbc/cppconn/resultset_metadata.h"
+#include "../jdbc/cppconn/statement.h"
+#include "../jdbc/cppconn/sqlstring.h"
+#include "../jdbc/cppconn/warning.h"
+#include "../jdbc/cppconn/version_info.h"
+#include "../jdbc/cppconn/variant.h"

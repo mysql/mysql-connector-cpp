@@ -36,23 +36,14 @@
 
 include(headers)
 
-#
-# Headers require C++11 compiler. Set appropriate option
-# for gcc/clang compilers.
-#
+SET(headers jdbc.h)
 
-if(NOT WIN32)
-  set(HEADER_CHECK_OPTIONS "-std=c++11")
-endif()
+# TODO: Make it work one beautiful day...
+#check_headers(${headers})
+#ADD_HEADERS(${headers})
+#ADD_HEADER_CHECKS()
 
-setup_headers(${CMAKE_CURRENT_SOURCE_DIR})
+INSTALL(FILES ${headers} DESTINATION ${INSTALL_INCLUDE_DIR}/mysql COMPONENT JDBCDev)
 
-add_headers_dir(mysql)
-add_headers_dir(mysqlx)
 
-#
-# Target to test public headers, if WITH_HEADERS_CHECKS build option is set.
-#
-
-add_headers_target()
 

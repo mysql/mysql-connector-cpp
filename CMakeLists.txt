@@ -558,6 +558,10 @@ if(WITH_JDBC)
 
   add_executable(try_jdbc EXCLUDE_FROM_ALL try_jdbc.cc)
   target_link_libraries(try_jdbc connector-jdbc)
+  target_include_directories(try_jdbc
+    PRIVATE "${PROJECT_BINARY_DIR}/include/mysql"
+    PRIVATE "${PROJECT_BINARY_DIR}/include/jdbc/cppconn"
+  )
 
 endif()
 
