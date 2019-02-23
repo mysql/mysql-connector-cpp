@@ -49,6 +49,12 @@ namespace connection {
 class TCPIP;
 class TLS;
 
+/**
+   @brief get_local_hostname returns hostname of the current machine
+ */
+std::string get_local_hostname();
+
+
 
 /*
   Defining cdkio error category

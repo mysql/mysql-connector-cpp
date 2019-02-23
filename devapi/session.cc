@@ -65,12 +65,12 @@ void process_val(PRC *prc, common::Value &val)
   switch (val.get_type())
   {
   // TODO: avoid unnecessary utf8 conversion
-  case common::Value::STRING:  prc->str(val.get_string()); break;
+  case common::Value::STRING:  prc->str(val.get_string());  break;
   case common::Value::USTRING: prc->str(val.get_string()); break;
-  case common::Value::INT64:   prc->num(val.get_sint());   break;
-  case common::Value::UINT64:  prc->num(val.get_uint());   break;
-  case common::Value::BOOL:  prc->yesno(val.get_bool());   break;
-
+  case common::Value::INT64:   prc->num(val.get_sint());    break;
+  case common::Value::UINT64:  prc->num(val.get_uint());    break;
+  case common::Value::BOOL:    prc->yesno(val.get_bool());  break;
+  case common::Value::VNULL:   prc->null();                 break;
   default:
     throw_error("Invalid type of session option value");
   }

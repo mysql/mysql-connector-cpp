@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -280,10 +280,10 @@ protected:
     version >> sep;
     version >> release_version;
 
-    if ( (upper_version < test_upper_version) ||
-         (upper_version == test_upper_version &&
-          minor_version << test_lower_version) ||
-         (upper_version == test_upper_version &&
+    if ((upper_version < test_upper_version) ||
+      (upper_version == test_upper_version &&
+        minor_version < test_lower_version) ||
+        (upper_version == test_upper_version &&
           minor_version == test_lower_version &&
           release_version < test_release_version))
     {

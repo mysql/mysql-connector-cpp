@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -2105,3 +2105,252 @@ TEST_F(Sess, settings_iterator)
     }
   }
 }
+
+TEST_F(Sess, connection_attributes)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 15)
+
+  const char* sql_attrs = "select ATTR_NAME, ATTR_VALUE, PROCESSLIST_ID from "
+                          "performance_schema.session_connect_attrs where PROCESSLIST_ID=";
+
+  auto check_attr = [] (std::list<Row> &attr_res)
+  {
+    for (auto &row : attr_res)
+    {
+      std::cout << "(" <<row[2] << ")" << row[0] << ": " << row[1] << std::endl;
+
+      string varname = row[0];
+
+      if (varname == "_client_name")
+      {
+        EXPECT_EQ(string("mysql-connector-cpp"), row[1].get<string>());
+      } else if (varname == "foo")
+      {
+        EXPECT_EQ(string("bar"), row[1].get<string>());
+      } else if(varname == "qux")
+      {
+        EXPECT_TRUE(row[1].isNull());
+      } else if(varname == "baz")
+      {
+        EXPECT_TRUE(row[1].isNull());
+      }
+
+    }
+  };
+
+  auto get_pid = []( mysqlx::Session& sess) -> uint64_t
+  {
+    return sess.sql("SELECT CONNECTION_ID()").execute().fetchOne()[0]
+        .get<uint64_t>();
+  };
+
+  auto get_attr = [sql_attrs,get_pid] ( mysqlx::Session& sess) -> std::list<Row>
+  {
+    std::stringstream query;
+    query << sql_attrs << get_pid(sess) << ";";
+    return sess.sql(query.str()).execute().fetchAll();
+  };
+
+
+  std::stringstream uri_base;
+  uri_base << "mysqlx://" << get_user() << "@" << get_host() << ":" << get_port() << "/";
+
+  {
+    auto sess = getSession(std::string(uri_base.str())+"?connection-attributes=[foo=bar,qux,baz=]");
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(10, attr_res.size());
+
+    check_attr(attr_res);
+  }
+
+  {
+    auto sess = getSession(std::string(uri_base.str())+"?connection-attributes=[]");
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(7, attr_res.size());
+
+    check_attr(attr_res);
+  }
+
+  {
+    auto sess = getSession(std::string(uri_base.str())+"?connection-attributes=true");
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(7, attr_res.size());
+
+    check_attr(attr_res);
+  }
+
+  {
+    auto sess = getSession(std::string(uri_base.str())+"?connection-attributes=false");
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(0, attr_res.size());
+
+  }
+
+  {
+    auto sess = getSession(std::string(uri_base.str())+"?connection-attributes");
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(7, attr_res.size());
+
+  }
+
+
+  {
+    try{
+      getSession(std::string(uri_base.str())+"?connection-attributes=[foo=bar,_qux,baz=]");
+    }
+    catch(mysqlx::Error &e)
+    {
+      EXPECT_EQ(string("Connection attribute names cannot start with \"_\"."),
+                e.what());
+    }
+
+    try {
+      getSession(std::string(uri_base.str())+"?connection-attributes=fail");
+      FAIL() << "Error not thrown!";
+    } catch (mysqlx::Error &e)
+    {
+      std::cout << "Expected: " << e << std::endl;
+    }
+
+  }
+
+  {
+    SessionSettings opt(SessionOption::HOST, get_host(),
+                        SessionOption::PORT, get_port(),
+                        SessionOption::USER, get_user(),
+                        SessionOption::CONNECTION_ATTRIBUTES,
+                        DbDoc(R"({ "foo":"bar","qux" : null, "baz":"" })"));
+
+    auto sess = getSession(opt);
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(10, attr_res.size());
+
+    check_attr(attr_res);
+  }
+
+  {
+    SessionSettings opt(SessionOption::HOST, get_host(),
+                        SessionOption::PORT, get_port(),
+                        SessionOption::USER, get_user(),
+                        SessionOption::CONNECTION_ATTRIBUTES,
+                        R"({ "foo":"bar","qux" : null, "baz":"" })");
+
+    auto sess = getSession(opt);
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(10, attr_res.size());
+
+    check_attr(attr_res);
+  }
+
+
+  {
+    SessionSettings opt(SessionOption::HOST, get_host(),
+                        SessionOption::PORT, get_port(),
+                        SessionOption::USER, get_user(),
+                        SessionOption::CONNECTION_ATTRIBUTES,
+                        false);
+
+    auto sess = getSession(opt);
+
+    std::list<Row> attr_res = get_attr(sess);
+
+    EXPECT_EQ(0, attr_res.size());
+
+    opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
+
+    auto sess2 = getSession(opt);
+
+    std::list<Row> attr_res2 = get_attr(sess2);
+
+    EXPECT_EQ(7, attr_res2.size());
+
+  }
+
+  {
+    EXPECT_THROW(SessionSettings(SessionOption::HOST, get_host(),
+                                 SessionOption::PORT, get_port(),
+                                 SessionOption::USER, get_user(),
+                                 SessionOption::CONNECTION_ATTRIBUTES,
+                                 R"({ "foo":"bar", "qux": 1, baz:"" })"),
+                 mysqlx::Error);
+  }
+
+  {
+    try{
+      SessionSettings(SessionOption::HOST, get_host(),
+                      SessionOption::PORT, get_port(),
+                      SessionOption::USER, get_user(),
+                      SessionOption::CONNECTION_ATTRIBUTES,
+                      R"({ "foo":"bar", "_qux":null, baz:"" })");
+    }
+    catch(mysqlx::Error &e)
+    {
+      EXPECT_EQ(string("Connection attribute names cannot start with \"_\"."),
+                e.what());
+    }
+  }
+
+  // Pool with reset
+  {
+    SessionSettings opt(SessionOption::HOST, get_host(),
+                        SessionOption::PORT, get_port(),
+                        SessionOption::USER, get_user(),
+                        SessionOption::CONNECTION_ATTRIBUTES,
+                        false);
+
+    auto client = getClient(opt);
+
+
+    {
+      auto sess = client.getSession();
+
+      std::list<Row> attr_res = get_attr(sess);
+
+      EXPECT_EQ(0, attr_res.size());
+
+      opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
+
+      auto sess2 = getSession(opt);
+
+      std::list<Row> attr_res2 = get_attr(sess2);
+
+      EXPECT_EQ(7, attr_res2.size());
+    }
+
+    {
+      auto sess = client.getSession();
+
+      std::list<Row> attr_res = get_attr(sess);
+
+      EXPECT_EQ(0, attr_res.size());
+
+      opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
+
+      auto sess2 = getSession(opt);
+
+      std::list<Row> attr_res2 = get_attr(sess2);
+
+      EXPECT_EQ(7, attr_res2.size());
+    }
+
+  }
+
+
+}
+

@@ -42,28 +42,11 @@ namespace foundation {
 namespace connection {
 
 
+void socket_system_initialize();
+
+
 class Socket_base::Impl
 {
-  class Socket_system_initializer
-  {
-  public:
-    Socket_system_initializer()
-    {
-      detail::initialize_socket_system();
-    }
-
-    ~Socket_system_initializer()
-    {
-      try
-      {
-        detail::uninitialize_socket_system();
-      }
-      catch (...)
-      {
-        // Ignoring errors in destructor.
-      }
-    }
-  };
 
 public:
   typedef detail::Socket socket;
@@ -74,7 +57,7 @@ public:
     : m_sock(detail::NULL_SOCKET)
   {
     // This will initialize socket system (e.g. Winsock) during construction of first CDK connection.
-    static Socket_system_initializer initializer;
+    socket_system_initialize();
   }
 
   bool is_open() const

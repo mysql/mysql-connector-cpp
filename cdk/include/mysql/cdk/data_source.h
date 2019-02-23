@@ -37,6 +37,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <functional>
 #include <algorithm>
 #include <set>
+#include "api/expression.h"
 POP_SYS_WARNINGS_CDK
 
 
@@ -46,12 +47,29 @@ namespace cdk {
 
 namespace ds {
 
+
+struct Attr_processor
+{
+  virtual ~Attr_processor() {}
+  virtual void attr(const string &key, const string &val)=0;
+};
+
+class Session_attributes
+  : public cdk::api::Expr_base<Attr_processor>
+{};
+
+
 /*
  * Generic session options which are valid for any data source.
  */
 
+
+
 template <class Base>
-class Options : public Base
+class Options
+    : public Base
+    , public Session_attributes
+    , public Attr_processor
 {
 public:
 
@@ -88,6 +106,31 @@ public:
     m_has_db = true;
   }
 
+  void set_attributes(std::map<std::string,std::string> &connection_attr)
+  {
+    m_connection_attr = connection_attr;
+  }
+
+  const Session_attributes* attributes() const
+  {
+    if (m_connection_attr.empty())
+      return nullptr;
+    return this;
+  }
+
+  void process(Processor &prc) const override
+  {
+    for (auto &el :  m_connection_attr)
+    {
+      prc.attr(el.first, el.second);
+    }
+  }
+
+  void attr(const string &key, const string &val) override
+  {
+    m_connection_attr[key]=val;
+  }
+
 protected:
 
   string m_usr;
@@ -96,6 +139,7 @@ protected:
 
   bool    m_has_db;
   string  m_db;
+  std::map<std::string,std::string> m_connection_attr;
 
 };
 

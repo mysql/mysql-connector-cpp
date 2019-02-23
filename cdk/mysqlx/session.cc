@@ -354,6 +354,73 @@ private:
    Class Session
 */
 
+void Session::send_connection_attr(const Options &options)
+{
+
+  struct Attr_converter
+      : cdk::protocol::mysqlx::api::Any::Document
+      , ds::Attr_processor
+  {
+    Attr_converter(const ds::Session_attributes* attr)
+      :m_attr(attr)
+    {}
+
+    const ds::Session_attributes * m_attr;
+    Processor::Any_prc::Doc_prc *m_attr_prc;
+
+    void process(Processor &prc) const override
+    {
+      auto *self  = const_cast<Attr_converter*>(this);
+      prc.doc_begin();
+      self->m_attr_prc = prc.key_val("session_connect_attrs")->doc();
+      self->m_attr_prc->doc_begin();
+      m_attr->process(*self);
+      self->m_attr_prc->doc_end();
+      prc.doc_end();
+    }
+
+    void attr(const string &key, const string &val) override
+    {
+      m_attr_prc->key_val(key)->scalar()->str(bytes(val));
+    }
+
+  } ;
+
+  if (options.attributes())
+  {
+    m_protocol.snd_CapabilitiesSet(Attr_converter(options.attributes())).wait();
+
+    struct Check_reply_prc : cdk::protocol::mysqlx::Reply_processor
+    {
+      string m_msg;
+      unsigned int m_code = 0;
+      cdk::protocol::mysqlx::sql_state_t m_sql_state;
+      void error(unsigned int code, short int,
+                 cdk::protocol::mysqlx::sql_state_t state, const string &msg) override
+      {
+        m_code = code;
+        m_sql_state = state;
+        m_msg = msg;
+      }
+
+      void ok(string) override
+      {}
+    };
+
+    Check_reply_prc prc;
+
+    m_protocol.rcv_Reply(prc).wait();
+
+    if(prc.m_code != 0 &&    prc.m_code != 5002)
+    {
+      //code: 5002
+      //msg: "Capability \'session_connect_attrs\' doesn\'t exist"
+      throw Server_error(prc.m_code, prc.m_sql_state, prc.m_msg);
+    }
+
+  }
+}
+
 
 void Session::send_auth()
 {

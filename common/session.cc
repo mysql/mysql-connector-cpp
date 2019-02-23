@@ -42,6 +42,12 @@ POP_SYS_WARNINGS
 #include "settings.h"
 #include "session.h"
 #include "result.h"
+#include "config.h"
+
+#ifndef _WIN32
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 using namespace ::mysqlx::common;
 using TCPIP_options = cdk::ds::TCPIP::Options;
@@ -77,6 +83,35 @@ void Settings_impl::set_client_opts(const Settings_impl &opts)
   Setter set(*this);
   set.set_client_opts(opts);
   set.commit();
+}
+
+void mysqlx::common::Settings_impl::Data::init_connection_attr()
+{
+  //Already initialized... nothing to do here!
+  if (!m_connection_attr.empty())
+    return;
+
+  std::string pid;
+#ifdef _WIN32
+  pid = std::to_string(GetCurrentProcessId());
+#else
+  pid = std::to_string(getpid());
+#endif
+  m_connection_attr["_pid"] =  pid;
+
+  m_connection_attr["_platform"] = MACHINE_TYPE;
+  m_connection_attr["_os"] = SYSTEM_TYPE;
+  m_connection_attr["_source_host"] =
+      cdk::foundation::connection::get_local_hostname();
+  m_connection_attr["_client_name"] =  PACKAGE_NAME;
+  m_connection_attr["_client_version"] = PACKAGE_VERSION;
+  m_connection_attr["_client_license"] = PACKAGE_LICENSE;
+
+}
+
+void mysqlx::common::Settings_impl::Data::clear_connection_attr()
+{
+  m_connection_attr.clear();
 }
 
 TCPIP_options::auth_method_t get_auth(unsigned m)
@@ -196,6 +231,10 @@ void prepare_options(
     opts.set_tls(tls_opt);
   }
 #endif
+
+  // Set Connection Attributes
+
+  settings.get_attributes(opts);
 
   // Set authentication options
 
@@ -340,6 +379,26 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   };
 #endif
 
+  auto add_connect_attr = [this](iterator &it) {
+    switch (it->second.get_type())
+    {
+//      case Value::
+      case Value::Type::BOOL:
+        if (!it->second.get_bool())
+          this->m_data.m_connection_attr.clear();
+        else
+          this->m_data.init_connection_attr();
+      break;
+      default:
+//        try {
+
+//        } catch () {
+
+//        }
+        break;
+    }
+  };
+
   /*
     Go through options and look for ones which define connections.
   */
@@ -370,6 +429,15 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   if (0 == src.size())
   {
     throw_error("No sources to connect");
+  }
+}
+
+
+void Settings_impl::get_attributes(cdk::ds::Attr_processor &prc)
+{
+  for(auto &el : m_data.m_connection_attr)
+  {
+    prc.attr(el.first, el.second);
   }
 }
 

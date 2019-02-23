@@ -71,6 +71,7 @@ protected:
   const char *m_status;
   mysqlx::Client *m_client;
   mysqlx::Session *m_sess;
+  const char *m_host;
   unsigned short m_port;
   const char *m_user;
   const char *m_password;
@@ -82,12 +83,17 @@ protected:
     using namespace mysqlx;
 
     m_status = NULL;
+    m_host = NULL;
     m_port = 0;
     m_socket = NULL;
     m_user = NULL;
     m_password = NULL;
     m_client = NULL;
     m_sess = NULL;
+
+    const char *xplugin_host = getenv("XPLUGIN_HOST");
+    if (!xplugin_host)
+      m_host = "localhost";
 
     const char *xplugin_port = getenv("XPLUGIN_PORT");
     if (!xplugin_port)
@@ -165,6 +171,11 @@ protected:
     if (!m_sess)
       throw m_status;
     return *m_sess;
+  }
+
+  const char* get_host() const
+  {
+    return m_host;
   }
 
   const char* get_socket() const
