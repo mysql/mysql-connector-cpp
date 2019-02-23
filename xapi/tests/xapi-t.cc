@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -2032,4 +2032,276 @@ TEST_F(xapi, pool)
   mysqlx_client_close(cli);
   mysqlx_free(opt);
 
+}
+
+TEST_F(xapi, connection_attrs)
+{
+  SKIP_IF_NO_XPLUGIN;
+  AUTHENTICATE();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 15)
+
+  mysqlx_error_t *error;
+  char buffer[1024];
+  size_t buffer_len;
+  size_t rows;
+
+  const char* sql_attrs = "select ATTR_NAME, ATTR_VALUE, PROCESSLIST_ID from "
+                          "performance_schema.session_connect_attrs where PROCESSLIST_ID=";
+
+  std::stringstream uri_base;
+  uri_base << "mysqlx://" << m_xplugin_usr;
+  if (m_xplugin_pwd)
+    uri_base << ":" << m_xplugin_pwd;
+
+  uri_base << "@" << m_xplugin_host << ":" << m_xplugin_port << "/";
+
+  auto check_attr = [&buffer,&buffer_len] (mysqlx_result_t *attr_res)
+  {
+    mysqlx_row_t *row;
+    while ((row = mysqlx_row_fetch_one(attr_res)) != NULL)
+    {
+      std::string var_name;
+      std::string var_value;
+      int64_t process_id;
+
+      mysqlx_get_sint(row, 2, &process_id);
+      std::cout << "(" <<process_id << ")";
+      buffer_len = sizeof(buffer);
+      mysqlx_get_bytes(row, 0, 0, buffer, &buffer_len);
+      var_name = buffer;
+      std::cout << buffer << ": ";
+      buffer_len = sizeof(buffer);
+      int rc = mysqlx_get_bytes(row, 1, 0, buffer, &buffer_len);
+      if (rc == RESULT_NULL)
+      {
+        std::cout << "null" << std::endl;
+        var_value.clear();
+      }
+      else
+      {
+        std::cout << buffer << std::endl;
+        var_value = buffer;
+      }
+
+      if (var_name == "_client_name")
+      {
+        EXPECT_EQ(string("mysql-connector-cpp"), var_value);
+      } else if (var_name == "foo")
+      {
+        EXPECT_EQ(string("bar"), var_value);
+      } else if(var_name == "qux")
+      {
+        EXPECT_TRUE(var_value.empty());
+      } else if(var_name == "baz")
+      {
+        EXPECT_TRUE(var_value.empty());
+      }
+    }
+  };
+
+  auto get_pid = [](mysqlx_session_t *sess) -> uint64_t
+  {
+    const char *qry_pid= "SELECT CONNECTION_ID()";
+    uint64_t process_id;
+    mysqlx_row_t *row;
+
+    mysqlx_result_t *res = mysqlx_sql(sess, qry_pid, strlen(qry_pid));
+    row = mysqlx_row_fetch_one(res);
+
+    mysqlx_get_uint(row, 0, &process_id);
+
+    return process_id;
+  };
+
+  auto get_attr_res = [sql_attrs, get_pid] (mysqlx_session_t *sess) -> mysqlx_result_t*
+  {
+    std::stringstream query;
+    query << sql_attrs << get_pid(sess) << ";";
+
+    return mysqlx_sql(sess, query.str().c_str(), query.str().size());
+  };
+
+  {
+
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes=[foo=bar,qux,baz=]").c_str(),
+                  &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(10, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes=[]").c_str(),
+                   &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(7, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes=true").c_str(),
+                   &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(7, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes=false").c_str(),
+                   &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(0, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+
+  }
+
+  {
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes").c_str(),
+                   &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(7, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+
+  }
+
+
+  {
+    auto *sess = mysqlx_get_session_from_url(
+                  (std::string(uri_base.str())+"?connection-attributes=[foo=bar,_qux,baz=]").c_str(),
+                   &error);
+
+    if (sess)
+      FAIL() << "Bad variable names... should fail!";
+
+    sess = mysqlx_get_session_from_url(
+             (std::string(uri_base.str())+"?connection-attributes=fail").c_str(),
+             &error);
+
+    if (sess)
+      FAIL() << "Bad variable names... should fail!";
+
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+                opt,
+                OPT_HOST(m_xplugin_host),
+                OPT_PORT(m_port),
+                OPT_USER(m_xplugin_usr),
+                OPT_PWD(m_xplugin_pwd),
+                OPT_CONNECTION_ATTRIBUTES(R"({ "foo":"bar","qux" : null, "baz":"" })"),
+                PARAM_END
+                ));
+
+
+
+    auto *sess = mysqlx_get_session_from_options(opt, &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(10, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+    mysqlx_free_options(opt);
+  }
+
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+                opt,
+                OPT_HOST(m_xplugin_host),
+                OPT_PORT(m_port),
+                OPT_USER(m_xplugin_usr),
+                OPT_PWD(m_xplugin_pwd),
+                OPT_CONNECTION_ATTRIBUTES(NULL),
+                PARAM_END
+                ));
+
+    auto *sess = mysqlx_get_session_from_options(opt, &error);
+
+    mysqlx_result_t *res = get_attr_res(sess);
+
+    mysqlx_store_result(res, &rows);
+
+    EXPECT_EQ(0, rows);
+
+    check_attr(res);
+    mysqlx_session_close(sess);
+    mysqlx_free_options(opt);
+
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+                opt,
+                OPT_HOST(m_xplugin_host),
+                OPT_PORT(m_port),
+                OPT_USER(m_xplugin_usr),
+                OPT_PWD(m_xplugin_pwd),
+                OPT_CONNECTION_ATTRIBUTES(R"({ "foo":"bar", "qux": 1, baz:"" })"),
+                PARAM_END
+                ));
+
+    mysqlx_free_options(opt);
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+                opt,
+                OPT_HOST(m_xplugin_host),
+                OPT_PORT(m_port),
+                OPT_USER(m_xplugin_usr),
+                OPT_PWD(m_xplugin_pwd),
+                OPT_CONNECTION_ATTRIBUTES(R"({ "foo":"bar", "_qux":null, baz:"" })"),
+                PARAM_END
+                ));
+
+    mysqlx_free_options(opt);
+  }
 }

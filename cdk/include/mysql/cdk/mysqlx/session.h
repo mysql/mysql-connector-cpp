@@ -524,7 +524,9 @@ public:
   {
     m_prepare_prc.m_session = this;
     m_stmt_stats.clear();
+    send_connection_attr(options);
     authenticate(options, conn.is_secure());
+
     // TODO: make "lazy" checks instead, deferring to the time when given
     // feature is used.
     check_protocol_fields();
@@ -697,6 +699,8 @@ private:
 
   Reply_init & set_command(Proto_prepare_op *cmd);
 
+  // Send Connection Attributes
+  void send_connection_attr(const Options &options);
   // Authentication (cdk::protocol::mysqlx::Auth_processor)
   void authenticate(const Options &options, bool secure = false);
   void do_authenticate(const Options &options, int auth_method, bool secure);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,6 +33,7 @@
 
 #include <mysqlx/common.h>
 #include <mysql/cdk.h>
+#include <json_parser.h>
 #include <uri_parser.h>
 #include "value.h"
 
@@ -599,6 +600,80 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::AUTH>(
   }
 }
 
+template<>
+inline void
+Settings_impl::Setter::set_option<
+Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const std::string &val)
+{
+
+  struct processor
+      : parser::JSON_parser::Processor
+      , Any_prc
+      , Scalar_prc
+  {
+    Settings_impl::Data &m_data;
+    string m_key;
+    processor(Settings_impl::Data &data)
+      : m_data(data)
+    {}
+
+    Any_prc* key_val(const string &key) override
+    {
+      if (key.length() == 0)
+        throw_error("Invalid empty key on connection attributes");
+      if (key[0] == '_')
+        throw_error("Connection attribute names cannot start with \"_\".");
+      m_key = key;
+      return this;
+    }
+
+    Scalar_prc* scalar() override
+    {
+      return this;
+    }
+
+    // Arrays and documents are not valid... throw error
+    List_prc*   arr() override
+    {
+      throw_error("Connection attribute can not be an array");
+      return nullptr;
+    }
+
+    // Report that any value is a document.
+
+    Doc_prc*    doc() override
+    {
+      throw_error("Connection attribute can not be a document");
+      return nullptr;
+    }
+
+    void null() override
+    {
+      m_data.m_connection_attr[m_key];
+    }
+    void str(const string &val) override
+    {
+      m_data.m_connection_attr[m_key] = val;
+    }
+    virtual void num(uint64_t)override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(int64_t) override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(float)   override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(double)  override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void yesno(bool)  override
+    {throw_error("Connection attributes values can't be of boolean type");}
+
+  };
+
+  parser::JSON_parser parser(val);
+  processor prc(m_data);
+
+  parser.process(prc);
+}
+
 
 // Other options that need special handling.
 // TODO: support std::string for PWD and other options that are ascii only?
@@ -772,6 +847,9 @@ void Settings_impl::Setter::null()
   case Session_option_impl::USER:
     throw_error("Option ... can not be unset");
     break;
+  case Session_option_impl::CONNECTION_ATTRIBUTES:
+    m_data.clear_connection_attr();
+    break;
   case Session_option_impl::LAST:
     break;
   default:
@@ -790,6 +868,16 @@ void Settings_impl::Setter::yesno(bool b)
     add_option(m_cur_opt, b);
     return;
   default: break;
+  }
+  switch(m_cur_opt)
+  {
+    case Session_option_impl::CONNECTION_ATTRIBUTES:
+      if (b)
+        m_data.init_connection_attr();
+      else
+        m_data.clear_connection_attr();
+      return;
+    default:break;
   }
   throw_error("Option ... can not be bool");
 }
@@ -849,7 +937,31 @@ inline
 void Settings_impl::Setter::key_val(const std::string &key, const std::string &val)
 {
   try {
-    key_val(get_uri_option(key))->scalar()->str(val);
+    auto option = get_uri_option(key);
+    switch(option)
+    {
+    case Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES:
+        {
+          std::string tmp = to_lower(val);
+
+          if (tmp == "false")
+          {
+            m_data.m_connection_attr.clear();
+          }
+          else if (tmp == "true")
+          {
+            m_data.init_connection_attr();
+          }
+          else
+          {
+            throw_error("The value of a \"session-connect-attribute\" must be "
+                        "either a Boolean or a list of key-value pairs.");
+          }
+        }
+        break;
+      default:
+        key_val(get_uri_option(key))->scalar()->str(val);
+    }
   }
   catch (const std::out_of_range&)
   {
@@ -861,8 +973,14 @@ inline
 void Settings_impl::Setter::key_val(const std::string &key)
 {
   try {
-    get_uri_option(key);
-    throw_error("Option ... requires a value");
+    switch(get_uri_option(key))
+    {
+      case Session_option_impl::CONNECTION_ATTRIBUTES:
+        m_data.init_connection_attr();
+        return;
+      default:
+        throw_error("Option ... requires a value");
+    }
   }
   catch (const std::out_of_range&)
   {
@@ -871,11 +989,34 @@ void Settings_impl::Setter::key_val(const std::string &key)
 }
 
 inline
-void Settings_impl::Setter::key_val(const std::string &key, const std::list<std::string>&)
+void Settings_impl::Setter::key_val(const std::string &key,
+                                    const std::list<std::string> &list)
 {
   try {
-    get_uri_option(key);
-    throw_error("Option ... does not accept a list value");
+    switch(get_uri_option(key))
+    {
+      case Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES:
+        for(auto el : list)
+        {
+          if (el.empty())
+            continue;
+          size_t eq = el.find("=");
+          std::string key = el.substr(0,eq);
+          if (key[0]== '_')
+            throw_error("Connection attribute names cannot start with \"_\".");
+          auto &attr_pos = m_data.m_connection_attr[key];
+          if (eq != std::string::npos)
+            attr_pos = el.substr(eq+1);
+
+        }
+        break;
+      default:
+        std::stringstream err;
+        err << "Option " << key << " does not accept a list value";
+        throw_error(err.str().c_str());
+        break;
+
+    }
   }
   catch (const std::out_of_range&)
   {

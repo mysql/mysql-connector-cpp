@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -458,6 +458,16 @@ public:
 
     - `ssl-mode` : define `SSLMode` option to be used
     - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
+    - `connection-attributes=` : the value is either a (possibly empty) list of
+    "key=value" pairs or a Boolean constant "true" or "false". If no value is
+    specified for a key, as in "key=" or "key" then empty string is assumed.\n
+    Examples:\n
+    "mysqlx://user@host?connection-attributes=[foo=bar,qux,baz=]"\n
+    "mysqlx://user@host?connection-attributes=false"\n
+    "mysqlx://user@host?connection-attributes=true"\n
+    "mysqlx://user@host?connection-attributes=[]"\n
+    "mysqlx://user@host?connection-attributes"\n
+
   */
 
   SessionSettings(const string &uri)

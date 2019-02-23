@@ -56,6 +56,7 @@ namespace cdk {
 namespace ds {
 
 class Multi_source;
+struct Attr_processor;
 
 }}
 
@@ -131,6 +132,7 @@ protected:
   using opt_val_t = std::pair<int, Value>;
   // TODO: use multimap instead?
   using option_list_t = std::vector<opt_val_t>;
+  using connection_attr = std::map<std::string,std::string>;
   using iterator = option_list_t::const_iterator;
 
 public:
@@ -171,6 +173,7 @@ public:
 
   void get_data_source(cdk::ds::Multi_source&);
 
+  void get_attributes(cdk::ds::Attr_processor&);
 
   // Set options based on URI
 
@@ -201,8 +204,13 @@ protected:
 
   struct PUBLIC_API Data
   {
+    Data()
+    {
+      init_connection_attr();
+    }
     DLL_WARNINGS_PUSH
     option_list_t           m_options;
+    connection_attr         m_connection_attr;
     DLL_WARNINGS_POP
     unsigned m_host_cnt = 0;
     bool m_user_priorities = false;
@@ -212,6 +220,9 @@ protected:
     bool m_sock = false;  // set to true if socket connection was specified
 
     void erase(int);
+    void init_connection_attr();
+    void clear_connection_attr();
+
   };
 
   Data m_data;
@@ -305,6 +316,7 @@ void Settings_impl::erase(int opt)
 {
   m_data.erase(opt);
 }
+
 
 /*
   Note: Removes all occurrences of the given option. Also updates the context

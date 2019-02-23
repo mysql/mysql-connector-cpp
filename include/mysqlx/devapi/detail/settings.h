@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -129,6 +129,20 @@ protected:
     return unsigned(m);
   }
 
+  static Value opt_val(int opt, const DbDoc &doc)
+  {
+    if (opt != Session_option_impl::CONNECTION_ATTRIBUTES)
+    {
+      std::stringstream err_msg;
+      err_msg << "Option " << option_name(opt) << " does not accept DbDoc object";
+      throw_error(err_msg.str().c_str());
+    }
+
+    std::stringstream str_opts;
+    str_opts << doc;
+    return str_opts.str();
+  }
+
   template<typename _Rep, typename _Period>
   static Value opt_val(
     int opt, const std::chrono::duration<_Rep, _Period> &duration
@@ -150,8 +164,10 @@ protected:
 
   template <
     typename V,
-    typename std::enable_if<std::is_convertible<V, int>::value>::type*
-    = nullptr
+    typename std::enable_if<std::is_convertible<V,int>::value>::type*
+    = nullptr,
+    typename std::enable_if<std::is_convertible<V,Value>::value>::type*
+      = nullptr
   >
   static Value opt_val(int, V &&val)
   {

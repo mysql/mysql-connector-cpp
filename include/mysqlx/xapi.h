@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -408,6 +408,7 @@ mysqlx_opt_type_t;
 #define OPT_PRIORITY(A) MYSQLX_OPT_PRIORITY, (unsigned int)(A)
 #define OPT_AUTH(A)     MYSQLX_OPT_AUTH, (unsigned int)(A)
 #define OPT_CONNECT_TIMEOUT(A) MYSQLX_OPT_CONNECT_TIMEOUT, (unsigned int)(A)
+#define OPT_CONNECTION_ATTRIBUTES(A) MYSQLX_OPT_CONNECTION_ATTRIBUTES, (A)
 
 /**
   Session SSL mode values for use with `mysqlx_session_option_get()`

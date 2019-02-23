@@ -99,6 +99,12 @@ endif()
 
 
 #
+# Connector System Configuration
+#
+include(config.cmake)
+
+
+#
 # Install settings
 # ================
 #

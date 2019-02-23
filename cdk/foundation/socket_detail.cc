@@ -968,5 +968,14 @@ size_t send_some(Socket socket, const byte *buffer, size_t buffer_size, bool wai
   return bytes_sent;
 }
 
+std::string get_local_hostname()
+{
+  char buf[1024] = {0};
+  if (gethostname(buf, sizeof(buf)) < 0) {
+    throw_socket_error();
+  }
+  return buf;
+}
+
 
 }}}} // cdk::foundation::connection::detail

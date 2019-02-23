@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -83,8 +83,10 @@
   /*! path to a PEM file specifying trusted root certificates*/              \
   OPT_STR(x,SSL_CA,9)                                                        \
   OPT_ANY(x,AUTH,10)      /*!< authentication method, PLAIN, MYSQL41, etc.*/ \
-  OPT_STR(x,SOCKET,11)                                                       \
-  OPT_NUM(x,CONNECT_TIMEOUT,12)                                              \
+  OPT_STR(x,SOCKET,11)    /*!< unix socket path*/                            \
+  OPT_NUM(x,CONNECT_TIMEOUT,12) /*!< timeout to connect*/                   \
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13) /*!< Expects JSON with key:pair values*/ \
+
   END_LIST
 
 #define OPT_STR(X,Y,N) X##_str(Y,N)
@@ -103,6 +105,7 @@
   X("ssl-ca", SSL_CA)       \
   X("auth", AUTH)           \
   X("connect-timeout", CONNECT_TIMEOUT) \
+  X("connection-attributes",CONNECTION_ATTRIBUTES)
   END_LIST
 
 

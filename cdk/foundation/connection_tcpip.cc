@@ -130,6 +130,42 @@ namespace cdk {
 namespace foundation {
 namespace connection {
 
+class Socket_system_initializer
+{
+  Socket_system_initializer()
+  {
+    detail::initialize_socket_system();
+  }
+
+  ~Socket_system_initializer()
+  {
+    try
+    {
+      detail::uninitialize_socket_system();
+    }
+    catch (...)
+    {
+      // Ignoring errors in destructor.
+    }
+  }
+
+  friend void socket_system_initialize();
+};
+
+void socket_system_initialize()
+{
+  static Socket_system_initializer initializer;
+}
+
+
+std::string get_local_hostname()
+{
+  // This will initialize socket system (e.g. Winsock) during construction of first CDK connection.
+  socket_system_initialize();
+
+  return detail::get_local_hostname();
+}
+
 
 TCPIP::TCPIP(const std::string& host,
              unsigned short port,

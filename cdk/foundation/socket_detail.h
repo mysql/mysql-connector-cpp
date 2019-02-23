@@ -442,6 +442,11 @@ size_t recv_some(Socket socket, byte *buffer, size_t buffer_size, bool wait);
 size_t send_some(Socket socket, const byte *buffer, size_t buffer_size, bool wait);
 
 
+/**
+   @brief get_local_hostname returns hostname of the current machine
+ */
+std::string get_local_hostname();
+
 }}}} // cdk::foundation::connection::detail
 
 
