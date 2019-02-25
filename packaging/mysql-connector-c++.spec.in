@@ -209,6 +209,7 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_includedir}/mysql-cppconn
 %dir %{_includedir}/mysql-cppconn-8
 %{_includedir}/mysql-cppconn-8/mysqlx
+%{_includedir}/mysql-cppconn-8/mysql
 %{_includedir}/mysql-cppconn-8/jdbc
 
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}

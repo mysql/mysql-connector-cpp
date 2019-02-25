@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -29,6 +29,7 @@ usr/include/mysqlx/*.h usr/include/mysql-cppconn-8/mysqlx
 usr/include/mysqlx/devapi/*.h usr/include/mysql-cppconn-8/mysqlx/devapi
 usr/include/mysqlx/devapi/detail/*.h usr/include/mysql-cppconn-8/mysqlx/devapi/detail
 usr/include/mysqlx/common/*.h usr/include/mysql-cppconn-8/mysqlx/common
+usr/include/mysql/*.h usr/include/mysql-cppconn-8/mysql
 usr/include/jdbc/*.h usr/include/mysql-cppconn-8/jdbc
 usr/include/jdbc/cppconn/*.h usr/include/mysql-cppconn-8/jdbc/cppconn
 
