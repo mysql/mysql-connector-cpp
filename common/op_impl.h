@@ -2315,6 +2315,7 @@ public:
   void add_operation(typename Impl::Operation op,
                      const string &field) override
   {
+    set_prepare_state(PS_EXECUTE);
     m_update.emplace_back(op, field);
   }
 
@@ -2322,6 +2323,7 @@ public:
                      const string &field,
                      const Value &val) override
   {
+    set_prepare_state(PS_EXECUTE);
     m_update.emplace_back(op, field, val);
   }
 
@@ -2334,12 +2336,15 @@ public:
                      const string &field,
                      cdk::Expression &expr)
   {
+    set_prepare_state(PS_EXECUTE);
     m_update.emplace_back(op, field, expr);
   }
 
 
   void clear_modifications() override
   {
+    if (m_update.size() != 0)
+      set_prepare_state(PS_EXECUTE);
     m_update.clear();
   }
 
@@ -2742,7 +2747,12 @@ public:
 
   void add_set(const string &field, const Value &val) override
   {
-    m_set_values.emplace(field, val);
+    auto el = m_set_values.emplace(field, val);
+    //substitute if exists
+    if (!el.second)
+    {
+      el.first->second = val;
+    }
     Base::set_prepare_state(PS_EXECUTE);
   }
 
