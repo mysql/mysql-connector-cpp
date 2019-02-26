@@ -61,7 +61,7 @@ BuildRequires:  cmake3
 %else
 BuildRequires:  cmake
 %endif
-%if 0%{?fedora} || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 %else
@@ -118,8 +118,10 @@ test suite for MySQL Connector/C++
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
 
 %build
+%if 0%{?rhel} < 8
 %{?rhel:export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc}
 %{?rhel:export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++}
+%endif
 
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
 %global __cmake_test_opts -DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}
