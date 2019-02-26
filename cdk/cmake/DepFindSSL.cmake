@@ -152,7 +152,7 @@ function(check_x509_functions)
 
     IF(HAVE_SSL_GET0_PARAM AND HAVE_X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS AND
        HAVE_X509_VERIFY_PARAM_SET_HOSTFLAGS AND HAVE_X509_VERIFY_PARAM_SET1_HOST)
-      SET(HAVE_REQUIRED_X509_FUNCTIONS ON CACHE INTERNAL 
+      SET(HAVE_REQUIRED_X509_FUNCTIONS ON CACHE INTERNAL
           "Indicates the presence of required X509 functionality")
       message("-- found required X509 extensions")
       ADD_CONFIG(HAVE_REQUIRED_X509_FUNCTIONS)
@@ -190,18 +190,17 @@ function(find_openssl)
 
 
   # Verify version number. Version information looks like:
-  #   #define OPENSSL_VERSION_NUMBER 0x1000103fL
-  # Encoded as MNNFFPPS: major minor fix patch status
+  #   #define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1a  20 Nov 2018"
 
   FILE(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h"
     OPENSSL_VERSION_NUMBER
-    REGEX "^#[ ]*define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x[0-9].*"
+    REGEX "#[ ]*define[\t ]+OPENSSL_VERSION_TEXT"
   )
 
   #message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
   STRING(REGEX REPLACE
-    "^.*OPENSSL_VERSION_NUMBER[\t ]+0x(.)(..)(..)(..)(.).*$"
-    "\\1;\\2;\\3;\\4;\\5"
+    "^.*OPENSSL_VERSION_TEXT[\t ]+\"OpenSSL[\t ]([0-9]+)\\.([0-9]+)\\.([0-9]+)([a-z]).*$"
+    "\\1;\\2;\\3;\\4"
     version_list "${OPENSSL_VERSION_NUMBER}"
   )
   #message("-- OPENSSL_VERSION: ${version_list}")
@@ -216,22 +215,11 @@ function(find_openssl)
   math(EXPR OPENSSL_VERSION_FIX ${OPENSSL_VERSION_FIX})
 
   list(GET version_list 3 OPENSSL_VERSION_PATCH)
-  math(EXPR OPENSSL_VERSION_PATCH ${OPENSSL_VERSION_PATCH})
 
-  list(GET version_list 4 OPENSSL_VERSION_STATUS)
 
-  #
-  # Calculate patch letter as: 1 - 'a', 2 - 'b' , ...
-  # Note: ascii 'a' is 97
-  #
-
-  if(OPENSSL_VERSION_PATCH GREATER 0)
-    math(EXPR letter_code "97 + ${OPENSSL_VERSION_PATCH} - 1")
-    string(ASCII ${letter_code} patch_letter)
-  endif()
 
   set(OPENSSL_VERSION
-    "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${patch_letter}"
+    "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH}"
     PARENT_SCOPE
   )
   set(OPENSSL_VERSION_MAJOR ${OPENSSL_VERSION_MAJOR} PARENT_SCOPE)
