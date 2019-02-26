@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -59,6 +59,8 @@ ENDIF()
 # Platform specifics. The differences are generally only distro name used in version string
 IF(DEB_CODENAME STREQUAL "stretch")
   SET (DEB_PLATFORMRELEASE "debian9")
+ELSEIF(DEB_CODENAME STREQUAL "buster")
+  SET (DEB_PLATFORMRELEASE "debian10")
 ELSEIF(DEB_CODENAME STREQUAL "sid")
   IF (DEFINED DEB_GCC_SNAPSHOT)
     SET (DEB_CMAKE_EXTRAS "${DEB_CMAKE_EXTRAS} -DCMAKE_C_COMPILER=/usr/lib/gcc-snapshot/bin/gcc -DCMAKE_CXX_COMPILER=/usr/lib/gcc-snapshot/bin/g++ -DMYSQL_MAINTAINER_MODE=0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
@@ -91,6 +93,8 @@ ELSEIF(DEB_CODENAME STREQUAL "bionic")
   SET (DEB_PLATFORMRELEASE "ubuntu18.04")
 ELSEIF(DEB_CODENAME STREQUAL "cosmic")
   SET (DEB_PLATFORMRELEASE "ubuntu18.10")
+ELSEIF(DEB_CODENAME STREQUAL "disco")
+  SET (DEB_PLATFORMRELEASE "ubuntu19.04")
 ELSE()
   MESSAGE(STATUS
     "Skipping deb packaging on unsupported platform ${DEB_CODENAME}.")
