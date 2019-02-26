@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -122,11 +122,10 @@ if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
 endif()
 
+
 # ======================================================================
 # Licenses for binary packages
 # ======================================================================
-
-#if (0)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
   set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
@@ -142,34 +141,22 @@ else()
   set(newline UNIX)
 endif()
 
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/README.txt")
-  set(info_files README ${LIC_FILE})
-  set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
-else()
-  set(info_files README.md CONTRIBUTING.md ${LIC_FILE})
-  set(CPACK_RESOURCE_FILE_README  "README.md")
-endif()
+set(info_files README ${LIC_FILE})
 
 foreach(file ${info_files})
-  if (${file} MATCHES "[.]*\\.md")
-    set(file_src "${CMAKE_SOURCE_DIR}/${file}")
-    set(file_bin "${CMAKE_BINARY_DIR}/${file}")
-  else()
-    set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
-    set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
-  endif()
+
+  set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
+  set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
 
   configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
   install(FILES "${file_bin}" DESTINATION ${INSTALL_DOC_DIR} COMPONENT Readme)
-  message("Installing README files: ${file_bin}")
 
 endforeach()
 
+set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
 set(CPACK_RESOURCE_FILE_LICENSE "${LIC_FILE}${info_ext}")
 #set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
 
-#endif()
 
 # ======================================================================
 # Specs for source package
