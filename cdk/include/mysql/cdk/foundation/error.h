@@ -412,7 +412,7 @@ class Error_class : public B
 {
 protected:
 
-  typedef Error_class<E> Error_base;
+  typedef Error_class<E,B> Error_base;
 
   Error_class()
   {}
@@ -423,15 +423,11 @@ protected:
 
   // Constructors that pass parameters to base class constructor
 
-  template <typename X>
-  Error_class(void*, X x)
-    : B(x)
+  template <typename... XX>
+  Error_class(void*, XX&&... xx)
+    : B(std::forward<XX>(xx)...)
   {}
 
-  template <typename X, typename Y>
-  Error_class(void*, X x, Y y)
-    : B(x, y)
-  {}
 
   virtual ~Error_class() throw ()
   {}

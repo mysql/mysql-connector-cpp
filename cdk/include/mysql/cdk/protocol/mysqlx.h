@@ -1254,13 +1254,17 @@ public:
                                                 m_schema_set(true) {}
 
   Db_obj(const api::Db_obj &other)
-    : m_name(other.get_name())
-    , m_schema_set(false)
   {
-    if (!other.get_schema())
-      return;
-    m_schema = *other.get_schema();
-    m_schema_set = true;
+    operator=(other);
+  }
+
+  Db_obj& operator=(const api::Db_obj &other)
+  {
+    m_name = other.get_name();
+    m_schema_set = (nullptr != other.get_schema());
+    if (m_schema_set)
+      m_schema = *other.get_schema();
+    return *this;
   }
 
   virtual ~Db_obj() {}

@@ -472,15 +472,16 @@ public:
   // Prepared Statments methods
   // --------------------------
 
-  Reply_init prepared_execute(uint32_t stmt_id,
-                              const Limit* lim = nullptr,
-                              const Param_source *param = nullptr)
+  Reply_init prepared_execute(
+    uint32_t stmt_id, const Limit* lim, const Param_source *param = nullptr
+  )
   {
     return m_session->prepared_execute(stmt_id, lim, param);
   }
 
-  Reply_init prepared_execute(uint32_t stmt_id,
-                              const cdk::Any_list *list = nullptr)
+  Reply_init prepared_execute(
+    uint32_t stmt_id, const cdk::Any_list *list = nullptr
+  )
   {
     return m_session->prepared_execute(stmt_id, list);
   }

@@ -51,7 +51,8 @@ class Cursor
 
 public:
 
-  Cursor(Reply &r) : m_impl(r.m_impl)
+  Cursor(Reply &r)
+    : m_impl(r.m_impl)
   {}
 
   // Cursor interface
