@@ -607,9 +607,14 @@ Socket connect(const char *host_name, unsigned short port,
         if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       #endif
         {
-          int select_result = poll_one(socket, POLL_MODE_CONNECT,true,
-                                         (uint64_t)duration_cast<microseconds>(
-                                           deadline - system_clock::now()).count());
+          auto timeout = duration_cast<microseconds>(
+            deadline - system_clock::now()
+          ).count();
+
+          int select_result = poll_one(
+            socket, POLL_MODE_CONNECT, true,
+            timeout_usec > 0 && timeout > 0 ? timeout : 0
+          );
 
           if (select_result == 0 && (timeout_usec > 0) &&
                (std::chrono::system_clock::now() >= deadline))
@@ -790,13 +795,8 @@ DIAGNOSTIC_PUSH_CDK
 DIAGNOSTIC_POP_CDK
 
   //milliseconds
-  int timeout = -1;
-
-  if (wait && timeout_usec > 0)
-  {
-    // If timeout is specified we will use it
-    timeout = static_cast<int>(timeout_usec / 1000);
-  }
+  int timeout =
+    !wait ? 0 : timeout_usec > 0 ? static_cast<int>(timeout_usec / 1000) : -1;
 
 #ifdef _WIN32
   int result = ::WSAPoll(&fds, 1, timeout);
