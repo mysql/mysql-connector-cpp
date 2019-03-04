@@ -165,17 +165,46 @@ function(main)
     NO_DEFAULT_PATH
   )
 
-  find_library(MYSQL_DLL
-    NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
-    PATHS ${MYSQL_LIB_DIR}
-    NO_DEFAULT_PATH
-  )
+  if(NOT WIN32)
 
-  find_library(MYSQL_DLL_DEBUG
-    NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
-    PATHS "${MYSQL_LIB_DIR}/debug"
-    NO_DEFAULT_PATH
-  )
+    find_library(MYSQL_DLL
+      NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
+      PATHS ${MYSQL_LIB_DIR}
+      NO_DEFAULT_PATH
+      )
+
+    find_library(MYSQL_DLL_DEBUG
+      NAMES ${CMAKE_DYNAMIC_LIBRARY_PREFIX}mysqlclient${CMAKE_DYNAMIC_LIBRARY_SUFFIX}
+      PATHS "${MYSQL_LIB_DIR}/debug"
+      NO_DEFAULT_PATH
+      )
+
+  else() #WIN32
+
+    find_library(MYSQL_DLL
+      NAMES libmysql
+      PATHS ${MYSQL_LIB_DIR}
+      NO_DEFAULT_PATH
+      )
+
+    find_library(MYSQL_DLL_DEBUG
+      NAMES libmysql
+      PATHS "${MYSQL_LIB_DIR}/debug"
+      NO_DEFAULT_PATH
+      )
+
+    find_library(MYSQL_DLL_IMP
+      NAMES libmysql.lib
+      PATHS ${MYSQL_LIB_DIR}
+      NO_DEFAULT_PATH
+    )
+
+    find_library(MYSQL_DLL_IMP_DEBUG
+      NAMES libmysql.lib
+      PATHS "${MYSQL_LIB_DIR}/debug"
+      NO_DEFAULT_PATH
+    )
+  endif()
 
   #message("-- static lib: ${MYSQL_LIB}")
   #message("-- debug lib: ${MYSQL_LIB_DEBUG}")
@@ -229,6 +258,18 @@ function(main)
     IMPORTED_LOCATION_DEBUG "${MYSQL_DLL_DEBUG}"
   )
 
+  if (WIN32)
+    if(MYSQL_DLL_IMP)
+      set_target_properties(MySQL::client-shared PROPERTIES
+        IMPORTED_IMPLIB "${MYSQL_DLL_IMP}")
+    endif()
+    if(MYSQL_DLL_IMP_DEBUG)
+      set_target_properties(MySQL::client-shared PROPERTIES
+        IMPORTED_IMPLIB_DEBUG "${MYSQL_DLL_IMP_DEBUG}")
+    endif()
+  endif()
+
+
   # Define alias MySQL::client pointing to -static or -shared library,
   # depending on MYSQL_LIB_STATIC setting.
   #
@@ -278,8 +319,10 @@ function(main)
   get_dependencies()
 
   message("  version: ${MYSQL_VERSION}")
-  message("  include path: ${MYSQL_INCLUDE_DIR}")
-  message("  library location: ${MYSQL_LIB}")
+  get_target_property(dummy MySQL::client-shared INTERFACE_INCLUDE_DIRECTORIES)
+  message("  include path: ${dummy}")
+  get_target_property(dummy MySQL::client-shared IMPORTED_LOCATION)
+  message("  library location: ${dummy}")
 
   # Using INTERFACE_LINK_LIBRARIES we ensure that -L option will appear
   # in the link line of the consumer of this library. Adding this -L option
