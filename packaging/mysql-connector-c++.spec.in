@@ -130,7 +130,7 @@ test suite for MySQL Connector/C++
 %endif
 
 %global __cmake_explicit_opts -DCMAKE_INSTALL_PREFIX="%_prefix" -DCMAKE_C_FLAGS:STRING="%optflags" -DCMAKE_CXX_FLAGS:STRING="%optflags"
-%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt}
+%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
 
 %if 0%{?rhel}
 %global __cmake_cmd cmake3 %{__cmake_common_opts} %{__cmake_explicit_opts} ..
