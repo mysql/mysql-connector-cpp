@@ -586,8 +586,6 @@ public:
     CATCH_AND_WRAP
   }
 
-  using iterator = RowList::iterator;
-
   /**
     Return all remaining rows
 
