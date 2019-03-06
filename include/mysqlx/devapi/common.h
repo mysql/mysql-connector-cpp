@@ -471,7 +471,6 @@ protected:
 
 public:
 
-  typedef typename std::remove_reference<Source>::type::iterator iterator;
 
   /*
     Arguments given to the constructor are passed to the internal
@@ -492,9 +491,6 @@ public:
 
   template <
     typename U
-    , typename std::is_constructible<
-        U, const iterator&, const iterator&
-      >::type* = nullptr
     , typename std::enable_if<
         !std::is_same< U, std::initializer_list<typename U::value_type> >::value
       >::type* = nullptr
@@ -507,7 +503,7 @@ public:
     CATCH_AND_WRAP
   }
 
-  iterator begin()
+  auto begin() -> decltype(std::begin(m_src))
   {
     try {
       return std::begin(m_src);
@@ -515,14 +511,13 @@ public:
     CATCH_AND_WRAP
   }
 
-  iterator end() const
+  auto end() const -> decltype(std::end(m_src))
   {
     try {
       return std::end(m_src);
     }
     CATCH_AND_WRAP
   }
-
 };
 
 

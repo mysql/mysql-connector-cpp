@@ -297,3 +297,84 @@ TEST_F(Bugs, modify_clone)
   //Should not crash
   Result mod = cModify.execute();
 }
+
+TEST_F(Bugs, list_initializer)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto sch = get_sess().getSchema("test", true);
+
+  auto coll = sch.createCollection("c1");
+  coll.remove("true").execute();
+
+  for(auto collection : sch.getCollectionNames())
+  {
+    std::cout << collection << std::endl;
+  }
+
+  for(auto collections : sch.getCollections())
+  {
+    std::cout << collections.getName() << std::endl;
+  }
+
+  for(auto tables : sch.getTables())
+  {
+    std::cout << tables.getName() << std::endl;
+  }
+
+  Result add_res = coll.add(
+                 "{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+                 "{ \"name\": \"buz\", \"age\": 17 }",
+                 "{ \"name\": \"bar\", \"age\": 3 }"
+                 ).execute();
+
+  int count = 0;
+  for(const string& id : add_res.getGeneratedIds())
+  {
+    std::cout << id << std::endl;
+    ++count;
+  }
+  EXPECT_EQ(2, count);
+
+  for(auto w : add_res.getWarnings())
+  {
+    std::cout << w.getCode() << ": " << w.getMessage() << std::endl;
+  }
+
+  count = 0;
+  for(const std::string& id : add_res.getGeneratedIds())
+  {
+    std::cout << id << std::endl;
+    ++count;
+  }
+  EXPECT_EQ(2, count);
+
+  count = 0;
+  for(auto id : add_res.getGeneratedIds())
+  {
+    std::cout << id << std::endl;
+    ++count;
+  }
+  EXPECT_EQ(2, count);
+
+  DocResult fin_res = coll.find().execute();
+
+  for(auto doc : fin_res)
+  {
+    std::cout << doc << std::endl;
+  }
+
+  auto tbl = sch.getCollectionAsTable("c1");
+
+  auto tbl_res = tbl.select("_id").execute();
+  for (Row r : tbl_res)
+  {
+    std::cout << r.get(0).get<string>() << std::endl;
+  }
+
+  RowResult sql_res = get_sess().sql("select _id from test.c1").execute();
+  for(Row r : sql_res)
+  {
+    std::cout << r.get(0).get<string>() << std::endl;
+  }
+}
