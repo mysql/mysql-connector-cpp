@@ -40,7 +40,7 @@
 
   The following classes for table CRUD operations are defined:
   - TableInsert
-  - TableDelete
+  - TableRemove
   - TableSelect
   - TableUpdate
 
@@ -132,6 +132,7 @@ public:
     internal::Table_insert_base::operator=(std::move(other));
   }
 
+  using internal::Table_insert_base::operator=;
 
   /// Add the given row to the list of rows to be inserted.
 
@@ -287,6 +288,7 @@ public:
     internal::Table_select_cmd::operator=(std::move(other));
   }
 
+  using internal::Table_select_cmd::operator=;
 
   /**
     Specify row selection criteria.
@@ -376,6 +378,7 @@ public:
     internal::Table_update_cmd::operator=(std::move(other));
   }
 
+  using internal::Table_update_cmd::operator=;
 
   /**
     Set the given field in a row to the given value.
@@ -477,6 +480,7 @@ public:
     internal::Table_remove_cmd::operator=(std::move(other));
   }
 
+  using internal::Table_remove_cmd::operator=;
 
   /**
     Specify selection criteria for rows to be removed.

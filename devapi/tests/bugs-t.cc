@@ -378,3 +378,115 @@ TEST_F(Bugs, list_initializer)
     std::cout << r.get(0).get<string>() << std::endl;
   }
 }
+
+TEST_F(Bugs, crud_move)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto coll = get_sess().createSchema("test",true).createCollection("c1",true);
+
+  coll.remove("true").execute();
+
+  Result add_res = coll.add(
+                 "{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+                 "{ \"name\": \"buz\", \"age\": 17 }",
+                 "{ \"name\": \"bar\", \"age\": 3 }"
+                 ).execute();
+
+  auto find = coll.find();
+  // query
+  find.execute();
+  // prepare+execute
+  find.execute();
+
+  EXPECT_EQ(1,
+            sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+  {
+    auto tmp_find = find;
+    //Since limit will prepare+execute right away, we should test it here:
+    find.limit(2);
+    // prepare+execute
+    find.execute();
+    // execute
+    find.execute();
+    find = find.limit(1);
+    find.execute();
+
+    EXPECT_EQ(2,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+  }
+
+  //Force stmt_id cleanup
+  find.sort("name ASC");
+  find.execute();
+  find.execute();
+
+  { //Find2 scope
+    CollectionFind find2 = find.limit(1);
+    //With assign, both point to same implementation (also same PS id), untill one
+    //changes some parameter, which in that case, will create a clone.
+
+    // execute
+    find.execute();
+
+    find2.limit(2);
+    // execute
+    find.execute();
+
+    // execute
+    find2.execute();
+    find2.execute();
+
+    EXPECT_EQ(1,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+    //Move works just like assignment (same as shared_ptr behaviour)
+    find = std::move(find2);
+    { //find3 scope
+      auto find3 = find;
+
+      // execute
+      find2.execute();
+      find2.execute();
+      // execute
+      find2.execute();
+      find2.execute();
+      // execute
+      find3.execute();
+      find3.execute();
+
+      EXPECT_EQ(1,
+                sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+      find.sort("name ASC");
+
+      // query
+      find.execute();
+      // prepare+execute
+      find.execute();
+      // execute
+      find2.execute();
+      // execute
+      find3.execute();
+
+      EXPECT_EQ(2,
+                sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+    } //find3 scope
+
+    EXPECT_EQ(2,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+  }// find2 scope
+
+  find.sort("name DESC");
+
+  find.execute();
+  find.execute();
+
+  EXPECT_EQ(1,
+            sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+
+}
