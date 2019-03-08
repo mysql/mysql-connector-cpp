@@ -101,6 +101,7 @@ protected:
 
   using string = std::string;
   using Shared_session_impl = shared_ptr<Session_impl>;
+  using Shared_stmt_id = shared_ptr<uint32_t>;
 
   Shared_session_impl m_sess;
 
@@ -110,7 +111,7 @@ protected:
   */
   cdk::scoped_ptr<cdk::Reply> m_reply;
 
-  uint32_t m_stmt_id = 0;
+  Shared_stmt_id m_stmt_id;
   Prepare_state  m_prepare_state = PS_EXECUTE;
   bool m_inited = false;
   bool m_completed = false;
@@ -130,14 +131,13 @@ public:
 
   Op_base(const Op_base& other)
     : m_sess(other.m_sess)
+    , m_stmt_id(other.m_stmt_id)
+    , m_prepare_state(other.m_prepare_state)
   {}
 
-  virtual ~Op_base()
+  virtual ~Op_base() override
   {
-    if (m_stmt_id != 0)
-    {
-      m_sess->release_stmt_id(m_stmt_id);
-    }
+    release_stmt_id();
   }
 
   cdk::Session& get_cdk_session()
@@ -148,19 +148,23 @@ public:
 
   uint32_t create_stmt_id()
   {
-    if (m_stmt_id == 0)
+    assert(m_sess);
+    if (!m_stmt_id.unique())
     {
-      assert(m_sess);
-      m_stmt_id = m_sess->create_stmt_id();
+      uint32_t id = m_sess->create_stmt_id();
+      if(id != 0)
+        m_stmt_id.reset(new uint32_t(id));
+      else
+        m_stmt_id.reset();
     }
-    return m_stmt_id;
+    return get_stmt_id();
   }
 
   void release_stmt_id()
   {
-    if (m_stmt_id != 0)
-      m_sess->release_stmt_id(m_stmt_id);
-    m_stmt_id = 0;
+    if (m_stmt_id.unique())
+      m_sess->release_stmt_id(*m_stmt_id);
+    m_stmt_id.reset();
   }
 
 
@@ -171,9 +175,9 @@ public:
 
   void reset_state()
   {
-    if (m_stmt_id != 0)
-      get_session()->error_stmt_id(m_stmt_id);
-    m_stmt_id = 0;
+    if (m_stmt_id.unique())
+      get_session()->error_stmt_id(*m_stmt_id);
+    m_stmt_id.reset();
     m_prepare_state = PS_EXECUTE;
     m_reply.reset();
     m_inited = false;
@@ -182,7 +186,7 @@ public:
 
   uint32_t get_stmt_id()
   {
-    return m_stmt_id;
+    return m_stmt_id ? *m_stmt_id.get() : 0;
   }
 
   Prepare_state get_prepare_state()
@@ -475,23 +479,25 @@ private:
     auto prepare = get_prepare_state();
 
     /*
-      Upon first execution, get_executed() and get_re_prepare() are false and
-      get_stmt_id() is 0. The new statement id is not allocated yet and function
-      returns false, meaning that the statement will be executed directly
-      without preparing.
+      Upon first execution, prepare is on PS_EXECUTE state and get_stmt_id() is
+      0. The new statement id is not allocated yet and function returns false,
+      meaning that the statement will be executed directly without preparing.
+      Also, prepare is set to PS_PREPARE_EXECUTE.
 
-      On next execution, get_executed() and get_re_prepare() are true. Then new
+      On next execution, prepare is then on PS_PREPARE_EXECUTE. Then new
       PS id is allocated and function returns false, meaning that the statement
-      gets prepared and executed. Also, the re-prepare flag is cleared.
+      gets prepared and executed. Also, the state is set to PS_EXECUTE_PREPARED.
 
-      On 3rd and following executions, if re-prepare flag stays false, this
+      On 3rd and following executions, if state stays PS_EXECUTE_PREPARED, this
       function will return true meaning that the prepared statement should be
       used.
     */
 
-    if (prepare != PS_EXECUTE )
+    if (prepare == PS_PREPARE_EXECUTE )
+    {
       create_stmt_id();
-    else
+    }
+    else if (prepare == PS_EXECUTE)
     {
       release_stmt_id();
     }

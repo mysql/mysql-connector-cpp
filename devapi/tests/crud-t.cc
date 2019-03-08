@@ -2614,17 +2614,19 @@ TEST_F(Crud, PS)
   cout << "Fetching documents..." << endl;
 
   std::vector<CollectionFind> finds;
+  std::vector<CollectionFind> finds2;
+  std::vector<CollectionFind> finds3;
 
   auto create_find = [&finds, &coll]()
   {
-    for (int i = 0; i < 200; ++i)
+    for (int i = 0; i < 100; ++i)
     {
       finds.push_back(coll.find("name like :name and age < :age"));
     }
   };
 
   //-1 means not set
-  auto execute_find = [&finds](int limit, int offset, int expected)
+  auto execute_find = [](std::vector<CollectionFind> &finds,int limit, int offset, int expected, bool bind = true)
   {
     for (auto &find : finds)
     {
@@ -2633,17 +2635,18 @@ TEST_F(Crud, PS)
       if(offset != -1)
         find.offset(offset);
 
+      if (bind)
+        find.bind("name", "%").bind("age", 1000);
 
-      EXPECT_EQ(expected,
-                find
-                .bind("name", "%")
-                .bind("age", 1000)
-                .execute().count());
+      EXPECT_EQ(expected,find.execute().count());
     }
 
   };
 
-  auto execute_find_sort = [&finds](bool set_sort, int expected)
+  auto execute_find_sort = [](
+                           std::vector<CollectionFind> &finds,
+                           bool set_sort,
+                           int expected)
   {
     for (auto &find : finds)
     {
@@ -2667,7 +2670,7 @@ TEST_F(Crud, PS)
     auto start_time = std::chrono::system_clock::now();
 
     //direct_execute
-    execute_find(-1, -1, 6);
+    execute_find(finds,-1, -1, 6);
 
     std::cout << "Direct Execute: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2677,7 +2680,7 @@ TEST_F(Crud, PS)
 
     //prepare+execute
     //Even if limit/offset changes, it will not fallback to the direct execute
-    execute_find(6,-1,6);
+    execute_find(finds,6,-1,6);
 
     std::cout << "Prepare+Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2686,44 +2689,115 @@ TEST_F(Crud, PS)
     start_time = std::chrono::system_clock::now();
 
     //execute prepared
-     execute_find(6, -1, 6);
+     execute_find(finds, 6, -1, 6);
 
     std::cout << "Execute PS: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::system_clock::now()-start_time).count()
               << "(ms)" << std::endl;
+
+
     start_time = std::chrono::system_clock::now();
 
 
     //Re-use previously freed stmt_ids
     finds.clear();
     create_find();
+
+    auto cpy_find = [&finds](std::vector<CollectionFind> &finds2)
+    {
+      finds2.clear();
+      for(auto find : finds)
+      {
+        finds2.push_back(find);
+      }
+    };
+
+    finds2.clear();
+    finds2.clear();
+
     //Execute
-    execute_find(-1, -1, 6);
+    execute_find(finds,-1, -1, 6);
     //Prepare+Execute
-    execute_find(-1, -1, 6);
+    execute_find(finds,-1, -1, 6);
+
+
+    cpy_find(finds2);
+    cpy_find(finds3);
+
+
+    //Only 100, because the PS id is shared by finds finds2 and finds3
+    EXPECT_EQ(100,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+    //Since no re-prepare needed, all use same PS id
+
     //ExecutePrepared
-    execute_find(-1, -1, 6);
+    execute_find(finds,-1, -1, 6,false);
+    execute_find(finds2,-1, -1, 6, false);
+    execute_find(finds3,-1, -1, 6, false);
+
+    //Only 100, because the PS id is shared by finds finds2 and finds3
+    EXPECT_EQ(100,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+
     //Prepare+Execute
-    execute_find(-1, 5, 1);
+    execute_find(finds,-1, 5, 1, false);
+    execute_find(finds2,-1, 5, 1, false);
+    execute_find(finds3,-1, 5, 1, false);
+
+    //Reaches max PS because sort forces a re-prepare
+    EXPECT_EQ(199,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
     //ExecutePrepared
-    execute_find(1, 0, 1);
+    execute_find(finds,1, 0, 1, false);
+    execute_find(finds2,1, 0, 1, false);
+    execute_find(finds3,1, 0, 1, false);
+
+
+
     //ExecutePrepared
-    execute_find(1, 1, 1);
+    execute_find(finds,1, 1, 1, false);
+    execute_find(finds2,1, 1, 1, false);
+    execute_find(finds3,1, 1, 1, false);
     //ExecutePrepared
-    execute_find(1, 1, 1);
+    execute_find(finds,1, 1, 1, false);
+    execute_find(finds2,1, 1, 1, false);
+    execute_find(finds3,1, 1, 1, false);
 
     //SET SORT
+    //Re-prepare needed, so find3 will only deirect execute because it passed
+    //max_prepared_stmt_count = 200
+
     //Execute
-    execute_find_sort(true, 1);
+    execute_find_sort(finds,true, 1);
+    execute_find_sort(finds2,true, 1);
+    execute_find_sort(finds3,true, 1);
+
     //Prepare+Execute
-    execute_find_sort(false, 1);
+    execute_find_sort(finds,false, 1);
+
+    //After release, finds take first 100 PS ids
+    EXPECT_EQ(100,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+    execute_find_sort(finds2,false, 1);
+    execute_find_sort(finds3,false, 1);
+
+    //Reaches max PS, since finds no longer share ids.
+    EXPECT_EQ(199,
+              sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
+
+
     //ExecutePrepared
-    execute_find_sort(false, 1);
+    execute_find_sort(finds,false, 1);
+    execute_find_sort(finds2,false, 1);
+    execute_find_sort(finds3,false, 1);
 
     //clean upp the finds for next round
     finds.clear();
-    create_find();
   }
 
   //Modify prepare

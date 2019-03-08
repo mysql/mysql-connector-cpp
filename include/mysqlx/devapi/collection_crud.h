@@ -159,6 +159,8 @@ public:
     internal::Collection_add_base::operator=(std::move(other));
   }
 
+  using internal::Collection_add_base::operator=;
+
 
   /**
     Add all documents from a range defined by two iterators.
@@ -284,6 +286,8 @@ public:
     internal::Collection_remove_cmd::operator=(std::move(other));
   }
 
+  using internal::Collection_remove_cmd::operator=;
+
 };
 
 
@@ -363,6 +367,8 @@ public:
   {
     internal::Collection_find_cmd::operator=(std::move(other));
   }
+
+  using internal::Collection_find_cmd::operator=;
 
 
 public:
@@ -462,6 +468,7 @@ public:
     internal::Collection_modify_cmd::operator=(std::move(other));
   }
 
+  using internal::Collection_modify_cmd::operator=;
 
   /**
     Set the given field in a document to the given value.

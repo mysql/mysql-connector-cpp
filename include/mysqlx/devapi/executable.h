@@ -66,11 +66,12 @@ using std::ostream;
 template <class Res, class Op>
 class Executable
 {
-protected:
-
+private:
   using Impl = common::Executable_if;
 
-  std::shared_ptr<Impl> m_impl;
+  std::unique_ptr<Impl> m_impl;
+protected:
+
 
   Executable() = default;
 
@@ -93,10 +94,10 @@ protected:
 
   void reset(const Executable &&other)
   {
-    m_impl = std::move(other.m_impl);
+    m_impl.reset(other.m_impl->clone());
   }
 
-  void check_if_valid()
+  void check_if_valid() const
   {
     if (!m_impl)
       throw Error("Attempt to use invalid operation");
