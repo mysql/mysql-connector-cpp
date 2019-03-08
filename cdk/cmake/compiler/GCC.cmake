@@ -29,6 +29,27 @@
 ##########################################################################
 
 #
+# Ensure relative source locations in debug entries
+#
+
+option(DEBUG_PREFIX_MAP
+  "Set -fdebug-prefix-map option to ensure relative source locations in debug entries."
+  ON
+)
+
+if(DEBUG_PREFIX_MAP)
+
+  foreach(LANG C CXX)
+  foreach(TYPE DEBUG RELWITHDEBINFO)
+    set(CMAKE_${LANG}_FLAGS_${TYPE}
+      "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=. ${CMAKE_${LANG}_FLAGS_${TYPE}}"
+    )
+  endforeach(TYPE)
+  endforeach(LANG)
+
+endif(DEBUG_PREFIX_MAP)
+
+#
 # Deal with broken optimization in gcc 4.8.
 #
 # We observed very strange behaviour of exceptions when compiling
