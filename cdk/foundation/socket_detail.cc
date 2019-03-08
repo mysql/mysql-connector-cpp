@@ -44,6 +44,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <limits>
 #include <chrono>
 #include <sstream>
+
 #ifndef _WIN32
 #include <arpa/inet.h>
 #include <signal.h>
@@ -607,9 +608,14 @@ Socket connect(const char *host_name, unsigned short port,
         if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       #endif
         {
-          int select_result = poll_one(socket, POLL_MODE_CONNECT,true,
-                                         (uint64_t)duration_cast<microseconds>(
-                                           deadline - system_clock::now()).count());
+          auto timeout = duration_cast<microseconds>(
+            deadline - system_clock::now()
+          ).count();
+
+          int select_result = poll_one(
+            socket, POLL_MODE_CONNECT, true,
+            0 == timeout_usec ? 0 : timeout > 0 ? timeout : 1
+          );
 
           if (select_result == 0 && (timeout_usec > 0) &&
                (std::chrono::system_clock::now() >= deadline))
@@ -759,6 +765,7 @@ Socket listen_and_accept(unsigned short port)
   return client;
 }
 
+
 int poll_one(Socket socket, Poll_mode mode, bool wait,
                uint64_t timeout_usec)
 {
@@ -790,13 +797,9 @@ DIAGNOSTIC_PUSH_CDK
 DIAGNOSTIC_POP_CDK
 
   //milliseconds
-  int timeout = -1;
-
-  if (wait && timeout_usec > 0)
-  {
-    // If timeout is specified we will use it
-    timeout = static_cast<int>(timeout_usec / 1000);
-  }
+  int timeout =
+    !wait ? 0
+    : timeout_usec > 0 ? static_cast<int>((1000+timeout_usec) / 1000) : -1;
 
 #ifdef _WIN32
   int result = ::WSAPoll(&fds, 1, timeout);
