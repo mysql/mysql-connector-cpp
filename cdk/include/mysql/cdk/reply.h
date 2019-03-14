@@ -46,8 +46,9 @@ class Reply
 {
 protected:
 
-  mysqlx::Reply m_impl;
-  typedef mysqlx::Reply_init& Initializer;
+  // Note: Implementation might be shared with a Cursor instance.
+  std::shared_ptr<mysqlx::Stmt_op> m_impl;
+  typedef mysqlx::Stmt_op* Initializer;
 
 public:
 
@@ -55,50 +56,67 @@ public:
   {}
 
   Reply(Initializer _init)
-  {
-    m_impl= _init;
-  }
+    : m_impl(_init)
+  {}
 
   Reply& operator=(Initializer _init)
   {
-    m_impl= _init;
+    m_impl.reset(_init);
     return *this;
   }
 
   // Reply interface
 
-  bool has_results() { return m_impl.has_results(); }
-  void skip_result() { m_impl.skip_result(); }
-  row_count_t affected_rows() { return m_impl.affected_rows(); }
-  row_count_t last_insert_id() { return m_impl.last_insert_id(); }
+  bool has_results()
+  {
+    /*
+      If we are in a state after consuming one result set and there is
+      a next one available, next_result() will return true and proceed
+      to reading it. Otherwise check_results() tells if we have a (not yet
+      consumed) result set available.
+    */
+
+    return m_impl->next_result() || m_impl->check_results();
+  }
+
+  void skip_result()
+  {
+    m_impl->discard_result();
+    m_impl->wait();
+    // Note: this moves to next result set, if present.
+    m_impl->next_result();
+  }
+
+  row_count_t affected_rows() { return m_impl->affected_rows(); }
+  row_count_t last_insert_id() { return m_impl->last_insert_id(); }
   const std::vector<std::string>& generated_ids() const
-  { return m_impl.generated_ids(); }
-  void discard() { m_impl.discard(); }
+  { return m_impl->generated_ids(); }
+  void discard() { m_impl->discard(); }
 
   // Diagnostics interface
 
   unsigned int entry_count(Severity::value level=Severity::ERROR)
-  { return m_impl.entry_count(level); }
+  { return m_impl->entry_count(level); }
 
   Diagnostic_iterator& get_entries(Severity::value level=Severity::ERROR)
-  { return m_impl.get_entries(level); }
+  { return m_impl->get_entries(level); }
 
   const Error& get_error()
-  { return m_impl.get_error(); }
+  { return m_impl->get_error(); }
 
   // Async_op interface
 
-  bool is_completed() const { return m_impl.is_completed(); }
+  bool is_completed() const { return m_impl->is_completed(); }
 
 private:
 
   // Async_op
 
-  bool do_cont() { return m_impl.cont(); }
-  void do_wait() { return m_impl.wait(); }
-  void do_cancel() { return m_impl.cancel(); }
+  bool do_cont() { return m_impl->cont(); }
+  void do_wait() { return m_impl->wait(); }
+  void do_cancel() { return m_impl->cancel(); }
   const cdk::api::Event_info* get_event_info() const
-  { return m_impl.get_event_info(); }
+  { return m_impl->get_event_info(); }
 
 
   friend class Session;

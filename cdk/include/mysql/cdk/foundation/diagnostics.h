@@ -251,14 +251,14 @@ class Diagnostic_arena
   : public api::Diagnostics
 {
   typedef Diagnostic_iterator::Entry_list Entry_list;
-  typedef api::Severity Severity;
 
   Entry_list m_entries;
-  std::map<Severity::value, unsigned int> m_counts;
+  std::map<api::Severity::value, unsigned int> m_counts;
   Diagnostic_iterator m_it;
 
 public:
 
+  typedef api::Severity Severity;
   typedef Diagnostic_iterator Iterator;
 
   Diagnostic_arena()

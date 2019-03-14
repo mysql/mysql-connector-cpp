@@ -761,10 +761,11 @@ TEST_F(First, sqlresult)
     SqlResult res =  get_sess().sql("SELECT * from test.t")
                      .execute();
 
-    EXPECT_THROW(res.getAffectedItemsCount(), mysqlx::Error);
-    EXPECT_THROW(res.getAutoIncrementValue(), mysqlx::Error);
+    EXPECT_THROW(res.getAffectedItemsCount(), Error);
+    EXPECT_THROW(res.getAutoIncrementValue(), Error);
 
-    while (res.nextResult());
+    res.nextResult();
+    EXPECT_FALSE(res.nextResult());
 
     EXPECT_EQ(0, res.getAffectedItemsCount());
     EXPECT_EQ(0, res.getAutoIncrementValue());

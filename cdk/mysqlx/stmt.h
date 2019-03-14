@@ -32,7 +32,7 @@
 #define CDK_MYSQLX_DELAYED_OP_H
 
 #include <mysql/cdk/common.h>
-#include <mysql/cdk/protocol/mysqlx.h>
+#include <mysql/cdk/mysqlx/result.h>
 #include <memory>
 #include "converters.h"
 
@@ -44,252 +44,276 @@ namespace mysqlx {
 
 
 /*
-  Delayed operations
-  ==================
-
-  Delayed operations are created by session an put into a queue for later
-  execution. When it is time to execute delayed operation, its start() method
-  is called which should start corresponding protocol operation.
+  Specialization of Stmt_op which expects a full server reply with result
+  sets instead of a simple OK.
 */
 
-
-class Proto_delayed_op
-    : public Proto_op
+class Query_stmt
+  : public Stmt_op
 {
-
 protected:
 
-  Protocol& m_protocol;
-  Proto_op* op;
+  using Stmt_op::Stmt_op;
 
-  Proto_delayed_op(Protocol& protocol)
-    : m_protocol(protocol)
-    , op(nullptr)
-  {}
-
-public:
-
-  virtual ~Proto_delayed_op()
+  virtual bool do_cont() override
   {
+    if (SEND == m_state)
+      return Stmt_op::do_cont();
+
+    /*
+      Note: call to next_result() changes statement state so that it
+      expects a full reply.
+    */
+
+    if (OK == m_state)
+      m_state = MDATA; // next_result();
+
+    assert(OK != m_state);
+
+    return Stmt_op::do_cont();
   }
 
-  bool is_completed() const
-  {
-    return nullptr != op && op->is_completed();
-  }
-
-protected:
-
-  virtual Proto_op* start() = 0;
-
-  virtual bool do_cont()
-  {
-    if (nullptr == op)
-      op = start();
-    return op->cont();
-  }
-
-  virtual void do_wait()
-  {
-    if (op == nullptr)
-      op = start();
-
-    if (op)
-       op->wait();
-    else
-      THROW("Invalid delayed operation.");
-  }
-
-  virtual void do_cancel()
-  {
-    if (op)
-      op->cancel();
-  }
-
-  virtual const api::Event_info* get_event_info() const
-  {
-    if (op)
-      return op->waits_for();
-    return nullptr;
-  }
-
-  size_t do_get_result(void)
-  { return op ? op->get_result() : 0; }
 };
 
 
-class Proto_prepare_op
-    : public Proto_delayed_op
+/*
+  A base class for operations that use statements prepared on the server.
+
+  By default this operation will execute prepared statement with stmt_id given
+  when it is created and then will process its reply as usual (so the user
+  of this class must ensure that the statement was prepared on the server
+  beforehand).
+
+  Otherwise, if derived class is used, it is assumed that it overrides
+  send_cmd() method to to send and prepare a statement on the server. Server
+  reply is expected to be a reply to prepare + execute pipeline with first OK
+  packet as a reply to the prepare command followed by a reply to the
+  statement that was prepared (which is handled as usual by the base
+  class).
+*/
+
+template <class Base>
+class Prepared
+    : public Base
 {
 protected:
+
   uint32_t m_stmt_id=0;
+  const Limit        *m_limit = nullptr;
+  const protocol::mysqlx::api::Any_list *m_param_list = nullptr;
+  const protocol::mysqlx::api::Args_map *m_param_map = nullptr;
+  Any_list_converter m_list_conv;
+  Param_converter    m_map_conv;
+  bool m_prepare_error = false;
 
 public:
 
-  Proto_prepare_op(Protocol& protocol, uint32_t stmt_id=0)
-    : Proto_delayed_op(protocol)
+  Prepared(
+    Session &s,
+    uint32_t stmt_id,
+    const cdk::Limit *lim,
+    const Param_source *param
+  )
+    : Base(s)
     , m_stmt_id(stmt_id)
+    , m_limit(lim)
+  {
+    if (param)
+    {
+      m_map_conv.reset(*param);
+      m_param_map = &m_map_conv;
+    }
+  }
+
+  Prepared(
+    Session &s,
+    uint32_t stmt_id,
+    const Any_list *list
+  )
+    : Base(s)
+    , m_stmt_id(stmt_id)
+  {
+    if (list)
+    {
+      m_list_conv.reset(*list);
+      m_param_list = &m_list_conv;
+    }
+  }
+
+  Prepared(Session &s)
+    : Base(s)
   {}
 
-  uint32_t stmt_id()
+
+  /*
+    This implementation just executes an already prepared statement with the
+    given id and processes the reply as usual. Derived classes are supposed
+    to override it with protocol operation that prepares and executes
+    a statement (if m_stmt_id is not 0).
+  */
+
+  Proto_op* send_cmd() override
   {
-    return m_stmt_id;
+    uint32_t id = m_stmt_id;
+    m_stmt_id = 0;  // so that we directly process reply to Execute
+    if (m_limit || m_param_map)
+    {
+      return &Base::get_protocol().snd_PrepareExecute(id, m_limit, m_param_map);
+    }
+    else
+    {
+      return &Base::get_protocol().snd_PrepareExecute(id, m_param_list);
+    }
   }
 
-  virtual bool prepare_prepare()
+  bool do_cont() override
   {
-    return m_stmt_id != 0;
+    /*
+      If m_stmt_id is 0 (so no prepared statements are used) or we are still
+      in the sending phase, continue as the base operation.
+    */
+
+    if ((0 == m_stmt_id) || !this->stmt_sent())
+      return Base::do_cont();
+
+    /*
+      Here m_stmt_id != 0 and we know we are dealing with server reply to
+      a pipeline starting with prepare command. We need to first process
+      the reply to prepare command and then continue processing the rest
+      of the reply as dictated by the base class.
+
+      Note: we could execute rcv_Reply() operation asynchronously here, but
+      for simplicity we just wait for it to complete before proceeding.
+    */
+
+    Base::get_protocol().rcv_Reply(*this).wait();
+    m_stmt_id = 0; // continue processing as usual
+    return false;
   }
 
+  void error(
+    unsigned int code, short int severity,
+    sql_state_t sql_state, const string &msg
+  ) override
+  {
+    /*
+      If we see error after sending commands and while m_stmt_id != 0 then this
+      is failed prepare command which we report as Server_prepare_error and also
+      set m_prepare_error flag so that further errors are ignored. Otherwise
+      we invoke base error handler.
+    */
+
+    if (this->stmt_sent() && (0 != m_stmt_id) && (Severity::ERROR == severity))
+    {
+      m_prepare_error = true;
+      Base::add_diagnostics(Severity::ERROR, new Server_prepare_error(code, sql_state, msg));
+      return;
+    }
+    else
+      Base::error(code, severity, sql_state, msg);
+  }
+
+  void add_diagnostics(short int severity, Server_error *err) override
+  {
+    // ignore other errors after failed prepare
+    if (m_prepare_error && Severity::ERROR == severity)
+      return;
+    Base::add_diagnostics(severity, err);
+  }
+
+  void ok(string) override
+  {}
 };
 
-class Crud_op_base
-  : public Proto_prepare_op
-  , public protocol::mysqlx::api::Db_obj
+
+class Crud_stmt
+  : public Prepared<Query_stmt>
 {
 protected:
 
-  string   m_name;
-  string   m_schema;
-  bool     m_has_schema;
-
-  Crud_op_base(Protocol &proto)
-    : Proto_prepare_op(proto)
-    , m_has_schema(false)
-  {}
-
-  Crud_op_base(Protocol &proto, const api::Object_ref &obj, uint32_t stmt_id = 0)
-    : Proto_prepare_op(proto, stmt_id)
+  Crud_stmt(
+    Session &s, uint32_t stmt_id,
+    const api::Object_ref &obj,
+    const cdk::Limit *lim,
+    const Param_source *param
+  )
+    : Prepared(s, stmt_id, lim, param)
   {
     set(obj);
   }
-
-  void set(const api::Object_ref &obj)
-  {
-    m_name = obj.name();
-    m_has_schema = (nullptr != obj.schema());
-    if (m_has_schema)
-      m_schema = obj.schema()->name();
-  }
-
-    // Db_obj
-
-  const string& get_name() const { return m_name; }
-  const string* get_schema() const { return m_has_schema ? &m_schema : nullptr; }
-
 };
+
 
 // -------------------------------------------------------------------------
 
 
-class SndStmt
-    : public Proto_prepare_op
+struct Doc_args : public Any_list
+{
+  Doc_args()
+  {}
+
+  Doc_args(const Any::Document *args)
+    : m_doc(args)
+  {}
+
+  const cdk::Any::Document *m_doc = nullptr;
+  void process(Processor &prc) const
+  {
+    Safe_prc<Any_list::Processor> sprc(prc);
+    sprc->list_begin();
+    if (m_doc)
+      m_doc->process_if(sprc->list_el()->doc());
+    sprc->list_end();
+  }
+
+  bool has_args() const
+  {
+    return nullptr != m_doc;
+  }
+};
+
+
+class Cmd_StmtExecute
+    : public Prepared<Query_stmt>
 {
 protected:
 
   const char *m_ns;
   const string m_stmt;
-  Any_list *m_args;
+  Doc_args m_doc_args;
 
-  Proto_op* start()
+  Proto_op* send_cmd()
   {
-    Any_list_converter conv;
-    if (m_args)
-      conv.reset(*m_args);
-    return &m_protocol.snd_StmtExecute(m_stmt_id, m_ns, m_stmt, m_args ? &conv : nullptr);
+    return &get_protocol().snd_StmtExecute(
+      m_stmt_id, m_ns, m_stmt, m_param_list
+    );
   }
 
 public:
 
-  SndStmt(Protocol& protocol, uint32_t stmt_id, const char *ns,
+  Cmd_StmtExecute(Session &s, uint32_t stmt_id, const char *ns,
           const string& stmt, Any_list *args)
-    : Proto_prepare_op(protocol, stmt_id)
+    : Prepared(s, stmt_id, args)
     , m_ns(ns)
-    , m_stmt(stmt), m_args(args)
+    , m_stmt(stmt)
   {}
+
+  Cmd_StmtExecute(Session &s, uint32_t stmt_id, const char *ns,
+    const string& stmt, const cdk::Any::Document *args)
+    : Prepared(s, stmt_id, &m_doc_args)
+    , m_ns(ns)
+    , m_stmt(stmt)
+    , m_doc_args(args)
+  {}
+
 };
 
 
 // -------------------------------------------------------------------------
 
-class SndPrepareExecute
-    : public Proto_prepare_op
-{
-  const Limit        *m_limit;
-  const Param_source *m_param;
-  const Any_list *m_list;
 
-public:
-  SndPrepareExecute(Protocol& protocol, uint32_t stmt_id,
-                    const cdk::Limit *lim,
-                    const Param_source *param)
-    : Proto_prepare_op(protocol, stmt_id)
-    , m_limit(lim)
-    , m_param(param)
-    , m_list(nullptr)
-  {}
-
-  SndPrepareExecute(Protocol& protocol, uint32_t stmt_id,
-                    const Any_list *list)
-    : Proto_prepare_op(protocol, stmt_id)
-    , m_limit(nullptr)
-    , m_param(nullptr)
-    , m_list(list)
-  {}
-
-  Proto_op* start() override
-  {
-    if (m_list)
-    {
-      Any_list_converter conv;
-      conv.reset(*m_list);
-
-      return &m_protocol.snd_PrepareExecute(
-            m_stmt_id, &conv);
-    }
-    else
-    {
-      Param_converter conv;
-      if (m_param)
-        conv.reset(*m_param);
-
-      return &m_protocol.snd_PrepareExecute(
-            m_stmt_id, m_limit, m_param ? &conv : nullptr);
-    }
-  }
-
-  bool prepare_prepare() override
-  {
-    return false;
-  }
-};
-
-
-class SndPrepareDeallocate
-    : public Proto_prepare_op
-{
-
-public:
-  SndPrepareDeallocate(Protocol& protocol, uint32_t stmt_id)
-    : Proto_prepare_op(protocol, stmt_id)
-  {}
-
-  Proto_op* start() override
-  {
-    return &m_protocol.snd_PrepareDeallocate(m_stmt_id);
-  }
-
-  bool prepare_prepare() override
-  {
-    return false;
-  }
-};
-
-// -------------------------------------------------------------------------
-
-
-class SndInsertDocs
-    : public Crud_op_base
+class Cmd_InsertDocs
+    : public Crud_stmt
     , public protocol::mysqlx::Row_source
 {
 protected:
@@ -298,14 +322,14 @@ protected:
   const Param_source *m_param;
   bool m_upsert;
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
     Param_converter param_conv;
 
     if (m_param)
         param_conv.reset(*m_param);
 
-    return &m_protocol.snd_Insert(cdk::protocol::mysqlx::DOCUMENT,
+    return &get_protocol().snd_Insert(cdk::protocol::mysqlx::DOCUMENT,
                                   m_stmt_id,
                                   *this,
                                   nullptr,
@@ -316,13 +340,15 @@ protected:
 
 public:
 
-  SndInsertDocs(Protocol& protocol,
-                uint32_t stmt_id,
-                const api::Table_ref &coll,
-                cdk::Doc_source &docs,
-                const Param_source *param,
-                bool upsert = false)
-    : Crud_op_base(protocol, coll, stmt_id)
+  Cmd_InsertDocs(
+    Session &s,
+    uint32_t stmt_id,
+    const api::Table_ref &coll,
+    cdk::Doc_source &docs,
+    const Param_source *param,
+    bool upsert = false
+  )
+    : Crud_stmt(s, stmt_id, coll, nullptr, param)
     , m_docs(docs)
     , m_param(param)
     , m_upsert(upsert)
@@ -332,7 +358,7 @@ private:
 
   // Row_source
 
-  void process(Processor &prc) const
+  void process(Processor &prc) const override
   {
     prc.list_begin();
     Processor::Element_prc *ep = prc.list_el();
@@ -344,7 +370,7 @@ private:
     prc.list_end();
   }
 
-  bool next()
+  bool next() override
   {
     return m_docs.next();
   }
@@ -355,8 +381,8 @@ private:
 // -------------------------------------------------------------------------
 
 
-class SndInsertRows
-  : public Crud_op_base
+class Cmd_InsertRows
+  : public Crud_stmt
   , public protocol::mysqlx::Row_source
 {
 protected:
@@ -366,14 +392,14 @@ protected:
   const api::Columns *m_cols;
   const Param_source *m_param;
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
     Param_converter param_conv;
 
     if (m_param)
       param_conv.reset(*m_param);
 
-    return &m_protocol.snd_Insert(cdk::protocol::mysqlx::TABLE,
+    return &get_protocol().snd_Insert(cdk::protocol::mysqlx::TABLE,
                                   m_stmt_id,
                                   *this,
                                   m_cols,
@@ -385,13 +411,15 @@ public:
 
   // TODO: Life-time of rows instance...
 
-  SndInsertRows(Protocol& protocol,
-                uint32_t stmt_id,
-                const api::Table_ref &coll,
-                cdk::Row_source &rows,
-                const api::Columns *cols,
-                const Param_source *param)
-    : Crud_op_base(protocol, coll, stmt_id)
+  Cmd_InsertRows(
+    Session &s,
+    uint32_t stmt_id,
+    const api::Table_ref &coll,
+    cdk::Row_source &rows,
+    const api::Columns *cols,
+    const Param_source *param
+  )
+    : Crud_stmt(s, stmt_id, coll, nullptr, param)
     , m_rows(rows), m_cols(cols), m_param(param)
   {}
 
@@ -399,14 +427,14 @@ private:
 
   // Row_source
 
-  void process(Processor &prc) const
+  void process(Processor &prc) const override
   {
     Expr_list_converter conv;
     conv.reset(m_rows);
     conv.process(prc);
   }
 
-  bool next()
+  bool next() override
   {
     return m_rows.next();
   }
@@ -463,7 +491,7 @@ typedef Expr_conv_base<
   Helper base class which implements protocol's Select_spec
   (or Find_spec) interface. This is used by CRUD operations
   which involve selecting a subset of rows/documents in the
-  table/colleciton.
+  table/collection.
 
   A CRUD operation class which derives from this Select_op_base
   can be used as selection criteria specification as required
@@ -475,20 +503,17 @@ typedef Expr_conv_base<
 */
 
 template <class IF = protocol::mysqlx::Select_spec>
-class Select_op_base
-  : public Crud_op_base
+class Cmd_Select
+  : public Crud_stmt
   , public IF
 {
 protected:
 
   Expr_converter     m_expr_conv;
-  Param_converter    m_param_conv;
   Order_by_converter m_ord_conv;
-  const Limit       *m_limit;
 
-
-  Select_op_base(
-    Protocol &protocol,
+  Cmd_Select(
+    Session &s,
     uint32_t stmt_id,
     const api::Object_ref &obj,
     const cdk::Expression *expr,
@@ -496,13 +521,13 @@ protected:
     const cdk::Limit *lim = nullptr,
     const cdk::Param_source *param = nullptr
   )
-    : Crud_op_base(protocol, obj, stmt_id)
-    , m_expr_conv(expr), m_param_conv(param), m_ord_conv(order_by)
-    , m_limit(lim)
+    : Crud_stmt(s, stmt_id, obj, lim, param)
+    , m_expr_conv(expr)
+    , m_ord_conv(order_by)
   {}
 
 
-  virtual ~Select_op_base()
+  virtual ~Cmd_Select()
   {}
 
 
@@ -532,26 +557,28 @@ protected:
 
 
 template <protocol::mysqlx::Data_model DM>
-class SndDelete
-    : public Select_op_base<>
+class Cmd_Delete
+    : public Cmd_Select<>
 {
 protected:
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
-    return &m_protocol.snd_Delete(DM, m_stmt_id, *this, m_param_conv.get());
+    return &get_protocol().snd_Delete(DM, m_stmt_id, *this, m_param_map);
   }
 
 public:
 
-  SndDelete(Protocol& protocol,
-            uint32_t stmt_id,
-            const api::Object_ref &obj,
-            const cdk::Expression *expr,
-            const cdk::Order_by *order_by,
-            const cdk::Limit *lim = nullptr,
-            const cdk::Param_source *param = nullptr)
-    : Select_op_base(protocol, stmt_id, obj, expr, order_by, lim, param)
+  Cmd_Delete(
+    Session& s,
+    uint32_t stmt_id,
+    const api::Object_ref &obj,
+    const cdk::Expression *expr,
+    const cdk::Order_by *order_by,
+    const cdk::Limit *lim = nullptr,
+    const cdk::Param_source *param = nullptr
+  )
+    : Cmd_Select(s, stmt_id, obj, expr, order_by, lim, param)
   {}
 
 };
@@ -573,7 +600,7 @@ public:
 
 
 /*
-  Processor coverter for Expression::Document -> protocol::mysqlx::Projection
+  Processor converter for Expression::Document -> protocol::mysqlx::Projection
   conversion. Top-level keys become aliases and their values are projection
   expressions.
 */
@@ -639,9 +666,9 @@ public:
 
 
 /*
-  The SndFind delayed operation below has two variants, for documents and
+  The SndFind statement below has two variants, for documents and
   for tables. Each variant uses different Projection type and different
-  projection coverter. Find_traits<> template defines these types for each
+  projection converter. Find_traits<> template defines these types for each
   variant.
 */
 
@@ -671,12 +698,12 @@ struct Find_traits<protocol::mysqlx::TABLE>
 };
 
 
-template <protocol::mysqlx::Data_model DM> class SndViewCrud;
+template <protocol::mysqlx::Data_model DM> class Cmd_ViewCrud;
 
 
 template <protocol::mysqlx::Data_model DM>
-class SndFind
-    : public Select_op_base<protocol::mysqlx::Find_spec>
+class Cmd_Find
+    : public Cmd_Select<protocol::mysqlx::Find_spec>
 {
 protected:
 
@@ -689,15 +716,15 @@ protected:
   Lock_mode_value       m_lock_mode;
   Lock_contention_value m_lock_contention;
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
-    return &m_protocol.snd_Find(DM, m_stmt_id, *this, m_param_conv.get());
+    return &get_protocol().snd_Find(DM, m_stmt_id, *this, m_param_map);
   }
 
 public:
 
-  SndFind(
-      Protocol& protocol,
+  Cmd_Find(
+      Session& s,
       uint32_t stmt_id,
       const api::Table_ref &coll,
       const cdk::Expression *expr = nullptr,
@@ -709,8 +736,8 @@ public:
       const cdk::Param_source *param = nullptr,
       const Lock_mode_value locking = Lock_mode_value::NONE,
       const Lock_contention_value contention = Lock_contention_value::DEFAULT
-                                               )
-    : Select_op_base(protocol, stmt_id, coll,  expr, order_by, lim, param)
+  )
+    : Cmd_Select(s, stmt_id, coll,  expr, order_by, lim, param)
     , m_proj_conv(proj)
     , m_group_by_conv(group_by), m_having_conv(having)
     , m_lock_mode(locking)
@@ -719,32 +746,32 @@ public:
 
 private:
 
-  const protocol::mysqlx::api::Projection* project() const
+  const protocol::mysqlx::api::Projection* project() const override
   {
     return m_proj_conv.get();
   }
 
-  const protocol::mysqlx::api::Expr_list*  group_by() const
+  const protocol::mysqlx::api::Expr_list*  group_by() const override
   {
     return m_group_by_conv.get();
   }
 
-  const protocol::mysqlx::api::Expression* having() const
+  const protocol::mysqlx::api::Expression* having() const override
   {
     return m_having_conv.get();
   }
 
-  Lock_mode_value locking() const
+  Lock_mode_value locking() const override
   {
     return m_lock_mode;
   }
 
-  Lock_contention_value contention() const
+  Lock_contention_value contention() const override
   {
     return m_lock_contention;
   }
 
-  friend class SndViewCrud<DM>;
+  friend class Cmd_ViewCrud<DM>;
 };
 
 
@@ -778,36 +805,36 @@ typedef List_prc_converter<String_to_col_prc_converter> Columns_prc_converter;
 
 
 /*
-  Delayed operation which sends view create or update request. These request
-  can include a find message. Whether update or create request should be sent
-  is determined by the view specification passed when creating this delayed
-  operation.
+  Statement which creates or updates a view. It can include a find message.
+  Whether update or create command should be sent is determined by the view
+  specification passed when creating this statement object.
 */
 
 template <protocol::mysqlx::Data_model DM>
-class SndViewCrud
-  : public Crud_op_base
+class Cmd_ViewCrud
+  : public Stmt_op
   , public View_spec::Processor
   , public cdk::protocol::mysqlx::api::Columns
   , public protocol::mysqlx::api::View_options
 {
-  const View_spec *m_view;
-  SndFind<DM> *m_find;
-  View_spec::op_type  m_type;
-  bool   m_has_cols;
-  bool   m_has_opts;
+  const View_spec *m_view = nullptr;
+  Cmd_Find<DM> *m_find = nullptr;
+  View_spec::op_type  m_type = CREATE;
+  bool   m_has_cols = false;
+  bool   m_has_opts = false;
 
   // Columns
 
-  void process(cdk::protocol::mysqlx::api::Columns::Processor &prc) const
+  void
+  process(cdk::protocol::mysqlx::api::Columns::Processor &prc) const override
   {
     assert(m_view);
 
     /*
       Column names are reported to the protocol layer as column specification
-      (as used by snd_Insert() for example). We use processor converter to convert
-      string list processor callbacks to these of Columns specification
-      processor.
+      (as used by snd_Insert() for example). We use processor converter
+      to convert string list processor callbacks to these of Columns
+      specification processor.
     */
 
     Columns_prc_converter conv;
@@ -849,7 +876,8 @@ class SndViewCrud
 
   // View_options
 
-  void process(protocol::mysqlx::api::View_options::Processor &prc) const
+  void
+  process(protocol::mysqlx::api::View_options::Processor &prc) const override
   {
     assert(m_view);
 
@@ -890,24 +918,29 @@ class SndViewCrud
   const protocol::mysqlx::api::Args_map*
   get_args()
   {
-    return m_find->m_param_conv.get();
+    return m_find->m_param_map;
   }
 
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
     switch (m_type)
     {
     case CREATE:
     case REPLACE:
-      return &m_protocol.snd_CreateView(DM, *this, *m_find,
-                                        get_cols(), REPLACE == m_type,
-                                        get_opts(), get_args());
+      return &get_protocol().snd_CreateView(
+        DM, *this, *m_find,
+        get_cols(), REPLACE == m_type,
+        get_opts(), get_args()
+      );
 
     case UPDATE:
-      return &m_protocol.snd_ModifyView(DM, *this, *m_find,
-                                        get_cols(), get_opts(),
-                                        m_find->m_param_conv.get());
+      return &get_protocol().snd_ModifyView(
+        DM, *this, *m_find,
+        get_cols(), get_opts(),
+        m_find->m_param_map
+      );
+
     default:
       assert(false);
       return nullptr;  // quiet compile warnings
@@ -916,10 +949,9 @@ class SndViewCrud
 
 public:
 
-  SndViewCrud(const View_spec &view, SndFind<DM> *find = nullptr)
-    : Crud_op_base(find->m_protocol)
-    , m_view(&view), m_find(find), m_type(CREATE)
-    , m_has_cols(false), m_has_opts(false)
+  Cmd_ViewCrud(Session &s, const View_spec &view, Cmd_Find<DM> *find = nullptr)
+    : Stmt_op(s)
+    , m_view(&view), m_find(find)
   {
     /*
       Process view specification to extract view name and information which
@@ -930,7 +962,7 @@ public:
     view.process(*this);
   }
 
-  ~SndViewCrud()
+  ~Cmd_ViewCrud()
   {
     delete m_find;
   }
@@ -939,13 +971,13 @@ private:
 
   // View_spec::Processor
 
-  void name(const Table_ref &view, View_spec::op_type type)
+  void name(const Table_ref &view, View_spec::op_type type) override
   {
-    Crud_op_base::set(view);
+    set(view);
     m_type = type;
   }
 
-  List_processor* columns()
+  List_processor* columns() override
   {
     m_has_cols = true;
     /*
@@ -955,7 +987,7 @@ private:
     return nullptr;
   }
 
-  Options::Processor* options()
+  Options::Processor* options() override
   {
     m_has_opts = true;
     return nullptr;
@@ -963,6 +995,8 @@ private:
 
 };
 
+
+#if 0
 
 class SndDropView
   : public Crud_op_base
@@ -987,6 +1021,7 @@ public:
 
 };
 
+#endif
 
 // -------------------------------------------------------------------------
 
@@ -1182,213 +1217,34 @@ public:
 
 
 template <protocol::mysqlx::Data_model DM>
-class SndUpdate
-    : public Select_op_base<>
+class Cmd_Update
+    : public Cmd_Select<>
 {
 protected:
 
   Update_converter    m_upd_conv;
 
-  Proto_op* start()
+  Proto_op* send_cmd() override
   {
-    return &m_protocol.snd_Update(DM,
-                                  m_stmt_id,
-                                  *this,
-                                  m_upd_conv,
-                                  m_param_conv.get()
-                                  );
+    return &get_protocol().snd_Update(
+      DM, m_stmt_id, *this, m_upd_conv, m_param_map
+    );
   }
 
 public:
 
-  SndUpdate(Protocol& protocol,
-            uint32_t stmt_id,
-            const api::Table_ref &table,
-            const cdk::Expression *expr,
-            const cdk::Update_spec &us,
-            const cdk::Order_by *order_by,
-            const cdk::Limit *lim = nullptr,
-            const cdk::Param_source *param = nullptr)
-    : Select_op_base(protocol, stmt_id, table, expr, order_by, lim, param)
+  Cmd_Update(
+    Session& s,
+    uint32_t stmt_id,
+    const api::Table_ref &table,
+    const cdk::Expression *expr,
+    const cdk::Update_spec &us,
+    const cdk::Order_by *order_by,
+    const cdk::Limit *lim = nullptr,
+    const cdk::Param_source *param = nullptr
+  )
+    : Cmd_Select(s, stmt_id, table, expr, order_by, lim, param)
     , m_upd_conv(DM, us)
-  {}
-
-};
-
-
-// -------------------------------------------------------------------------
-
-
-class RcvMetaData
-    : public Proto_delayed_op
-{
-  typedef protocol::mysqlx::Mdata_processor Mdata_processor;
-
-protected:
-
-  Mdata_processor& m_prc;
-
-  Proto_op* start()
-  {
-    return &m_protocol.rcv_MetaData(m_prc);
-  }
-
-public:
-  RcvMetaData(Protocol& protocol,
-              Mdata_processor& prc)
-    : Proto_delayed_op(protocol)
-    , m_prc(prc)
-  {}
-
-};
-
-
-class RcvStmtReply
-    : public Proto_delayed_op
-{
-  typedef protocol::mysqlx::Stmt_processor Stmt_processor;
-
-protected:
-
-  Stmt_processor& m_prc;
-
-  Proto_op* start()
-  {
-    return &m_protocol.rcv_StmtReply(m_prc);
-  }
-
-public:
-  RcvStmtReply(Protocol& protocol,
-               Stmt_processor& prc)
-    : Proto_delayed_op(protocol)
-    , m_prc(prc)
-  {}
-
-};
-
-
-class RcvReply
-    : public Proto_delayed_op
-{
-  typedef protocol::mysqlx::Reply_processor Reply_processor;
-
-protected:
-
-  Reply_processor& m_prc;
-
-  Proto_op* start()
-  {
-    return &m_protocol.rcv_Reply(m_prc);
-  }
-
-public:
-  RcvReply(Protocol& protocol,
-           Reply_processor& prc)
-    : Proto_delayed_op(protocol)
-    , m_prc(prc)
-  {}
-
-};
-
-
-// -------------------------------------------------------------------------
-
-
-#if 0
-class RcvRows
-    : public Proto_delayed_op
-{
-protected:
-
-  Row_processor& m_prc;
-
-  Op* start()
-  {
-    return &m_protocol.rcv_Rows(m_prc);
-  }
-
-public:
-  RcvRows(Protocol& protocol,
-          Row_processor& prc)
-    : Proto_delayed_op(protocol)
-    , m_prc(prc)
-  {}
-
-};
-#endif
-
-
-class SndAuthStart
-    : public Proto_delayed_op
-{
-
-protected:
-
-  const char * m_mechanism;
-  bytes m_data;
-  bytes m_response;
-
-  Proto_op* start()
-  {
-    return &m_protocol.snd_AuthenticateStart(m_mechanism,
-                                             m_data,
-                                             m_response);
-  }
-
-public:
-  SndAuthStart(Protocol& protocol,
-               const char * mechanism,
-               bytes data,
-               bytes response)
-    : Proto_delayed_op(protocol)
-    , m_mechanism(mechanism)
-    , m_data(data)
-    , m_response(response)
-  {}
-
-};
-
-class SndAuthContinue
-    : public Proto_delayed_op
-{
-
-protected:
-
-  bytes m_data;
-
-  Proto_op* start()
-  {
-    return &m_protocol.snd_AuthenticateContinue(m_data);
-  }
-
-public:
-  SndAuthContinue(Protocol& protocol,
-                  bytes data)
-    : Proto_delayed_op(protocol)
-    , m_data(data)
-  {}
-
-};
-
-class RcvAuthReply
-    : public Proto_delayed_op
-{
-  typedef protocol::mysqlx::Auth_processor Auth_processor;
-
-protected:
-
-  Auth_processor& m_prc;
-
-  Proto_op* start()
-  {
-    return &m_protocol.rcv_AuthenticateReply(m_prc);
-  }
-
-public:
-  RcvAuthReply(Protocol& protocol,
-               Auth_processor& prc)
-    : Proto_delayed_op(protocol)
-    , m_prc(prc)
   {}
 
 };

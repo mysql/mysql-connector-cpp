@@ -37,7 +37,7 @@ PUSH_SYS_WARNINGS_CDK
 #include "auth_hash.h"
 POP_SYS_WARNINGS_CDK
 
-#include "delayed_op.h"
+#include "stmt.h"
 
 namespace cdk {
 namespace mysqlx {
@@ -46,7 +46,9 @@ namespace mysqlx {
   A structure to check if xplugin we are connecting supports a
   specific field
 */
-struct Proto_field_checker : public cdk::protocol::mysqlx::api::Expectations
+
+struct Proto_field_checker
+  : public cdk::protocol::mysqlx::api::Expectations
 {
   cdk::bytes m_data;
   cdk::protocol::mysqlx::Protocol &m_proto;
@@ -181,15 +183,139 @@ bool error_category_server::do_equivalent(int code,
 */
 
 
-class AuthPlain
-    : public SessionAuthInterface
-{
+SessionAuth::SessionAuth(Session &s, const char *method)
+  : m_sess(s), m_am(method)
+{}
 
+
+void SessionAuth::restart()
+{
+  if (INIT != m_state && !is_completed())
+    THROW("Attempt to restart on-going authentication.");
+
+  m_state = START;
+  m_op = &m_sess.m_protocol.snd_AuthenticateStart(
+    m_am, auth_data(), auth_response(0, {})
+  );
+}
+
+// TODO: true asynchronous implementation.
+
+bool SessionAuth::do_cont()
+{
+  do_wait();
+  return true;
+}
+
+void SessionAuth::do_wait()
+{
+  if (!is_completed() && !m_op)
+    restart();
+
+  while (!is_completed())
+  {
+    if (m_op)
+      m_op->wait();
+    m_op = nullptr;
+
+    switch (m_state)
+    {
+    case START:
+    case CONT:
+    {
+      // note: while processing incoming message, m_op might be set
+      // to another operation that needs to be executed.
+      m_sess.m_protocol.rcv_AuthenticateReply(*this).wait();
+      continue;
+    }
+    default:
+      return;
+    }
+  }
+}
+
+
+bool SessionAuth::is_completed() const
+{
+  switch (m_state)
+  {
+  case DONE:
+  case ERROR:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool SessionAuth::do_get_result()
+{
+  return DONE == m_state;
+}
+
+const cdk::api::Event_info* SessionAuth::get_event_info() const
+{
+  return m_op ? m_op->waits_for() : nullptr;
+}
+
+
+void SessionAuth::do_cancel()
+{
+  if (!m_op)
+    return;
+  m_op->cancel();
+}
+
+//void SessionAuth::do_cancel()
+//{
+//  THROW("Canceling authentication process not implemented.");
+//}
+
+
+void  SessionAuth::auth_ok(bytes)
+{
+  m_state = DONE;
+}
+
+void  SessionAuth::auth_continue(bytes data)
+{
+  m_state = CONT;
+  m_op = &m_sess.m_protocol.snd_AuthenticateContinue(
+    auth_response(++m_round, data)
+  );
+}
+
+void SessionAuth::error(
+  unsigned int code, short int severity,
+  sql_state_t sql_state, const string &msg
+)
+{
+  m_state = ERROR;
+  m_sess.error(code, severity, sql_state, msg);
+}
+
+void SessionAuth::notice(
+  unsigned int type, short int scope, bytes payload
+)
+{
+  m_sess.notice(type, scope, payload);
+}
+
+
+/*
+  Specializations of SessionAuth that implement different
+  authentication mechanisms.
+*/
+
+
+class AuthPlain
+    : public SessionAuth
+{
   std::string m_data;
 
   public:
 
-  AuthPlain( const Session::Options &options )
+  AuthPlain(Session &s, const Session::Options &options)
+    : SessionAuth(s, "PLAIN")
   {
     std::string user(options.user());  // convert to utf8 before sending
 
@@ -202,109 +328,56 @@ class AuthPlain
     m_data.append(user).push_back('\0'); // authc
     if (options.password())
       m_data.append(*options.password()); // pass
-
   }
 
-  const char* auth_method() { return "PLAIN";}
-
-  virtual bytes auth_data()
+  virtual bytes auth_data() override
   {
     return bytes((byte*)m_data.c_str(), m_data.size());
   }
 
-  virtual bytes auth_response()
+  virtual bytes auth_response(unsigned round, bytes) override
   {
-    return bytes((byte*)nullptr, (byte*)nullptr);
-  }
+    if (0 == round)
+      return {};
 
-  virtual bytes auth_continue(bytes)
-  {
     THROW("Unexpected auth continuation");
   }
-};
-
-class AuthMysql41
-    : public SessionAuthInterface
-{
-
-protected:
-
-  std::string m_user;
-  std::string m_pass;
-  std::string m_db;
-
-  std::string m_cont_data;
-
-public:
-  AuthMysql41(const Session::Options &options)
-    : m_user(options.user())
-  {
-    if (options.password())
-      m_pass = *options.password();
-    if (options.database())
-      m_db = *options.database();
-  }
-
-
-  const char* auth_method() { return "MYSQL41";}
-
-  virtual bytes auth_data()
-  {
-    return bytes((byte*)nullptr, (byte*)nullptr);
-  }
-
-  virtual bytes auth_response()
-  {
-    return bytes((byte*)nullptr, (byte*)nullptr);
-  }
-
-  virtual bytes auth_continue(bytes data)
-  {
-    m_cont_data = ::mysqlx::build_mysql41_authentication_response(std::string(data.begin(), data.end()),
-                                                                  m_user, m_pass, m_db);
-
-   return bytes((byte*)m_cont_data.c_str(), m_cont_data.size());
-  }
-
-private:
 
 };
+
 
 class AuthExternal
-  : public SessionAuthInterface
+  : public SessionAuth
 {
 
   std::string m_data;
 
 public:
 
-  AuthExternal(const Session::Options &options)
+  AuthExternal(Session &s, const Session::Options &options)
+    : SessionAuth(s, "EXTERNAL")
   {
     if (options.database())
       m_data.append(*options.database());
   }
 
-  const char* auth_method() { return "EXTERNAL"; }
-
-  virtual bytes auth_data()
+  virtual bytes auth_data() override
   {
     return bytes((byte*)m_data.c_str(), m_data.size());
   }
 
-  virtual bytes auth_response()
+  virtual bytes auth_response(unsigned round, bytes) override
   {
-    return bytes((byte*)nullptr, (byte*)nullptr);
-  }
+    if (0 == round)
+      return {};
 
-  virtual bytes auth_continue(bytes)
-  {
     THROW("Unexpected auth continuation");
   }
 };
 
 
-class AuthSha256Memory
-    : public SessionAuthInterface
+class HashAuth
+    : public SessionAuth
 {
 
 protected:
@@ -315,9 +388,13 @@ protected:
 
   std::string m_cont_data;
 
+  virtual std::string build_hash(bytes data) = 0;
+
 public:
-  AuthSha256Memory(const Session::Options &options)
-    : m_user(options.user())
+
+  HashAuth(Session &s, const char *method, const Session::Options &options)
+    : SessionAuth(s, method)
+    , m_user(options.user())
   {
     if (options.password())
       m_pass = *options.password();
@@ -325,29 +402,60 @@ public:
       m_db = *options.database();
   }
 
-  const char* auth_method() { return "SHA256_MEMORY";}
 
-  virtual bytes auth_data()
+  virtual bytes auth_data() override
   {
-    return bytes((byte*)nullptr, (byte*)nullptr);
+    return {};
   }
 
-  virtual bytes auth_response()
+  virtual bytes auth_response(unsigned round, bytes data) override
   {
-    return bytes((byte*)nullptr, (byte*)nullptr);
-  }
+    if (0 == round)
+      return {};
 
-  virtual bytes auth_continue(bytes data)
-  {
-    m_cont_data = ::mysqlx::build_sha256_authentication_response(std::string(data.begin(), data.end()),
-                                                                  m_user, m_pass, m_db);
+    m_cont_data = build_hash(data);
 
     return bytes((byte*)m_cont_data.c_str(), m_cont_data.size());
   }
 
-private:
-
 };
+
+
+class AuthMysql41
+  : public HashAuth
+{
+public:
+
+  AuthMysql41(Session &s, const Session::Options &options)
+    : HashAuth(s, "MYSQL41", options)
+  {}
+
+  std::string build_hash(bytes data) override
+  {
+    return ::mysqlx::build_mysql41_authentication_response(
+      std::string(data.begin(), data.end()), m_user, m_pass, m_db
+    );
+  }
+};
+
+
+class AuthSha256Memory
+    : public HashAuth
+{
+public:
+
+  AuthSha256Memory(Session &s, const Session::Options &options)
+    : HashAuth(s, "SHA256_MEMORY", options)
+  {}
+
+  std::string build_hash(bytes data) override
+  {
+    return ::mysqlx::build_sha256_authentication_response(
+      std::string(data.begin(), data.end()), m_user, m_pass, m_db
+    );
+  }
+};
+
 
 
 /*
@@ -422,22 +530,10 @@ void Session::send_connection_attr(const Options &options)
 }
 
 
-void Session::send_auth()
-{
-  start_authentication(m_auth_interface->auth_method(),
-                       m_auth_interface->auth_data(),
-                       m_auth_interface->auth_response());
-
-  start_reading_auth_reply();
-}
-
 void Session::do_authenticate(const Options &options,
                               int original_am,
                               bool  secure_conn)
 {
-
-  m_auth_interface.reset();
-
   using cdk::ds::mysqlx::Protocol_options;
 
   auto am = original_am;
@@ -446,54 +542,50 @@ void Session::do_authenticate(const Options &options,
 
   switch (am)
   {
-    case Protocol_options::MYSQL41:
-      m_auth_interface.reset(new AuthMysql41(options));
+  case Protocol_options::MYSQL41:
+    m_auth.reset(new AuthMysql41(*this, options));
     break;
-    case Protocol_options::PLAIN:
-      m_auth_interface.reset(new AuthPlain(options));
+  case Protocol_options::PLAIN:
+    m_auth.reset(new AuthPlain(*this, options));
     break;
-    case Protocol_options::EXTERNAL:
-      m_auth_interface.reset(new AuthExternal(options));
+  case Protocol_options::EXTERNAL:
+    m_auth.reset(new AuthExternal(*this, options));
     break;
   case Protocol_options::SHA256_MEMORY:
-    m_auth_interface.reset(new AuthSha256Memory(options));
-  break;
-    case Protocol_options::DEFAULT:
-      assert(false);  // should not happen
-    default:
-      THROW("Unknown authentication method");
+    m_auth.reset(new AuthSha256Memory(*this, options));
+    break;
+  case Protocol_options::DEFAULT:
+    assert(false);  // should not happen
+  default:
+    THROW("Unknown authentication method");
   }
 
-  send_auth();
+  if (m_auth->get_result())
+    return;
 
-  if (!is_valid())
+  // second attempt
+
+  if (Protocol_options::DEFAULT == original_am && !secure_conn)
   {
-    if (Protocol_options::DEFAULT == original_am && !secure_conn)
+    //Cleanup Diagnostic_area
+    clear_errors();
+
+    m_auth.reset(new AuthSha256Memory(*this, options));
+
+    if (!m_auth->get_result())
     {
-      //Cleanup Diagnostic_area
-      clear_errors();
-
-      /*
-        Second attempt does not throw errors. If auth fails, it will always
-        throw below error
-      */
-      try{
-      do_authenticate(options, Protocol_options::SHA256_MEMORY, secure_conn);
-      } catch(...)
-      {}
-
-      if (!m_isvalid)
-      {
-        throw_error("Authentication failed using MYSQL41 and SHA256_MEMORY, "
-                      "check username and password or try a secure connection");
-      }
+      throw_error("Authentication failed using MYSQL41 and SHA256_MEMORY, "
+                    "check username and password or try a secure connection");
     }
   }
 }
 
+
 void Session::authenticate(const Options &options, bool  secure_conn)
 {
   do_authenticate(options, options.auth_method(),secure_conn);
+  if (entry_count())
+    get_error().rethrow();
 }
 
 
@@ -503,14 +595,6 @@ Session::~Session()
   try
   {
     close();
-  }
-  catch (...)
-  {
-  }
-
-  try
-  {
-    m_auth_interface.reset();
   }
   catch (...)
   {
@@ -543,6 +627,7 @@ void Session::check_protocol_fields()
   }
 }
 
+
 bool Session::has_prepared_statements()
 {
   check_protocol_fields();
@@ -573,21 +658,27 @@ option_t Session::check_valid()
 
 void Session::reset()
 {
-  check_protocol_fields(); // This will be used for lazy checks
+  // TODO: discard current reply?
   clear_errors();
-
-  m_reply_op_queue.clear();
 
   if (is_valid())
   {
-    m_protocol.snd_SessionReset(has_keep_open()).wait();
+    // TODO: Do it in asnyc fashion using the fact that session is an
+    // async operation
 
+    m_protocol.snd_SessionReset(has_keep_open()).wait();
     m_protocol.rcv_Reply(*this).wait();
 
     if (!has_keep_open())
     {
+      // Re-authenticate for servers not supporting keep-open
       m_isvalid = false;
-      send_auth();  // Re-authenticate for servers not supporting keep-open
+      clear_errors();
+      m_auth->restart();
+      m_auth->wait();
+      if (entry_count())
+        get_error().rethrow();
+      m_isvalid = m_auth->get_result();
     }
   }
 }
@@ -595,62 +686,74 @@ void Session::reset()
 
 void Session::close()
 {
-  m_reply_op_queue.clear();
-
+  // TODO: discard current reply
   if (is_valid())
   {
     m_protocol.snd_ConnectionClose().wait();
     m_protocol.rcv_Reply(*this).wait();
   }
   m_isvalid = false;
-
 }
 
-void Session::register_reply(Reply *reply)
-{
-  // Complete previous reply
 
-  if (m_current_reply)
+/*
+  Statements registered with a session are put into a double linked
+  list, with stmt->m_prev_stmt pointing at the previous statement that
+  needs to be completed before the given one can finish (see Stmt_op).
+  In Session we store pointer to the end of this list, because this is
+  where we add new statements.
+*/
+
+void Session::register_stmt(Stmt_op *stmt)
+{
+  assert(stmt);
+
+  // Append stmt to the end of the list of active statements.
+
+  stmt->m_prev_stmt = m_last_stmt;
+  if (m_last_stmt)
   {
-    m_current_reply->close_cursor();
-    m_current_reply->discard();
+    assert(nullptr == m_last_stmt->m_next_stmt);
+    m_last_stmt->m_next_stmt = stmt;
   }
-  m_current_reply = reply;
+  m_last_stmt = stmt;
 }
 
-void Session::deregister_reply(Reply *reply)
+
+void Session::deregister_stmt(Stmt_op *stmt)
 {
-  // TODO: Should reply be discared here?
-  m_current_reply = nullptr;
+  assert(stmt);
+
+  // Remove stmt from the list of active statements.
+
+  if (stmt->m_next_stmt)
+    stmt->m_next_stmt->m_prev_stmt = stmt->m_prev_stmt;
+  if (stmt->m_prev_stmt)
+    stmt->m_prev_stmt->m_next_stmt = stmt->m_next_stmt;
+
+  if (m_last_stmt == stmt)
+    m_last_stmt = stmt->m_prev_stmt;
+
+  stmt->m_prev_stmt = stmt->m_next_stmt = nullptr;
 }
 
 
-Reply_init& Session::sql(uint32_t stmt_id,const string &stmt, Any_list *args)
+
+Reply_init
+Session::sql(uint32_t stmt_id,const string &stmt, Any_list *args)
 {
-  return set_command(
-        new SndStmt(m_protocol, stmt_id, "sql", stmt, args));
-}
-
-void Session::Doc_args::process(Processor &prc) const
-{
-  Safe_prc<Any_list::Processor> sprc(prc);
-  sprc->list_begin();
-  if (m_doc)
-    m_doc->process_if(sprc->list_el()->doc());
-  sprc->list_end();
+  return new Cmd_StmtExecute(*this, stmt_id, "sql", stmt, args);
 }
 
 
-Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
+Reply_init
+Session::admin(const char *cmd, const cdk::Any::Document &args)
 {
 
   if (!is_valid())
     throw_error("admin: invalid session");
 
-  m_cmd_args.m_doc = &args;
-
-  m_stmt.set_utf8(cmd);
-  return set_command(new SndStmt(m_protocol, 0, "mysqlx", m_stmt, &m_cmd_args));
+  return new Cmd_StmtExecute(*this, 0U, "mysqlx", cmd, &args);
 }
 
 
@@ -662,18 +765,18 @@ Reply_init& Session::admin(const char *cmd, const cdk::Any::Document &args)
 
 void Session::begin()
 {
-  Reply r(sql(0, "START TRANSACTION", nullptr));
-  r.wait();
-  if (r.entry_count() > 0)
-    r.get_error().rethrow();
+  std::unique_ptr<Stmt_op> op(sql(0, "START TRANSACTION", nullptr));
+  op->wait();
+  if (op->entry_count() > 0)
+    op->get_error().rethrow();
 }
 
 void Session::commit()
 {
-  Reply r(sql(0, "COMMIT", nullptr));
-  r.wait();
-  if (r.entry_count() > 0)
-    r.get_error().rethrow();
+  std::unique_ptr<Stmt_op> op(sql(0, "COMMIT", nullptr));
+  op->wait();
+  if (op->entry_count() > 0)
+    op->get_error().rethrow();
 }
 
 void Session::rollback(const string &savepoint)
@@ -681,238 +784,241 @@ void Session::rollback(const string &savepoint)
   string qry = "ROLLBACK";
   if (!savepoint.empty())
     qry += " TO `" + savepoint + "`";
-  Reply r(sql(0, qry, nullptr));
-  r.wait();
-  if (r.entry_count() > 0)
-    r.get_error().rethrow();
+  std::unique_ptr<Stmt_op> op(sql(0, qry, nullptr));
+  op->wait();
+  if (op->entry_count() > 0)
+    op->get_error().rethrow();
 }
 
 void Session::savepoint_set(const string &savepoint)
 {
   // TODO: some chars in savepoint name need to be quotted.
   string qry = u"SAVEPOINT `" + savepoint + u"`";
-  Reply r(sql(0, qry, nullptr));
-  r.wait();
-  if (r.entry_count() > 0)
-    r.get_error().rethrow();
+  std::unique_ptr<Stmt_op> op(sql(0, qry, nullptr));
+  op->wait();
+  if (op->entry_count() > 0)
+    op->get_error().rethrow();
 }
 
 void Session::savepoint_remove(const string &savepoint)
 {
   string qry = "RELEASE SAVEPOINT `" + savepoint + "`";
-  Reply r(sql(0, qry, nullptr));
-  r.wait();
-  if (r.entry_count() > 0)
-    r.get_error().rethrow();
+  std::unique_ptr<Stmt_op> op(sql(0, qry, nullptr));
+  op->wait();
+  if (op->entry_count() > 0)
+    op->get_error().rethrow();
 }
 
 
-Reply_init& Session::prepared_execute(uint32_t stmt_id,
-                                      const Limit *lim,
-                                      const Param_source *param
-                                      )
+Reply_init Session::prepared_execute(
+  uint32_t stmt_id, const Limit *lim, const Param_source *param
+)
 {
-    return set_command(
-                new SndPrepareExecute(m_protocol, stmt_id, lim, param)
-                );
+  return new Prepared<Query_stmt>(*this, stmt_id, lim, param);
 }
 
-Reply_init& Session::prepared_execute(uint32_t stmt_id,
-                                      const cdk::Any_list *list
-                                     )
+Reply_init Session::prepared_execute(
+  uint32_t stmt_id, const cdk::Any_list *list
+)
 {
-    return set_command(
-                new SndPrepareExecute(m_protocol, stmt_id, list)
-                );
+  return new Prepared<Query_stmt>(*this, stmt_id, list);
 }
 
 
-Reply_init& Session::prepared_deallocate(uint32_t stmt_id)
+Reply_init Session::prepared_deallocate(uint32_t stmt_id)
 {
-    return set_command(new SndPrepareDeallocate(m_protocol, stmt_id));
+  struct Prepared_deallocate
+    : public Stmt_op
+  {
+    uint32_t m_id;
+
+    Prepared_deallocate(Session &s, uint32_t id)
+      : Stmt_op(s)
+      , m_id(id)
+    {}
+
+    Proto_op* send_cmd() override
+    {
+      return &get_protocol().snd_PrepareDeallocate(m_id);
+    }
+  };
+
+  return new Prepared_deallocate(*this, stmt_id);
 }
 
 
-Reply_init& Session::coll_add(const Table_ref &coll,
-                              Doc_source &docs,
-                              const Param_source *param,
-                              bool upsert)
+
+Reply_init Session::coll_add(
+  const Table_ref &coll,
+  Doc_source &docs,
+  const Param_source *param,
+  bool upsert
+)
 {
-  return set_command(
-    new SndInsertDocs(m_protocol, 0, coll, docs, param, upsert)
+  return new Cmd_InsertDocs(*this, 0U, coll, docs, param, upsert);
+}
+
+
+Reply_init Session::coll_remove(
+  uint32_t stmt_id,
+  const Table_ref &coll,
+  const Expression *expr,
+  const Order_by *order_by,
+  const Limit *lim,
+  const Param_source *param
+)
+{
+  return new Cmd_Delete<protocol::mysqlx::DOCUMENT>(
+    *this, stmt_id, coll, expr,order_by, lim, param
   );
 }
 
-Reply_init& Session::coll_remove(uint32_t stmt_id,
-                                 const Table_ref &coll,
-                                 const Expression *expr,
-                                 const Order_by *order_by,
-                                 const Limit *lim,
-                                 const Param_source *param)
-{
-  return set_command(
-        new SndDelete<protocol::mysqlx::DOCUMENT>(
-          m_protocol, stmt_id,
-          coll, expr,order_by, lim, param)
-        );
-}
 
-Reply_init& Session::coll_find(uint32_t stmt_id,
-                               const Table_ref &coll,
-                               const View_spec *view,
-                               const Expression *expr,
-                               const Expression::Document *proj,
-                               const Order_by *order_by,
-                               const Expr_list *group_by,
-                               const Expression *having,
-                               const Limit *lim,
-                               const Param_source *param,
-                               const Lock_mode_value lock_mode,
-                               const Lock_contention_value lock_contention)
+Reply_init Session::coll_find(
+  uint32_t stmt_id,
+  const Table_ref &coll,
+  const View_spec *view,
+  const Expression *expr,
+  const Expression::Document *proj,
+  const Order_by *order_by,
+  const Expr_list *group_by,
+  const Expression *having,
+  const Limit *lim,
+  const Param_source *param,
+  const Lock_mode_value lock_mode,
+  const Lock_contention_value lock_contention
+)
 {
   if (lock_mode != Lock_mode_value::NONE &&
       !(m_proto_fields & Protocol_fields::ROW_LOCKING))
     throw_error("Row locking is not supported by this version of the server");
 
-  SndFind<protocol::mysqlx::DOCUMENT> *find
-      =  new SndFind<protocol::mysqlx::DOCUMENT>(
-           m_protocol, stmt_id, coll, expr, proj,
-           order_by,group_by, having, lim, param, lock_mode, lock_contention
-           );
+ auto *find
+    =  new Cmd_Find<protocol::mysqlx::DOCUMENT>(
+        *this, stmt_id, coll, expr, proj,
+        order_by,group_by, having, lim, param, lock_mode, lock_contention
+       );
 
   if (view)
-    return set_command(new SndViewCrud<protocol::mysqlx::DOCUMENT>(*view, find));
+    return new Cmd_ViewCrud<protocol::mysqlx::DOCUMENT>(*this, *view, find);
 
-  return set_command(find);
+  return find;
 }
 
 
-Reply_init& Session::coll_update(uint32_t stmt_id,
-                                 const api::Table_ref &coll,
-                                 const Expression *expr,
-                                 const Update_spec &us,
-                                 const Order_by *order_by,
-                                 const Limit *lim,
-                                 const Param_source *param)
+Reply_init Session::coll_update(
+  uint32_t stmt_id,
+  const api::Table_ref &coll,
+  const Expression *expr,
+  const Update_spec &us,
+  const Order_by *order_by,
+  const Limit *lim,
+  const Param_source *param
+)
 {
-  return set_command(
-        new SndUpdate<protocol::mysqlx::DOCUMENT>(
-          m_protocol, stmt_id, coll, expr, us, order_by, lim, param)
-        );
+  return new Cmd_Update<protocol::mysqlx::DOCUMENT>(
+    *this, stmt_id, coll, expr, us, order_by, lim, param
+  );
 }
 
-Reply_init& Session::table_insert(uint32_t stmt_id,
-                                  const Table_ref &coll,
-                                  Row_source &rows,
-                                  const api::Columns *cols,
-                                  const Param_source *param)
+
+
+Reply_init Session::table_insert(
+  uint32_t stmt_id,
+  const Table_ref &coll,
+  Row_source &rows,
+  const api::Columns *cols,
+  const Param_source *param
+)
 {
-  return set_command(
-        new SndInsertRows(m_protocol, stmt_id, coll, rows, cols, param)
-        );
+  return new Cmd_InsertRows(*this, stmt_id, coll, rows, cols, param);
 }
 
-Reply_init& Session::table_delete(uint32_t stmt_id,
-                                  const Table_ref &coll,
-                                  const Expression *expr,
-                                  const Order_by *order_by,
-                                  const Limit *lim,
-                                  const Param_source *param)
+
+Reply_init Session::table_delete(
+  uint32_t stmt_id,
+  const Table_ref &coll,
+  const Expression *expr,
+  const Order_by *order_by,
+  const Limit *lim,
+  const Param_source *param
+)
 {
-  return set_command(
-        new SndDelete<protocol::mysqlx::TABLE>(
-          m_protocol, stmt_id, coll, expr, order_by, lim, param)
-        );
+  return new Cmd_Delete<protocol::mysqlx::TABLE>(
+    *this, stmt_id, coll, expr, order_by, lim, param
+  );
 }
 
-Reply_init& Session::table_select(uint32_t stmt_id,
-                                  const Table_ref &coll,
-                                  const View_spec *view,
-                                  const Expression *expr,
-                                  const Projection *proj,
-                                  const Order_by *order_by,
-                                  const Expr_list *group_by,
-                                  const Expression *having,
-                                  const Limit *lim,
-                                  const Param_source *param,
-                                  const Lock_mode_value lock_mode,
-                                  const Lock_contention_value lock_contention)
+
+Reply_init Session::table_select(
+  uint32_t stmt_id,
+  const Table_ref &coll,
+  const View_spec *view,
+  const Expression *expr,
+  const Projection *proj,
+  const Order_by *order_by,
+  const Expr_list *group_by,
+  const Expression *having,
+  const Limit *lim,
+  const Param_source *param,
+  const Lock_mode_value lock_mode,
+  const Lock_contention_value lock_contention
+)
 {
   if (lock_mode != Lock_mode_value::NONE &&
       !(m_proto_fields & Protocol_fields::ROW_LOCKING))
     throw_error("Row locking is not supported by this version of the server");
 
-
   auto* select_cmd =
-      new SndFind<protocol::mysqlx::TABLE>(
-        m_protocol, stmt_id, coll, expr, proj, order_by,
+      new Cmd_Find<protocol::mysqlx::TABLE>(
+        *this, stmt_id, coll, expr, proj, order_by,
         group_by, having, lim, param, lock_mode, lock_contention
         );
 
   if (view)
-    return set_command(
-          new SndViewCrud<protocol::mysqlx::TABLE>(*view, select_cmd)
-          );
+    return new Cmd_ViewCrud<protocol::mysqlx::TABLE>(*this, *view, select_cmd);
 
-  return set_command(select_cmd);
-}
-
-Reply_init& Session::table_update(uint32_t stmt_id,
-                                  const api::Table_ref &coll,
-                                  const Expression *expr,
-                                  const Update_spec &us,
-                                  const Order_by *order_by,
-                                  const Limit *lim,
-                                  const Param_source *param)
-{
-  return set_command(
-        new SndUpdate<protocol::mysqlx::TABLE>(
-          m_protocol, stmt_id, coll, expr, us, order_by, lim, param)
-        );
-
+  return select_cmd;
 }
 
 
-Reply_init& Session::view_drop(const api::Table_ref &view, bool check_existence)
+Reply_init Session::table_update(
+  uint32_t stmt_id,
+  const api::Table_ref &coll,
+  const Expression *expr,
+  const Update_spec &us,
+  const Order_by *order_by,
+  const Limit *lim,
+  const Param_source *param
+)
 {
-  return set_command(
-    new SndDropView(m_protocol, view, check_existence)
+  return new Cmd_Update<protocol::mysqlx::TABLE>(
+    *this, stmt_id, coll, expr, us, order_by, lim, param
   );
 }
 
 
-Reply_init &Session::set_command(cdk::mysqlx::Proto_prepare_op *cmd)
+Reply_init Session::view_drop(const api::Table_ref &view, bool check_existence)
 {
-  m_cmd.reset(cmd);
+  struct Drop_view
+    : public Stmt_op
+  {
+    bool m_check;
 
-  m_prepare_prepare = m_cmd->prepare_prepare();
+    Drop_view(Session &s, const api::Table_ref &view, bool check)
+      : Stmt_op(s)
+      , m_check(check)
+    {
+      set(view);
+    }
 
-  if (!is_valid())
-    throw_error("set_command: invalid session");
+    Proto_op* send_cmd() override
+    {
+      return &get_protocol().snd_DropView(*this, m_check);
+    }
+  };
 
-  return *this;
-}
-
-
-void Session::auth_ok(bytes data)
-{
-  m_isvalid = true;
-}
-
-
-void Session::auth_continue(bytes data)
-{
-  start_authentication_continue(m_auth_interface->auth_continue(data));
-  start_reading_auth_reply();
-}
-
-
-void Session::auth_fail(bytes data)
-{
-  add_diagnostics(Severity::ERROR, error_code(cdkerrc::auth_failure),
-                  std::string(data.begin(), data.end()));
-  m_isvalid = false;
-  m_auth_interface.reset();
+  return new Drop_view(*this, view, check_existence);
 }
 
 
@@ -952,198 +1058,7 @@ void Session::error(unsigned int code, short int severity,
   default:
     level = Severity::ERROR; break;
   }
-  add_diagnostics(level, code, sql_state, msg);
-}
-
-
-void Session::add_diagnostics(Severity::value level, error_code code,
-                              const string &msg)
-{
-  if (m_current_reply)
-  {
-    m_current_reply->m_da.add_entry(level, new Error(code, msg));
-  }
-  else
-  {
-    m_da.add_entry(level, new Error(code, msg));
-  }
-}
-
-
-void Session::add_diagnostics(Severity::value level, unsigned code,
-                              sql_state_t sql_state, const string &msg)
-{
-  if (m_current_reply)
-  {
-    m_current_reply->m_da.add_entry(level, new Server_error(code, sql_state, msg));
-    if (Severity::ERROR == level)
-        m_current_reply->error();
-  }
-  else
-  {
-    m_da.add_entry(level, new Server_error(code, sql_state, msg));
-  }
-}
-
-
-void Session::add_diagnostics(Severity::value level,
-                              const Error *e,
-                              bool report_to_reply)
-{
-  if (m_current_reply)
-  {
-    m_current_reply->m_da.add_entry(level, e);
-    if (Severity::ERROR == level && report_to_reply)
-        m_current_reply->error();
-  }
-  else
-  {
-    m_da.add_entry(level, e);
-  }
-}
-
-void Session::ok(string)
-{}
-
-void Session::Prepare_processor::error(
-      unsigned int code,
-      short severity,
-      protocol::mysqlx::Error_processor::sql_state_t sql_state,
-      const protocol::mysqlx::Processor_base::string &msg)
-{
-  Severity::value level;
-  switch (severity)
-  {
-  case 0: level = Severity::INFO; break;
-  case 1: level = Severity::WARNING; break;
-  case 2:
-  default:
-    level = Severity::ERROR; break;
-  }
-
-  m_session->add_diagnostics(
-        level,
-        new Server_prepare_error(code, sql_state, msg),
-        false);
-}
-
-
-void Session::col_count(col_count_t nr_cols)
-{
-  //When all columns metadata arrived...
-  m_nr_cols = nr_cols;
-  m_has_results = m_nr_cols != 0;
-
-  if (!m_has_results)
-    start_reading_stmt_reply();
-
-}
-
-
-void Session::col_type(col_count_t pos, unsigned short type)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_type = type;
-}
-
-
-void Session::col_content_type(col_count_t pos, unsigned short type)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_content_type = type;
-}
-
-// TODO: original name should be optional (pointer)
-
-void Session::col_name(col_count_t pos,
-                       const string &name, const string &original)
-{
-  if (m_discard)
-    return;
-
-  Col_metadata &md= (*m_col_metadata)[pos];
-
-  md.m_name= name;
-  md.m_name_original = original;
-  md.m_has_name_original= true;
-}
-
-
-void Session::col_table(col_count_t pos,
-                        const string &table, const string &original)
-{
-  if (m_discard)
-    return;
-
-  Col_metadata &md= (*m_col_metadata)[pos];
-
-  md.m_has_table= true;
-  md.m_table.m_name= table;
-  md.m_table.m_name_original = original;
-  md.m_table.m_has_name_original= true;
-}
-
-
-// TODO: catalog is optional - should be a pointer?
-
-void Session::col_schema(col_count_t pos,
-                         const string &schema, const string &catalog)
-{
-  if (m_discard)
-    return;
-
-  Col_metadata &md= (*m_col_metadata)[pos];
-
-  md.m_table.m_has_schema= true;
-  md.m_table.m_schema.m_name= schema;
-  md.m_table.m_schema.m_catalog.m_name = catalog;
-}
-
-
-void Session::col_collation(col_count_t pos, collation_id_t cs)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_cs = cs;
-}
-
-
-void Session::col_length(col_count_t pos, uint32_t length)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_length = length;
-}
-
-
-void Session::col_decimals(col_count_t pos, unsigned short decimals)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_decimals = decimals;
-}
-
-
-void Session::col_flags(col_count_t pos, uint32_t flags)
-{
-  if (m_discard)
-    return;
-
-  (*m_col_metadata)[pos].m_flags = flags;
-}
-
-
-void Session::execute_ok()
-{
-  // All done!
-  m_executed = true;
+  m_da.add_entry(level, new Server_error(code, sql_state, msg));
 }
 
 
@@ -1166,103 +1081,13 @@ void Session::current_schema(const string &val)
   m_cur_schema = val;
 }
 
-void Session::last_insert_id(insert_id_t val)
-{
-  m_stmt_stats.last_insert_id = val;
-}
 
-void Session::row_stats(row_stats_t stats, row_count_t val)
-{
-  switch (stats)
-  {
-  case ROWS_AFFECTED: m_stmt_stats.rows_affected = val; return;
-  case    ROWS_FOUND: m_stmt_stats.rows_found = val;    return;
-  case  ROWS_MATCHED: m_stmt_stats.rows_matched = val;  return;
-  }
-}
-
-void Session::generated_document_id(const std::string& id)
-{
-  if (m_current_reply)
-  {
-    m_current_reply->m_generated_ids.push_back(id);
-  }
-}
-
-void Session::send_cmd()
-{
-  m_executed = false;
-  m_reply_op_queue.push_back(m_cmd);
-  m_cmd.reset();
-  m_stmt_stats.clear();
-}
-
-void Session::start_reading_result()
-{
-  if (m_prepare_prepare)
-  {
-    //Reade PreparePrepare reply using the prepare_processor.
-    m_reply_op_queue.push_back(
-      shared_ptr<Proto_op>(new RcvReply(m_protocol, m_prepare_prc))
-    );
-    m_prepare_prepare = false;
-  }
-
-  m_col_metadata.reset(new Mdata_storage());
-  m_executed = false;
-  m_reply_op_queue.push_back(
-    shared_ptr<Proto_op>(new RcvMetaData(m_protocol, *this))
-  );
-
-}
-
-
-Proto_op*
-Session::start_reading_row_data(protocol::mysqlx::Row_processor &prc)
-{
-  return &m_protocol.rcv_Rows(prc);
-}
-
-
-void Session::start_reading_stmt_reply()
-{
-  m_reply_op_queue.push_back(
-    shared_ptr<Proto_op>(new RcvStmtReply(m_protocol, *this))
-  );
-}
-
-
-void Session::start_authentication(const char* mechanism,
-                                   bytes data,
-                                   bytes response)
-{
-  m_op_queue.push_back(
-    shared_ptr<Proto_op>(
-      new SndAuthStart(m_protocol, mechanism, data, response)
-    )
-  );
-}
-
-
-void Session::start_authentication_continue(bytes data)
-{
-  m_op_queue.push_back(
-    shared_ptr<Proto_op>(new SndAuthContinue(m_protocol, data))
-  );
-}
-
-
-void Session::start_reading_auth_reply()
-{
-  m_op_queue.push_back(
-    shared_ptr<Proto_op>(new RcvAuthReply(m_protocol, *this))
-  );
-}
+// Asynchronous operation.
 
 
 bool Session::is_completed() const
 {
-  if (!m_op_queue.empty())
+  if (m_auth && !m_auth->is_completed())
     return false;
 
   return true;
@@ -1271,69 +1096,31 @@ bool Session::is_completed() const
 
 bool Session::do_cont()
 {
-  if (m_op_queue.empty())
-    return true;
+  if (m_auth && !m_auth->cont())
+    return false;
 
-  bool done;
-
-  try
-  {
-    done = m_op_queue.front()->cont();
-  }
-  catch (...)
-  {
-    m_op_queue.pop_front();
-    throw;
-  }
-
-  if (done)
-    m_op_queue.pop_front();
-
-  return false;
-};
+  return true;
+}
 
 
 void Session::do_wait()
 {
-  while (!is_completed())
-  {
-    try
-    {
-      m_op_queue.front()->wait();
-    }
-    catch (...)
-    {
-      m_op_queue.pop_front();
-      throw;
-    }
-
-    m_op_queue.pop_front();
-  }
+  if (m_auth)
+    m_auth->wait();
 }
 
 
 void Session::do_cancel()
 {
-  while (!m_op_queue.empty())
-  {
-    try
-    {
-      m_op_queue.front()->cancel();
-    }
-    catch (...)
-    {
-      m_op_queue.pop_front();
-      throw;
-    }
-
-    m_op_queue.pop_front();
-  }
+  if (m_auth)
+    m_auth->cancel();
 }
+
 
 const cdk::api::Event_info* Session::get_event_info() const
 {
-  if (!m_op_queue.empty())
-    return m_op_queue.front()->waits_for();
+  if (m_auth && !m_auth->is_completed())
+    return m_auth->waits_for();
 
   return nullptr;
 }

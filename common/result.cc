@@ -208,19 +208,13 @@ bool Result_impl::next_result()
   m_pending_rows = false;
   m_inited = true;
 
-
   if (!m_reply)
     return false;
 
-  // Wait for the cdk reply object to become ready.
-
-  m_reply->wait();
-
-  if (0 < m_reply->entry_count())
-    m_reply->get_error().rethrow();
-
   if (!m_reply->has_results())
   {
+    if (0 < m_reply->entry_count())
+      m_reply->get_error().rethrow();
     m_sess->deregister_result(this);
     return false;
   }

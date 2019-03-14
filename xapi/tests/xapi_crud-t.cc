@@ -388,7 +388,7 @@ TEST_F(xapi, lock_contention)
   tbl = mysqlx_get_table(sch, "c1" , false);
   coll = mysqlx_get_collection(sch, "c1", true);
 
-  mysqlx_collection_remove(coll, "true)");
+  mysqlx_collection_remove(coll, "true");
 
   stmt = mysqlx_collection_add_new(coll);
   for(int i = 0; i < 10; ++i)

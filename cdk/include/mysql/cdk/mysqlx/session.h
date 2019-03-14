@@ -101,280 +101,6 @@ class Cursor;
 // ---------------------------------------------------------
 
 /*
-  Classes to store meta-data information received from server.
-*/
-
-
-template <class Base>
-class Obj_ref : public Base
-{
-protected:
-
-  string m_name;
-  string m_name_original;
-  bool   m_has_name_original;
-
-public:
-
-  Obj_ref()
-    : m_has_name_original(false)
-  {}
-
-  Obj_ref(const cdk::api::Ref_base &ref)
-    : m_name(ref.name())
-    , m_name_original(ref.orig_name())
-    , m_has_name_original(true)
-  {}
-
-  const string name() const { return m_name; }
-  const string orig_name() const
-  {
-    return m_has_name_original ? m_name_original : m_name;
-  }
-
-  friend class Session;
-};
-
-
-/*
-  Determine charset from collation id reported by the protocol. The mapping
-  is given by COLLATIONS_XXX() lists in collations.h.
-*/
-
-inline
-cdk::Charset::value get_collation_cs(collation_id_t id)
-{
-  /*
-    If collation id is 0, that is, there is no collation info in server
-    reply, we assume utf8.
-  */
-
-  if (0 == id)
-    return cdk::Charset::utf8;
-
-#undef  CS
-#define COLL_TO_CS(CS) COLLATIONS_##CS(COLL_TO_CS_CASE) return cdk::Charset::CS;
-#define COLL_TO_CS_CASE(CS,ID,COLL,CC)  case ID:
-
-  switch (id)
-  {
-    CDK_CS_LIST(COLL_TO_CS)
-  default:
-    THROW("Unkonwn collation id");
-  }
-}
-
-
-class Col_metadata
-  : public Obj_ref<cdk::Column_info>
-  , public cdk::Format_info
-{
-  typedef Column_info::length_t length_t;
-
-  int          m_type;
-  int          m_content_type;
-  length_t     m_length;
-  unsigned int m_decimals;
-  collation_id_t m_cs;
-  uint32_t     m_flags;
-
-  class : public Obj_ref<cdk::api::Table_ref>
-  {
-    class : public Obj_ref<cdk::api::Schema_ref>
-    {
-      Obj_ref<cdk::api::Ref_base> m_catalog;
-      const cdk::api::Ref_base* catalog() const { return &m_catalog; }
-      friend class Session;
-    } m_schema;
-
-    bool m_has_schema;
-
-    const cdk::api::Schema_ref* schema() const
-    {
-      return m_has_schema ? &m_schema : nullptr;
-    }
-
-    friend class Session;
-  } m_table;
-
-  bool      m_has_table;
-
-  const cdk::api::Table_ref* table() const
-  {
-    return m_has_table ? &m_table : nullptr;
-  }
-
-  /*
-    Format_info interface
-    ---------------------
-  */
-
-  bool for_type(Type_info type) const
-  {
-    switch (m_type)
-    {
-    case protocol::mysqlx::col_type::SINT:
-    case protocol::mysqlx::col_type::UINT:
-      return TYPE_INTEGER == type;
-
-    case protocol::mysqlx::col_type::FLOAT:
-    case protocol::mysqlx::col_type::DOUBLE:
-    case protocol::mysqlx::col_type::DECIMAL:
-      return TYPE_FLOAT == type;
-
-    case protocol::mysqlx::col_type::TIME:
-    case protocol::mysqlx::col_type::DATETIME:
-      return TYPE_DATETIME == type;
-
-    case protocol::mysqlx::col_type::BYTES:
-      switch (m_content_type)
-      {
-      case content_type::JSON: return TYPE_DOCUMENT == type;
-      case content_type::GEOMETRY: return TYPE_GEOMETRY == type;
-      case content_type::XML: return TYPE_XML == type;
-      default: break;
-      }
-
-      FALLTHROUGH;
-    case protocol::mysqlx::col_type::ENUM:
-    default:
-      return TYPE_BYTES == type || TYPE_STRING == type;
-    }
-  }
-
-  /*
-    Methods get_info() update a Type_info object to describe the
-    encoding format used by this column data.
-  */
-
-  void get_info(Format<TYPE_INTEGER>& fmt) const
-  {
-    switch (m_type)
-    {
-    case protocol::mysqlx::col_type::SINT:
-      Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::SINT);
-      break;
-    case protocol::mysqlx::col_type::UINT:
-      Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::UINT);
-      break;
-    }
-    Format<TYPE_INTEGER>::Access::set_length(fmt, m_length);
-  }
-
-  void get_info(Format<TYPE_FLOAT>& fmt) const
-  {
-    switch (m_type)
-    {
-    case protocol::mysqlx::col_type::FLOAT:
-      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::FLOAT);
-      break;
-    case protocol::mysqlx::col_type::DOUBLE:
-      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DOUBLE);
-      break;
-    case protocol::mysqlx::col_type::DECIMAL:
-      Format<TYPE_FLOAT>::Access::set_fmt(fmt, Format<TYPE_FLOAT>::DECIMAL);
-      break;
-    }
-  }
-
-  void get_info(Format<TYPE_STRING>& fmt) const
-  {
-    Format<TYPE_STRING>::Access::set_cs(fmt, get_collation_cs(m_cs));
-
-    /*
-      Note: Types ENUM and SET are generally treated as
-      strings, but we set a 'kind' flag in the format description
-      to be able to distinguish them from plain strings.
-    */
-
-    switch (m_type)
-    {
-    case protocol::mysqlx::col_type::BYTES:
-      Format<TYPE_STRING>::Access::set_width(fmt, m_length);
-      break;
-    case protocol::mysqlx::col_type::SET:
-      Format<TYPE_STRING>::Access::set_kind_set(fmt);
-      break;
-    case protocol::mysqlx::col_type::ENUM:
-      Format<TYPE_STRING>::Access::set_kind_enum(fmt);
-      break;
-    }
-  }
-
-  void get_info(Format<TYPE_DATETIME>& fmt) const
-  {
-    switch (m_type)
-    {
-    case protocol::mysqlx::col_type::TIME:
-      Format<TYPE_DATETIME>::Access::set_fmt(fmt, Format<TYPE_DATETIME>::TIME, true);
-      break;
-
-    case protocol::mysqlx::col_type::DATETIME:
-
-      // Note: flag 0x01 distinguishes TIMESTAMP from DATETIME type.
-
-      if (m_flags & 0x01)
-        Format<TYPE_DATETIME>::Access::set_fmt(fmt,
-          Format<TYPE_DATETIME>::TIMESTAMP, true);
-      else
-      {
-        /*
-        Note: presence of time part is detected based on the length
-        of the column. Full DATETIME values occupy more than 10
-        positions.
-        */
-
-        Format<TYPE_DATETIME>::Access::set_fmt(fmt,
-          Format<TYPE_DATETIME>::DATETIME, m_length > 10);
-      }
-      break;
-    }
-  }
-
-  void get_info(Format<TYPE_BYTES> &fmt) const
-  {
-    // Note: flag 0x01 means that bytes should be padded with 0x00
-
-    if (m_flags & 0x01)
-    {
-      Format<TYPE_BYTES>::Access::set_width(fmt, m_length);
-    }
-  }
-
-  /*
-    Note: Access to default implementation for all overloads that
-    are not explicitly defined above
-    (see: http://stackoverflow.com/questions/9995421/gcc-woverloaded-virtual-warnings
-  */
-
-  using Format_info::get_info;
-
-public:
-
-  Col_metadata()
-    : m_type(0)
-    , m_content_type(0)
-    , m_length(0)
-    , m_decimals(0)
-    , m_cs(BINARY_CS_ID)
-    , m_flags(0)
-    , m_has_table(false)
-  {}
-
-  length_t length() const { return m_length; }
-  length_t decimals() const { return m_decimals; }
-  collation_id_t collation() const { return m_cs; }
-
-  friend class Session;
-  friend class Cursor;
-};
-
-
-typedef std::map<col_count_t, Col_metadata>  Mdata_storage;
-
-// ---------------------------------------------------------
-
-/*
   Note: other Session implementations might need to translate genric
   cdk types to something that is specific to the implementation.
 */
@@ -387,146 +113,152 @@ using cdk::Sort_direction;
 using cdk::Param_source;
 using cdk::View_spec;
 
-typedef Session Reply_init;
 
 class Reply;
 class Cursor;
-class Proto_prepare_op;
+class SessionAuth;
+class Stmt_op;
 
-class SessionAuthInterface
+typedef Stmt_op* Reply_init;
+typedef protocol::mysqlx::api::Protocol_fields Protocol_fields;
+
+
+/*
+  An asynchronous operation which performs authentication.
+
+  It performs authentication rounds, starting with AuthenticateStart
+  message and replying to AuthenticateContinue challenges from server
+  until server either accepts a session or reports error. The result of
+  a completed operation is a Boolean value telling whether session was accepted.
+  Errors and notices reported by server during the handshake are stored
+  in Session object.
+
+  After completing, the whole process can be restarted (using the same
+  credentials) by calling restart() method.
+
+  This class should be specialized to implement concrete authentication
+  methods by overriding auth_data() and auth_response() methods.
+*/
+
+class SessionAuth
+  : public cdk::api::Async_op<bool>
+  , protected protocol::mysqlx::Auth_processor
 {
 public:
 
-  virtual ~SessionAuthInterface() {}
+  SessionAuth(Session&, const char *method);
+  virtual ~SessionAuth() {}
 
-  virtual const char* auth_method() = 0;
+  /*
+    Authentication data to be sent in the AuthenticateStart message,
+    such as user name and credentials.
+  */
+
   virtual bytes auth_data()  = 0;
-  virtual bytes auth_response() = 0;
-  virtual bytes auth_continue(bytes) = 0;
+
+  /*
+    Response to the challenge in the given round of the authentication
+    handshake. This method is also called to produce initial response
+    for AuthenticateStart message. In this case round is 0 and challenge
+    is empty.
+  */
+
+  virtual bytes auth_response(unsigned round, bytes challenge) = 0;
+
+  // Async_op
+
+  void restart();
+
+  bool is_completed() const override;
+  const cdk::api::Event_info* get_event_info() const override;
+
+private:
+
+  void do_wait() override;
+  bool do_cont() override;
+  void do_cancel() override;
+  bool do_get_result() override;
+
+  // Auth_processor
+
+  void auth_ok(bytes) override;
+  void auth_continue(bytes) override;
+
+  void error(
+    unsigned int /*code*/, short int /*severity*/,
+    sql_state_t /*sql_state*/, const string &/*msg*/
+  ) override;
+
+  void notice(unsigned int /*type*/,
+    short int /*scope*/,
+    bytes /*payload*/
+  ) override;
+
+  // Local state
+
+  Session &m_sess;
+  enum { INIT, START, CONT, DONE, ERROR } m_state = INIT;
+  Proto_op *m_op   = nullptr;
+  unsigned m_round = 0;
+  const char *m_am;
 };
 
 
-typedef protocol::mysqlx::api::Protocol_fields Protocol_fields;
+/*
+  Represents active session with a server.
+
+  - is an async. operation which establishes the session when completed.
+  - initiates sending server commands via methods such as coll_find().
+  - is used by Reply and Cursor objects to send commands to the server and
+    process its replies.
+*/
 
 class Session
     : public api::Diagnostics
     , public Async_op
-    , private protocol::mysqlx::Auth_processor
-    , private protocol::mysqlx::Mdata_processor
-    , private protocol::mysqlx::Stmt_processor
+    //, private protocol::mysqlx::Auth_processor
     , private protocol::mysqlx::SessionState_processor
+    , private protocol::mysqlx::Reply_processor
 {
 
-  friend class Reply;
-  friend class Cursor;
-
-  struct Doc_args : public Any_list
-  {
-    const cdk::Any::Document *m_doc;
-    void process(Processor &prc) const;
-  };
-
-  struct Prepare_processor
-      : public Reply_processor
-  {
-    Session *m_session = nullptr;
-
-    virtual void error(unsigned int code, short int severity,
-                       sql_state_t sql_state, const string &msg);
-
-    virtual void notice(unsigned int type,
-                        short int scope,
-                        bytes payload)
-    {
-      assert(m_session);
-      m_session->notice(type, scope, payload);
-    }
-
-  };
-
-  friend Prepare_processor;
-
+  friend Stmt_op;
+  friend Cursor;
+  friend SessionAuth;
 
 protected:
 
   Protocol  m_protocol;
+  std::unique_ptr<SessionAuth> m_auth;
 
-  bool      m_prepare_prepare = false;
-
-
-  option_t  m_isvalid;
+  option_t  m_isvalid = false;
   Diagnostic_arena m_da;
 
-  Reply* m_current_reply;
+  /*
+    Pointer to the list of currently active statements registered with
+    this session. We point at the last registered statement, that waits
+    at all others to complete, because this is where we append new ones
+    (see (de)register_stmt() methods).
+  */
 
-  scoped_ptr<SessionAuthInterface> m_auth_interface;
+  Stmt_op* m_last_stmt = nullptr;
 
-  shared_ptr<Proto_prepare_op> m_cmd;
-
-  enum { CMD_SQL, CMD_ADMIN, CMD_COLL_ADD } m_cmd_type;
-
-  string m_stmt;
-  Doc_args m_cmd_args;
-  const Table_ref *m_table;
-
-  unsigned long m_id;
-  bool m_expired;
+  unsigned long m_id = 0;
+  bool m_expired = false;
   string m_cur_schema;
   uint64_t m_proto_fields = UINT64_MAX;
 
-  struct
-  {
-    row_count_t  last_insert_id;
-    row_count_t  rows_affected;
-    row_count_t  rows_found;
-    row_count_t  rows_matched;
-
-    void clear()
-    {
-      last_insert_id = 0;
-      rows_affected = 0;
-      rows_found = 0;
-      rows_matched = 0;
-    }
-  }
-  m_stmt_stats;
-
-  std::deque< shared_ptr<Proto_op> > m_op_queue;
-  std::deque< shared_ptr<Proto_op> > m_reply_op_queue;
-  Cursor*                 m_current_cursor;
-
-  Prepare_processor m_prepare_prc;
-
-  bool m_executed;
-  bool m_has_results;
-  bool m_discard;
 
 public:
-
-  //cdk::api::Connection* get_connection();
 
   typedef ds::Options<ds::mysqlx::Protocol_options> Options;
 
   template <class C>
   Session(C &conn, const Options &options)
     : m_protocol(conn)
-    , m_isvalid(false)
-    , m_current_reply(nullptr)
-    , m_auth_interface(nullptr)
-    , m_table(nullptr)
-    , m_id(0)
-    , m_expired(false)
-    , m_current_cursor(nullptr)
-    , m_executed(false)
-    , m_has_results(false)
-    , m_discard(false)
-    , m_nr_cols(0)
   {
-    m_prepare_prc.m_session = this;
-    m_stmt_stats.clear();
     send_connection_attr(options);
     authenticate(options, conn.is_secure());
-
+    m_isvalid = true;
     // TODO: make "lazy" checks instead, deferring to the time when given
     // feature is used.
     check_protocol_fields();
@@ -549,6 +281,7 @@ public:
     such as row locking, etc. The function sets binary flags in
     m_proto_fields member variable
   */
+
   void check_protocol_fields();
   bool has_prepared_statements();
   void set_has_prepared_statements(bool);
@@ -561,6 +294,7 @@ public:
     since last call to clear_errors() (or since session creation if
     clear_errors() was not called).
   */
+
   void clear_errors()
   { m_da.clear(); }
 
@@ -581,40 +315,40 @@ public:
     Prepared Statments
   */
 
-  Reply_init& prepared_execute(uint32_t stmt_id,
+  Reply_init prepared_execute(uint32_t stmt_id,
                                const Limit *lim,
                                const Param_source *param
                                );
-  Reply_init& prepared_execute(uint32_t stmt_id,
+  Reply_init prepared_execute(uint32_t stmt_id,
                                const cdk::Any_list *list
                                );
 
-  Reply_init& prepared_deallocate(uint32_t stmt_id);
+  Reply_init prepared_deallocate(uint32_t stmt_id);
 
   /*
      SQL API
   */
 
-  Reply_init &sql(uint32_t stmt_id, const string&, Any_list*);
+  Reply_init sql(uint32_t stmt_id, const string&, Any_list*);
 
-  Reply_init &admin(const char*, const cdk::Any::Document&);
+  Reply_init admin(const char*, const cdk::Any::Document&);
 
   /*
     CRUD API
   */
 
-  Reply_init &coll_add(const Table_ref&,
+  Reply_init coll_add(const Table_ref&,
                        Doc_source&,
                        const Param_source *param = nullptr,
                        bool upsert = false);
 
-  Reply_init &coll_remove(uint32_t stmt_id,
+  Reply_init coll_remove(uint32_t stmt_id,
                           const Table_ref&,
                           const Expression *expr = nullptr,
                           const Order_by *order_by = nullptr,
                           const Limit *lim = nullptr,
                           const Param_source *param = nullptr);
-  Reply_init &coll_find(uint32_t stmt_id,
+  Reply_init coll_find(uint32_t stmt_id,
                         const Table_ref&,
                         const View_spec *view = nullptr,
                         const Expression *expr = nullptr,
@@ -627,7 +361,7 @@ public:
                         const Lock_mode_value lock_mode = Lock_mode_value::NONE,
                         const Lock_contention_value lock_contention
                           = Lock_contention_value::DEFAULT);
-  Reply_init &coll_update(uint32_t stmt_id,
+  Reply_init coll_update(uint32_t stmt_id,
                           const api::Table_ref&,
                           const Expression*,
                           const Update_spec&,
@@ -635,13 +369,13 @@ public:
                           const Limit* = nullptr,
                           const Param_source * = nullptr);
 
-  Reply_init &table_delete(uint32_t stmt_id,
+  Reply_init table_delete(uint32_t stmt_id,
                            const Table_ref&,
                            const Expression *expr = nullptr,
                            const Order_by *order_by = nullptr,
                            const Limit *lim = nullptr,
                            const Param_source *param = nullptr);
-  Reply_init &table_select(uint32_t stmt_id,
+  Reply_init table_select(uint32_t stmt_id,
                            const Table_ref&,
                            const View_spec *view = nullptr,
                            const Expression *expr = nullptr,
@@ -653,12 +387,12 @@ public:
                            const Param_source *param = nullptr,
                            const Lock_mode_value lock_mode = Lock_mode_value::NONE,
                            const Lock_contention_value lock_contention = Lock_contention_value::DEFAULT);
-  Reply_init &table_insert(uint32_t stmt_id,
+  Reply_init table_insert(uint32_t stmt_id,
                            const Table_ref&,
                            Row_source&,
                            const api::Columns *cols,
                            const Param_source *param = nullptr);
-  Reply_init &table_update(uint32_t stmt_id,
+  Reply_init table_update(uint32_t stmt_id,
                            const api::Table_ref &coll,
                            const Expression *expr,
                            const Update_spec &us,
@@ -666,7 +400,7 @@ public:
                            const Limit *lim = nullptr,
                            const Param_source *param = nullptr);
 
-  Reply_init &view_drop(const api::Table_ref&, bool check_existence = false);
+  Reply_init view_drop(const api::Table_ref&, bool check_existence = false);
 
 
 
@@ -697,58 +431,24 @@ public:
 
 private:
 
-  Reply_init & set_command(Proto_prepare_op *cmd);
+  friend Stmt_op;
 
   // Send Connection Attributes
   void send_connection_attr(const Options &options);
   // Authentication (cdk::protocol::mysqlx::Auth_processor)
   void authenticate(const Options &options, bool secure = false);
   void do_authenticate(const Options &options, int auth_method, bool secure);
-  void send_auth();
-  void auth_ok(bytes data);
-  void auth_continue(bytes data);
-  void auth_fail(bytes data);
-  void error(unsigned int code, short int severity, sql_state_t sql_state, const string& msg);
-
-  void add_diagnostics(Severity::value level, error_code code,
-                       const string &msg = string());
-
-  void add_diagnostics(Severity::value level, unsigned code,
-                       sql_state_t sql_state,
-                       const string &msg =string());
-  void add_diagnostics(Severity::value level, const Error *e,
-                       bool report_to_reply = true);
 
   //  Reply registration
-  virtual void register_reply(Reply* reply);
-  virtual void deregister_reply(Reply*);
+  virtual void register_stmt(Stmt_op* reply);
+  virtual void deregister_stmt(Stmt_op*);
 
   /*
-     Mdata_processor (cdk::protocol::mysqlx::Mdata_processor)
+    Errors and notices.
   */
 
-  void ok(string);
-  void col_count(col_count_t nr_cols);
-  void col_type(col_count_t pos, unsigned short type);
-  void col_content_type(col_count_t pos, unsigned short type);
-  void col_name(col_count_t pos,
-                const string &name, const string &original);
-  void col_table(col_count_t pos,
-                 const string &table, const string &original);
-  void col_schema(col_count_t pos,
-                  const string &schema, const string &catalog);
-  void col_collation(col_count_t pos, collation_id_t cs);
-  void col_length(col_count_t pos, uint32_t length);
-  void col_decimals(col_count_t pos, unsigned short decimals);
-  void col_flags(col_count_t, uint32_t);
-
-
-  /*
-     Stmt_processor
-  */
-
-  void execute_ok();
-  void notice(unsigned int /*type*/, short int /*scope*/, bytes /*payload*/);
+  void notice(unsigned int type, short int scope, bytes payload);
+  void error(unsigned int code, short int severity, sql_state_t sql_state, const string& msg);
 
   /*
     SessionState_processor
@@ -757,22 +457,10 @@ private:
   void client_id(unsigned long);
   void account_expired();
   void current_schema(const string&);
-  void row_stats(row_stats_t, row_count_t);
-  void last_insert_id(insert_id_t);
+  void row_stats(row_stats_t, row_count_t) {}
+  void last_insert_id(insert_id_t) {}
   // TODO: void trx_event(trx_event_t);
-  void generated_document_id(const std::string&);
-
-  /*
-     Helper functions to send/receive protocol messages
-  */
-
-  void send_cmd();
-  void start_reading_result();
-  Proto_op* start_reading_row_data(protocol::mysqlx::Row_processor &prc);
-  void start_reading_stmt_reply();
-  void start_authentication(const char* mechanism,bytes data,bytes response);
-  void start_authentication_continue(bytes data);
-  void start_reading_auth_reply();
+  void generated_document_id(const std::string&) {}
 
   /*
       Async (cdk::api::Async_op)
@@ -781,14 +469,6 @@ private:
   bool do_cont();
   void do_wait();
   void do_cancel();
-
-
-private:
-
-  // Meta data storage
-
-  cdk::scoped_ptr<Mdata_storage> m_col_metadata;
-  col_count_t m_nr_cols;
 
 };
 
