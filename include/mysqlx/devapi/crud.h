@@ -216,6 +216,7 @@ public:
   Operation& sort(Type... spec)
   {
     try {
+      get_impl()->clear_sort();
       add_sort(get_impl(), spec...);
       return *this;
     }
@@ -256,6 +257,7 @@ public:
   Operation& orderBy(Type... spec)
   {
     try {
+      get_impl()->clear_sort();
       add_sort(get_impl(), spec...);
       return *this;
     }
@@ -331,6 +333,7 @@ public:
   Operation& groupBy(Expr... group_by_spec)
   {
     try {
+      get_impl()->clear_group_by();
       do_group_by(get_impl(), group_by_spec...);
       return *this;
     }

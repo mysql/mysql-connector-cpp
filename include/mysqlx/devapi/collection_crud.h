@@ -387,6 +387,7 @@ public:
   Operation& fields(Expr... proj)
   {
     try {
+      get_impl()->clear_proj();
       do_fields(get_impl(), proj...);
       return *this;
     }

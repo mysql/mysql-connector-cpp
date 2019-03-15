@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -489,4 +489,93 @@ TEST_F(Bugs, crud_move)
             sql("select count(*) from performance_schema.prepared_statements_instances").fetchOne()[0].get<int>());
 
 
+}
+
+TEST_F(Bugs, not_accumulate)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto sch = get_sess().createSchema("test",true);
+  auto coll = sch.createCollection("c1",true);
+  auto tbl = sch.getCollectionAsTable("c1");
+
+  coll.remove("true").execute();
+
+  coll.add("{ \"_id\": \"myuuid-1\", \"name\": \"foo\", \"age\": 7 }",
+           "{ \"name\": \"buz\", \"age\": 17 }",
+           "{ \"name\": \"bar\", \"age\": 3 }",
+           "{ \"name\": \"baz\", \"age\": 3 }"
+           ).execute();
+
+
+  //FIND
+
+  auto find = coll.find();
+  find.fields("notfound");
+  find.fields("name as name", "age as age");
+  find.groupBy("notfound");
+  find.groupBy("age","name");
+  find.sort("notfound");
+  find.sort("age ASC");
+
+  auto doc = find.execute().fetchOne();
+  EXPECT_EQ(3, doc["age"].get<int>());
+  EXPECT_EQ(string("bar"), doc["name"].get<string>());
+
+
+  // MODIFY
+
+  auto modify = coll.modify("true");
+  modify.set("food", expr("[]"));
+  modify.arrayAppend("food", "milk");
+  modify.arrayAppend("food", "soup");
+  modify.arrayAppend("food", "potatoes");
+  modify.sort("notfound");
+  modify.sort("age ASC");
+  modify.limit(2);
+  //only age=3 will be modified
+  modify.execute();
+
+  auto check_changes = coll.find().sort("age ASC").execute();
+  EXPECT_TRUE(check_changes.fetchOne().hasField("food"));
+  EXPECT_TRUE(check_changes.fetchOne().hasField("food"));
+  EXPECT_FALSE(check_changes.fetchOne().hasField("food"));
+  EXPECT_FALSE(check_changes.fetchOne().hasField("food"));
+
+  //REMOVE
+
+  auto remove = coll.remove("true");
+  remove.sort("name DESC");
+  remove.sort("age ASC");
+  remove.limit(2);
+  //only age=3 will be removed
+  remove.execute();
+
+  check_changes = coll.find().execute();
+  for(auto doc : check_changes)
+  {
+    EXPECT_NE(3, doc["age"].get<int>());
+  }
+
+  // TABLE
+  auto select = tbl.select("doc->$.age");
+  select.orderBy("notfound ASC");
+  select.orderBy("doc->$.age ASC");
+  select.groupBy("notfound");
+  select.groupBy("doc->$.age");
+
+  select.lockExclusive();
+  EXPECT_EQ(2, select.execute().count());
+
+  auto update = tbl.update();
+  update.set("doc->$.age",1);
+  update.where("doc->$.age > 7");
+  update.orderBy("notfound ASC");
+  update.orderBy("doc->$.age ASC");
+  EXPECT_EQ(1, update.execute().getAffectedItemsCount());
+
+  auto tbl_remove = tbl.remove();
+  tbl_remove.orderBy("notfound ASC");
+  tbl_remove.orderBy("doc->$.age ASC");
+  EXPECT_EQ(2, tbl_remove.execute().getAffectedItemsCount());
 }
