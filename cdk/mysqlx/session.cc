@@ -658,8 +658,7 @@ option_t Session::check_valid()
 
 void Session::reset()
 {
-  // TODO: discard current reply?
-  clear_errors();
+  clean_up();
 
   if (is_valid())
   {
@@ -684,11 +683,37 @@ void Session::reset()
 }
 
 
+/*
+  Discard results for the given statement and all previous statements
+  for which it is waiting (if any).
+*/
+
+void discard_results(Stmt_op *stmt)
+{
+  if (!stmt)
+    return;
+  if (stmt->m_prev_stmt)
+    discard_results(stmt->m_prev_stmt);
+  stmt->discard();
+  stmt->wait();
+}
+
+
+void Session::clean_up()
+{
+  if (!is_valid())
+    return;
+  discard_results(m_last_stmt);
+  rollback({});
+  clear_errors();
+}
+
+
 void Session::close()
 {
-  // TODO: discard current reply
   if (is_valid())
   {
+    clean_up();
     m_protocol.snd_ConnectionClose().wait();
     m_protocol.rcv_Reply(*this).wait();
   }

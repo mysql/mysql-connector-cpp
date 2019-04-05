@@ -59,16 +59,40 @@ using time_point = std::chrono::time_point<system_clock>;
    Session pooling
 */
 
+/*
+  Abstract interface used to clean up a session before it is closed.
+*/
+
+struct Session_cleanup
+{
+  virtual void cleanup() = 0;
+};
+
+
+/*
+  Wraps a shared pointer to a CDK session that was created and is managed
+  by a session pool.
+
+  Pooled_session acts as an asynchronous operation. After construction one has
+  to wait until it is completed -- only then the session is available.
+*/
+
 class Pooled_session
   : public cdk::foundation::api::Async_op<void>
   , public std::shared_ptr<cdk::Session>
 {
   Session_pool_shared m_sess_pool;
   time_point m_deadline;
+  Session_cleanup *m_cleanup = nullptr;
 
 public:
 
-  Pooled_session(Session_pool_shared &pool);
+  /*
+    Get a session from the given pool, registering a cleanup handler to be
+    called if the pool decides to close this session.
+  */
+
+  Pooled_session(Session_pool_shared &pool, Session_cleanup *cleanup = nullptr);
 
   Pooled_session(cdk::ds::Multi_source &ds);
 
@@ -99,6 +123,7 @@ namespace common {
 using impl::common::duration;
 using impl::common::time_point;
 using impl::common::Pooled_session;
+using impl::common::Session_cleanup;
 
 
 /*
@@ -108,8 +133,8 @@ using impl::common::Pooled_session;
 
 class Session_pool
 {
-
 public:
+
   Session_pool(cdk::ds::Multi_source &ds);
 
   ~Session_pool();
@@ -148,9 +173,13 @@ protected:
 
   void release_session(std::shared_ptr<cdk::Session> &sess);
 
-  //returns Session if possible (available).
-  //throws error if the pool is closed
-  std::shared_ptr<cdk::Session> get_session();
+  /*
+    Returns Session if possible (available). Throws error if the pool is closed.
+    If cleanup handler is given, it will be called in case this session needs
+    to be closed while in use (for example, when pool is closed).
+  */
+
+  std::shared_ptr<cdk::Session> get_session(Session_cleanup* = nullptr);
 
   void time_to_live_cleanup();
 
@@ -161,7 +190,12 @@ protected:
   duration m_timeout = duration::max();
   duration m_time_to_live = duration::max();
 
-  std::map<cdk::shared_ptr<cdk::Session>, time_point> m_pool;
+  struct Sess_data {
+    time_point m_deadline;
+    Session_cleanup *m_cleanup; 
+  };
+
+  std::map<cdk::shared_ptr<cdk::Session>, Sess_data> m_pool;
   std::recursive_mutex m_pool_mutex;
   std::mutex m_reelase_mutex;
   std::condition_variable m_release_cond;
@@ -182,6 +216,7 @@ protected:
 */
 
 class Session_impl
+  : public Session_cleanup
 {
 public:
 
@@ -194,7 +229,7 @@ public:
   size_t              m_max_pstmt = std::numeric_limits<size_t>::max();
 
   Session_impl(Session_pool_shared &pool)
-    : m_sess(pool)
+    : m_sess(pool, this)
   {
     m_sess.wait();
     if (m_sess->get_default_schema())
@@ -345,6 +380,11 @@ public:
 
 
   void release();
+
+  void cleanup() override
+  {
+    prepare_for_cmd();
+  }
 };
 
 

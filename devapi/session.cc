@@ -167,7 +167,6 @@ void Session_detail::prepare_for_cmd()
 
 void Session_detail::close()
 {
-  get_cdk_session().rollback();
   m_impl->release();
   m_impl.reset();
 }

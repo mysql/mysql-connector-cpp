@@ -1673,9 +1673,11 @@ TEST_F(Sess, pool_use)
           EXPECT_THROW( mysqlx::Session s3(client), Error);
         }
 
-        EXPECT_THROW(s2.getSchema("test",true).getName(),Error);
+        // Closing a client invalidates all sessions created from it
+
+        EXPECT_THROW(s2.getSchema("test",true).getName(), Error);
       }
-      EXPECT_THROW(s1.getSchema("test",true).getName(),Error);
+      EXPECT_THROW(s1.getSchema("test",true).getName(), Error);
     }
 
     {
@@ -1775,7 +1777,7 @@ TEST_F(Sess, pool_ttl)
                           SessionOption::PWD, get_password(),
                           SessionOption::DB, "test");
 
-
+#if 1
 
   // threaded example
   {
@@ -1846,6 +1848,8 @@ TEST_F(Sess, pool_ttl)
     test_sessions(false);
 
     // Now closing pool so that waiting threads get session without timeout
+    client.close();
+
     ClientSettings settings1 = settings;
 
     settings1.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::hours(1),
@@ -1868,6 +1872,8 @@ TEST_F(Sess, pool_ttl)
     test_sessions(true);
 
   }
+
+#endif
 
   {
 

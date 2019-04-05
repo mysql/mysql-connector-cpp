@@ -544,6 +544,8 @@ void Session_impl::prepare_for_cmd()
 
 void Session_impl::release()
 {
+  // Clear up pending results before returning session to the pool
+  cleanup();
   m_sess.release();
 }
 
@@ -551,8 +553,10 @@ void Session_impl::release()
 // ---------------------------------------------------------------------------
 
 
-Pooled_session::Pooled_session(Session_pool_shared &pool)
-  : m_sess_pool(pool)
+Pooled_session::Pooled_session(
+  Session_pool_shared &pool, Session_cleanup *cleanup
+)
+  : m_sess_pool(pool), m_cleanup(cleanup)
 {
   m_deadline = system_clock::now() + m_sess_pool->m_timeout;
   cont();
@@ -572,8 +576,13 @@ Pooled_session::~Pooled_session()
 
 void Pooled_session::release()
 {
-  if (m_sess_pool)
-    m_sess_pool->release_session(*this);
+  if (*this)
+  {
+    if (m_sess_pool)
+      m_sess_pool->release_session(*this);
+    else
+      (*this)->close();
+  }
 
   //Session pool is no longer needed
   m_sess_pool.reset();
@@ -594,7 +603,9 @@ bool Pooled_session::do_cont()
   assert(m_sess_pool);
 
   // If session pool disabled, create session
-  std::shared_ptr<cdk::Session>::operator=(m_sess_pool->get_session());
+  std::shared_ptr<cdk::Session>::operator=(
+    m_sess_pool->get_session(m_cleanup)
+  );
 
   if (get())
     return true;
@@ -663,9 +674,14 @@ void Session_pool::close()
   for(auto &el : m_pool)
   {
     try{
+      // If there is a cleanup handler, call it before closing a session.
+      if (el.second.m_cleanup)
+        el.second.m_cleanup->cleanup();
       el.first->close();
     } catch(...)
-    {}
+    {
+      assert(false);
+    }
   }
   m_pool.clear();
 
@@ -689,12 +705,18 @@ void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 
     auto el = m_pool.find(sess);
 
-    //Reset session so that internal is unique!
-    sess.reset();
-
     if (el != m_pool.end())
-      try {
-      el->second = system_clock::now() + m_time_to_live;
+    {
+      el->second.m_deadline = system_clock::now() + m_time_to_live;
+
+      // Note: we assume that session returned to the pool is no longer
+      // in use and does not need a cleanup handler.
+      el->second.m_cleanup = nullptr;
+    }
+
+    try {
+      //Reset session so that internal is unique!
+      sess.reset();
     }
     catch (...) {
       try {
@@ -712,7 +734,8 @@ void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 }
 
 
-std::shared_ptr<cdk::Session> Session_pool::get_session()
+std::shared_ptr<cdk::Session>
+Session_pool::get_session(Session_cleanup *cleanup)
 {
   lock_guard guard(m_pool_mutex);
 
@@ -744,6 +767,7 @@ std::shared_ptr<cdk::Session> Session_pool::get_session()
         m_pool.erase(it);
         break;
       }
+      it->second.m_cleanup = cleanup;
       return it->first;
     }
   }
@@ -751,9 +775,10 @@ std::shared_ptr<cdk::Session> Session_pool::get_session()
   // Need new connection
   if (m_pool.size() < m_max)
   {
-    auto ret = m_pool.emplace( cdk::shared_ptr<cdk::Session>(
-                                 new cdk::Session(m_ds)),
-                               time_point::max());
+    auto ret = m_pool.emplace(
+      cdk::shared_ptr<cdk::Session>(new cdk::Session(m_ds)),
+      Sess_data{ time_point::max(), cleanup }
+    );
     return ret.first->first;
   }
   return nullptr;
@@ -769,9 +794,11 @@ void Session_pool::time_to_live_cleanup()
   auto it = m_pool.begin();
   for(; it != m_pool.end(); )
   {
-    if (it->first.unique() && it->second < current_time)
+    if (it->first.unique() && it->second.m_deadline < current_time)
     {
-      m_pool.erase(it++);
+      // Note: removed session is not active and does not need calling
+      // of the cleanup handler.
+      it = m_pool.erase(it);
     }
     else
     {

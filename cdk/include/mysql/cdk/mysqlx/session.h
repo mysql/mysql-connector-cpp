@@ -298,6 +298,15 @@ public:
   void clear_errors()
   { m_da.clear(); }
 
+  /*
+    Clean up the session by completing all pending statements and rollback
+    the currently open transaction (if any). Results of these pending statements
+    are discarded (note: if there are cursors opened for these results, an error
+    will be thrown).
+  */
+
+  void clean_up();
+
   void reset();
   void close();
 
