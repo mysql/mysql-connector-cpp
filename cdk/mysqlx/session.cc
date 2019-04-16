@@ -598,6 +598,8 @@ Session::~Session()
   }
   catch (...)
   {
+    // Something went wrong - do not try to use this session again.
+    m_isvalid = false;
   }
 }
 
@@ -712,10 +714,15 @@ void Session::clean_up()
 void Session::close()
 {
   if (is_valid())
-  {
+  try {
     clean_up();
     m_protocol.snd_ConnectionClose().wait();
     m_protocol.rcv_Reply(*this).wait();
+  }
+  catch (...)
+  {
+    m_isvalid = false;
+    throw;
   }
   m_isvalid = false;
 }

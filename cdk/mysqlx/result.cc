@@ -131,6 +131,16 @@ bool Stmt_op::do_cont()
 
       m_op_mdata = false;
 
+      if (m_discard)
+      {
+        switch (m_state)
+        {
+        case ROWS: m_state = DISCARD; break;
+        case NEXT: m_state = MDATA; break;
+        default: break;
+        }
+      }
+
       switch (m_state)
       {
       case OK:
@@ -191,6 +201,9 @@ bool Stmt_op::is_completed() const
     return true;
   case ROWS:
   case NEXT:
+    if (m_discard)
+      return false;
+    FALLTHROUGH;
   case DONE:
     /*
       In one of these states we still continue until do_cont() finishes the

@@ -1386,15 +1386,16 @@ TEST_F(Sess, bugs)
     EXPECT_THROW(mysqlx::Session sess(sess_settings), mysqlx::Error);
   }
 
+  cout << "empty string as password" << endl;
+
   {
-    // empty string as password
     SessionSettings sess_settings("localhost_not_found", 13009, "rafal", "");
   }
 
 
-  {
-    // Using same Result on different sessions
+  cout << "Using same Result on different sessions" << endl;
 
+  {
     SessionSettings settings(SessionOption::PORT, get_port(),
                              SessionOption::USER,get_user(),
                              SessionOption::PWD, get_password() ?
@@ -1429,7 +1430,8 @@ TEST_F(Sess, bugs)
   catch(...)
   {}
 
-  //memory leak when using bad ssl_ca
+  cout << "memory leak when using bad ssl_ca" << endl;
+
   EXPECT_THROW(mysqlx::Session(SessionOption::SSL_CA, "Bad",
                                SessionOption::SSL_MODE, SSLMode::VERIFY_CA,
                                SessionOption::PORT, get_port(),
@@ -1440,6 +1442,17 @@ TEST_F(Sess, bugs)
                                  ),
                Error);
 
+  cout << "Session shut-down with pending multi-result set." << endl;
+
+  {
+    Session sess(this);
+
+    sess.sql("drop procedure if exists test.test").execute();
+    sess.sql("CREATE PROCEDURE test.test() BEGIN select 1; select 2; END")
+        .execute();
+
+    SqlResult res = sess.sql("call test.test()").execute();
+  }
 }
 
 
