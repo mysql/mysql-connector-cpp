@@ -324,6 +324,14 @@ TEST_F(Ddl, create_index)
     R"({ "type" : "SPATIAL", "fields": [{ "field": "$.coords", "type" : "GEOJSON", "required" : false }] })")
              );
 
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 17);
+
+  cout << "Array index" << endl;
+  coll.createIndex("arr_idx",
+    R"-({ "fields": [{ "field": "$.zip", "type" : "CHAR(5)", "array" : true }] })-"
+  );
+  coll.dropIndex("arr_idx");
+
   cout << "Done!" << endl;
 }
 

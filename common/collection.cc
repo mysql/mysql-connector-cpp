@@ -144,7 +144,7 @@ struct Field_conv
     Any_prc* key_val(const string &key) override
     {
       static const std::set<std::string> allowed_keys =
-      { "field", "type", "required", "options", "srid" };
+      { "field", "type", "required", "options", "srid", "array" };
 
       std::string field_name = to_lower(key);
 

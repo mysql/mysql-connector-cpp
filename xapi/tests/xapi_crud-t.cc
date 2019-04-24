@@ -217,8 +217,8 @@ TEST_F(xapi, test_create_collection_index)
   const char *schema_name = "cc_crud_test";
   const char *coll_name = "index_test";
   const char *json[] = {
-    "{\"zip\": \"34239\", \"zcount\": \"10\", \"some_text\": \"just some text\"}",
-    "{\"zip\": \"30001\", \"zcount\": \"20\", \"some_text\": \"some more text\"}"
+    "{\"zip\": [\"34239\", \"23456\"], \"zcount\": \"10\", \"some_text\": \"just some text\"}",
+    "{\"zip\": [\"00001\", \"23456\"], \"zcount\": \"20\", \"some_text\": \"some more text\"}"
   };
 
   const char *geo_json =
@@ -226,8 +226,9 @@ TEST_F(xapi, test_create_collection_index)
 
   const char *json_idx = "{"\
              "\"fields\": ["\
-             "{ \"field\": \"$.zip\", \"required\" : true , \"type\" : \"TEXT(10)\" },"\
+             "{ \"field\": \"$.zip\", \"required\" : true , \"type\" : \"TEXT(10)\"},"\
              "{ \"field\": \"$.zcount\", \"type\" : \"INT UNSIGNED\" }]}";
+
 
   const char *geo_json_idx = "{"
              "\"type\" : \"SPATIAL\","
@@ -284,6 +285,20 @@ TEST_F(xapi, test_create_collection_index)
 
   EXPECT_EQ(RESULT_OK,
             mysqlx_collection_drop_index(collection, "geo_idx1"));
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 17);
+
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(schema, coll_name));
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
+  collection = mysqlx_get_collection(schema, coll_name, 0);
+
+  const char *multival_idx = "{"\
+            "\"fields\": ["\
+            "{ \"field\": \"$.zip\", \"type\" : \"CHAR(10)\", \"array\" : true}]}";
+  printf("\nCreate multivalue index.");
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_create_index(collection, "multival_idx1", multival_idx));
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_drop(schema, coll_name));
 }
 
 
