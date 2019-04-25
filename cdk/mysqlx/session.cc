@@ -39,6 +39,7 @@ POP_SYS_WARNINGS_CDK
 
 #include "stmt.h"
 
+
 namespace cdk {
 namespace mysqlx {
 
@@ -739,6 +740,9 @@ void Session::close()
 void Session::register_stmt(Stmt_op *stmt)
 {
   assert(stmt);
+  assert(!stmt->m_session);
+
+  stmt->m_session = this;
 
   // Append stmt to the end of the list of active statements.
 
@@ -755,6 +759,12 @@ void Session::register_stmt(Stmt_op *stmt)
 void Session::deregister_stmt(Stmt_op *stmt)
 {
   assert(stmt);
+
+  if (!stmt->m_session)
+    return;
+
+  assert(stmt->m_session == this);
+  stmt->m_session = nullptr;
 
   // Remove stmt from the list of active statements.
 

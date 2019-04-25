@@ -404,7 +404,12 @@ public:
   using Row_processor::col_count_t;
   using Row_processor::row_count_t;
 
-  Session& m_session;
+  /*
+    This points at statement's session as long as the statement is active and
+    registered with it.
+  */
+
+  Session *m_session = nullptr;
 
   /*
     If several asynchronous statements have been issued, these pointers
@@ -431,21 +436,30 @@ public:
   Cursor *m_current_cursor = nullptr;
 
   Stmt_op(Session &s)
-    : m_session(s)
   {
-    m_session.register_stmt(this);
+    s.register_stmt(this);
+    // Note: m_session is set during registration.
+    assert(m_session);
   }
 
   virtual ~Stmt_op()
   {
     discard();
     wait();
-    m_session.deregister_stmt(this);
+    if (m_session)
+      m_session->deregister_stmt(this);
+  }
+
+  Session& get_session()
+  {
+    // Note: get_session() should not be called for inactive statement.
+    assert(m_session);
+    return *m_session;
   }
 
   Protocol& get_protocol()
   {
-    return m_session.m_protocol;
+    return get_session().m_protocol;
   }
 
   // Async_op

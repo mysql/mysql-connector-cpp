@@ -65,6 +65,7 @@ bool Stmt_op::do_cont()
 
   assert(ERROR != m_state);
   assert(DONE != m_state || m_op);
+  assert(m_session);
 
   try {
 
@@ -125,7 +126,7 @@ bool Stmt_op::do_cont()
           will be set to NULL so that we don't enter this branch again.
         */
 
-        m_session.deregister_stmt(m_prev_stmt);
+        m_session->deregister_stmt(m_prev_stmt);
         assert(nullptr == m_prev_stmt);
       }
 
@@ -195,6 +196,12 @@ bool Stmt_op::do_cont()
 
 bool Stmt_op::is_completed() const
 {
+  if (!m_session)
+  {
+    assert(DONE == m_state || ERROR == m_state);
+    return true;
+  }
+
   switch (m_state)
   {
   case ERROR:
