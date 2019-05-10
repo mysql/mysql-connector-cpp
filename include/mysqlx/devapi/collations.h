@@ -187,6 +187,8 @@ static PUBLIC_API const CollationInfo COLL_CONST_NAME(COLL,CASE);
 #define COLL_CONST_NAME_ai_ci(COLL) COLL##_ai_ci
 #define COLL_CONST_NAME_cs(COLL)    COLL##_cs
 #define COLL_CONST_NAME_as_cs(COLL) COLL##_as_cs
+#define COLL_CONST_NAME_as_ci(COLL) COLL##_as_ci
+#define COLL_CONST_NAME_as_cs_ks(COLL) COLL##_as_cs_ks
 
 // Add utf8mb4 alias for bin collation for compatibility
 

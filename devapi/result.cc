@@ -281,8 +281,10 @@ struct CollationInfo::Access
   enum coll_case {
     case_ci = CollationInfo::case_ci,
     case_ai_ci = case_ci,
+    case_as_ci = case_ci,
     case_cs = CollationInfo::case_cs,
     case_as_cs = case_cs,
+    case_as_cs_ks = case_cs,
     case_bin = CollationInfo::case_bin
   };
 
@@ -317,11 +319,6 @@ coll_name(
 {
   static std::vector<std::string> special;
 
-  // Note: special exception for "binary" collation (no _bin suffix)
-
-  if (sensitivity == "bin")
-    return cs == "binary" ? "binary" : name_bin;
-
   /*
     For generic UCA collations, such as uca0900, the "uca" prefix is
     not present in the MySQL collation name. For example, for the uca0900
@@ -335,7 +332,14 @@ coll_name(
     special.push_back(cs + "_" + coll.substr(3) + "_" + sensitivity);
     return special.back().c_str();
   }
-  return name;
+
+  if (sensitivity == "bin")
+  {
+    // Note: special exception for "binary" collation (no _bin suffix)
+    return cs == "binary" ? "binary" : name_bin;
+  }
+  else
+    return name;
 }
 
 

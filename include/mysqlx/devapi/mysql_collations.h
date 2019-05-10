@@ -302,6 +302,12 @@
   X(utf8mb4,247,vietnamese,ci) \
   X(utf8mb4,277,vi_0900,ai_ci) \
   X(utf8mb4,300,vi_0900,as_cs) \
+  X(utf8mb4,304,ja_0900,as_cs_ks) \
+  X(utf8mb4,305,uca0900,as_ci) \
+  X(utf8mb4,306,ru_0900,ai_ci) \
+  X(utf8mb4,307,ru_0900,as_cs) \
+  X(utf8mb4,308,zh_0900,as_cs) \
+  X(utf8mb4,309,uca0900,bin) \
   COLLATIONS_utf8mb4_EXTRA
 
 #define COLLATIONS_utf8mb4_EXTRA
