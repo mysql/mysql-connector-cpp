@@ -317,7 +317,7 @@ coll_name(
   std::string cs, std::string coll, std::string sensitivity,
   const char *name, const char *name_bin)
 {
-  static std::vector<std::string> special;
+  static std::list<std::string> special;
 
   /*
     For generic UCA collations, such as uca0900, the "uca" prefix is
