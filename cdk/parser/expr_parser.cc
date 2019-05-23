@@ -215,6 +215,10 @@ std::string Expr_parser_base::parse_cast_type()
     parse_error("Expected cast type");
 
   Keyword::Type type = Keyword::get(*token);
+
+  if (Keyword::NONE == type)
+    parse_error("Unexpected cast type");
+
   type_str = Keyword::name(type);
 
   switch (type)
@@ -242,7 +246,7 @@ std::string Expr_parser_base::parse_cast_type()
     break;
 
   default:
-    parse_error("Expected cast type");
+    parse_error("Unexpected cast type");
 
   }
 
@@ -1695,7 +1699,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
         switch (Keyword::get(*t))
         {
         case Keyword::L_TRUE:  aprc->list_el()->scalar()->val()->yesno(true); break;
-        case Keyword::L_FALSE: aprc->list_el()->scalar()->val()->yesno(true); break;
+        case Keyword::L_FALSE: aprc->list_el()->scalar()->val()->yesno(false); break;
         case Keyword::L_NULL: aprc->list_el()->scalar()->val()->null(); break;
         default:
           t = NULL; // this indicates error
