@@ -641,5 +641,22 @@ TEST_F(Bugs, bug29525077)
     }
   }
   sess.dropSchema("bug29525077_int_types");
+}
 
+TEST_F(Bugs, is_false)
+{
+  SKIP_IF_NO_XPLUGIN
+  auto schema = get_sess().createSchema("test", true);
+  auto coll = schema.createCollection("is_false", true);
+  coll.remove("true").execute();
+  coll.add(DbDoc(R"({"val": 0 })")).execute();
+  coll.add(DbDoc(R"({"val": 1 })")).execute();
+  coll.add(DbDoc(R"({"val": 1 })")).execute();
+  // Since boolean is not an expected type, it should throw error
+  // Had a segmentation fault issue
+  EXPECT_THROW(coll.find("cast(val as boolean) is false").execute(),
+               mysqlx::Error);
+  EXPECT_EQ(1, coll.find("val is false").execute().count());
+  auto tbl = schema.getCollectionAsTable("is_false");
+  EXPECT_EQ(1, tbl.select().where("doc->$.val is false").execute().count());
 }
