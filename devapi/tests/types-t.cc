@@ -497,6 +497,56 @@ TEST_F(Types, string)
 }
 
 
+inline
+const CollationInfo* get_collation(unsigned id)
+{
+#define COLL_FIND(COL) COLLATIONS_##COL(COLL_FIND1)
+#define COLL_FIND1(CS,ID,COLL,CASE) \
+  case ID: return &Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE);
+
+  switch (id)
+  {
+    CDK_CS_LIST(COLL_FIND)
+  default:
+    return nullptr;
+  }
+}
+
+
+TEST_F(Types, collations)
+{
+  using col_data = std::pair<unsigned, string>;
+  std::vector<col_data> unknown;
+
+  Table t = getSchema("information_schema").getTable("collations");
+
+  for (Row r : t.select("id", "collation_name").execute())
+  {
+    col_data col = { r[0], r[1] };
+
+    const CollationInfo *info = get_collation(col.first);
+
+    if (!info)
+      unknown.push_back(col);
+    else
+    {
+      EXPECT_EQ(std::string{ col.second }, std::string{ info->getName() })
+        << "bad collation name";
+    }
+  }
+
+  if (!unknown.empty())
+  {
+    cout << "Unknown collations:" << endl;
+    for (col_data col : unknown)
+    {
+      cout << " -" << col.first << ": " << col.second << endl;
+    }
+    FAIL() << "There are unknown collations";
+  }
+}
+
+
 TEST_F(Types, blob)
 {
   SKIP_IF_NO_XPLUGIN;

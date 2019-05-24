@@ -182,11 +182,25 @@ static PUBLIC_API const CollationInfo COLL_CONST_NAME(COLL,CASE);
 
 #define COLL_CONST_NAME(COLL,CASE) COLL_CONST_NAME_##CASE(COLL)
 
-#define COLL_CONST_NAME_bin(COLL) COLL
-#define COLL_CONST_NAME_ci(COLL)  COLL##_ci
-#define COLL_CONST_NAME_cs(COLL)  COLL##_cs
+#define COLL_CONST_NAME_bin(COLL)   COLL
+#define COLL_CONST_NAME_ci(COLL)    COLL##_ci
+#define COLL_CONST_NAME_ai_ci(COLL) COLL##_ai_ci
+#define COLL_CONST_NAME_cs(COLL)    COLL##_cs
+#define COLL_CONST_NAME_as_cs(COLL) COLL##_as_cs
+#define COLL_CONST_NAME_as_ci(COLL) COLL##_as_ci
+#define COLL_CONST_NAME_as_cs_ks(COLL) COLL##_as_cs_ks
+
+// Add utf8mb4 alias for bin collation for compatibility
+
+#undef  COLLATIONS_utf8mb4_EXTRA
+#define COLLATIONS_utf8mb4_EXTRA \
+static PUBLIC_API const CollationInfo utf8mb4;
 
 CDK_CS_LIST(COLL_DECL)
+
+#undef  COLLATIONS_utf8mb4_EXTRA
+#define COLLATIONS_utf8mb4_EXTRA
+
 
 MYSQLX_ABI_END(2,0)
 }  // mysqlx
