@@ -280,11 +280,17 @@ struct CollationInfo::Access
 {
   enum coll_case {
     case_ci = CollationInfo::case_ci,
+    case_ai_ci = case_ci,
+    case_as_ci = case_ci,
     case_cs = CollationInfo::case_cs,
+    case_as_cs = case_cs,
+    case_as_cs_ks = case_cs,
     case_bin = CollationInfo::case_bin
   };
 
-  static CollationInfo mk(CharacterSet _cs, unsigned _id, coll_case _case, const char *_name)
+  static CollationInfo mk(
+    CharacterSet _cs, unsigned _id, coll_case _case, const char *_name
+  )
   {
     CollationInfo ci;
     ci.m_cs = _cs;
@@ -295,6 +301,48 @@ struct CollationInfo::Access
   }
 };
 
+
+/*
+  A helper function that reconstructs MySQL collation name from the data
+  given by COLLATIONS_XXX() lists. In most cases the collation name is just
+  a concatenation of charset name, collation and sensitivity flags - this
+  default name is passed as 'name' pre-allocated string. But there are few
+  exceptions to the general rule: 'name_bin' is the name to be used for binary
+  collations; also, individual components of the name are given to allow
+  further customization.
+*/
+
+const char*
+coll_name(
+  std::string cs, std::string coll, std::string sensitivity,
+  const char *name, const char *name_bin)
+{
+  static std::list<std::string> special;
+
+  /*
+    For generic UCA collations, such as uca0900, the "uca" prefix is
+    not present in the MySQL collation name. For example, for the uca0900
+    collation with "ai_ci" sensitivity, the collation name
+    is "utf8mb4_0900_ai_ci" but the value of 'name' is "utf8mb4_uca0900_ai_ci",
+    so we need to correct this.
+  */
+
+  if (coll.substr(0,3) == "uca")
+  {
+    special.push_back(cs + "_" + coll.substr(3) + "_" + sensitivity);
+    return special.back().c_str();
+  }
+
+  if (sensitivity == "bin")
+  {
+    // Note: special exception for "binary" collation (no _bin suffix)
+    return cs == "binary" ? "binary" : name_bin;
+  }
+  else
+    return name;
+}
+
+
 #define COLL_DEFS(CS)  COLLATIONS_##CS(COLL_CONST_DEF)
 
 #define COLL_CONST_DEF(CS,ID,COLL,CASE) \
@@ -302,14 +350,22 @@ const CollationInfo \
 Collation<CharacterSet::CS>::COLL_CONST_NAME(COLL,CASE) = \
   CollationInfo::Access::mk(CharacterSet::CS, ID, \
     CollationInfo::Access::case_##CASE, \
-    COLL_NAME_##CASE(CS,COLL));
+    COLL_NAME(CS,COLL,CASE));
 
-#define COLL_NAME_bin(CS,COLL) #CS "_bin"
-#define COLL_NAME_ci(CS,COLL)  #CS "_" #COLL "_ci"
-#define COLL_NAME_cs(CS,COLL)  #CS "_" #COLL "_cs"
+#define COLL_NAME(CS,COLL,CASE) \
+  coll_name(#CS, #COLL, #CASE, #CS "_" #COLL "_" #CASE, #CS "_bin")
+
+// Add utf8mb4 alias for bin collation for compatibility
+
+#undef  COLLATIONS_utf8mb4_EXTRA
+#define COLLATIONS_utf8mb4_EXTRA \
+const CollationInfo Collation<CharacterSet::utf8mb4>::utf8mb4 = \
+  Collation<CharacterSet::utf8mb4>::bin;
 
 CDK_CS_LIST(COLL_DEFS)
 
+#undef  COLLATIONS_utf8mb4_EXTRA
+#define COLLATIONS_utf8mb4_EXTRA
 
 /*
   Handling result data
