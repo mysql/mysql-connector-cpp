@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,13 +26,33 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-file(GLOB HEADERS *.h)
+#
+# Note: We must clear compile flags - the ones used to build the connector
+# are not good for building client code that uses the connector.
+#
 
-add_library(common STATIC
-  session.cc result.cc collection.cc value.cc
-  ${HEADERS}
+set_property(
+  DIRECTORY .
+  PROPERTY COMPILE_DEFINITIONS ""
 )
 
-target_link_libraries(common cdk uuid_gen)
+if(WIN32)
+  add_definitions(
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
 
-add_subdirectory(tests)
+endif()
+
+#Add cdk includes because we are using their source tests
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/include)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/rapidjson/include)
+add_test_includes(${PROJECT_BINARY_DIR}/cdk/include)
+
+ADD_TEST_LIBRARIES(cdk_parser)
+
+ADD_NG_TEST(common-t
+  ${PROJECT_SOURCE_DIR}/cdk/parser/tests/parser-t.cc
+)
+
+
