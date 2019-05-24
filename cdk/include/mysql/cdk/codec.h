@@ -77,7 +77,7 @@ public:
   }
 
   bool is_unsigned() const { return UINT == m_fmt; }
-  size_t length() { return m_length; }
+  size_t length() const { return m_length; }
 
 protected:
 

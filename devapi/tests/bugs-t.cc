@@ -579,3 +579,67 @@ TEST_F(Bugs, not_accumulate)
   tbl_remove.orderBy("doc->$.age ASC");
   EXPECT_EQ(2, tbl_remove.execute().getAffectedItemsCount());
 }
+
+
+TEST_F(Bugs, bug29525077)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  mysqlx::Session &sess = get_sess();
+  sess.dropSchema("bug29525077_int_types");
+  sess.createSchema("bug29525077_int_types");
+
+  sess.sql(
+    "CREATE TABLE bug29525077_int_types.int_types ("
+    "c1 TINYINT, c2 SMALLINT, c3 MEDIUMINT,"
+    "c4 INT, c5 BIGINT,"
+    "c6 TINYINT UNSIGNED, c7 SMALLINT UNSIGNED,"
+    "c8 MEDIUMINT UNSIGNED, c9 INT UNSIGNED,"
+    "c10 BIGINT UNSIGNED)"
+  ).execute();
+  sess.sql(
+    "INSERT INTO bug29525077_int_types.int_types "
+    "VALUES (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"
+  ).execute();
+  mysqlx::Table tab = sess.getSchema("bug29525077_int_types").
+                  getTable("int_types");
+
+  auto res = tab.select().execute();
+  auto columns = &res.getColumns();
+  col_count_t num_columns = res.getColumnCount();
+  EXPECT_EQ(10, num_columns);
+  while (Row r = res.fetchOne())
+  {
+    for (col_count_t i = 0; i < num_columns; ++i)
+    {
+      auto col_type = (*columns)[i].getType();
+      switch (i)
+      {
+      case 0:
+      case 5:
+        EXPECT_EQ(Type::TINYINT, col_type);
+        break;
+      case 1:
+      case 6:
+        EXPECT_EQ(Type::SMALLINT, col_type);
+        break;
+      case 2:
+      case 7:
+        EXPECT_EQ(Type::MEDIUMINT, col_type);
+        break;
+      case 3:
+      case 8:
+        EXPECT_EQ(Type::INT, col_type);
+        break;
+      case 4:
+      case 9:
+        EXPECT_EQ(Type::BIGINT, col_type);
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  sess.dropSchema("bug29525077_int_types");
+
+}

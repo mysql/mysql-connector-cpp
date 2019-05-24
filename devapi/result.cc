@@ -110,11 +110,26 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
   }
 
   case cdk::TYPE_INTEGER:
-    /*
-      TODO: Report more precise DevAPI type (TINYINT etc) based
-      on CDK type and encoding format information.
-    */
-    return Type::INT;
+  {
+    const common::Format_descr<cdk::TYPE_INTEGER> &fd
+      = fmt.get<cdk::TYPE_INTEGER>();
+
+    size_t f_len = fd.m_format.length();
+
+    if (f_len < 5)
+      return Type::TINYINT;
+
+    if (f_len < 8)
+      return Type::SMALLINT;
+
+    if (f_len < 10)
+      return Type::MEDIUMINT;
+
+    if (f_len < 20)
+      return Type::INT;
+
+    return Type::BIGINT;
+  }
 
   case cdk::TYPE_FLOAT:
   {
