@@ -2036,7 +2036,7 @@ TEST_F(Sess, settings_iterator)
       else if(set.first == SessionOption::SSL_MODE)
         EXPECT_EQ(static_cast<int>(SSLMode::DISABLED), set.second.get<int>());
       else if(set.first == SessionOption::USER)
-        EXPECT_EQ(std::string(get_user()), set.second.get<std::string>());
+        EXPECT_EQ(std::string(get_user() ? get_user() : ""), set.second.get<std::string>());
       else if(set.first == SessionOption::PWD)
       {
         if (get_password())
@@ -2091,7 +2091,7 @@ TEST_F(Sess, settings_iterator)
       else if(set.first == SessionOption::SSL_MODE)
         EXPECT_EQ(static_cast<int>(SSLMode::DISABLED), set.second.get<int>());
       else if(set.first == SessionOption::USER)
-        EXPECT_EQ(std::string(get_user()), set.second.get<std::string>());
+        EXPECT_EQ(std::string(get_user() ? get_user() : ""), set.second.get<std::string>());
       else if(set.first == SessionOption::PWD)
       {
         if (get_password())
