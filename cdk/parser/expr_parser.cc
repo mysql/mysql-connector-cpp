@@ -1219,11 +1219,9 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     case Token::QSTRING:
       if (m_strings_as_blobs)
       {
-        cdk::bytes raw = consume_token()->get_bytes();
-        // NOTE: we remove first and last byte which contain quotes
-        assert(raw.size() > 1);
-        sprc->val()->value(cdk::TYPE_BYTES, Format_info(),
-          cdk::bytes(raw.begin()+1, raw.end()-1));
+        sprc->val()->value(
+          cdk::TYPE_BYTES, Format_info(), consume_token()->get_bytes()
+        );
       }
       else
         sprc->val()->str(consume_token()->get_text());
