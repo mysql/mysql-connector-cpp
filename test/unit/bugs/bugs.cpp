@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -309,7 +309,7 @@ void bugs::expired_pwd()
       SKIP("The expired password does not work with anonymous-user accounts.");
     }
   }
-  catch (sql::SQLException &e)
+  catch (sql::SQLException&)
   {
     /* If no anonymous user present then continue */
   }
@@ -884,7 +884,7 @@ void bugs::bug21053335()
       ASSERT(res->wasNull());
       FAIL("Exception was not thrown by wasNull()");
     }
-    catch (sql::SQLException & e)
+    catch (sql::SQLException&)
     {
       // Everything is ok
     }
@@ -899,7 +899,7 @@ void bugs::bug21053335()
 
   }
 
-  catch (sql::SQLException &e)
+  catch (sql::SQLException&)
   {
     FAIL("Exception thrown by wasNull()");
     throw;
@@ -935,7 +935,7 @@ void bugs::bug17218692()
     ASSERT_EQUALS(log.str(), log2.str());
 
   }
-  catch (sql::SQLException & e)
+  catch (sql::SQLException&)
   {
     FAIL("Exception thrown");
     throw;
@@ -966,7 +966,7 @@ void bugs::bug21067193()
     ASSERT_EQUALS(false, res->absolute(std::numeric_limits<int>::min())); //Invalid position, Returns FALSE
 
   }
-  catch (sql::SQLException & e)
+  catch (sql::SQLException&)
   {
 //	Error....
       throw;

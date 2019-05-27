@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -57,7 +57,14 @@ namespace NativeAPI
 
 class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 {
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
   boost::scoped_ptr< ::sql::mysql::NativeAPI::NativeDriverWrapper > proxy;
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 public:
   MySQL_Driver();

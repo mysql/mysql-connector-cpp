@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -277,7 +277,7 @@ static void validateResultSet(boost::scoped_ptr< sql::ResultSet > & res, struct 
   validateRow(res, max);
   /* Another way to move after the last entry */
   cout << "#\t Trying absolute(NUMROWS + 10) to move cursor after last row and fetch last entry..." << endl;
-  if (false != res->absolute(res->rowsCount() + 10)) {
+  if (false != res->absolute(static_cast<int>(res->rowsCount() + 10))) {
     throw runtime_error("Call did fail although parameter is valid");
   }
   if (true != res->isAfterLast()) {
