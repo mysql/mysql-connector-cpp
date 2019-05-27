@@ -876,6 +876,7 @@ struct Expr_Test{ parser::Parser_mode::value mode; const char *txt;} ;
 
 const Expr_Test exprs[] =
 {
+  { parser::Parser_mode::DOCUMENT, "_id in ('1','3')"},
   { parser::Parser_mode::DOCUMENT, "-2*34.1%5"},
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5"},
   { parser::Parser_mode::DOCUMENT, "-2*3+4.1%5"},
