@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -141,7 +141,7 @@ public:
     while (sent < str->length())
     {
       chunkSize= (sent + MAX_SEND_LONGDATA_CHUNK > str->length()
-            ? str->length() - sent
+            ? static_cast<unsigned int>(str->length() - sent)
             : MAX_SEND_LONGDATA_CHUNK);
 
       if (proxy->send_long_data(position, str->c_str() + sent, chunkSize)) {

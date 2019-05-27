@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -178,13 +178,28 @@ private:
   void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
 
   Driver * driver;
+
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
   boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
   /* statement handle to execute queries initiated by driver. Perhaps it is
      a good idea to move it to a separate helper class */
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
   boost::scoped_ptr< ::sql::mysql::MySQL_Statement > service;
 
   boost::scoped_ptr< ::sql::mysql::MySQL_ConnectionData > intern; /* pimpl */
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
   /* Prevent use of these */
   MySQL_Connection(const MySQL_Connection &);

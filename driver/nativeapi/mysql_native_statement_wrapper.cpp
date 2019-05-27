@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -197,7 +197,7 @@ MySQL_NativeStatementWrapper::param_count()
 int
 MySQL_NativeStatementWrapper::prepare(const ::sql::SQLString & stmt_str)
 {
-  return api->stmt_prepare(stmt, stmt_str.c_str(), stmt_str.length());
+  return api->stmt_prepare(stmt, stmt_str.c_str(), static_cast<unsigned long>(stmt_str.length()));
 }
 /* }}} */
 
@@ -206,7 +206,7 @@ MySQL_NativeStatementWrapper::prepare(const ::sql::SQLString & stmt_str)
 NativeResultsetWrapper *
 MySQL_NativeStatementWrapper::result_metadata()
 {
-	::MYSQL_RES * raw = api->stmt_result_metadata(stmt);
+  ::MYSQL_RES * raw = api->stmt_result_metadata(stmt);
 
   if (raw == NULL) {
     return NULL;
