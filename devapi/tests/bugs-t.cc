@@ -660,3 +660,29 @@ TEST_F(Bugs, is_false)
   auto tbl = schema.getCollectionAsTable("is_false");
   EXPECT_EQ(1, tbl.select().where("doc->$.val is false").execute().count());
 }
+
+TEST_F(Bugs, bug29394723)
+{
+  SKIP_IF_NO_XPLUGIN
+  // Check that the _os session attribute is present and not empty
+  string _os = get_sess().sql("SELECT ATTR_VALUE FROM "
+                            "performance_schema.session_account_connect_attrs "
+                            "WHERE ATTR_NAME = '_os' AND "
+                            "PROCESSLIST_ID = CONNECTION_ID() AND "
+                            "LENGTH(ATTR_VALUE) > 0").execute().
+                            fetchOne()[0].get<string>();
+
+  cout << "_os: " << _os << endl;
+  EXPECT_NE("", _os);
+
+  // Check that the _platform session attribute is present and not empty
+  string _platform = get_sess().sql("SELECT ATTR_VALUE FROM "
+                            "performance_schema.session_account_connect_attrs "
+                            "WHERE ATTR_NAME = '_platform' AND "
+                            "PROCESSLIST_ID = CONNECTION_ID() AND "
+                            "LENGTH(ATTR_VALUE) > 0").execute().
+                            fetchOne()[0].get<string>();
+
+  cout << "_platform: " << _platform << endl;
+  EXPECT_NE("", _platform);
+}
