@@ -45,8 +45,7 @@
 #include "crud_internal.h"
 
 
-using namespace mysqlx::common;
-using Db_obj_ref = mysqlx::common::Object_ref;
+using Db_obj_ref = ::mysqlx::impl::common::Object_ref;
 
 class Diag_info_list;
 
@@ -362,7 +361,7 @@ public:
   {
     assert(name && *name);
     Db_obj_ref obj(this->name(), name);
-    mysqlx::common::drop_object<T>(m_session.m_impl, obj);
+    ::mysqlx::impl::common::drop_object<T>(m_session.m_impl, obj);
   }
 
   void drop_collection(const char *name)

@@ -825,7 +825,7 @@ mysqlx_get_count(mysqlx_result_struct *result, size_t *num)
   -------------------------------------------------------------------------
 */
 
-using common::bytes;
+using impl::common::bytes;
 
 
 #define CHECK_COLUMN_RANGE(COL, ROW) if (COL >= ROW->col_count()) \

@@ -32,14 +32,14 @@
 #define MYSQLX_COMMON_RESULT_INT_H
 
 
-//#include <devapi/error.h>
+#include "common.h"
+#include "session.h"
+#include "value.h"
+
 #include <mysql/cdk.h>
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 
-#include "../global.h"
-#include "session.h"
-#include "value.h"
 
 PUSH_SYS_WARNINGS
 #include <vector>
@@ -47,7 +47,7 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
+namespace impl {
 namespace common {
 
 // TODO: Use std::variant when available
@@ -262,8 +262,14 @@ struct Format_info
 };
 
 
-using cdk::col_count_t;
-using cdk::row_count_t;
+}}  // impl::common
+
+
+MYSQLX_ABI_BEGIN(2,0)
+namespace common {
+
+using impl::common::Format_info;
+using impl::common::Format_descr;
 
 
 /*
@@ -272,9 +278,10 @@ using cdk::row_count_t;
   This extends Fromat_info with members used to store other column meta-data
   such as its name etc.
 
-  Template is parametrized by a string class STR used to store textual
-  meta-data. If STR is std::string, then textual data is stored as utf8 encoded
-  strings.
+  Note: All textual data is stored as utf8 encoded strings.
+
+  Note: Column_info must be defined inside ABI namespace to preserve ABI
+  compatibility (name of this class is used in public API)
 */
 
 class Column_info
@@ -359,6 +366,15 @@ public:
   }
 
 };
+
+}  // common
+MYSQLX_ABI_END(2,0)
+
+
+namespace impl {
+namespace common {
+
+using MYSQLX_ABI(2,0)::common::Column_info;
 
 
 /*
@@ -526,70 +542,6 @@ typedef std::map<col_count_t, Buffer> Row_data;
 
 
 /*
-  Given encoding format information, convert raw bytes to the corresponding
-  value.
-*/
-
-Value convert(cdk::bytes, Format_descr<cdk::TYPE_STRING>&);
-Value convert(cdk::bytes, Format_descr<cdk::TYPE_INTEGER>&);
-Value convert(cdk::bytes, Format_descr<cdk::TYPE_FLOAT>&);
-Value convert(cdk::bytes, Format_descr<cdk::TYPE_DOCUMENT>&);
-
-/*
-  Generic template used when no type-specific specialization is defined.
-  It builds a value holding the raw bytes.
-*/
-
-template <cdk::Type_info T>
-Value convert(cdk::bytes data, Format_descr<T>&)
-{
-  /*
-    Note: Trailing '\0' byte is used for NULL value detection and is not
-    part of the data
-  */
-  return { data.begin(), data.size() - 1 };
-}
-
-
-/*
-  This static function is called by Row_impl to build column value from raw
-  bytes.
-*/
-
-template<cdk::Type_info T>
-inline
-Value Value::Access::mk(bytes data, common::Format_descr<T> &format)
-{
-  // Use convert() to convert raw bytes into a value
-
-  Value val{ common::convert(data, format) };
-
-  /*
-    Store raw representation in m_str if possible (for RAW value this is
-    already done by the constructor).
-  */
-
-  switch (val.get_type())
-  {
-  case Value::RAW:
-  case Value::STRING:
-  case Value::VNULL:
-    break;
-
-  default:
-    /*
-      Note: Trailing '\0' byte is used for NULL value detection and is not
-      part of the data
-    */
-    val.m_str.assign(data.begin(), data.end() - 1);
-    break;
-  }
-
-  return val;
-}
-
-
-/*
   Implementation for a single Row instance. It holds a copy of
   raw data and a shared pointer to row set meta-data.
 
@@ -733,6 +685,78 @@ private:
 
 
 /*
+  Given encoding format information, convert raw bytes to the corresponding
+  value.
+*/
+
+Value convert(cdk::bytes, Format_descr<cdk::TYPE_STRING>&);
+Value convert(cdk::bytes, Format_descr<cdk::TYPE_INTEGER>&);
+Value convert(cdk::bytes, Format_descr<cdk::TYPE_FLOAT>&);
+Value convert(cdk::bytes, Format_descr<cdk::TYPE_DOCUMENT>&);
+
+/*
+  Generic template used when no type-specific specialization is defined.
+  It builds a value holding the raw bytes.
+*/
+
+template <cdk::Type_info T>
+Value convert(cdk::bytes data, Format_descr<T>&)
+{
+  /*
+    Note: Trailing '\0' byte is used for NULL value detection and is not
+    part of the data
+  */
+  return{ data.begin(), data.size() - 1 };
+}
+
+}}  // impl::common
+
+
+MYSQLX_ABI_BEGIN(2, 0)
+namespace common {
+
+/*
+  This static function is called by Row_impl to build column value from raw
+  bytes.
+*/
+
+template<cdk::Type_info T>
+inline
+Value Value::Access::mk(cdk::bytes data, impl::common::Format_descr<T> &format)
+{
+  // Use convert() to convert raw bytes into a value
+
+  Value val{ convert(data, format) };
+
+  /*
+    Store raw representation in m_str if possible (for RAW value this is
+    already done by the constructor).
+  */
+
+  switch (val.get_type())
+  {
+  case Value::RAW:
+  case Value::STRING:
+  case Value::VNULL:
+    break;
+
+  default:
+    /*
+      Note: Trailing '\0' byte is used for NULL value detection and is not
+      part of the data
+    */
+    val.m_str.assign(data.begin(), data.end() - 1);
+    break;
+  }
+
+  return val;
+}
+
+}  // common
+MYSQLX_ABI_END(2, 0)
+
+
+/*
   Implementation of result object
   ===============================
 
@@ -754,16 +778,21 @@ private:
   a result instance.
 */
 
-class Session_impl;
-using Shared_session_impl = std::shared_ptr<Session_impl>;
-class Result_impl;
+MYSQLX_ABI_BEGIN(2,0)
+namespace common {
 
+using impl::common::Shared_meta_data;
+using impl::common::Row_data;
+using impl::common::Column_info;
 
 /*
   An abstract interface used to initialize result of an operation.
 
   An object implementing this interface can be used to construct a result
   object (see ctor of Result_impl_base).
+
+  Note: This class must be defined inside ABI namespace to preserve ABI
+  compatibility (its name is used in public API)
 */
 
 class Result_init
@@ -795,6 +824,9 @@ public:
 
   Given a server reply to a command, it processes the reply giving access to
   the result data and meta-data.
+
+  Note: This class must be defined inside ABI namespace to preserve ABI
+  compatibility (its name is used in public API)
 */
 
 class Result_impl
@@ -1105,8 +1137,7 @@ row_count_t Result_impl::count()
 }
 
 
-} // common
-
+}  // common
 MYSQLX_ABI_END(2,0)
 }  // mysqlx
 

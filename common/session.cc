@@ -50,10 +50,11 @@ POP_SYS_WARNINGS
 #include <sys/utsname.h>
 #endif
 
-using namespace ::mysqlx::common;
+using namespace ::mysqlx::impl::common;
 using TCPIP_options = cdk::ds::TCPIP::Options;
 using TLS_options = TCPIP_options::TLS_options;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
+
 
 void Settings_impl::clear()
 {

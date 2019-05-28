@@ -39,9 +39,10 @@ POP_SYS_WARNINGS
 
 #include "impl.h"
 
-using namespace mysqlx::internal;
-using namespace mysqlx;
-using namespace uuid;
+using namespace ::mysqlx::impl::common;
+using namespace ::mysqlx::internal;
+using namespace ::mysqlx;
+using namespace ::uuid;
 
 /*
   Code in this file defines implementations for various CRUD operations used
@@ -50,10 +51,10 @@ using namespace uuid;
 */
 
 
-auto Crud_factory::mk_sql(Session &sess, const string &query)
+auto Crud_factory::mk_sql(Session &sess, const mysqlx::string &query)
 -> Impl*
 {
-  return new common::Op_sql(sess.m_impl, query);
+  return new Op_sql(sess.m_impl, query);
 }
 
 
@@ -68,7 +69,7 @@ auto Crud_factory::mk_sql(Session &sess, const string &query)
 
 auto Crud_factory::mk_add(Collection &coll) -> Impl*
 {
-  return new common::Op_collection_add(
+  return new Op_collection_add(
     coll.get_session(), Object_ref(coll)
   );
 }
@@ -78,7 +79,7 @@ auto Crud_factory::mk_remove(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
-  return new common::Op_collection_remove(
+  return new Op_collection_remove(
     coll.get_session(), Object_ref(coll), expr
   );
 }
@@ -86,7 +87,7 @@ auto Crud_factory::mk_remove(
 
 auto Crud_factory::mk_find(Collection &coll) -> Impl*
 {
-  return new common::Op_collection_find(
+  return new Op_collection_find(
     coll.get_session(), Object_ref(coll)
   );
 }
@@ -96,7 +97,7 @@ auto Crud_factory::mk_find(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
-  return new common::Op_collection_find(
+  return new Op_collection_find(
     coll.get_session(), Object_ref(coll), expr
   );
 }
@@ -106,7 +107,7 @@ auto Crud_factory::mk_modify(
   Collection &coll, const mysqlx::string &expr
 ) -> Impl*
 {
-  return new common::Op_collection_modify(
+  return new Op_collection_modify(
     coll.get_session(), Object_ref(coll), expr
   );
 }
@@ -116,13 +117,13 @@ struct Replace_cmd
   : public Executable<Result, Replace_cmd>
 {
   Replace_cmd(
-    common::Shared_session_impl sess,
+    internal::Shared_session_impl sess,
     const cdk::api::Object_ref &coll,
     const std::string &id,
     const cdk::Expression &doc
   )
   {
-    reset(new common::Op_collection_replace(
+    reset(new Op_collection_replace(
       sess, coll, id, doc
     ));
   }
@@ -132,13 +133,13 @@ struct Replace_cmd
 struct Upsert_cmd : public Executable<Result, Upsert_cmd>
 {
   Upsert_cmd(
-    common::Shared_session_impl sess,
+    internal::Shared_session_impl sess,
     const cdk::api::Object_ref &coll,
     const std::string &id,
     cdk::Expression &doc
   )
   {
-    reset(new common::Op_collection_upsert(
+    reset(new Op_collection_upsert(
       sess, coll, id, doc
     ));
   }
@@ -150,7 +151,7 @@ struct Value_expr_check_id
     , cdk::Expression::Processor
     , cdk::Expression::Processor::Doc_prc
 {
-  Value_expr &m_expr;
+  mysqlx::Value_expr &m_expr;
   bool m_is_expr;
 
   Processor *m_prc;
@@ -242,7 +243,7 @@ struct Value_expr_check_id
     void str(const string &val) override
     {
       if (m_id != val)
-        throw Error(R"(Document "_id" and replace id are different!)");
+        throw mysqlx::Error(R"(Document "_id" and replace id are different!)");
       m_value_prc->str(val);
     }
     void num(int64_t  val) override { m_value_prc->num(val); }
@@ -255,7 +256,7 @@ struct Value_expr_check_id
 
   Any_processor_check m_any_prc;
 
-  Value_expr_check_id(Value_expr &expr, bool is_expr, const string& id)
+  Value_expr_check_id(mysqlx::Value_expr &expr, bool is_expr, const string& id)
     : m_expr(expr)
     , m_is_expr(is_expr)
     , m_any_prc(id)
@@ -305,7 +306,9 @@ struct Value_expr_check_id
     if (string("_id") == key )
     {
       if (m_is_expr)
-        throw Error(R"(Document "_id" will be replaced by expression "_id")");
+        mysqlx::throw_error(
+          R"(Document "_id" will be replaced by expression "_id")"
+        );
 
       m_any_prc.m_id_prc = m_doc_prc->key_val(key);
       return m_any_prc.m_id_prc ? &m_any_prc : nullptr;
@@ -318,7 +321,7 @@ struct Value_expr_check_id
 
 Result
 Collection_detail::add_or_replace_one(
-  const string &id, Value &&doc, bool replace
+  const mysqlx::string &id, mysqlx::Value &&doc, bool replace
 )
 {
   Object_ref coll(get_schema().m_name, m_name);
@@ -347,15 +350,17 @@ Collection_detail::add_or_replace_one(
 }
 
 
-void Collection_detail::index_drop(const string &name)
+void Collection_detail::index_drop(const mysqlx::string &name)
 {
   Object_ref coll(get_schema().m_name, m_name);
-  common::Op_idx_drop cmd(m_sess, coll, name);
+  Op_idx_drop cmd(m_sess, coll, name);
   cmd.execute();
 }
 
 void
-Collection_detail::index_create(const string &name, Value &&spec)
+Collection_detail::index_create(
+  const mysqlx::string &name, mysqlx::Value &&spec
+)
 {
   switch (spec.getType())
   {
@@ -367,7 +372,7 @@ Collection_detail::index_create(const string &name, Value &&spec)
   }
 
   Object_ref coll(get_schema().m_name, m_name);
-  common::Op_idx_create cmd(m_sess, coll, name, (std::string)spec);
+  Op_idx_create cmd(m_sess, coll, name, (std::string)spec);
   cmd.execute();
 
 }
@@ -383,7 +388,7 @@ Collection_detail::index_create(const string &name, Value &&spec)
 
 auto Crud_factory::mk_insert(Table &table) -> Impl*
 {
-  return new common::Op_table_insert<Value>(
+  return new Op_table_insert<Value>(
     table.get_session(), Object_ref(table)
   );
 }
@@ -391,7 +396,7 @@ auto Crud_factory::mk_insert(Table &table) -> Impl*
 
 auto Crud_factory::mk_select(Table &table) -> Impl*
 {
-  return new common::Op_table_select(
+  return new Op_table_select(
     table.get_session(), Object_ref(table)
   );
 }
@@ -399,7 +404,7 @@ auto Crud_factory::mk_select(Table &table) -> Impl*
 
 auto Crud_factory::mk_update(Table &table) -> Impl*
 {
-  return new common::Op_table_update(
+  return new Op_table_update(
     table.get_session(), Object_ref(table)
   );
 }
@@ -407,7 +412,7 @@ auto Crud_factory::mk_update(Table &table) -> Impl*
 
 auto Crud_factory::mk_remove(Table &table) -> Impl*
 {
-  return new common::Op_table_remove(
+  return new Op_table_remove(
     table.get_session(), Object_ref(table)
   );
 }

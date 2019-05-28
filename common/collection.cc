@@ -35,7 +35,7 @@
 #include "op_impl.h"
 
 
-using namespace ::mysqlx::common;
+using namespace ::mysqlx::impl::common;
 
 
 /*

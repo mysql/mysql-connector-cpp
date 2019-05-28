@@ -39,7 +39,7 @@
   into values.
 */
 
-using namespace ::mysqlx::common;
+using namespace ::mysqlx::impl::common;
 
 
 void Value::print(std::ostream &out) const

@@ -56,7 +56,7 @@ POP_SYS_WARNINGS
 
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
+
 
 struct Value::Access
 {
@@ -92,12 +92,12 @@ struct Value::Access
   static Value mk_from_json(const std::string &json);
 
   template <cdk::Type_info T>
-  static Value mk(cdk::bytes data, common::Format_descr<T> &fmt)
+  static Value mk(cdk::bytes data, impl::common::Format_descr<T> &fmt)
   {
     return common::Value::Access::mk(data, fmt);
   }
 
-  static Value mk(cdk::bytes data, common::Format_descr<cdk::TYPE_DOCUMENT>&);
+  static Value mk(cdk::bytes data, impl::common::Format_descr<cdk::TYPE_DOCUMENT>&);
 
   static cdk::string cdk_str(const Value &val)
   {
@@ -246,9 +246,9 @@ void Value::Access::process(
   a Schema_ref/Object_ref instance directly from Schema/Collection/Table one.
 */
 
-struct Schema_ref : public common::Schema_ref
+struct Schema_ref : public impl::common::Schema_ref
 {
-  using common::Schema_ref::Schema_ref;
+  using impl::common::Schema_ref::Schema_ref;
 
   Schema_ref(const Schema &sch)
     : Schema_ref(sch.getName())
@@ -256,9 +256,9 @@ struct Schema_ref : public common::Schema_ref
 };
 
 
-struct Object_ref : public common::Object_ref
+struct Object_ref : public impl::common::Object_ref
 {
-  using common::Object_ref::Object_ref;
+  using impl::common::Object_ref::Object_ref;
 
   // TODO: Collection/Table without explicit schema?
 
@@ -379,11 +379,11 @@ public:
 */
 
 class internal::Row_detail::Impl
-  : public common::Row_impl<Value>
+  : public impl::common::Row_impl<Value>
 {
 public:
 
-  using common::Row_impl<Value>::Row_impl;
+  using impl::common::Row_impl<Value>::Row_impl;
 
   friend Row;
   friend Row_detail;
@@ -399,9 +399,9 @@ public:
 */
 
 struct internal::Client_detail::Impl
-  : public common::Session_pool
+  : public impl::common::Session_pool
 {
-  using common::Session_pool::Session_pool;
+  using impl::common::Session_pool::Session_pool;
 };
 
 
@@ -412,14 +412,20 @@ struct internal::Client_detail::Impl
 */
 
 struct internal::Session_detail::Impl
-  : public common::Session_impl
+  : public impl::common::Session_impl
 {
   using Result_impl = internal::Result_detail::Impl;
 
-  using common::Session_impl::Session_impl;
+  using impl::common::Session_impl::Session_impl;
 };
 
-MYSQLX_ABI_END(2,0)
+
 }  // mysqlx
+
+
+#ifndef THROW_AS_ASSERT
+#undef THROW
+#define THROW(MSG) do { mysqlx::throw_error(MSG); throw (MSG); } while(false)
+#endif
 
 #endif

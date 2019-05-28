@@ -44,7 +44,7 @@
   into values.
 */
 
-using namespace ::mysqlx::common;
+using namespace ::mysqlx::impl::common;
 
 
 /*
@@ -59,7 +59,8 @@ using namespace ::mysqlx::common;
 
 
 Value
-mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd)
+mysqlx::impl::common::
+convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd)
 {
   /*
     String encoding has artificial 0x00 byte appended at the end to
@@ -82,7 +83,8 @@ mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_STRING> &fd)
 
 
 Value
-mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd)
+mysqlx::impl::common::
+convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd)
 {
   auto &codec = fd.m_codec;
   auto &fmt = fd.m_format;
@@ -103,7 +105,8 @@ mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_INTEGER> &fd)
 
 
 Value
-mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd)
+mysqlx::impl::common::
+convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd)
 {
   auto &fmt = fd.m_format;
 
@@ -125,7 +128,8 @@ mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_FLOAT> &fd)
 
 
 Value
-mysqlx::common::convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
+mysqlx::impl::common::
+convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 {
   if (0 == data.size())
     return Value();

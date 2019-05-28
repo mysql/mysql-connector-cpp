@@ -43,13 +43,14 @@
   Implementation of Result and Row interfaces.
 */
 
+using namespace ::mysqlx::impl::common;
 using namespace ::mysqlx::internal;
 using namespace ::mysqlx;
 
 using std::endl;
 
 
-class bytes::Access
+class mysqlx::bytes::Access
 {
 public:
   static bytes mk(const cdk::bytes &data)
@@ -80,7 +81,7 @@ void Column_detail::print(std::ostream &out) const
   Note: Expected to return values of Type enum constants.
 */
 
-Type get_api_type(cdk::Type_info, const common::Format_info &);
+Type get_api_type(cdk::Type_info, const Format_info &);
 
 unsigned Column_detail::get_type() const
 {
@@ -88,7 +89,7 @@ unsigned Column_detail::get_type() const
 }
 
 
-Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
+Type get_api_type(cdk::Type_info type, const Format_info &fmt)
 {
   switch (type)
   {
@@ -100,7 +101,7 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 
   case cdk::TYPE_STRING:
   {
-    const common::Format_descr<cdk::TYPE_STRING> &fd
+    const Format_descr<cdk::TYPE_STRING> &fd
       = fmt.get<cdk::TYPE_STRING>();
     if (fd.m_format.is_enum())
       return Type::ENUM;
@@ -111,7 +112,7 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 
   case cdk::TYPE_INTEGER:
   {
-    const common::Format_descr<cdk::TYPE_INTEGER> &fd
+    const Format_descr<cdk::TYPE_INTEGER> &fd
       = fmt.get<cdk::TYPE_INTEGER>();
 
     size_t f_len = fd.m_format.length();
@@ -133,7 +134,7 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 
   case cdk::TYPE_FLOAT:
   {
-    const common::Format_descr<cdk::TYPE_FLOAT> &fd
+    const Format_descr<cdk::TYPE_FLOAT> &fd
       = fmt.get<cdk::TYPE_FLOAT>();
     switch (fd.m_format.type())
     {
@@ -147,7 +148,7 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 
   case cdk::TYPE_DATETIME:
   {
-    const common::Format_descr<cdk::TYPE_DATETIME> &fd
+    const Format_descr<cdk::TYPE_DATETIME> &fd
       = fmt.get<cdk::TYPE_DATETIME>();
     switch (fd.m_format.type())
     {
@@ -171,27 +172,27 @@ Type get_api_type(cdk::Type_info type, const common::Format_info &fmt)
 }
 
 
-string Column_detail::get_name() const
+mysqlx::string Column_detail::get_name() const
 {
   return get_impl().m_name;
 }
 
-string Column_detail::get_label() const
+mysqlx::string Column_detail::get_label() const
 {
   return get_impl().m_label;
 }
 
-string Column_detail::get_schema_name() const
+mysqlx::string Column_detail::get_schema_name() const
 {
   return get_impl().m_schema_name;
 }
 
-string Column_detail::get_table_name() const
+mysqlx::string Column_detail::get_table_name() const
 {
   return get_impl().m_table_name;
 }
 
-string Column_detail::get_table_label() const
+mysqlx::string Column_detail::get_table_label() const
 {
   return get_impl().m_table_label;
 }
@@ -212,7 +213,7 @@ bool Column_detail::is_signed() const
   if (cdk::TYPE_INTEGER != get_impl().m_type)
     return false;
 
-  const common::Format_descr<cdk::TYPE_INTEGER> &fd
+  const Format_descr<cdk::TYPE_INTEGER> &fd
     = get_impl().get<cdk::TYPE_INTEGER>();
   return !fd.m_format.is_unsigned();
 }
@@ -407,7 +408,6 @@ void Row_detail::ensure_impl()
     m_impl = std::make_shared<Impl>();
 }
 
-using common::Format_descr;
 
 /*
   Decoding document values from raw bytes representation.
@@ -416,8 +416,8 @@ using common::Format_descr;
   class.
 */
 
-Value
-Value::Access::mk(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
+mysqlx::Value
+mysqlx::Value::Access::mk(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 {
   /*
     Note: this assumes that document is represented as json string
@@ -443,13 +443,13 @@ Value::Access::mk(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 }
 
 
-col_count_t Row_detail::col_count() const
+mysqlx::col_count_t Row_detail::col_count() const
 {
   return get_impl().col_count();
 }
 
 
-bytes Row_detail::get_bytes(col_count_t pos) const
+mysqlx::bytes Row_detail::get_bytes(mysqlx::col_count_t pos) const
 {
   cdk::bytes data = get_impl().m_data.at(pos).data();
   return mysqlx::bytes::Access::mk(data);
@@ -463,7 +463,7 @@ mysqlx::Value& Row_detail::get_val(mysqlx::col_count_t pos)
 
 
 void Row_detail::process_one(
-  std::pair<Impl*,col_count_t> *data, const Value &val
+  std::pair<Impl*, mysqlx::col_count_t> *data, const mysqlx::Value &val
 )
 {
   Impl *impl = data->first;
@@ -477,7 +477,6 @@ void Row_detail::process_one(
   =============
 */
 
-using common::Result_init;
 
 Result_detail::Result_detail(Result_init &init)
 {
@@ -611,7 +610,7 @@ template<>
 bool Row_result_detail<Columns>::iterator_next()
 {
   auto &impl = get_impl();
-  const common::Row_data *row = impl.get_row();
+  const Row_data *row = impl.get_row();
 
   if (!row)
     return false;
@@ -625,7 +624,7 @@ bool Row_result_detail<Columns>::iterator_next()
 
 
 template<>
-col_count_t Row_result_detail<Columns>::col_count() const
+mysqlx::col_count_t Row_result_detail<Columns>::col_count() const
 {
   return get_impl().get_col_count();
 }
@@ -640,7 +639,7 @@ Row_result_detail<Columns>::Row_result_detail(Result_init &init)
 
 
 template<>
-auto Row_result_detail<Columns>::get_column(col_count_t pos) const
+auto Row_result_detail<Columns>::get_column(mysqlx::col_count_t pos) const
 -> const Column&
 {
   return m_cols.at(pos);
@@ -666,7 +665,7 @@ void Columns_detail<Column>::init(const Result_detail::Impl &impl)
 
 
 template<>
-row_count_t Row_result_detail<Columns>::row_count()
+mysqlx::row_count_t Row_result_detail<Columns>::row_count()
 {
   auto cnt = get_impl().count();
   ASSERT_NUM_LIMITS(row_count_t, cnt);
@@ -683,7 +682,7 @@ row_count_t Row_result_detail<Columns>::row_count()
 bool Doc_result_detail::iterator_next()
 {
   auto &impl = get_impl();
-  const common::Row_data *row = impl.get_row();
+  const Row_data *row = impl.get_row();
 
   if (impl.entry_count())
     impl.get_error().rethrow();

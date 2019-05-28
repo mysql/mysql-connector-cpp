@@ -38,17 +38,18 @@
   Copy constructor must be disabled for this class
 */
 
-using namespace mysqlx;
+using namespace ::mysqlx::impl::common;
+using namespace ::mysqlx;
 
 
-uint32_t get_type(const mysqlx::common::Format_info&);
+uint32_t get_type(const Format_info&);
 
 
 struct mysqlx_result_struct
   : public Mysqlx_diag
-  , common::Result_impl
+  , Result_impl
 {
-  using Impl = common::Result_impl;
+  using Impl = Result_impl;
 
   mysqlx_stmt_struct   *m_stmt;
   cdk::Diagnostic_iterator m_warn_it;
@@ -63,7 +64,7 @@ public:
 public:
 
 
-  mysqlx_result_struct(mysqlx_stmt_struct *sess, common::Result_init &init)
+  mysqlx_result_struct(mysqlx_stmt_struct *sess, Result_init &init)
     : Impl(init), m_stmt(sess)
   {
     next_result();
@@ -87,7 +88,7 @@ public:
   */
   mysqlx_row_struct *read_row()
   {
-    const common::Row_data *data = get_row();
+    const Row_data *data = get_row();
     check_errors();
     if (!data)
       return nullptr;
@@ -109,7 +110,7 @@ struct mysqlx_stmt_struct : public Mysqlx_diag
 {
 private:
 
-  using Impl = common::Executable_if;
+  using Impl = Executable_if;
   using Result_impl = mysqlx_result_struct::Impl;
 
   mysqlx_session_struct &m_session;
@@ -124,7 +125,7 @@ public:
     : m_session(*session), m_impl(impl), m_op_type(op)
   {}
 
-  mysqlx_result_struct* new_result(common::Result_init &init)
+  mysqlx_result_struct* new_result(Result_init &init)
   {
     m_result.reset(new mysqlx_result_struct(this, init));
     return m_result.get();
@@ -208,137 +209,137 @@ struct stmt_traits;
 template<>
 struct stmt_traits<OP_SQL>
 {
-  using Impl = common::Op_sql;
+  using Impl = Op_sql;
 };
 
 
 template<>
 struct stmt_traits<OP_TRX_BEGIN>
 {
-  using Impl = common::Op_trx<common::Trx_op::BEGIN>;
+  using Impl = Op_trx<Trx_op::BEGIN>;
 };
 
 template<>
 struct stmt_traits<OP_TRX_COMMIT>
 {
-  using Impl = common::Op_trx<common::Trx_op::COMMIT>;
+  using Impl = Op_trx<Trx_op::COMMIT>;
 };
 
 template<>
 struct stmt_traits<OP_TRX_ROLLBACK>
 {
-  using Impl = common::Op_trx<common::Trx_op::ROLLBACK>;
+  using Impl = Op_trx<Trx_op::ROLLBACK>;
 };
 
 template<>
 struct stmt_traits<OP_TRX_SAVEPOINT_SET>
 {
-  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_SET>;
+  using Impl = Op_trx<Trx_op::SAVEPOINT_SET>;
 };
 
 template<>
 struct stmt_traits<OP_TRX_SAVEPOINT_RM>
 {
-  using Impl = common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE>;
+  using Impl = Op_trx<Trx_op::SAVEPOINT_REMOVE>;
 };
 
 
 template<>
 struct stmt_traits<OP_SELECT>
 {
-  using Impl = common::Op_table_select;
+  using Impl = Op_table_select;
 };
 
 template<>
 struct stmt_traits<OP_INSERT>
 {
-  using Impl = common::Op_table_insert<>;
+  using Impl = Op_table_insert<>;
 };
 
 template<>
 struct stmt_traits<OP_UPDATE>
 {
-  using Impl = common::Op_table_update;
+  using Impl = Op_table_update;
 };
 
 template<>
 struct stmt_traits<OP_DELETE>
 {
-  using Impl = common::Op_table_remove;
+  using Impl = Op_table_remove;
 };
 
 
 template<>
 struct stmt_traits<OP_ADD>
 {
-  using Impl = common::Op_collection_add;
+  using Impl = Op_collection_add;
 };
 
 template<>
 struct stmt_traits<OP_REMOVE>
 {
-  using Impl = common::Op_collection_remove;
+  using Impl = Op_collection_remove;
 };
 
 template<>
 struct stmt_traits<OP_FIND>
 {
-  using Impl = common::Op_collection_find;
+  using Impl = Op_collection_find;
 };
 
 template<>
 struct stmt_traits<OP_MODIFY>
 {
-  using Impl = common::Op_collection_modify;
+  using Impl = Op_collection_modify;
 };
 
 template<>
 struct stmt_traits<OP_SCHEMA_CREATE>
 {
-  using Impl = common::Op_create<common::Object_type::SCHEMA>;
+  using Impl = Op_create<Object_type::SCHEMA>;
 };
 
 template<>
 struct stmt_traits<OP_SCHEMA_DROP>
 {
-  using Impl = common::Op_drop<common::Object_type::SCHEMA>;
+  using Impl = Op_drop<Object_type::SCHEMA>;
 };
 
 template<>
 struct stmt_traits<OP_COLLECTION_DROP>
 {
-  using Impl = common::Op_drop<common::Object_type::COLLECTION>;
+  using Impl = Op_drop<Object_type::COLLECTION>;
 };
 
 template<>
 struct stmt_traits<OP_LIST_SCHEMAS>
 {
-  using Impl = common::Op_list<common::Object_type::SCHEMA>;
+  using Impl = Op_list<Object_type::SCHEMA>;
 };
 
 template<>
 struct stmt_traits<OP_LIST_COLLECTIONS>
 {
-  using Impl = common::Op_list<common::Object_type::COLLECTION>;
+  using Impl = Op_list<Object_type::COLLECTION>;
 };
 
 template<>
 struct stmt_traits<OP_LIST_TABLES>
 {
-  using Impl = common::Op_list<common::Object_type::TABLE>;
+  using Impl = Op_list<Object_type::TABLE>;
 };
 
 template<>
 struct stmt_traits<OP_IDX_CREATE>
 {
-  using Impl = common::Op_idx_create;
+  using Impl = Op_idx_create;
 };
 
 
 template<>
 struct stmt_traits<OP_IDX_DROP>
 {
-  using Impl = common::Op_idx_drop;
+  using Impl = Op_idx_drop;
 };
 
 

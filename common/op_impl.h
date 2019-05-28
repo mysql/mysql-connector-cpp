@@ -31,15 +31,19 @@
 #ifndef MYSQLX_COMMON_OP_IMPL_H
 #define MYSQLX_COMMON_OP_IMPL_H
 
-#include <mysql/cdk.h>
-#include <mysqlx/common.h>
-#include <mysqlx/common/op_if.h>
+#include "common.h"
 #include "session.h"
 #include "result.h"
 #include "db_object.h"
 
+#include <mysql/cdk.h>
+#include <mysqlx/common.h>
+#include <mysqlx/common/op_if.h>
+
+PUSH_SYS_WARNINGS
 #include <bitset>
 #include <list>
+POP_SYS_WARNINGS
 
 
 /*
@@ -48,7 +52,7 @@
 */
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
+namespace impl {
 namespace common {
 
 enum class Object_type
@@ -1060,13 +1064,13 @@ private:
 
         Scalar_prc* scalar()
         {
-          throw_error("Scalar expression can not be used as projection");
+          common::throw_error("Scalar expression can not be used as projection");
           return nullptr;
         }
 
         List_prc* arr()
         {
-          throw_error("Array expression can not be used as projection");
+          common::throw_error("Array expression can not be used as projection");
           return nullptr;
         }
 
@@ -1201,7 +1205,7 @@ public:
     if (m_where_expr.empty())
     {
       if (m_where_set)
-        throw_error("Invalid selection criteria");
+        common::throw_error("Invalid selection criteria");
       return nullptr;
     }
 
@@ -1222,11 +1226,11 @@ public:
 */
 
 struct Op_sql
-  : public Op_base<common::Bind_if>
+  : public Op_base<Bind_if>
 {
   using string = std::string;
 
-  using Base = Op_base<common::Bind_if>;
+  using Base = Op_base<Bind_if>;
 
   string m_query;
 
@@ -1470,7 +1474,7 @@ struct Op_trx<Trx_op::SAVEPOINT_REMOVE>
     : Op_trx_savepoint(sess, name)
   {
     if (name.empty())
-      throw_error("Invalid empty save point name");
+      common::throw_error("Invalid empty save point name");
   }
 
   cdk::Reply* send_command() override
@@ -1533,7 +1537,7 @@ struct Op_create<Object_type::COLLECTION>
     if (coll.schema())
       add_param("schema", Value::Access::mk_str(coll.schema()->name()));
     else
-      throw_error("No schema specified for create collection operation");
+      common::throw_error("No schema specified for create collection operation");
     add_param("name", Value::Access::mk_str(coll.name()));
     // 1050 = table already exists
     if (reuse)
@@ -1574,7 +1578,7 @@ struct Op_drop
     : Op_admin(sess, "drop_collection")
   {
     if (!obj.schema())
-      throw_error("No schema specified for drop collection/table operation");
+      common::throw_error("No schema specified for drop collection/table operation");
     add_param("schema", obj.schema()->name());
     add_param("name", obj.name());
     // 1051 = collection doesn't exist
@@ -2547,7 +2551,7 @@ class Op_table_insert
   using string = std::string;
   using Row_list = std::list < Row_impl<VAL> >;
   using Col_list = std::list < string >;
-  using Object_ref = mysqlx::common::Object_ref;
+  using Object_ref = impl::common::Object_ref;
 
   Object_ref m_table;
 
@@ -2896,7 +2900,7 @@ protected:
 
 
 }  // internal
-MYSQLX_ABI_END(2,0)
+}  // impl
 }  // mysqlx
 
 #endif

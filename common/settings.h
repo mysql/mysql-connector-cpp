@@ -31,11 +31,12 @@
 #ifndef MYSQLX_COMMON_SETTINGS_INT_H
 #define MYSQLX_COMMON_SETTINGS_INT_H
 
-#include <mysqlx/common.h>
+#include "common.h"
+#include "value.h"
+
 #include <mysql/cdk.h>
 #include <json_parser.h>
 #include <uri_parser.h>
-#include "value.h"
 
 PUSH_SYS_WARNINGS
 #include <vector>
@@ -1043,7 +1044,7 @@ Settings_impl::Setter::get_uri_option(const std::string &name)
 }
 
 
-}  // internal namespace
+}  // common
 MYSQLX_ABI_END(2,0)
 }  // mysqlx namespace
 

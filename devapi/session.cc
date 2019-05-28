@@ -29,6 +29,10 @@
  */
 
 
+#include "impl.h"
+#include "../common/settings.h"
+#include "../common/result.h"
+
 #include <mysql/cdk.h>
 #include <uri_parser.h>
 
@@ -40,13 +44,11 @@ PUSH_SYS_WARNINGS
 #include <list>
 POP_SYS_WARNINGS
 
-#include "impl.h"
-#include "../common/settings.h"
-#include "../common/result.h"
 
 
 const unsigned max_priority = 100;
 
+using namespace ::mysqlx::impl::common;
 using namespace ::mysqlx::internal;
 using namespace ::mysqlx;
 using std::ostream;
@@ -72,7 +74,7 @@ void process_val(PRC *prc, common::Value &val)
   case common::Value::BOOL:    prc->yesno(val.get_bool());  break;
   case common::Value::VNULL:   prc->null();                 break;
   default:
-    throw_error("Invalid type of session option value");
+    mysqlx::throw_error("Invalid type of session option value");
   }
 }
 
@@ -108,7 +110,7 @@ Client_detail::Client_detail(common::Settings_impl &settings)
 }
 
 
-common::Shared_session_pool&
+Shared_session_pool&
 Client_detail::get_session_pool()
 {
   return m_impl;
@@ -141,7 +143,7 @@ Session_detail::Session_detail(common::Settings_impl &settings)
 }
 
 
-Session_detail::Session_detail(common::Shared_session_pool &pool)
+Session_detail::Session_detail(Shared_session_pool &pool)
 {
   m_impl = std::make_shared<Impl>(pool);
 }
@@ -180,34 +182,34 @@ void Session_detail::close()
 
 void Session_detail::start_transaction()
 {
-  common::Op_trx<common::Trx_op::BEGIN> cmd(m_impl);
+  Op_trx<Trx_op::BEGIN> cmd(m_impl);
   cmd.execute();
 }
 
 
 void Session_detail::commit()
 {
-  common::Op_trx<common::Trx_op::COMMIT> cmd(m_impl);
+  Op_trx<Trx_op::COMMIT> cmd(m_impl);
   cmd.execute();
 }
 
 
-void Session_detail::rollback(const string &sp)
+void Session_detail::rollback(const mysqlx::string &sp)
 {
-  common::Op_trx<common::Trx_op::ROLLBACK> cmd(m_impl, sp);
+  Op_trx<Trx_op::ROLLBACK> cmd(m_impl, sp);
   cmd.execute();
 }
 
-string Session_detail::savepoint_set(const string &sp)
+mysqlx::string Session_detail::savepoint_set(const mysqlx::string &sp)
 {
-  common::Op_trx<common::Trx_op::SAVEPOINT_SET> cmd(m_impl, sp);
+  Op_trx<Trx_op::SAVEPOINT_SET> cmd(m_impl, sp);
   cmd.execute();
   return cmd.get_name();
 }
 
-void Session_detail::savepoint_remove(const string &sp)
+void Session_detail::savepoint_remove(const mysqlx::string &sp)
 {
-  common::Op_trx<common::Trx_op::SAVEPOINT_REMOVE> cmd(m_impl, sp);
+  Op_trx<Trx_op::SAVEPOINT_REMOVE> cmd(m_impl, sp);
   cmd.execute();
 }
 
@@ -215,24 +217,21 @@ void Session_detail::savepoint_remove(const string &sp)
 // ---------------------------------------------------------------------
 
 
-using common::Object_type;
-
-
-void Session_detail::create_schema(const string &name, bool reuse)
+void Session_detail::create_schema(const mysqlx::string &name, bool reuse)
 {
   Schema_ref schema(name);
-  common::create_object<Object_type::SCHEMA>(m_impl, schema, reuse);
+  create_object<Object_type::SCHEMA>(m_impl, schema, reuse);
 }
 
 
-void Session_detail::drop_schema(const string &name)
+void Session_detail::drop_schema(const mysqlx::string &name)
 {
   Schema_ref schema(name);
-  common::drop_object<Object_type::SCHEMA>(m_impl, schema);
+  drop_object<Object_type::SCHEMA>(m_impl, schema);
 }
 
 
-string Session_detail::get_default_schema_name()
+mysqlx::string Session_detail::get_default_schema_name()
 {
   if (m_impl->m_default_db.empty())
     throw Error("No default schema set for the session");
@@ -253,11 +252,11 @@ Query_src::~Query_src()
 
 
 Session_detail::Name_src::Name_src(
-  const Session &sess, const string &pattern
+  const Session &sess, const mysqlx::string &pattern
 )
   : m_sess(sess)
 {
-  common::Op_list<Object_type::SCHEMA> list_op{ sess.m_impl, pattern };
+  Op_list<Object_type::SCHEMA> list_op{ sess.m_impl, pattern };
   m_res = new Res_impl(list_op.execute());
 }
 
@@ -276,17 +275,18 @@ auto Session_detail::Schema_src::iterator_get() -> Schema
 */
 
 
-void Schema_detail::create_collection(const string &name, bool reuse)
+void
+Schema_detail::create_collection(const mysqlx::string &name, bool reuse)
 {
   Object_ref coll(m_name, name);
-  common::create_object<Object_type::COLLECTION>(m_sess, coll, reuse);
+  create_object<Object_type::COLLECTION>(m_sess, coll, reuse);
 }
 
 
 void Schema_detail::drop_collection(const mysqlx::string& name)
 {
   Object_ref coll(m_name, name);
-  common::drop_object<Object_type::COLLECTION>(m_sess, coll);
+  drop_object<Object_type::COLLECTION>(m_sess, coll);
 }
 
 
@@ -294,7 +294,7 @@ void Schema_detail::drop_collection(const mysqlx::string& name)
 Schema_detail::Name_src::Name_src(
   const Schema &sch,
   Obj_type type,
-  const string &pattern
+  const mysqlx::string &pattern
 )
   : m_schema(sch)
 {
@@ -305,14 +305,14 @@ Schema_detail::Name_src::Name_src(
   {
   case COLLECTION:
     {
-      common::Op_list<Object_type::COLLECTION> list_op(sess, obj, pattern);
+      Op_list<Object_type::COLLECTION> list_op(sess, obj, pattern);
       m_res = new Res_impl(list_op.execute());
     };
     break;
 
   case TABLE:
     {
-      common::Op_list<Object_type::TABLE> list_op(sess, obj, pattern);
+      Op_list<Object_type::TABLE> list_op(sess, obj, pattern);
       m_res = new Res_impl(list_op.execute());
     };
     break;
@@ -329,7 +329,7 @@ Schema_detail::Collection_src::iterator_get()
 Table
 Schema_detail::Table_src::iterator_get()
 {
-  auto *row = static_cast<const common::Row_data*>(m_row);
+  auto *row = static_cast<const Row_data*>(m_row);
   assert(1 < row->size());
   assert(cdk::TYPE_STRING == m_res->get_column(1).m_type);
 
@@ -355,10 +355,10 @@ bool Query_src::iterator_next()
 }
 
 
-string Query_src::iterator_get()
+mysqlx::string Query_src::iterator_get()
 {
   assert(m_row);
-  auto *row = static_cast<const common::Row_data*>(m_row);
+  auto *row = static_cast<const Row_data*>(m_row);
 
   const auto &name_col = m_res->get_column(0);
   const auto &data = row->at(0).data();
@@ -414,33 +414,33 @@ void from_str(mysqlx::string &to, const std::basic_string<C> &from)
 }
 
 
-std::string string::Impl::to_utf8(const string &other)
+std::string mysqlx::string::Impl::to_utf8(const string &other)
 {
   return to_str<char>(other);
 }
 
-void string::Impl::from_utf8(string &s, const std::string &other)
+void mysqlx::string::Impl::from_utf8(string &s, const std::string &other)
 {
   from_str(s, other);
 }
 
-std::u32string string::Impl::to_ucs4(const string &other)
+std::u32string mysqlx::string::Impl::to_ucs4(const string &other)
 {
   return to_str<char32_t>(other);
 }
 
-void string::Impl::from_ucs4(string &s, const std::u32string &other)
+void mysqlx::string::Impl::from_ucs4(string &s, const std::u32string &other)
 {
   from_str(s, other);
 }
 
 
-std::wstring string::Impl::to_wide(const string &other)
+std::wstring mysqlx::string::Impl::to_wide(const string &other)
 {
   return to_str<wchar_t>(other);
 }
 
-void string::Impl::from_wide(string &s, const std::wstring &other)
+void mysqlx::string::Impl::from_wide(string &s, const std::wstring &other)
 {
   from_str(s, other);
 }

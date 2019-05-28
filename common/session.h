@@ -35,29 +35,29 @@
   Internal implementations for public DevAPI classes.
 */
 
-#include <mysqlx/common.h>
+#include "common.h"
+
 #include <mysql/cdk.h>
+
+PUSH_SYS_WARNINGS
 #include <list>
 #include <mutex>
 #include <condition_variable>
+POP_SYS_WARNINGS
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
-namespace common {
 
-class Result_impl;
-class Result_init;
+namespace impl {
+namespace common {
 
 using duration = std::chrono::milliseconds;
 using system_clock = std::chrono::system_clock;
 using time_point = std::chrono::time_point<system_clock>;
 
+
 /*
    Session pooling
 */
-class Session_pool;
-using Session_pool_shared = std::shared_ptr<Session_pool>;
-
 
 class Pooled_session
   : public cdk::foundation::api::Async_op<void>
@@ -89,8 +89,26 @@ private:
 };
 
 
+}  // common
+}  // impl
+
+
+MYSQLX_ABI_BEGIN(2,0)
+namespace common {
+
+using impl::common::duration;
+using impl::common::time_point;
+using impl::common::Pooled_session;
+
+
+/*
+  Note: This class must be defined inside ABI namespace to preserve ABI
+  compatibility (its name is used in public API)
+*/
+
 class Session_pool
 {
+
 public:
   Session_pool(cdk::ds::Multi_source &ds);
 
@@ -114,14 +132,14 @@ public:
   void set_timeout(uint64_t ms)
   {
     if (!check_num_limits<int64_t>(ms))
-      throw_error("Timeout value too big!");
+      common::throw_error("Timeout value too big!");
     m_timeout = duration(static_cast<int64_t>(ms));
   }
 
   void set_time_to_live(uint64_t ms)
   {
     if (!check_num_limits<int64_t>(ms))
-      throw_error("MaxIdleTime value too big!");
+      common::throw_error("MaxIdleTime value too big!");
     m_time_to_live = duration(static_cast<int64_t>(ms));
   }
 
@@ -156,6 +174,9 @@ protected:
 
 /*
   Internal implementation for Session objects.
+
+  Note: This class must be defined inside ABI namespace to preserve ABI
+  compatibility (its name is used in public API)
 
   TODO: Add transaction methods here?
 */
@@ -327,8 +348,10 @@ public:
 };
 
 
-}  // internal namespace
+}  // common
 MYSQLX_ABI_END(2,0)
+
+
 }  // mysqlx namespace
 
 

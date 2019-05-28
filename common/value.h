@@ -38,18 +38,21 @@
 
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
 
+namespace impl {
 namespace common {
-
-using cdk::string;
-using cdk::byte;
-using cdk::bytes;
 
 template <cdk::Type_info T> class Format_descr;
 
+}}  // impl::common
+
+
+MYSQLX_ABI_BEGIN(2,0)
+namespace common {
+
 struct Value::Access
 {
+
   static Value mk_str(const cdk::string &str)
   {
     return (std::u16string)str;
@@ -68,7 +71,7 @@ struct Value::Access
   // Create value from raw bytes, given CDK format description.
 
   template<cdk::Type_info T>
-  static Value mk(bytes data, common::Format_descr<T> &format);
+  static Value mk(cdk::bytes data, impl::common::Format_descr<T> &format);
 
   // Describe value to a CDK expression or value processor.
 
@@ -78,6 +81,18 @@ struct Value::Access
   static void
   process_val(const Value&, cdk::Value_processor&);
 };
+
+}
+MYSQLX_ABI_END(2,0)
+
+
+namespace impl {
+namespace common {
+
+using cdk::string;
+using cdk::byte;
+using cdk::bytes;
+using mysqlx::common::Value;
 
 
 /*
@@ -105,6 +120,7 @@ public:
   }
 };
 
+
 class Value_expr
   : public cdk::Expression
 {
@@ -124,8 +140,8 @@ public:
 };
 
 
-}  // internal
-MYSQLX_ABI_END(2,0)
+}  // common
+}  // impl
 }  // mysqlx
 
 #endif

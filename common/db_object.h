@@ -31,12 +31,13 @@
 #ifndef MYSQLX_COMMON_DB_OBJECT_H
 #define MYSQLX_COMMON_DB_OBJECT_H
 
+#include "common.h"
+
 #include <mysql/cdk.h>
-#include <mysqlx/common.h>
 
 
 namespace mysqlx {
-MYSQLX_ABI_BEGIN(2,0)
+namespace impl {
 
 // --------------------------------------------------------------------
 
@@ -87,7 +88,6 @@ namespace common {
 
 } // common
 
-MYSQLX_ABI_END(2,0)
-} // mysqlx
+}} // mysqlx::impl
 
 #endif
