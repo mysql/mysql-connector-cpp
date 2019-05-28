@@ -47,6 +47,7 @@ POP_SYS_WARNINGS
 #ifndef _WIN32
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/utsname.h>
 #endif
 
 using namespace ::mysqlx::common;
@@ -85,6 +86,92 @@ void Settings_impl::set_client_opts(const Settings_impl &opts)
   set.commit();
 }
 
+/*
+  Get information about OS and platform architecture.
+  platform - an output parameter containig the string with the
+  platform architecture (such as 'i386' or 'x86_64' etc)
+
+  Returns the string containing the OS type and its version.
+  Note: it returns the version, not the number in the name of the OS.
+        In Windows it will be Windows-6.3.x instead of Windows-8.1
+*/
+std::string get_os_version_info(std::string &platform)
+{
+  std::stringstream ver_info;
+#ifdef _WIN32
+  HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+  typedef long (NTAPI *tRtlGetVersion)(OSVERSIONINFO*);
+  tRtlGetVersion pRtlGetVersion = nullptr;
+  OSVERSIONINFO ver;
+  _SYSTEM_INFO hw_info;
+
+  memset(&ver, 0, sizeof(OSVERSIONINFO));
+  ver.dwOSVersionInfoSize = sizeof(sizeof(OSVERSIONINFO));
+
+  if (ntdll != nullptr)
+    pRtlGetVersion = (tRtlGetVersion)GetProcAddress(ntdll, "RtlGetVersion");
+
+  if (pRtlGetVersion)
+  {
+    pRtlGetVersion(&ver);
+  }
+  else
+  {
+    PUSH_SYS_WARNINGS
+      DISABLE_WARNING(4996)
+      if (GetVersionEx(&ver) == 0)
+        ver_info << "<unknown>";
+    POP_SYS_WARNINGS
+  }
+
+  // Check if version info was set to <unknown> because of error
+  if (ver_info.str().length() == 0)
+    ver_info << "Windows-"
+      << ver.dwMajorVersion << "."
+      << ver.dwMinorVersion << "."
+      << ver.dwBuildNumber;
+
+  GetSystemInfo(&hw_info);
+  switch (hw_info.wProcessorArchitecture)
+  {
+  case PROCESSOR_ARCHITECTURE_AMD64:
+    platform = "x86_64"; break;
+  case PROCESSOR_ARCHITECTURE_ARM:
+    platform = "arm"; break;
+  case PROCESSOR_ARCHITECTURE_IA64:
+    platform = "ia64"; break;
+  case PROCESSOR_ARCHITECTURE_INTEL:
+    platform = "i386"; break;
+  case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
+    platform = "i686"; break;
+  case PROCESSOR_ARCHITECTURE_PPC:
+    platform = "powerpc"; break;
+  case PROCESSOR_ARCHITECTURE_MIPS:
+    platform = "mips"; break;
+  case PROCESSOR_ARCHITECTURE_ALPHA:
+  case PROCESSOR_ARCHITECTURE_ALPHA64:
+    platform = "alpha"; break;
+  default:
+    platform = "<unknown>";
+  }
+
+#else
+  struct utsname ver;
+  if (uname(&ver) == -1)
+  {
+    ver_info << "<unknown>";
+    platform = "<unknown>";
+  }
+  else
+  {
+    ver_info << ver.sysname << "-" << ver.release;
+    platform = ver.machine;
+  }
+#endif
+
+  return ver_info.str();
+}
+
 void mysqlx::common::Settings_impl::Data::init_connection_attr()
 {
   //Already initialized... nothing to do here!
@@ -92,6 +179,7 @@ void mysqlx::common::Settings_impl::Data::init_connection_attr()
     return;
 
   std::string pid;
+  std::string platform;
 #ifdef _WIN32
   pid = std::to_string(GetCurrentProcessId());
 #else
@@ -99,8 +187,8 @@ void mysqlx::common::Settings_impl::Data::init_connection_attr()
 #endif
   m_connection_attr["_pid"] =  pid;
 
-  m_connection_attr["_platform"] = MACHINE_TYPE;
-  m_connection_attr["_os"] = SYSTEM_TYPE;
+  m_connection_attr["_os"] = get_os_version_info(platform);
+  m_connection_attr["_platform"] = platform;
   m_connection_attr["_source_host"] =
       cdk::foundation::connection::get_local_hostname();
   m_connection_attr["_client_name"] =  PACKAGE_NAME;
