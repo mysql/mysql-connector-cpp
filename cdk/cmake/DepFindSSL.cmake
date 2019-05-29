@@ -199,7 +199,7 @@ function(find_openssl)
 
   #message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
   STRING(REGEX REPLACE
-    "^.*OPENSSL_VERSION_TEXT[\t ]+\"OpenSSL[\t ]([0-9]+)\\.([0-9]+)\\.([0-9]+)([a-z]).*$"
+    "^.*OPENSSL_VERSION_TEXT[\t ]+\"OpenSSL[\t ]([0-9]+)\\.([0-9]+)\\.([0-9]+)([a-z]*)[\t ].*$"
     "\\1;\\2;\\3;\\4"
     version_list "${OPENSSL_VERSION_NUMBER}"
   )
