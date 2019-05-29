@@ -44,6 +44,8 @@ PUSH_SYS_WARNINGS_CDK
 #include <limits>
 #include <chrono>
 #include <sstream>
+#include <mutex>
+#include <thread>
 
 #ifndef _WIN32
 #include <arpa/inet.h>
@@ -353,6 +355,44 @@ void set_nonblocking(Socket socket, bool nonblocking)
 }
 
 
+#if defined WITH_SSL && OPENSSL_VERSION_NUMBER < 0x10100000L
+//Not needed after 1.1
+
+static std::mutex* m_openssl_mutex = nullptr;
+
+void thread_setup()
+{
+  m_openssl_mutex = new std::mutex[CRYPTO_num_locks()];
+}
+
+void thread_cleanup()
+{
+  delete[] m_openssl_mutex;
+}
+
+static void locking_function(int mode, int n, const char *file, int line)
+{
+  if(mode & CRYPTO_LOCK)
+  {
+    m_openssl_mutex[n].lock();
+  }
+  else if(mode & CRYPTO_UNLOCK)
+  {
+    m_openssl_mutex[n].unlock();
+  }
+}
+
+static void id_function(CRYPTO_THREADID *id)
+{
+  CRYPTO_THREADID_set_numeric(
+        id,
+        static_cast<unsigned long>(
+          std::hash<std::thread::id>()(std::this_thread::get_id())
+          )
+        );
+}
+#endif
+
 void initialize_socket_system()
 {
 #ifdef _WIN32
@@ -367,6 +407,11 @@ void initialize_socket_system()
   SSL_library_init();
   OpenSSL_add_all_algorithms();
   SSL_load_error_strings();
+# if OPENSSL_VERSION_NUMBER < 0x10100000L
+  thread_setup();
+  CRYPTO_set_locking_callback(locking_function);
+  CRYPTO_THREADID_set_callback(id_function);
+# endif
 #endif
 
 #ifndef WIN32
@@ -381,6 +426,11 @@ void uninitialize_socket_system()
 #ifdef _WIN32
   if (::WSACleanup() != 0)
     throw_socket_error();
+#endif
+#ifdef WITH_SSL
+# if OPENSSL_VERSION_NUMBER < 0x10100000L
+  thread_cleanup();
+# endif
 #endif
 }
 
