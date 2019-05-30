@@ -1071,9 +1071,9 @@ private:
 inline
 col_count_t Result_impl::get_col_count() const
 {
-  if (!m_cursor)
+  if (!m_cursor || !m_mdata)
     THROW("No result set");
-  return m_cursor->col_count();
+  return m_mdata->col_count();
 }
 
 inline
