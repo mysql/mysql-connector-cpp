@@ -61,12 +61,12 @@ protected:
       return Stmt_op::do_cont();
 
     /*
-      Note: call to next_result() changes statement state so that it
-      expects a full reply.
+      Note: Changing state to MDATA will tell Stmt_op to expect a full
+      reply instead of simple OK.
     */
 
     if (OK == m_state)
-      m_state = MDATA; // next_result();
+      m_state = MDATA;
 
     assert(OK != m_state);
 
@@ -85,11 +85,17 @@ protected:
   beforehand).
 
   Otherwise, if derived class is used, it is assumed that it overrides
-  send_cmd() method to to send and prepare a statement on the server. Server
+  send_cmd() method to send and prepare a statement on the server. Server
   reply is expected to be a reply to prepare + execute pipeline with first OK
   packet as a reply to the prepare command followed by a reply to the
   statement that was prepared (which is handled as usual by the base
   class).
+
+  Note: The distinction between the two behaviors is based on the value of
+  m_stmt_id member. Normally it should be non-zero but default implementation
+  of send_cmd() resets it to 0 and then the "execute already prepared statement"
+  path is executed. An overridden snd_cmd() that sends prepare + execute
+  pipeline should not reset m_stmt_id.
 */
 
 template <class Base>
@@ -98,7 +104,13 @@ class Prepared
 {
 protected:
 
+  /*
+    Note: m_stmt_id is reset to 0 by reply processing logic. Therefore one
+    should not expect that it always contains the original stmt id.
+  */
+
   uint32_t m_stmt_id=0;
+
   const Limit        *m_limit = nullptr;
   const protocol::mysqlx::api::Any_list *m_param_list = nullptr;
   const protocol::mysqlx::api::Args_map *m_param_map = nullptr;
@@ -493,7 +505,7 @@ typedef Expr_conv_base<
   which involve selecting a subset of rows/documents in the
   table/collection.
 
-  A CRUD operation class which derives from this Select_op_base
+  A CRUD operation class which derives from this Cmd_Select
   can be used as selection criteria specification as required
   by protocol object methods.
 
