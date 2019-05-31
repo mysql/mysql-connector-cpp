@@ -31,6 +31,14 @@ namespace common {
 
 using namespace mysqlx::common;
 
+/*
+  Note: for older gcc versions (4.8, 5.4) above using namespace declaration
+  is not sufficient to correctly resolve mysqlx::impl::common::Session_pool
+  (but for more recent versions it works).
+*/
+
+using mysqlx::common::Session_pool;
+
 using cdk::col_count_t;
 using cdk::row_count_t;
 
