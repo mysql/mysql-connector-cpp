@@ -292,7 +292,9 @@ const error_category& resolve_error_category()
 static void throw_socket_error()
 {
 #ifdef _WIN32
-  throw_error(WSAGetLastError(), winsock_error_category());
+  int error = WSAGetLastError();
+  if (error)
+    throw_error(error, winsock_error_category());
 #else
   throw_system_error();
 #endif
@@ -658,17 +660,32 @@ Socket connect(const char *host_name, unsigned short port,
         if (connect_result == SOCKET_ERROR && errno == EINPROGRESS)
       #endif
         {
-          auto timeout = duration_cast<microseconds>(
-            deadline - system_clock::now()
-          ).count();
 
-          int select_result = poll_one(
-            socket, POLL_MODE_CONNECT, true,
-            0 == timeout_usec ? 0 : timeout > 0 ? timeout : 1
-          );
+          int select_result = 0;
 
-          if (select_result == 0 && (timeout_usec > 0) &&
-               (std::chrono::system_clock::now() >= deadline))
+          do{
+
+            auto timeout = duration_cast<microseconds>(
+              deadline - system_clock::now()
+            ).count();
+
+            select_result = poll_one(
+                              socket, POLL_MODE_CONNECT, true,
+                              0 == timeout_usec ? 0 : timeout > 0 ? timeout : 1
+                                                                    );
+          // Note: if poll_one() returns 0 then, according to POSIX specs:
+          // A value of 0 indicates that the call timed out and no file descriptors have been selected
+          // Due to a bug on WSApool, it may return 0 even if no timeout occur..
+          // So we will check if timeout occurs and try again if not
+
+          } while ((select_result == 0) &&
+                   ((timeout_usec == 0) ||
+                    (std::chrono::system_clock::now() < deadline)
+                    )
+                   );
+
+          if ((timeout_usec > 0) &&
+              (std::chrono::system_clock::now() >= deadline))
           {
             // Throw the error in milliseconds, which we did not adjust.
             // Otherwise the user will be confused why the timeout
@@ -676,7 +693,8 @@ Socket connect(const char *host_name, unsigned short port,
             // (original timeout minus DNS resolution time)
             throw Connect_timeout_error(timeout_usec / 1000);
           }
-          else if (select_result < 0)
+
+          if (select_result < 0)
             throw_socket_error();
           else
             check_socket_error(socket);
@@ -858,8 +876,9 @@ DIAGNOSTIC_POP_CDK
  #endif
 
   if (fds.revents & (POLLERR | POLLHUP | POLLNVAL))
-       check_socket_error(socket);
-
+  {
+    check_socket_error(socket);
+  }
 
   return result;
 }
