@@ -358,7 +358,7 @@ Expr_parser_base::parse_function_call(const cdk::api::Table_ref &func, Scalar_pr
     )
       unsupported("LEADING, TRAILING or BOTH clause inside function TRIM()");
 
-    parse(parse_position ? COMP : FULL, aprc ? aprc->list_el() : NULL);
+    delete parse(parse_position ? COMP : FULL, aprc ? aprc->list_el() : NULL);
 
     if (consume_token(Token::COMMA))
       parse_argslist(aprc);
@@ -404,7 +404,7 @@ Expr_parser_base::parse_special_args(
   {
     if (!consume_token(Keyword::IN))
       parse_error("Expected IN inside POSITION(... IN ...)");
-    parse(FULL, aprc ? aprc->list_el() : NULL);
+    delete parse(FULL, aprc ? aprc->list_el() : NULL);
     return;
   }
 }
@@ -1082,12 +1082,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   case Token::LPAREN:
   {
     consume_token();
-    Expression *res = parse(FULL, prc);
+    smart_ptr<Expression> res(parse(FULL, prc));
     consume_token_throw(
       Token::RPAREN,
       "Expected ')' to close parenthesized sub-expression"
     );
-    return res;
+    return res.release();
   }
 
   default: break;
@@ -1179,7 +1179,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   if (argsp)
   {
     argsp->list_begin();
-    parse(ATOMIC, argsp->list_el());
+    delete parse(ATOMIC, argsp->list_el());
     argsp->list_end();
     return stored.release();
   }
@@ -1443,7 +1443,7 @@ Expr_parser_base::left_assoc_binary_op(const Op::Set &ops,
 
     // then parse rhs, passing it as 2nd argument
 
-    parse(rhs, aprc->list_el());
+    delete parse(rhs, aprc->list_el());
 
     aprc->list_end();
   }
@@ -1493,7 +1493,7 @@ Expression* Expr_parser_base::parse_bit(Processor *prc)
     if (argsp)
     {
       argsp->list_begin();
-      parse(ATOMIC, argsp->list_el());
+      delete parse(ATOMIC, argsp->list_el());
       argsp->list_end();
       return stored.release();
     }
@@ -1727,7 +1727,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
       }
       else
       {
-        parse(COMP, aprc->list_el());
+        delete parse(COMP, aprc->list_el());
       }
 
       break;
@@ -1738,7 +1738,7 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
     case Op::RLIKE:
     case Op::NOT_RLIKE:
     {
-      parse(COMP, aprc->list_el());
+      delete parse(COMP, aprc->list_el());
 
       if (cur_token_type_is(Keyword::ESCAPE))
       {
@@ -1750,22 +1750,22 @@ Expression* Expr_parser_base::parse_ilri(Processor *prc)
 
     case Op::REGEXP:
     case Op::NOT_REGEXP:
-      parse(COMP, aprc->list_el());
+      delete parse(COMP, aprc->list_el());
       break;
 
     case Op::OVERLAPS:
     case Op::NOT_OVERLAPS:
-      parse(COMP, aprc->list_el());
+      delete parse(COMP, aprc->list_el());
       break;
 
     case Op::BETWEEN:
     case Op::NOT_BETWEEN:
-      parse(COMP, aprc->list_el());
+      delete parse(COMP, aprc->list_el());
       consume_token_throw(
         Keyword::AND,
         "Expected AND in BETWEEN ... expression"
       );
-      parse(COMP, aprc->list_el());
+      delete parse(COMP, aprc->list_el());
       break;
 
     default: assert(false);
