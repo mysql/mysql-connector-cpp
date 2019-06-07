@@ -274,9 +274,6 @@ void bugs::expired_pwd()
 {
   logMsg("bugs::expired_pwd");
 
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
-
   if (getMySQLVersion(con) < 56006)
   {
     SKIP("The server does not support tested functionality(expired password)");
@@ -294,7 +291,7 @@ void bugs::expired_pwd()
   }
 
   stmt->executeUpdate("CREATE USER ccpp_expired_pwd IDENTIFIED BY 'foo'");
-  stmt->executeUpdate("GRANT ALL ON test to ccpp_expired_pwd");
+  stmt->executeUpdate("GRANT ALL ON test.* to ccpp_expired_pwd");
   stmt->executeUpdate("ALTER USER ccpp_expired_pwd PASSWORD EXPIRE");
 
   sql::ConnectOptionsMap opts;
@@ -345,7 +342,12 @@ void bugs::expired_pwd()
   }
 
   // Now setting new password and getting fully functional connection
-  opts["preInit"]= sql::SQLString("set password= password('bar')");
+  if (getMySQLVersion(con) < 57006)
+    opts["preInit"]= sql::SQLString("set password= password('bar')");
+  else
+    opts["preInit"]= sql::SQLString("ALTER USER 'ccpp_expired_pwd' IDENTIFIED BY 'bar';");
+
+
 
   // Connect should go thru fine
   try
