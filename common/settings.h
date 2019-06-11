@@ -1002,10 +1002,10 @@ void Settings_impl::Setter::key_val(const std::string &key,
           if (el.empty())
             continue;
           size_t eq = el.find("=");
-          std::string key = el.substr(0,eq);
-          if (key[0]== '_')
+          std::string attr = el.substr(0,eq);
+          if (attr[0]== '_')
             throw_error("Connection attribute names cannot start with \"_\".");
-          auto &attr_pos = m_data.m_connection_attr[key];
+          auto &attr_pos = m_data.m_connection_attr[attr];
           if (eq != std::string::npos)
             attr_pos = el.substr(eq+1);
 
