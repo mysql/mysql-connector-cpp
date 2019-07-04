@@ -55,6 +55,24 @@ POP_SYS_WARNINGS_CDK
 #include "connection_tcpip_base.h"
 
 
+/*
+  On Windows, external dependencies can be declared using
+  #pragma comment directive.
+*/
+
+#ifdef _WIN32
+  #pragma comment(lib,"ws2_32")
+  #if defined(WITH_SSL) && !defined(WITH_SSL_WOLFSSL)
+    #if OPENSSL_VERSION_NUMBER < 0x10100000L
+      #pragma comment(lib,"ssleay32")
+      #pragma comment(lib,"libeay32")
+    #else
+      #pragma comment(lib,"libssl")
+      #pragma comment(lib,"libcrypto")
+    #endif
+  #endif
+#endif
+
 #ifdef WITH_SSL_WOLFSSL
 static const char* tls_ciphers_list="RC4-SHA:RC4-MD5:DES-CBC3-SHA:AES128-SHA:AES256-SHA:"
                                     "NULL-SHA:NULL-SHA256:"
