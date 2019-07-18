@@ -42,7 +42,7 @@
 
 
 PUSH_SYS_WARNINGS
-#include <vector>
+#include <queue>
 POP_SYS_WARNINGS
 
 
@@ -882,6 +882,10 @@ public:
 
   void store();
 
+  // Store all results to cache
+
+  void store_all_results();
+
   /*
     Return the number of rows remaining in the result (the rows that have been
     already fetched with get_row() are not counted).
@@ -927,9 +931,9 @@ public:
 
   const Column_info& get_column(col_count_t pos) const
   {
-    if (!m_cursor || !m_mdata)
+    if (m_result_mdata.empty() || !m_result_mdata.front())
       THROW("No result set");
-    return m_mdata->get_column(pos);
+    return m_result_mdata.front()->get_column(pos);
   }
 
 protected:
@@ -958,7 +962,7 @@ protected:
 
   // Note: meta-data can be shared with Row instances
 
-  Shared_meta_data    m_mdata;
+  std::queue<Shared_meta_data>  m_result_mdata;
 
   /*
     Method fetch_meta_data() creates a new Meta_data_base instance with
@@ -990,8 +994,10 @@ protected:
 
   using Row_cache = std::forward_list<Row_data>;
 
-  Row_cache   m_row_cache;
-  row_count_t m_row_cache_size = 0;
+  // Each queue elements represents a resultset.
+
+  std::queue<Row_cache> m_result_cache;
+  std::queue<row_count_t> m_result_cache_size;
   Row_cache::iterator m_cache_it;
 
   /*
@@ -1000,15 +1006,31 @@ protected:
     preftetch_size is non-zero then at most that many rows are loaded.
 
     Returns true if some rows are present in the cache.
+
+    This will cache the current resultset to the back of the queue
   */
 
   bool load_cache(row_count_t prefetch_size = 0);
 
-  void clear_cache()
+  // Jumps to new resultset without poping the cache element
+
+  bool read_next_result();
+
+  // Called after resultset has been get by user
+
+  void pop_row_cache()
   {
-    m_row_cache.clear();
-    m_row_cache_size = 0;
+    if(!m_result_mdata.empty())
+      m_result_mdata.pop();
+    if (!m_result_cache.empty())
+      m_result_cache.pop();
+    if (!m_result_cache_size.empty())
+      m_result_cache_size.pop();
   }
+
+  // Called on each resultset to be read.
+
+  void push_row_cache();
 
 public:
 
@@ -1071,9 +1093,9 @@ private:
 inline
 col_count_t Result_impl::get_col_count() const
 {
-  if (!m_cursor || !m_mdata)
+  if (m_result_mdata.empty())
     THROW("No result set");
-  return m_mdata->col_count();
+  return m_result_mdata.front()->col_count();
 }
 
 inline
@@ -1110,14 +1132,14 @@ const std::vector<std::string>& Result_impl::get_generated_ids() const
 inline
 bool Result_impl::has_data() const
 {
-  return !m_row_cache.empty() || m_pending_rows;
+  return (!m_result_cache.empty() && !m_result_cache.front().empty()) || m_pending_rows;
 }
 
 
 inline
 const Shared_meta_data& Result_impl::get_mdata() const
 {
-  return m_mdata;
+  return m_result_mdata.front();
 }
 
 
@@ -1128,12 +1150,23 @@ void Result_impl::store()
 }
 
 inline
+void Result_impl::store_all_results()
+{
+  do{
+  store();
+  }while(read_next_result());
+}
+
+inline
 row_count_t Result_impl::count()
 {
   store();
   if (entry_count() > 0)
     get_error().rethrow();
-  return m_row_cache_size;
+  row_count_t rc = 0;
+  if(!m_result_cache_size.empty())
+    rc = m_result_cache_size.front();
+  return rc;
 }
 
 

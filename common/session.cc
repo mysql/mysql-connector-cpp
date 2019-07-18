@@ -537,7 +537,10 @@ void Settings_impl::get_attributes(cdk::ds::Attr_processor &prc)
 void Session_impl::prepare_for_cmd()
 {
   if (m_current_result)
-    m_current_result->store();
+  {
+    m_current_result->store_all_results();
+  }
+
   m_current_result = nullptr;
 }
 

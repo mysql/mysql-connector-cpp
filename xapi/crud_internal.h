@@ -93,7 +93,7 @@ public:
     if (!data)
       return nullptr;
 
-    m_row_set.emplace_back(*data, m_mdata);
+    m_row_set.emplace_back(*data, m_result_mdata.front());
     return &m_row_set.back();
   }
 

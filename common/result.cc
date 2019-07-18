@@ -188,6 +188,16 @@ Result_impl::~Result_impl()
 
 bool Result_impl::next_result()
 {
+  pop_row_cache();
+  if(!m_result_cache.empty())
+    return true;
+
+  // Nothing in cache... jump to next resultset and read it
+  return read_next_result();
+}
+
+bool Result_impl::read_next_result()
+{
   /*
     Note: closing cursor discards previous rset. Only then
     we can move to the next rset (if any).
@@ -203,8 +213,6 @@ bool Result_impl::next_result()
 
   delete m_cursor;
   m_cursor = nullptr;
-  m_mdata.reset();
-  clear_cache();
   m_pending_rows = false;
   m_inited = true;
 
@@ -226,11 +234,19 @@ bool Result_impl::next_result()
   // Wait for cursor to fetch result meta-data and copy it to local storage.
 
   m_cursor->wait();
-  m_mdata.reset(new Meta_data(*m_cursor));
 
   m_pending_rows = true;
+  //Push new row cache
+  push_row_cache();
 
   return true;
+}
+
+void Result_impl::push_row_cache()
+{
+  m_result_mdata.push(Shared_meta_data(new Meta_data(*m_cursor)));
+  m_result_cache.push(Row_cache());
+  m_result_cache_size.push(0);
 }
 
 
@@ -238,18 +254,18 @@ const Row_data* Result_impl::get_row()
 {
   // TODO: Session parameter for cache prefetch size
 
-  if (!load_cache(16))
+  load_cache(16);
+
+  if (m_result_cache.empty() || m_result_cache.front().empty())
   {
     if (m_reply->entry_count() > 0)
       m_reply->get_error().rethrow();
     return nullptr;
   }
 
-  assert(!m_row_cache.empty());
-
-  m_row = m_row_cache.front();
-  m_row_cache.pop_front();
-  m_row_cache_size--;
+  m_row = m_result_cache.front().front();
+  m_result_cache.front().pop_front();
+  m_result_cache_size.front()--;
   return &m_row;
 }
 
@@ -260,6 +276,8 @@ const Row_data* Result_impl::get_row()
   prefetch_size rows into the cache. If prefetch_size is 0, it loads
   all remaining rows into the cache (even if cache currently contains some
   rows).
+  It caches elements to the last queue element, since more resultsets could have
+  been cached before.
 */
 
 bool Result_impl::load_cache(row_count_t prefetch_size)
@@ -267,7 +285,10 @@ bool Result_impl::load_cache(row_count_t prefetch_size)
   if (!m_inited)
     next_result();
 
-  if (!m_row_cache.empty() && 0 != prefetch_size)
+  if(m_result_cache.empty())
+    return false;
+
+  if (!m_result_cache.back().empty() && 0 != prefetch_size)
     return true;
 
   if (!m_pending_rows)
@@ -278,8 +299,8 @@ bool Result_impl::load_cache(row_count_t prefetch_size)
     element in the cache.
   */
 
-  if (m_row_cache.empty())
-    m_cache_it = m_row_cache.before_begin();
+  if (m_result_cache.back().empty())
+    m_cache_it = m_result_cache.back().before_begin();
 
   // Initiate row reading operation
 
@@ -303,7 +324,7 @@ bool Result_impl::load_cache(row_count_t prefetch_size)
     m_pending_rows = false;
   }
 
-  return !m_row_cache.empty();
+  return !m_result_cache.back().empty();
 }
 
 
@@ -330,8 +351,8 @@ void Result_impl::row_end(row_count_t)
   if (!m_row_filter(m_row))
     return;
 
-  m_cache_it = m_row_cache.emplace_after(m_cache_it, std::move(m_row));
-  m_row_cache_size++;
+  m_cache_it = m_result_cache.back().emplace_after(m_cache_it, std::move(m_row));
+  m_result_cache_size.back()++;
 }
 
 void Result_impl::end_of_data()

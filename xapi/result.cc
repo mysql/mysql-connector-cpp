@@ -119,9 +119,9 @@ uint32_t get_type(const Format_info &fi)
 
 const char * mysqlx_result_struct::read_json(size_t *json_byte_size)
 {
-  assert(m_mdata);
-  assert(1 == m_mdata->col_count());
-  assert(cdk::TYPE_DOCUMENT == m_mdata->get_type(0));
+  assert(!m_result_mdata.empty());
+  assert(1 == m_result_mdata.front()->col_count());
+  assert(cdk::TYPE_DOCUMENT == m_result_mdata.front()->get_type(0));
 
   mysqlx_row_struct *row = read_row();
 

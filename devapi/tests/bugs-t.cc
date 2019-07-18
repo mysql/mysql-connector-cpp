@@ -168,6 +168,9 @@ TEST_F(Bugs, bug_27727505_multiple_results)
       .execute();
   SqlResult res = sess.sql("call test").execute();
 
+  //Force result caching
+  SqlResult res2 = sess.sql("call test").execute();
+
   Row row;
   int setNo = 0;
   do
@@ -224,6 +227,9 @@ TEST_F(Bugs, bug_27727505_multiple_results)
     setNo++;
   }
   while(res.nextResult());
+
+  EXPECT_EQ(2, setNo);
+
   sess.sql("drop procedure if exists test").execute();
   sess.sql("CREATE PROCEDURE test() BEGIN select f0, f1 from newtable "
            "where f0 > 1000; select f0, f1  from newtable where f0 <= 10;"
@@ -257,6 +263,31 @@ TEST_F(Bugs, bug_27727505_multiple_results)
     setNo++;
   }
   while(res.nextResult());
+
+  EXPECT_EQ(2, setNo);
+
+  sess.sql("drop procedure if exists test").execute();
+  sess.sql("CREATE PROCEDURE test() BEGIN select f0 from newtable; select f1 from newtable "
+           "where f0 > 100; select f0 as new_f0  from newtable where f0 <= 10;"
+           " END").execute();
+
+  {
+    SqlResult res = sess.sql("call test").execute();
+
+    //Force result caching
+    SqlResult res2 = sess.sql("call test").execute();
+
+    //All resultsets are now cached
+    EXPECT_EQ(100, res.count());
+    EXPECT_EQ(string("f0"), res.getColumn(0).getColumnName());
+    EXPECT_TRUE(res.nextResult());
+    EXPECT_EQ(static_cast<unsigned long>(0), res.count());
+    EXPECT_EQ(string("f1"), res.getColumn(0).getColumnName());
+    EXPECT_TRUE(res.nextResult());
+    EXPECT_EQ(11, res.count());
+    EXPECT_EQ(string("new_f0"), res.getColumn(0).getColumnLabel());
+    EXPECT_FALSE(res.nextResult());
+  }
 }
 
 
