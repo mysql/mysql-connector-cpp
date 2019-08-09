@@ -59,12 +59,13 @@ public:
   /*
     Callbacks for the main components of the URI:
 
-    mysqlx://<user>:<password>@<host>:<port>/<schema>
+    <scheme>://<user>:<password>@<host>:<port>/<schema>
 
     If an optional component is not present, the corresponding callback
     is not called.
   */
 
+  virtual void scheme(const std::string&) {}
   virtual void user(const std::string&) {}
   virtual void password(const std::string&) {}
   virtual void schema(const std::string&) {}
@@ -305,7 +306,7 @@ private:
                       const std::string &host,
                       const std::string &port) const;
 
-  bool check_scheme(bool);
+  void parse_scheme(bool,Processor&);
 
   // Methods for processing tokens.
 

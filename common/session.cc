@@ -336,6 +336,13 @@ void prepare_options(
     opts.set_auth_method(
       socket ? TCPIP_options::PLAIN : TCPIP_options::DEFAULT
     );
+
+    // DNS+SRV
+
+    if(settings.has_option(Option::DNS_SRV))
+    {
+      opts.set_dns_srv(settings.get(Option::DNS_SRV).get_bool());
+    }
   }
 
 }
@@ -405,6 +412,10 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     if (Session_option_impl::PORT == it->first)
     {
       assert(0 == m_data.m_host_cnt);
+      if (opts.get_dns_srv())
+      {
+        throw_error("Specifying a port number with DNS SRV lookup is not allowed.");
+      }
     }
     else
     {
@@ -417,6 +428,10 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
     if (it != end() && Session_option_impl::PORT == it->first)
     {
+      if (opts.get_dns_srv())
+      {
+        throw_error("Specifying a port number with DNS SRV lookup is not allowed.");
+      }
       port = (unsigned short)it->second.get_uint();
       ++it;
     }
@@ -471,7 +486,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   auto add_connect_attr = [this](iterator &it) {
     switch (it->second.get_type())
     {
-//      case Value::
       case Value::Type::BOOL:
         if (!it->second.get_bool())
           this->m_data.m_connection_attr.clear();
@@ -479,11 +493,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
           this->m_data.init_connection_attr();
       break;
       default:
-//        try {
-
-//        } catch () {
-
-//        }
         break;
     }
   };
@@ -500,6 +509,12 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       add_host(it, prio--); break;
 
     case Session_option_impl::SOCKET:
+      if(opts.get_dns_srv())
+      {
+        throw_error(
+              "Using Unix domain sockets with DNS SRV lookup is not allowed."
+              );
+      }
       add_socket(it, prio--); break;
 
     /*
@@ -518,6 +533,13 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   if (0 == src.size())
   {
     throw_error("No sources to connect");
+  }
+
+  if(opts.get_dns_srv() && src.size() > 1)
+  {
+    throw_error(
+          "Specifying multiple hostnames with DNS SRV look up is not allowed."
+          );
   }
 }
 

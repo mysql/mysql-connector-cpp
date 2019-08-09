@@ -83,6 +83,7 @@ public:
 #define SETTINGS_OPT_ENUM_str(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_num(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_any(X,N)  X = N,
+#define SETTINGS_OPT_ENUM_bool(X,N) X = N,
 
   enum Session_option_impl {
     SESSION_OPTION_LIST(SETTINGS_OPT_ENUM)
@@ -233,6 +234,7 @@ protected:
 #define SETTINGS_OPT_NAME_str(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_num(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_any(X,N)  case N: return #X;
+#define SETTINGS_OPT_NAME_bool(X,N)  case N: return #X;
 
 
 #define CLIENT_OPT_NAME_str(X,N)  case -N: return #X;

@@ -300,6 +300,16 @@ if(NOT WIN32)
         )
     endif()
 
+    # Connector needs to Link with libresolv
+    set_property(TARGET MySQL::conncpp
+      APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
+    )
+
+else()
+  # Connector needs to Link with Dnsapi
+  set_property(TARGET MySQL::conncpp
+    APPEND PROPERTY INTERFACE_LINK_LIBRARIES Dnsapi
+  )
 endif()
 
 

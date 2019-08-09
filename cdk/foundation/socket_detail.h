@@ -31,6 +31,8 @@
 #ifndef CDK_FOUNDATION_SOCKET_DETAIL_H
 #define CDK_FOUNDATION_SOCKET_DETAIL_H
 #include <mysql/cdk/foundation/types.h>
+#include <forward_list>
+#include <string>
 
 PUSH_SYS_WARNINGS_CDK
 
@@ -446,6 +448,19 @@ size_t send_some(Socket socket, const byte *buffer, size_t buffer_size, bool wai
    @brief get_local_hostname returns hostname of the current machine
  */
 std::string get_local_hostname();
+
+/*
+   Retrieve host SRV record (target:port) list for specified service and protocol
+ */
+struct Srv_host_detail
+{
+  uint16_t prio;
+  uint16_t weight;
+  uint16_t port;
+  string name;
+};
+
+std::forward_list<Srv_host_detail> srv_list(const std::string &host_name);
 
 }}}} // cdk::foundation::connection::detail
 

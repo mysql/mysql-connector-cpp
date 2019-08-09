@@ -37,6 +37,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <functional>
 #include <algorithm>
 #include <set>
+#include <random>
 #include "api/expression.h"
 POP_SYS_WARNINGS_CDK
 
@@ -238,6 +239,8 @@ private:
   cdk::connection::TLS::Options m_tls_options;
 #endif
 
+  bool m_dns_srv = false;
+
 public:
 
   Options()
@@ -257,6 +260,16 @@ public:
   const TLS_options& get_tls() const
   {
     return m_tls_options;
+  }
+
+  bool get_dns_srv() const
+  {
+    return m_dns_srv;
+  }
+
+  void set_dns_srv(bool dns_srv)
+  {
+    m_dns_srv = dns_srv;
   }
 
 #endif
@@ -368,7 +381,22 @@ namespace ds {
     bool m_is_prioritized;
     unsigned short m_counter;
 
-    typedef std::multimap<unsigned short, DS_variant, std::greater<unsigned short>> DS_list;
+    struct Prio
+    {
+      unsigned short prio;
+      uint16_t weight;
+      operator unsigned short() const
+      {
+        return prio;
+      }
+
+      bool operator < (const Prio &other) const
+      {
+        return prio < other.prio;
+      }
+    };
+
+    typedef std::multimap<Prio, DS_variant, std::greater<Prio>> DS_list;
     DS_list m_ds_list;
 
   public:
@@ -380,7 +408,7 @@ namespace ds {
 
     template <class DS_t, class DS_opt>
     void add(const DS_t &ds, const DS_opt &opt,
-             unsigned short prio)
+             unsigned short prio, uint16_t weight = 1)
     {
       if (m_ds_list.size() == 0)
       {
@@ -406,7 +434,7 @@ namespace ds {
       DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
                                const_cast<DS_opt&>(opt));
       if (m_is_prioritized)
-        m_ds_list.emplace(prio, pair);
+        m_ds_list.emplace(Prio({prio,weight}), pair);
       else
       {
         /*
@@ -414,7 +442,7 @@ namespace ds {
           This is achieved by decrementing the counter every time a new element
           goes into the list.
         */
-        m_ds_list.emplace(m_counter--, pair);
+        m_ds_list.emplace(Prio({m_counter--,weight}), pair);
       }
     }
 
@@ -450,7 +478,91 @@ namespace ds {
     void visit(Visitor &visitor)
     {
       bool stop_processing = false;
-      std::set<DS_variant*> same_prio;
+      std::vector<DS_variant*> same_prio;
+      std::vector<uint16_t> weights;
+
+
+      struct DNS_SRV_visitor
+      {
+        Visitor &visitor;
+        cdk::ds::Multi_source src;
+        uint16_t total_weight = 0;
+        bool has_srv = false;
+
+        DNS_SRV_visitor(Visitor &_visitor)
+          : visitor(_visitor)
+        {}
+
+        bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &opts)
+        {
+          has_srv = opts.get_dns_srv();
+
+          if(has_srv)
+          {
+            ds::TCPIP::Options new_opts(opts);
+            new_opts.set_dns_srv(false);
+
+            auto list = cdk::foundation::connection::srv_list(ds.host());
+
+
+            if (list.empty())
+            {
+              std::string err = "Unable to locate any hosts for ";
+              err+= ds.host();
+              throw_error(err.c_str());
+            }
+
+            auto &tls= const_cast<ds::TCPIP::Options::TLS_options&>(opts.get_tls());
+
+            for (auto &el : list)
+            {
+              TCPIP::Options::TLS_options tls (new_opts.get_tls());
+              tls.set_host_name(el.name);
+              new_opts.set_tls(tls);
+              //Prio is negative because for URI prio, less is better, but for
+              //SRV record, more is better
+              src.add(ds::TCPIP(el.name, el.port),new_opts,-el.prio,el.weight);
+
+              total_weight+=el.weight;
+            }
+
+            src.visit(visitor);
+
+          }
+
+          return has_srv;
+        }
+
+
+
+      #ifndef WIN32
+        bool operator() (const ds::Unix_socket&ds, const ds::Unix_socket::Options &options)
+        {
+          return false;
+        }
+      #endif
+        bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options)
+        {
+          return false;
+        }
+
+      };
+
+      DNS_SRV_visitor dns_srv_visitor {visitor};
+
+      //SRV only possible with 1 host
+      if(m_ds_list.size() == 1)
+      {
+        // Give values to the visitor
+        Variant_visitor<DNS_SRV_visitor> variant_visitor;
+        variant_visitor.vis = &dns_srv_visitor;
+
+        m_ds_list.begin()->second.visit(variant_visitor);
+
+        if(variant_visitor.stop_processing)
+          return;
+      }
+
 
       for (auto it = m_ds_list.begin(); !stop_processing;)
       {
@@ -469,16 +581,34 @@ namespace ds {
             it = same_range.second;
 
             for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
-              same_prio.insert(&(it1->second));
+            {
+              //If weight is not specified, we need to set all weight values
+              //with same, os that discrete_distribution works as expected
+              weights.push_back(
+                    dns_srv_visitor.total_weight == 0 ? 1 : it1->first.weight);
+              same_prio.push_back(&(it1->second));
+            }
           }
+
+          std::random_device generator;
+          std::discrete_distribution<int> distribution(
+                weights.begin(), weights.end());
+
+
 
           auto el = same_prio.begin();
 
+          int pos = 0;
+
           if (same_prio.size() > 1)
-            std::advance(el, std::rand() % same_prio.size());
+          {
+            pos = distribution(generator);
+            std::advance(el, pos);
+          }
 
           item = *el;
-          same_prio.erase(el);
+          same_prio.erase(same_prio.begin()+pos);
+          weights.erase(weights.begin()+pos);
 
         } // if (m_is_prioritized)
         else

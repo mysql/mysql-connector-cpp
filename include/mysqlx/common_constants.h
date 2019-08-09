@@ -107,7 +107,10 @@
     requests sending only the default attributes which is also the default
     behavior when this option is not set.
   */ \
-  OPT_STR(x,CONNECTION_ATTRIBUTES,13)
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13)                                       \
+  OPT_BOOL(x,DNS_SRV,14)  /*!< If enabled (true) will check hostname for */ \
+  /*!  DNS SRV record and use its configuration (hostname, port, priority and
+     weight) to connect.*/ \
   END_LIST
 
 

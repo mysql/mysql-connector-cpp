@@ -93,6 +93,11 @@ target_link_libraries(cdk_foundation
   PRIVATE SSL::ssl
 )
 
+IF(WIN32)
+target_link_libraries(cdk_foundation PRIVATE Dnsapi)
+ELSE()
+target_link_libraries(cdk_foundation PRIVATE resolv)
+ENDIF()
 
 IF(WIN32)
   target_link_libraries(cdk_foundation PRIVATE ws2_32)

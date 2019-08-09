@@ -280,6 +280,7 @@ public:
 
   // URI processor
 
+  void scheme(const std::string &) override;
   void user(const std::string &usr) override;
   void password(const std::string &pwd) override;
   void schema(const std::string &db) override;
@@ -787,6 +788,8 @@ void Settings_impl::Setter::str(const string &val)
     throw_error("Can not convert to integer value"); \
   }
 
+  #define SET_OPTION_STR_bool(X,N) SET_OPTION_STR_num(X,N)
+
   switch (m_cur_opt)
   {
     SESSION_OPTION_LIST(SET_OPTION_STR)
@@ -804,6 +807,7 @@ void Settings_impl::Setter::num(uint64_t val)
 #define SET_OPTION_NUM_num(X,N) \
   case Session_option_impl::X: return set_option<Session_option_impl::X,unsigned>((unsigned)val);
 #define SET_OPTION_NUM_any(X,N) SET_OPTION_NUM_num(X,N)
+#define SET_OPTION_NUM_bool(X,N) SET_OPTION_NUM_num(X,N)
 #define SET_OPTION_NUM_str(X,N)
 
 #define SET_CLI_OPTION_NUM_num(X,N) \
@@ -868,22 +872,29 @@ void Settings_impl::Setter::yesno(bool b)
   case Client_option_impl::POOLING:
     add_option(m_cur_opt, b);
     return;
-  default: break;
-  }
-  switch(m_cur_opt)
-  {
-    case Session_option_impl::CONNECTION_ATTRIBUTES:
+
+  case Session_option_impl::CONNECTION_ATTRIBUTES:
       if (b)
         m_data.init_connection_attr();
       else
         m_data.clear_connection_attr();
       return;
+  case Session_option_impl::DNS_SRV:
+    add_option(m_cur_opt, b);
+    return;
     default:break;
   }
   throw_error("Option ... can not be bool");
 }
 
 // URI processor
+
+inline
+void Settings_impl::Setter::scheme(const std::string &_scheme)
+{
+  if(_scheme == "mysqlx+srv")
+    set_option<Session_option_impl::DNS_SRV>(true);
+}
 
 inline
 void Settings_impl::Setter::user(const std::string &usr)
