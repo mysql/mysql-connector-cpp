@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -43,28 +43,32 @@ namespace mysql
 class MySQL_Uri
 {
 private:
-  NativeAPI::Protocol_Type	protocol;
-  unsigned int				port;
-  sql::SQLString				host;
-  sql::SQLString				schema;
+  NativeAPI::Protocol_Type protocol;
+  uint16_t                 port;
+  sql::SQLString           host;
+  sql::SQLString           schema;
+  bool                     has_port = false;
 
 public:
   MySQL_Uri();
 
-      const sql::SQLString &		Host();
-      const sql::SQLString &		SocketOrPipe();
-  inline	int							Port()		{return port;}
-  inline	const sql::SQLString &		Schema()	{return schema;}
-  inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+  const sql::SQLString &		Host();
+  const sql::SQLString &		SocketOrPipe();
+  uint16_t Port()		{return port;}
+  const sql::SQLString &		Schema()	{return schema;}
+  NativeAPI::Protocol_Type	Protocol()	{return protocol;}
 
 
-      void setHost	(const sql::SQLString &h);
-      void setSocket	(const sql::SQLString &s);
-      void setPipe	(const sql::SQLString &p);
-      void setPort	(unsigned int p);
-  inline	void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
+  void setHost	(const sql::SQLString &h);
+  void setSocket	(const sql::SQLString &s);
+  void setPipe	(const sql::SQLString &p);
+  void setPort	(uint16_t p);
+  void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
 
-  inline	void setProtocol(NativeAPI::Protocol_Type p){protocol= p;}
+  void setProtocol(NativeAPI::Protocol_Type p){protocol= p;}
+
+  bool hasPort() { return has_port; }
+
 };
 
 

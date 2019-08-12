@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -37,8 +37,16 @@
 #include <sstream>
 #include <stdio.h>
 #include <map>
+#include <vector>
+#include <random>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+#ifndef _WIN32
+#include <resolv.h>
+#else
+#include <winsock2.h>
+#include <windns.h>
 #endif
 #include <mysqld_error.h>
 #include <cppconn/exception.h>
@@ -201,7 +209,7 @@ static const String2IntMap flagsOptions[]=
 /* {{{ readFlag(::sql::SQLString, int= 0) -I- */
 /** Check if connection option pointed by map iterator defines a connection
     flag */
-static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, int &flags)
+static bool read_connection_flag(ConnectOptionsMap::const_iterator &cit, unsigned long &flags)
 {
   const bool * value;
 
@@ -353,6 +361,120 @@ bool get_connection_option(const sql::SQLString optionName,
   return false;
 }
 
+struct Prio
+{
+  uint16_t prio;
+  uint16_t weight;
+  operator uint16_t() const
+  {
+    return prio;
+  }
+
+  bool operator < (const Prio &other) const
+  {
+    return prio < other.prio;
+  }
+};
+
+struct Srv_host_detail
+{
+  std::string name;
+  uint16_t port;
+};
+
+#ifdef _WIN32
+std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
+                                             uint16_t &total_weight)
+{
+  DNS_STATUS status;               //Return value of  DnsQuery_A() function.
+  PDNS_RECORD pDnsRecord =nullptr;          //Pointer to DNS_RECORD structure.
+
+  std::multimap<Prio,Srv_host_detail> srv;
+
+  status = DnsQuery(hostname.c_str(), DNS_TYPE_SRV, DNS_QUERY_STANDARD, nullptr, &pDnsRecord, nullptr);
+  if (!status)
+  {
+    PDNS_RECORD pRecord = pDnsRecord;
+    while (pRecord)
+    {
+      if (pRecord->wType == DNS_TYPE_SRV)
+      {
+        srv.insert(std::make_pair(
+                     Prio({pRecord->Data.Srv.wPriority,
+                           pRecord->Data.Srv.wWeight}
+                          ),
+                     Srv_host_detail
+                     {
+                       pRecord->Data.Srv.pNameTarget,
+                       pRecord->Data.Srv.wPort
+                     }));
+        total_weight+=pRecord->Data.Srv.wWeight;
+      }
+      pRecord = pRecord->pNext;
+    }
+
+    DnsRecordListFree(pDnsRecord, DnsFreeRecordListDeep);
+  }
+  return srv;
+}
+#else
+
+std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
+                                             uint16_t &total_weight)
+{
+  struct __res_state state {};
+  res_ninit(&state);
+
+  std::multimap<Prio,Srv_host_detail> srv;
+
+  unsigned char query_buffer[NS_PACKETSZ];
+
+
+  //let get
+  int res = res_nsearch(&state, hostname.c_str(), ns_c_in, ns_t_srv, query_buffer, sizeof (query_buffer) );
+
+  if (res >= 0)
+  {
+    ns_msg msg;
+    char name_buffer[NS_MAXDNAME];
+
+    ns_initparse(query_buffer, res, &msg);
+
+
+    auto process = [&msg, &name_buffer, &total_weight, &srv](const ns_rr &rr) -> void
+    {
+      const unsigned char* srv_data = ns_rr_rdata(rr);
+      Srv_host_detail host_data;
+      uint16_t prio, weight;
+
+      //Each NS_GET16 call moves srv_data to next value
+      NS_GET16(prio, srv_data);
+      NS_GET16(weight, srv_data);
+      NS_GET16(host_data.port, srv_data);
+
+      dn_expand(ns_msg_base(msg), ns_msg_end(msg),
+                srv_data, name_buffer, sizeof(name_buffer));
+
+      host_data.name = name_buffer;
+
+      srv.insert(std::make_pair(Prio({prio, weight}), std::move(host_data)));
+
+      total_weight+=weight;
+    };
+
+    for(int x= 0; x < ns_msg_count(msg, ns_s_an); x++)
+    {
+          ns_rr rr;
+          ns_parserr(&msg, ns_s_an, x, &rr);
+          process(rr);
+    }
+  }
+  res_nclose(&state);
+
+  return srv;
+}
+#endif
+
 
 /*
   We support :
@@ -391,6 +513,7 @@ bool get_connection_option(const sql::SQLString optionName,
   - OPT_READ_TIMEOUT
   - OPT_WRITE_TIMEOUT
   - OPT_RECONNECT
+  - OPT_DNS_SRV
   - OPT_CHARSET_NAME
   - OPT_REPORT_DATA_TRUNCATION
   - OPT_CAN_HANDLE_EXPIRED_PASSWORDS
@@ -434,13 +557,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   sql::SQLString sslKey, sslCert, sslCA, sslCAPath, sslCipher, postInit;
   bool ssl_used = false;
-  int flags = CLIENT_MULTI_RESULTS;
+  unsigned long flags = CLIENT_MULTI_RESULTS;
 
   const int * p_i;
   const bool * p_b;
   const sql::SQLString * p_s;
   bool opt_reconnect = false;
   int  client_exp_pwd = false;
+  bool opt_dns_srv = false;
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
   bool secure_auth= true;
 #endif
@@ -466,6 +590,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw sql::InvalidArgumentException("No string value passed for hostName");
     }
   }
+
 
 #define PROCESS_CONN_OPTION(option_type, options_map) process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
 
@@ -681,6 +806,16 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       }
       opt_reconnect = true;
       intern->reconnect= *p_b;
+    } else if (!it->first.compare("OPT_DNS_SRV")) {
+      try {
+        p_b = (it->second).get<bool>();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for OPT_DNS_SRV expected bool");
+      }
+      if (!(p_b)) {
+        throw sql::InvalidArgumentException("No bool value passed for OPT_DNS_SRV");
+      }
+      opt_dns_srv = *p_b;
     } else if (!it->first.compare("OPT_CHARSET_NAME")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
@@ -863,41 +998,155 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   CPP_INFO_FMT("port=%d", uri.Port());
   CPP_INFO_FMT("schema=%s", uri.Schema().c_str());
   CPP_INFO_FMT("socket/pipe=%s", uri.SocketOrPipe().c_str());
-  if (!proxy->connect(uri.Host(),
-            userName,
-            password,
-            uri.Schema() /* schema */,
-            uri.Port(),
-            uri.SocketOrPipe() /*socket or named pipe */,
-            flags))
+  CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
+
+  auto connect = [this,flags,client_exp_pwd](
+                 const std::string &host,
+                 const std::string &user,
+                 const std::string &pwd,
+                 const std::string &schema,
+                 uint16_t port,
+                 const std::string &socketOrPipe)
   {
-    CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
-    CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
-    CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
-    CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 
-    /* If error is "Password has expired" and application supports it while
-       mysql client lib does not */
-    std::string error_message;
-    int native_error= proxy->errNo();
+    if (!proxy->connect(host,
+                        user,
+                        pwd,
+                        schema,
+                        port,
+                        socketOrPipe,
+                        flags))
+    {
+      CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
+      CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
+      CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
+      CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 
-    if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
-      && client_exp_pwd) {
+      /* If error is "Password has expired" and application supports it while
+         mysql client lib does not */
+      std::string error_message;
+      unsigned int native_error= proxy->errNo();
 
-      native_error= deCL_CANT_HANDLE_EXP_PWD;
-      error_message= "Your password has expired, but your instance of"
-        " Connector/C++ is not linked against mysql client library that"
-        " allows to reset it. To resolve this you either need to change"
-        " the password with mysql client that is capable to do that,"
-        " or rebuild your instance of Connector/C++ against mysql client"
-        " library that supports resetting of an expired password.";
-    } else {
-      error_message= proxy->error();
+      if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
+          && client_exp_pwd) {
+
+        native_error= deCL_CANT_HANDLE_EXP_PWD;
+        error_message= "Your password has expired, but your instance of"
+                       " Connector/C++ is not linked against mysql client library that"
+                       " allows to reset it. To resolve this you either need to change"
+                       " the password with mysql client that is capable to do that,"
+                       " or rebuild your instance of Connector/C++ against mysql client"
+                       " library that supports resetting of an expired password.";
+      } else {
+        error_message= proxy->error();
+      }
+
+      sql::SQLException e(error_message, proxy->sqlstate(), native_error);
+      throw e;
+    }
+  };
+
+  if(opt_dns_srv)
+  {
+    if(uri.Protocol() != NativeAPI::PROTOCOL_TCP)
+    {
+      throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
     }
 
-    sql::SQLException e(error_message, proxy->sqlstate(), native_error);
-    proxy.reset();
-    throw e;
+    if(uri.hasPort())
+    {
+      throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
+    }
+
+
+    uint16_t total_weight = 0;
+
+    auto list = srv_list(uri.Host(),total_weight);
+
+    if(list.empty())
+    {
+      std::stringstream err;
+      err << "Unable to locate any hosts for " << uri.Host();
+      throw sql::InvalidArgumentException(err.str());
+    }
+
+    bool connected = false;
+
+    while(!list.empty() && !connected)
+    {
+      auto same_range = list.equal_range(list.begin()->first);
+      std::vector<Srv_host_detail*> same_prio;
+      std::vector<uint16_t> weights;
+
+
+
+      for(auto it = same_range.first; it != same_range.second; ++it)
+      {
+        //if weight is not used, we should put all weights = 1 so that
+        //discrete_distribution works as expected
+        weights.push_back(total_weight!= 0 ? it->first.weight : 1);
+        same_prio.push_back(&it->second);
+      }
+
+      while (!weights.empty() && !connected)
+      {
+        std::random_device generator;
+        std::discrete_distribution<int> distribution(
+              weights.begin(), weights.end());
+
+        auto el = same_prio.begin();
+        auto weight_el = weights.begin();
+
+        if (same_prio.size() > 1)
+        {
+          int pos = distribution(generator);
+          std::advance(el, pos);
+          std::advance(weight_el, pos);
+        }
+
+        try {
+          connect((*el)->name, userName,
+                  password,
+                  uri.Schema() /* schema */,
+                  (*el)->port,
+                  uri.SocketOrPipe());
+          connected = true;
+          break;
+        }
+        catch (sql::SQLException&)
+        {}
+
+        same_prio.erase(el);
+        weights.erase(weight_el);
+      }
+
+      list.erase(same_range.first, same_range.second);
+
+    };
+
+    if(!connected)
+    {
+      std::stringstream err;
+      err << "Unable to connect to any of the hosts of " << uri.Host() << " SRV";
+      proxy.reset();
+      throw sql::InvalidArgumentException(err.str());
+    }
+
+  }
+  else
+  {
+    try {
+      connect(uri.Host(),
+              userName,
+              password,
+              uri.Schema() /* schema */,
+              uri.Port(),
+            uri.SocketOrPipe() /*socket or named pipe */);
+    } catch (sql::SQLException&)
+    {
+      proxy.reset();
+      throw;
+    }
   }
 
   if (opt_reconnect) {

@@ -189,6 +189,12 @@ add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 
 target_link_libraries(jdbc PUBLIC Boost::boost)
 
+IF(WIN32)
+target_link_libraries(jdbc PRIVATE Dnsapi)
+ELSE()
+target_link_libraries(jdbc PRIVATE resolv)
+ENDIF()
+
 if (MYSQLCLIENT_STATIC_BINDING)
   target_link_libraries(jdbc PRIVATE MySQL::client)
 else()

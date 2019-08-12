@@ -427,6 +427,18 @@ endif(jdbc_test_stand_alone)
 add_executable(jdbc_test jdbc_test.cc)
 target_link_libraries(jdbc_test PRIVATE MySQL::conncpp-jdbc)
 
+if(WIN32)
+  # Connector needs to Link with Dnsapi
+  set_property(TARGET jdbc_test
+    APPEND PROPERTY INTERFACE_LINK_LIBRARIES Dnsapi
+  )
+else()
+  # Connector needs to Link with libresolv
+  set_property(TARGET jdbc_test
+    APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
+  )
+endif()
+
 #
 # We need to link to OpenSSL libraries too.
 #

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -128,9 +128,10 @@ void MySQL_Uri::setPipe(const sql::SQLString &p)
 
 
 /* {{{ MySQL_Uri::setPort() -I- */
-void MySQL_Uri::setPort(unsigned int p)
+void MySQL_Uri::setPort(uint16_t p)
 {
   setProtocol(NativeAPI::PROTOCOL_TCP);
+  has_port = true;
   port= p;
 }
 
@@ -218,10 +219,6 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
   {
     uri.setPort(atoi(host.substr(start_sep + 1, sql::SQLString::npos).c_str()));
     host = host.substr(0, start_sep);
-  }
-  else
-  {
-    uri.setPort(DEFAULT_TCP_PORT);
   }
 
   /* If host was enclosed in [], it has been already set, and "host" variable is
