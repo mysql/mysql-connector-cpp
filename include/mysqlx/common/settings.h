@@ -218,6 +218,8 @@ protected:
     SSL_mode m_ssl_mode = SSL_mode::LAST;
     bool m_tcpip = false; // set to true if TCPIP connection was specified
     bool m_sock = false;  // set to true if socket connection was specified
+    bool m_tls_vers = false;
+    bool m_tls_ciphers = false;
 
     void erase(int);
     void init_connection_attr();
@@ -304,10 +306,31 @@ const common::Value& Settings_impl::get(int opt) const
 inline
 bool Settings_impl::has_option(int opt) const
 {
+  // For options whose value is a list, we return true if we know the option
+  // was set even if no actual values are stored in m_options, which is the
+  // case when option value is an empty list.
+
+  switch (opt)
+  {
+  case Session_option_impl::TLS_VERSIONS:
+    if (m_data.m_tls_vers)
+      return true;
+    break;
+
+  case Session_option_impl::TLS_CIPHERSUITES:
+    if (m_data.m_tls_ciphers)
+      return true;
+    break;
+
+  default:
+    break;
+  }
+
   return m_data.m_options.cend() !=
-    find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
-      [opt](opt_val_t el) -> bool { return el.first == opt; }
-    );
+  find_if(m_data.m_options.cbegin(), m_data.m_options.cend(),
+    [opt](opt_val_t el) -> bool { return el.first == opt; }
+  );
+
 }
 
 

@@ -32,6 +32,7 @@
 #include <climits>
 #include <chrono>
 #include <iostream>
+#include <map>
 #include "test.h"
 
 
@@ -2303,5 +2304,268 @@ TEST_F(xapi, connection_attrs)
                 ));
 
     mysqlx_free_options(opt);
+  }
+}
+
+
+TEST_F(xapi, tls_ver_ciphers)
+{
+  SKIP_IF_NO_XPLUGIN;
+  AUTHENTICATE();
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 15)
+
+  #define EXIT_WITH_ERROR(ERR) { \
+    mysqlx_free(error); \
+    mysqlx_free_options(opt); \
+    printf(ERR); \
+    FAIL(); }
+
+  std::set<std::string> versions = {"TLSv1.1" ,"TLSv1.2"};
+  std::map<std::string, std::string> suites_map = {
+    { "DHE-RSA-AES128-GCM-SHA256", "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"},
+    { "DES-CBC3-SHA", "TLS_RSA_WITH_3DES_EDE_CBC_SHA" }
+  };
+
+  std::string versions_str;
+  std::string suites_str;
+  std::vector<std::string> suites;
+
+  for (auto ver : versions)
+  {
+    if (!versions_str.empty())
+      versions_str.append(",");
+    versions_str.append(ver);
+  }
+
+  for (auto c : suites_map)
+  {
+    if (!suites_str.empty())
+      suites_str.append(",");
+    suites_str.append(c.second);
+    suites.push_back(c.second);
+  }
+
+  {
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
+    mysqlx_session_t *sess;
+    mysqlx_error_t *error = NULL;
+    mysqlx_result_t *res;
+    mysqlx_row_t *row;
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS(versions_str.c_str()),
+      OPT_TLS_CIPHERSUITES(suites_str.c_str()),
+      PARAM_END
+    ));
+
+    sess = mysqlx_get_session_from_options(opt, &error);
+    if (sess == NULL)
+      EXIT_WITH_ERROR("Session could not be established");
+
+    res = mysqlx_sql(sess, "SHOW STATUS LIKE 'Mysqlx_ssl_version'",
+                     MYSQLX_NULL_TERMINATED);
+    if((row = mysqlx_row_fetch_one(res)) == NULL)
+      EXIT_WITH_ERROR("Could not fetch TLS version info");
+    {
+      char buf[1024] = {'\0'};
+      size_t sz = sizeof(buf);
+      mysqlx_get_bytes(row, 1, 0, buf, &sz);
+      printf("Mysqlx_ssl_version=%s\n", buf);
+      EXPECT_TRUE(0 < versions.count(buf));
+    }
+
+    res = mysqlx_sql(sess, "SHOW STATUS LIKE 'Mysqlx_ssl_cipher'",
+                     MYSQLX_NULL_TERMINATED);
+    if ((row = mysqlx_row_fetch_one(res)) == NULL)
+      EXIT_WITH_ERROR("Could not fetch TLS cipher info");
+    {
+      char buf[1024] = { '\0' };
+      size_t sz = sizeof(buf);
+      mysqlx_get_bytes(row, 1, 0, buf, &sz);
+      printf("Mysqlx_ssl_cipher=%s\n", buf);
+      EXPECT_NO_THROW(suites_map.at(buf));
+    }
+
+    mysqlx_free_options(opt);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    mysqlx_session_options_t *opt = mysqlx_session_options_new();
+    mysqlx_session_t *sess;
+    mysqlx_error_t *error = NULL;
+
+    // Test parsing of comma separated list values
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("\t TLSv1.1,\n TLSv1.2 "),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
+
+    // Negative: no version or cipher given
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS(""),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("TLSv1.2"),
+      OPT_TLS_CIPHERSUITES(""),
+      PARAM_END
+    ));
+
+
+    // Negative: wrong version name
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("SSLv1"),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
+    error = NULL;
+    sess = mysqlx_get_session_from_options(opt, &error);
+    printf("Expected error: %s\n", mysqlx_error_message(error));
+    mysqlx_free(error);
+    EXPECT_EQ(NULL, sess);
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("foo"),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
+    error = NULL;
+    sess = mysqlx_get_session_from_options(opt, &error);
+    printf("Expected error: %s\n", mysqlx_error_message(error));
+    mysqlx_free(error);
+    EXPECT_EQ(NULL, sess);
+
+
+   // Negative: invalid or not accepted ciphers
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_CIPHERSUITES("foo,TLS_DHE_RSA_WITH_DES_CBC_SHA"),
+      PARAM_END
+    ));
+
+    error = NULL;
+    sess = mysqlx_get_session_from_options(opt, &error);
+    printf("Expected error: %s\n", mysqlx_error_message(error));
+    mysqlx_free(error);
+    EXPECT_EQ(NULL, sess);
+
+    // Some ciphers invalid, but some are OK
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_CIPHERSUITES(
+        "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
+        "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+      ),
+      PARAM_END
+    ));
+
+    error = NULL;
+    sess = mysqlx_get_session_from_options(opt, &error);
+    mysqlx_free(error);
+    EXPECT_NE(NULL, sess);
+    mysqlx_session_close(sess);
+
+
+    // Negative: option defined twice
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("TLSv1.1"),
+      OPT_TLS_VERSIONS("TLSv1.2"),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
+    mysqlx_free_options(opt);
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_host),
+      OPT_PORT(m_port),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("TLSv1.1"),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
+      PARAM_END
+    ));
+
   }
 }

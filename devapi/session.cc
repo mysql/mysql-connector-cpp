@@ -59,24 +59,91 @@ using std::ostream;
   ================
 */
 
-template<typename PRC>
-void process_val(PRC *prc, common::Value &val)
+
+void process_val(
+    cdk::JSON::Processor::Any_prc::Scalar_prc *prc,
+    const mysqlx::Value &val
+)
 {
+  using mysqlx::Value;
+
   assert(prc);
 
-  switch (val.get_type())
+  auto vtype = val.getType();
+  switch (vtype)
   {
   // TODO: avoid unnecessary utf8 conversion
-  case common::Value::STRING:  prc->str(val.get_string());  break;
-  case common::Value::USTRING: prc->str(val.get_string()); break;
-  case common::Value::INT64:   prc->num(val.get_sint());    break;
-  case common::Value::UINT64:  prc->num(val.get_uint());    break;
-  case common::Value::BOOL:    prc->yesno(val.get_bool());  break;
-  case common::Value::VNULL:   prc->null();                 break;
+  case Value::STRING:  prc->str(val.get<mysqlx::string>());  break;
+  case Value::INT64:   prc->num(val.get<int64_t>());    break;
+  case Value::UINT64:  prc->num(val.get<uint64_t>());    break;
+  case Value::BOOL:    prc->yesno(val.get<bool>());  break;
+  case Value::VNULL:   prc->null();                 break;
+  case Value::DOCUMENT:
+    {
+      std::stringstream json;
+      json << val.get<DbDoc>();
+      prc->str(json.str());
+    }
+    break;
   default:
     mysqlx::throw_error("Invalid type of session option value");
   }
 }
+
+void process(cdk::JSON::Processor::Any_prc *prc, const mysqlx::Value &val)
+{
+  using mysqlx::Value;
+  assert(prc);
+
+  switch (val.getType())
+  {
+  case Value::DOCUMENT:
+    {
+      auto *dprc = prc->doc();
+      if (!dprc)
+        return;
+
+      DbDoc doc = val;
+
+      dprc->doc_begin();
+
+
+      for (auto f : doc)
+      {
+        auto *eprc = dprc->key_val(f);
+        if (eprc)
+          process(eprc, doc[f]);
+      }
+
+      dprc->doc_end();
+    }
+    break;
+
+  case Value::ARRAY:
+    {
+      auto *aprc = prc->arr();
+      if (!aprc)
+        return;
+
+      aprc->list_begin();
+
+      for (Value v : val)
+      {
+        auto *eprc = aprc->list_el();
+        if (eprc)
+          process(eprc, v);
+      }
+
+      aprc->list_end();
+    }
+    break;
+
+  default:
+    process_val(prc->scalar(), val);
+    break;
+  }
+}
+
 
 template<>
 void
@@ -88,12 +155,52 @@ Settings_detail<Settings_traits>::do_set(session_opt_list_t &&opts)
 
   for (auto &opt_val : opts)
   {
-    process_val(set.key_val(opt_val.first)->scalar(),
-                opt_val.second);
+    int   opt = opt_val.first;
+    Value &val = opt_val.second;
+
+    process(set.key_val(opt), val);
   }
 
   set.doc_end();
 }
+
+
+/*
+  Note: old code for ABI compatibility. Some versions of gcc complained
+  if this was not defined inside namespace (even though it did not complain
+  for the do_set() overload defined above)
+*/
+
+namespace mysqlx {
+MYSQLX_ABI_BEGIN(2,0)
+namespace internal {
+
+template<>
+void
+Settings_detail<Settings_traits>::do_set(
+  std::list<std::pair<int, common::Value>> &&opts
+)
+{
+  Setter set(*this);
+
+  set.doc_begin();
+
+  for (auto &opt_val : opts)
+  {
+    int   opt = opt_val.first;
+    Value val(opt_val.second);
+
+    process_val(set.key_val(opt)->scalar(), val);
+  }
+
+  set.doc_end();
+}
+
+}  // internal
+MYSQLX_ABI_END(2,0)
+}  // mysqlx
+
+
 
 
 /*
@@ -138,6 +245,27 @@ Session_detail::Session_detail(common::Settings_impl &settings)
     settings.get_data_source(source);
     m_impl = std::make_shared<Impl>(source);
 
+  }
+  catch (const cdk::foundation::connection::TLS::Options::TLS_version::Error &e)
+  {
+    std::stringstream msg;
+    msg << "'" << e.get_ver() << "'";
+    msg << " not recognized as a valid TLS protocol version";
+    msg << " (should be one of TLSv1, TLSv1.1, TLSv1.2, TLSv1.3)";
+    throw_error(msg.str().c_str());
+  }
+  catch(const cdk::Error &e)
+  {
+    if (e.code() == cdk::cdkerrc::tls_versions)
+      throw_error("No supported TLS protocol version found in the 'tls-versions' list");
+
+    else if (e.code() == cdk::cdkerrc::tls_ciphers)
+      throw_error("No valid cipher suite found in the 'tls-ciphersuites' list");
+
+    try {
+      throw;
+    }
+    CATCH_AND_WRAP
   }
   CATCH_AND_WRAP
 }

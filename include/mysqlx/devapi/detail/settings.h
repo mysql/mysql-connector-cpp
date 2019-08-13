@@ -53,7 +53,7 @@ template <typename Traits>
 class Settings_detail
   : public common::Settings_impl
 {
-  using Value       = common::Value;
+  using Value       = mysqlx::Value;
   using Option      = typename Traits::Options;
   using COption     = typename Traits::COptions;
   using SSLMode     = typename Traits::SSLMode;
@@ -107,8 +107,7 @@ protected:
   >
   static Value opt_val(int opt, V &&val)
   {
-    OPT_VAL_TYPE(CHECK_OPT)
-    return string(val);
+    return opt_val(opt, Value(string(val)));
   }
 
   static Value opt_val(int opt, SSLMode m)
@@ -129,18 +128,18 @@ protected:
     return unsigned(m);
   }
 
-  static Value opt_val(int opt, const DbDoc &doc)
-  {
-    if (opt != Session_option_impl::CONNECTION_ATTRIBUTES)
-    {
-      std::stringstream err_msg;
-      err_msg << "Option " << option_name(opt) << " does not accept DbDoc object";
-      throw_error(err_msg.str().c_str());
-    }
+  // Note: is_range<C> is true for string types, which should not be treated
+  // as arrays of characters, but as single Values.
 
-    std::stringstream str_opts;
-    str_opts << doc;
-    return str_opts.str();
+  template <
+    typename C,
+    typename std::enable_if<is_range<C>::value>::type* = nullptr,
+    typename std::enable_if<!std::is_convertible<C,Value>::value>::type*
+      = nullptr
+  >
+  static Value opt_val(int opt, const C &container)
+  {
+    return Value(std::begin(container), std::end(container));
   }
 
   template<typename _Rep, typename _Period>
@@ -161,6 +160,7 @@ protected:
                  .count());
   }
 
+  // Handle values that are directly convertible to Value.
 
   template <
     typename V,
@@ -169,10 +169,9 @@ protected:
     typename std::enable_if<std::is_convertible<V,Value>::value>::type*
       = nullptr
   >
-  static Value opt_val(int, V &&val)
+  static Value opt_val(int opt, V &&val)
   {
-    //ClientOptions are all bool or int, so convertible to int
-    return val;
+    return opt_val(opt, Value(val));
   }
 
   using session_opt_val_t = std::pair<int, Value>;
@@ -186,6 +185,9 @@ protected:
   */
 
   void do_set(session_opt_list_t&&);
+
+  // Note: for ABI compatibility
+  void PUBLIC_API do_set(std::list<std::pair<int, common::Value>>&&);
 
   /*
     Templates that collect varargs list of options into opt_list_t list
@@ -231,7 +233,6 @@ protected:
     );
     return opts;
   }
-
 
   /*
     Note: Methods below rely on the fact that DevAPI SessionOption constants

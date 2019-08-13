@@ -107,7 +107,11 @@
     requests sending only the default attributes which is also the default
     behavior when this option is not set.
   */ \
-  OPT_STR(x,CONNECTION_ATTRIBUTES,13)
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13) \
+  OPT_STR(x,TLS_VERSIONS, 14) /*!< Expects single string or vector of string
+   values listing the available TLS versions >*/ \
+  OPT_STR(x,TLS_CIPHERSUITES, 15) /*!< Expects single string or vector of string
+   values listing the available TLS cipher suites >*/ \
   END_LIST
 
 
@@ -131,7 +135,9 @@
   X("ssl-ca", SSL_CA)       \
   X("auth", AUTH)           \
   X("connect-timeout", CONNECT_TIMEOUT) \
-  X("connection-attributes",CONNECTION_ATTRIBUTES)
+  X("connection-attributes",CONNECTION_ATTRIBUTES)\
+  X("tls-versions", TLS_VERSIONS) \
+  X("tls-ciphersuites", TLS_CIPHERSUITES)
   END_LIST
 
 
