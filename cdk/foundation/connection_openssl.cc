@@ -37,12 +37,12 @@ PUSH_SYS_WARNINGS_CDK
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <iostream>
+#include <map>
 POP_SYS_WARNINGS_CDK
 #include <mysql/cdk/foundation/error.h>
 #include <mysql/cdk/foundation/connection_openssl.h>
 #include <mysql/cdk/foundation/opaque_impl.i>
 #include "connection_tcpip_base.h"
-
 
 /*
   On Windows, external dependencies can be declared using
@@ -62,53 +62,131 @@ POP_SYS_WARNINGS_CDK
   #endif
 #endif
 
-static const char tls_ciphers_list[]="ECDHE-ECDSA-AES128-GCM-SHA256:"
-                                     "ECDHE-ECDSA-AES256-GCM-SHA384:"
-                                     "ECDHE-RSA-AES128-GCM-SHA256:"
-                                     "ECDHE-RSA-AES256-GCM-SHA384:"
-                                     "ECDHE-ECDSA-AES128-SHA256:"
-                                     "ECDHE-RSA-AES128-SHA256:"
-                                     "ECDHE-ECDSA-AES256-SHA384:"
-                                     "ECDHE-RSA-AES256-SHA384:"
-                                     "DHE-RSA-AES128-GCM-SHA256:"
-                                     "DHE-DSS-AES128-GCM-SHA256:"
-                                     "DHE-RSA-AES128-SHA256:"
-                                     "DHE-DSS-AES128-SHA256:"
-                                     "DHE-DSS-AES256-GCM-SHA384:"
-                                     "DHE-RSA-AES256-SHA256:"
-                                     "DHE-DSS-AES256-SHA256:"
-                                     "ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:"
-                                     "ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:"
-                                     "DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:"
-                                     "TLS_DHE_DSS_WITH_AES_256_CBC_SHA:DHE-RSA-AES256-SHA:"
-                                     "AES128-GCM-SHA256:DH-DSS-AES128-GCM-SHA256:"
-                                     "ECDH-ECDSA-AES128-GCM-SHA256:AES256-GCM-SHA384:"
-                                     "DH-DSS-AES256-GCM-SHA384:ECDH-ECDSA-AES256-GCM-SHA384:"
-                                     "AES128-SHA256:DH-DSS-AES128-SHA256:ECDH-ECDSA-AES128-SHA256:AES256-SHA256:"
-                                     "DH-DSS-AES256-SHA256:ECDH-ECDSA-AES256-SHA384:AES128-SHA:"
-                                     "DH-DSS-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES256-SHA:"
-                                     "DH-DSS-AES256-SHA:ECDH-ECDSA-AES256-SHA:DHE-RSA-AES256-GCM-SHA384:"
-                                     "DH-RSA-AES128-GCM-SHA256:ECDH-RSA-AES128-GCM-SHA256:DH-RSA-AES256-GCM-SHA384:"
-                                     "ECDH-RSA-AES256-GCM-SHA384:DH-RSA-AES128-SHA256:"
-                                     "ECDH-RSA-AES128-SHA256:DH-RSA-AES256-SHA256:"
-                                     "ECDH-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:"
-                                     "ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA:"
-                                     "ECDHE-ECDSA-AES256-SHA:DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:"
-                                     "TLS_DHE_DSS_WITH_AES_256_CBC_SHA:DHE-RSA-AES256-SHA:"
-                                     "AES128-SHA:DH-DSS-AES128-SHA:ECDH-ECDSA-AES128-SHA:AES256-SHA:"
-                                     "DH-DSS-AES256-SHA:ECDH-ECDSA-AES256-SHA:DH-RSA-AES128-SHA:"
-                                     "ECDH-RSA-AES128-SHA:DH-RSA-AES256-SHA:ECDH-RSA-AES256-SHA:DES-CBC3-SHA";
 
-static const char tls_cipher_blocked[]= "!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!DES:!RC2:!RC4:!PSK:"
-                                        "!DHE-DSS-DES-CBC3-SHA:!DHE-RSA-DES-CBC3-SHA:"
-                                        "!ECDH-RSA-DES-CBC3-SHA:!ECDH-ECDSA-DES-CBC3-SHA:"
-                                        "!ECDHE-RSA-DES-CBC3-SHA:!ECDHE-ECDSA-DES-CBC3-SHA:";
+/*
+  Valid TLS versions with a mapping to OpenSSL version constant and
+  major/minor version number.
 
-static const char tls_cipher_suites[] ="TLS_AES_128_GCM_SHA256:"
-                                       "TLS_AES_256_GCM_SHA384:"
-                                       "TLS_CHACHA20_POLY1305_SHA256:"
-                                       "TLS_AES_128_CCM_SHA256:"
-                                       "TLS_AES_128_CCM_8_SHA256:";
+  Note: Even if OpenSSL we are using does not support TLSv1.3, we still
+  recognize it as a valid version and define TLS1_3_VERSION although this
+  constant won't be used in that scenario.
+*/
+
+#ifndef TLS1_3_VERSION
+#define TLS1_3_VERSION 0
+#endif
+
+// Note: this list must be in increasing order.
+
+#define TLS_VERSIONS(X) \
+  X("TLSv1",   TLS1_VERSION,   1,0) \
+  X("TLSv1.1", TLS1_1_VERSION, 1,1) \
+  X("TLSv1.2", TLS1_2_VERSION, 1,2) \
+  X("TLSv1.3", TLS1_3_VERSION, 1,3) \
+
+
+/*
+  Default list of ciphers. By default we allow only ciphers that are approved
+  by the OSSA page (the link below). Lists of mandatory and approved ciphers
+  defined below should be kept in sync with requirements on this
+  page.
+
+  https://confluence.oraclecorp.com/confluence/display/GPS/Approved+Security+Technologies%3A+Standards+-+TLS+Ciphers+and+Versions
+*/
+
+#define TLS_CIPHERS_MANDATORY(X) \
+  X("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",  "ECDHE-ECDSA-AES128-GCM-SHA256") \
+  X("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",  "ECDHE-ECDSA-AES256-GCM-SHA384") \
+  X("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",    "ECDHE-RSA-AES128-GCM-SHA256") \
+  X("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",  "ECDHE-ECDSA-AES128-SHA256") \
+  X("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",    "ECDHE-RSA-AES128-SHA256") \
+
+/*
+  Note: Empty OpenSSL name means TLSv1.3+ cipher suite which is handled
+  differently from pre-TLSv1.3 suites that have OpenSSL specific names.
+*/
+
+#define TLS_CIPHERS_APPROVED(X) \
+  X("TLS_AES_128_GCM_SHA256", "") \
+  X("TLS_AES_256_GCM_SHA384", "") \
+  X("TLS_CHACHA20_POLY1305_SHA256", "") \
+  X("TLS_AES_128_CCM_SHA256", "") \
+  X("TLS_AES_128_CCM_8_SHA256", "") \
+  X("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "ECDHE-RSA-AES256-GCM-SHA384") \
+  X("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", "ECDHE-ECDSA-AES256-SHA384") \
+  X("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "ECDHE-RSA-AES256-SHA384") \
+  X("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256", "DHE-RSA-AES128-GCM-SHA256") \
+  X("TLS_DHE_DSS_WITH_AES_128_GCM_SHA256", "DHE-DSS-AES128-GCM-SHA256") \
+  X("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256", "DHE-RSA-AES128-SHA256") \
+  X("TLS_DHE_DSS_WITH_AES_128_CBC_SHA256", "DHE-DSS-AES128-SHA256") \
+  X("TLS_DHE_DSS_WITH_AES_256_GCM_SHA384", "DHE-DSS-AES256-GCM-SHA384") \
+  X("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256", "DHE-RSA-AES256-SHA256") \
+  X("TLS_DHE_DSS_WITH_AES_256_CBC_SHA256", "DHE-DSS-AES256-SHA256") \
+  X("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384", "DHE-RSA-AES256-GCM-SHA384") \
+  X("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256", "ECDHE-ECDSA-CHACHA20-POLY1305") \
+  X("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", "ECDHE-RSA-CHACHA20-POLY1305") \
+  X("TLS_DH_DSS_WITH_AES_128_GCM_SHA256", "DH-DSS-AES128-GCM-SHA256") \
+  X("TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", "ECDH-ECDSA-AES128-GCM-SHA256") \
+  X("TLS_DH_DSS_WITH_AES_256_GCM_SHA384", "DH-DSS-AES256-GCM-SHA384") \
+  X("TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", "ECDH-ECDSA-AES256-GCM-SHA384") \
+  X("TLS_DH_DSS_WITH_AES_128_CBC_SHA256", "DH-DSS-AES128-SHA256") \
+  X("TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", "ECDH-ECDSA-AES128-SHA256") \
+  X("TLS_DH_DSS_WITH_AES_256_CBC_SHA256", "DH-DSS-AES256-SHA256") \
+  X("TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384", "ECDH-ECDSA-AES256-SHA384") \
+  X("TLS_DH_RSA_WITH_AES_128_GCM_SHA256", "DH-RSA-AES128-GCM-SHA256") \
+  X("TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256", "ECDH-RSA-AES128-GCM-SHA256") \
+  X("TLS_DH_RSA_WITH_AES_256_GCM_SHA384", "DH-RSA-AES256-GCM-SHA384") \
+  X("TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384", "ECDH-RSA-AES256-GCM-SHA384") \
+  X("TLS_DH_RSA_WITH_AES_128_CBC_SHA256", "DH-RSA-AES128-SHA256") \
+  X("TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256", "ECDH-RSA-AES128-SHA256") \
+  X("TLS_DH_RSA_WITH_AES_256_CBC_SHA256", "DH-RSA-AES256-SHA256") \
+  X("TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384", "ECDH-RSA-AES256-SHA384") \
+
+
+// Note: these deprecated ciphers are temporarily allowed to make it possible
+// to connect to old servers based on YaSSL.
+
+#define TLS_CIPHERS_COMPAT(X) \
+  X("TLS_DHE_RSA_WITH_AES_256_CBC_SHA", "DHE-RSA-AES256-SHA") \
+  X("TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "DHE-RSA-AES128-SHA") \
+  X("TLS_RSA_WITH_AES_256_CBC_SHA", "AES256-SHA")
+
+
+#define TLS_CIPHERS_DEFAULT(X) \
+  TLS_CIPHERS_MANDATORY(X) \
+  TLS_CIPHERS_APPROVED(X) \
+  TLS_CIPHERS_COMPAT(X) \
+
+
+
+/*
+  TLS_CIPHERS() list is used to translate IANA cipher names to OpenSSL ones.
+
+  In principle CDK could/should support any cipher that is known to OpenSSL,
+  but it is not so easy to find complete data for IANA -> OpenSSL translation.
+
+  Since X DevAPI is restricting allowed ciphers to the ones used in the default
+  list, the easy solution for now is to have translation only for these allowed
+  ciphers (as other ciphers should trigger error anyway). If needed, CDK can
+  be extended in the future to cover other ciphers known to OpenSSL.
+
+  Note: some sources of data for IANA -> OpenSSL name translation:
+  - https://confluence.oraclecorp.com/confluence/display/GPS/Approved+Security+Technologies%3A+Standards+-+TLS+Ciphers+and+Versions
+  - https://www.openssl.org/docs/man1.1.1/man1/ciphers.html
+  - https://testssl.sh/openssl-iana.mapping.html
+  - https://ciphersuite.info/
+*/
+
+#define TLS_CIPHERS(X) \
+  TLS_CIPHERS_DEFAULT(X)
+
+
+
+using namespace cdk::foundation;
+
+/*
+  Handling SSL layer errors.
+*/
 
 static void throw_openssl_error_msg(const char* msg)
 {
@@ -149,7 +227,7 @@ static void throw_ssl_error(SSL* tls, int err)
     //Will not throw anything, so function that calls this, will continue.
     break;
   case SSL_ERROR_ZERO_RETURN:
-    throw cdk::foundation::connection::Error_eos();
+    throw connection::Error_eos();
   case SSL_ERROR_SYSCALL:
     cdk::foundation::throw_posix_error();
   case SSL_ERROR_SSL:
@@ -165,12 +243,27 @@ static void throw_ssl_error(SSL* tls, int err)
 
 
 /*
+  TLS_version
+*/
+
+
+connection::TLS::Options::TLS_version::TLS_version(const std::string &ver)
+{
+#define TLS_VERSION_GET(V,N,X,Y) \
+  if (ver == V) { m_major = X; m_minor = Y; return; }
+
+  TLS_VERSIONS(TLS_VERSION_GET)
+  throw Error(ver);
+}
+
+
+/*
   Implementation of TLS connection class.
 */
 
 
 class connection_TLS_impl
-  : public ::cdk::foundation::connection::Socket_base::Impl
+  : public connection::Socket_base::Impl
 {
 public:
 
@@ -179,8 +272,8 @@ public:
     connection object (which is assumed to be dynamically allocated).
   */
 
-  connection_TLS_impl(cdk::foundation::connection::Socket_base* tcpip,
-                      cdk::foundation::connection::TLS::Options options)
+  connection_TLS_impl(connection::Socket_base* tcpip,
+                      connection::TLS::Options options)
     : m_tcpip(tcpip)
     , m_tls(NULL)
     , m_tls_ctx(NULL)
@@ -205,11 +298,212 @@ public:
 
   void verify_server_cert();
 
-  cdk::foundation::connection::Socket_base* m_tcpip;
+  connection::Socket_base* m_tcpip;
   SSL* m_tls;
   SSL_CTX* m_tls_ctx;
-  cdk::foundation::connection::TLS::Options m_options;
+  connection::TLS::Options m_options;
 };
+
+
+/*
+  Helper class to configure allowed TLS versions and ciphers.
+*/
+
+struct TLS_helper
+{
+  using Versions_list = connection::TLS::Options::TLS_versions_list;
+  using Ciphers_list =  connection::TLS::Options::TLS_ciphersuites_list;
+
+  TLS_helper()
+  {
+    // sets default ciphers
+    set_ciphers({
+#define CIPHER_NAME(A,B) A,
+      TLS_CIPHERS_DEFAULT(CIPHER_NAME)
+    });
+  }
+
+  void setup(SSL_CTX*);
+  void set_versions(const Versions_list&);
+  void set_ciphers(const Ciphers_list&);
+
+  int m_ver_min = TLS1_VERSION;
+  int m_ver_max = 0;
+  unsigned long m_ver_mask = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+
+  std::string m_cipher_list;
+  std::string m_cipher_list_13;
+
+  static TLS_helper m_instance;
+};
+
+/*
+  Note: This static instance is used to quickly get default settings without
+  processing cipher lists each time. The default list of ciphers is stored
+  in this static instance and will be used if user does not override defaults.
+*/
+
+TLS_helper TLS_helper::m_instance;
+
+
+void TLS_helper::setup(SSL_CTX *ctx)
+{
+  // Configure allowed TLS versions
+
+  SSL_CTX_clear_options(
+    ctx,
+    SSL_OP_NO_TLSv1 |
+    SSL_OP_NO_TLSv1_1 |
+    SSL_OP_NO_TLSv1_2
+  );
+
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+    if (1 != SSL_CTX_set_min_proto_version(ctx, m_ver_min))
+      throw_openssl_error();
+
+    if (1 != SSL_CTX_set_max_proto_version(ctx, m_ver_max))
+      throw_openssl_error();
+#endif
+
+  long result_mask = SSL_CTX_set_options(ctx, m_ver_mask);
+
+  if ((result_mask & m_ver_mask) == 0)
+    throw_openssl_error();
+
+  /*
+    Configure allowed TLS ciphers. First check if we have any valid ciphers
+    configured.
+  */
+
+  if (
+    m_cipher_list.empty()
+#if OPENSSL_VERSION_NUMBER>=0x1010100fL
+    && m_cipher_list_13.empty()
+#endif
+  )
+  {
+    throw Error(cdkerrc::tls_ciphers);
+  }
+
+  SSL_CTX_set_cipher_list(ctx, m_cipher_list.c_str());
+
+#if OPENSSL_VERSION_NUMBER>=0x1010100fL
+  SSL_CTX_set_ciphersuites(ctx, m_cipher_list_13.c_str());
+#endif
+
+}
+
+
+void TLS_helper::set_versions(const Versions_list &list)
+{
+  using TLS_version = connection::TLS::Options::TLS_version;
+  bool no_versions = true;  // Note: used to check if any version was set
+
+  m_ver_min = m_ver_max = 0;
+  m_ver_mask = SSL_OP_NO_SSLv2 |
+        SSL_OP_NO_SSLv3 |
+        SSL_OP_NO_TLSv1 |
+        SSL_OP_NO_TLSv1_1 |
+        SSL_OP_NO_TLSv1_2;
+
+  auto process_version = [&](const char *str, int val, TLS_version ver)
+  {
+    if (0 == list.count(ver))
+      return;
+
+    // val is 0 for TLS versions that are valid but not supported by
+    // OpenSSL. We skip them here.
+
+    if (!val)
+      return;
+
+    no_versions = false;
+
+    if (0 == m_ver_min)
+      m_ver_min = val;
+    m_ver_max = val;
+
+    // Currently we only have TLSv1.x versions.
+    assert(1 == ver.m_major);
+
+    switch(ver.m_minor)
+    {
+    case 0:
+      m_ver_mask &= ~SSL_OP_NO_TLSv1;
+      break;
+    case 1:
+      m_ver_mask &= ~SSL_OP_NO_TLSv1_1;
+      break;
+    case 2:
+      m_ver_mask &= ~SSL_OP_NO_TLSv1_2;
+      break;
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+    case 3:
+      // Note: Exclude mask works only up to version TLSv1.2 but exclustion
+      // of TLSv1.3 (if requested) is handled by m_ver_max
+      break;
+#endif
+    default:
+      // We should not have any other versions, when they appear this code
+      // needs to be modified.
+      assert(false);
+    }
+
+  };
+
+#define PROCESS_VERSION(V,N,X,Y) process_version(V,N,{X,Y});
+  TLS_VERSIONS(PROCESS_VERSION)
+
+  if (no_versions)
+    throw Error(cdkerrc::tls_versions);
+
+}
+
+
+void TLS_helper::set_ciphers(const Ciphers_list &list)
+{
+  m_cipher_list.clear();
+  m_cipher_list_13.clear();
+
+  bool user_setting = !list.empty();
+
+  auto add_cipher = [](std::string &list, const std::string &name)
+  {
+    if (!list.empty())
+      list.append(":");
+    list.append(name);
+  };
+
+
+  static std::map<std::string, std::string> cipher_name_map =
+  {
+#define TLS_CIPHER_MAP(A,B)  {A,B},
+    TLS_CIPHERS(TLS_CIPHER_MAP)
+  };
+
+
+  for (const std::string &cipher : list)
+  {
+    try {
+      const std::string &name = cipher_name_map.at(cipher);
+
+      // Empty name means that this is TLSv1.3+ cipher.
+
+      if (name.empty())
+        add_cipher(m_cipher_list_13, cipher);
+      else
+        add_cipher(m_cipher_list, name);
+    }
+    catch (const std::out_of_range&)
+    {
+      /*
+        We silently ignore unkown ciphers -- if no know cipher is configured,
+        error will be thrown in setup().
+      */
+    }
+  }
+
+}
 
 
 void connection_TLS_impl::do_connect()
@@ -234,24 +528,31 @@ void connection_TLS_impl::do_connect()
     if (!m_tls_ctx)
       throw_openssl_error();
 
+    // Set allowed TLS protocol versions and ciphers
 
-    std::string cipher_list;
-    cipher_list.append(tls_cipher_blocked);
-    cipher_list.append(tls_ciphers_list);
+    {
+      // Note: copy defaults from static instance
+      TLS_helper helper(TLS_helper::m_instance);
 
-    SSL_CTX_set_cipher_list(m_tls_ctx, cipher_list.c_str());
+      auto vlist = m_options.get_tls_versions();
+      if (!vlist.empty())
+        helper.set_versions(vlist);
 
-#if (OPENSSL_VERSION_NUMBER>=0x1010100fL)
-    //OpenSSL TLSv1.3
-    SSL_CTX_set_ciphersuites(m_tls_ctx, tls_cipher_suites);
-#endif
+      auto clist = m_options.get_ciphersuites();
+      if (!clist.empty())
+        helper.set_ciphers(clist);
+
+      helper.setup(m_tls_ctx);
+    }
 
 
+    // Certificate data, if requested.
 
-    if (m_options.ssl_mode()
-        >=
-        cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_CA
-        )
+    if (
+      m_options.ssl_mode()
+      >=
+      cdk::foundation::connection::TLS::Options::SSL_MODE::VERIFY_CA
+    )
     {
       /*
         Warnings must be disabled because of a bug in Visual Studio 2017 compiler:
@@ -270,6 +571,8 @@ void connection_TLS_impl::do_connect()
     {
       SSL_CTX_set_verify(m_tls_ctx, SSL_VERIFY_NONE, nullptr);
     }
+
+    // Establish TLS connection
 
     m_tls = SSL_new(m_tls_ctx);
     if (!m_tls)
