@@ -152,6 +152,8 @@ if(MAINTAINER_MODE)
 
 IF(MSVC)
 
+  # TODO: move to /Wall when code base is ready for this
+
   # 4127 = conditional expression is constant (needed for do {...} while(false))
   # 4512 = assignment operator could not be generated
   # 4100 = unreferenced formal parameter
@@ -180,7 +182,7 @@ IF(MSVC)
   # Note: 4520 only present on Visual Studio 12
 
   add_compile_options(
-    /Wall /wd4512 /wd4127 /wd4100
+    /W4 /wd4512 /wd4127 /wd4100
     /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520
   )
 
