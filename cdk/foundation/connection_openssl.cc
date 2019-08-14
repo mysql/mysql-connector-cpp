@@ -465,8 +465,6 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
   m_cipher_list.clear();
   m_cipher_list_13.clear();
 
-  bool user_setting = !list.empty();
-
   auto add_cipher = [](std::string &list, const std::string &name)
   {
     if (!list.empty())
