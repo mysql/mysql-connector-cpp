@@ -47,7 +47,8 @@ endif()
 
 setup_headers(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_headers_dir(mysql)
+# TODO: enable when JDBC public headers are ready for it
+# add_headers_dir(mysql)
 add_headers_dir(mysqlx)
 
 #

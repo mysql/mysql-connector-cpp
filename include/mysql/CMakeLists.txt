@@ -26,19 +26,10 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
-#
-# MySQL Connector/C++ Public Headers
-#
-# see headers.cmake for explanations how project's public
-# headers are declared and processed.
-#
-
-include(headers)
-
 SET(headers jdbc.h)
 
 # TODO: Make it work one beautiful day...
+# One issue is that jdbc.h depends on boost headers
 #check_headers(${headers})
 #ADD_HEADERS(${headers})
 #ADD_HEADER_CHECKS()
