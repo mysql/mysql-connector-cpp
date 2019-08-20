@@ -34,12 +34,6 @@
 PUSH_SYS_WARNINGS_CDK
 #include "openssl/ssl.h"
 
-// Wolfssl redefines close, which causes compiler errors in VS.
-// Therefore, we have to undef it.
-#if defined(WITH_SSL_WOLFSSL) && defined(_WIN32)
-#undef close
-#endif
-
 #include <cstdio>
 #include <limits>
 #include <chrono>

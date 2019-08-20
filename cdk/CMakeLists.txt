@@ -104,8 +104,6 @@ find_dependency(Coverage)
 # correct when used in a different environment.
 
 add_config(WITH_SSL)
-add_config(WITH_SSL_WOLFSSL)
-
 
 #
 # Make sure WIN32 is defined on Windows

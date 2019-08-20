@@ -135,11 +135,6 @@ Connector/C++ libraries. Another option is to put OpenSSL libraries in the same
 location as Connector/C++. In this case the dynamic linker should find them
 next to the connector library.
 
-@note
-It is possible to build Connector/C++ libraries without OpenSSL, using WolfSSL
-implementation of TLS connections. In this case the OpenSSL libraries are not
-required at runtime.
-
 
 Using the static library
 ------------------------

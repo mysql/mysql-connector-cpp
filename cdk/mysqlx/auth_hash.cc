@@ -79,11 +79,7 @@ class SHA
 
   void Update(byte* data, length_t length)
   {
-    SHA1_Update(&m_sha, data,
-#ifdef WITH_SSL_WOLFSSL
-                (unsigned long)
-#endif
-                length);
+    SHA1_Update(&m_sha, data, length);
   }
 
   void Final(byte* hash)

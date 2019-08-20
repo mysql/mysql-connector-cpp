@@ -41,7 +41,7 @@ include(CheckSymbolExists)
 
 add_config_option(WITH_SSL STRING DEFAULT system
   "Either 'system' to use system-wide OpenSSL library,"
-  " or custom OpenSSL location or path to WolfSSL sources."
+  " or custom OpenSSL location."
 )
 
 
@@ -50,13 +50,6 @@ function(main)
   message(STATUS "Looking for SSL library.")
 
   if(NOT WITH_SSL MATCHES "^(system|yes)$")
-
-    if(EXISTS ${WITH_SSL}/wolfssl/openssl/ssl.h)
-      message(STATUS "Using WolfSSL implementation of SSL")
-      use_wolfssl()
-      check_x509_functions()
-      return()
-    endif()
 
     if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
       set(OPENSSL_ROOT_DIR "${WITH_SSL}")
@@ -120,7 +113,7 @@ function(main)
 
   if(WIN32 AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/applink.c")
 
-    message("-- Handling applink.c")
+    #message("-- Handling applink.c")
 
     add_library(openssl-applink STATIC "${OPENSSL_INCLUDE_DIR}/openssl/applink.c")
     target_link_libraries(SSL::ssl INTERFACE openssl-applink)
@@ -326,31 +319,6 @@ function(bundle_ssl_libs)
   endif()
 
 endfunction(bundle_ssl_libs)
-
-
-#
-# Define SSL::ssl and friends to point at WolfSSL libraries
-# built from sources in WOLFSSL_SOURCE_DIR. Build instructions
-# and target definitions for WolfSSL libraries are specified in
-# extra/wolfssl/CMakeLists.txt
-#
-
-function(use_wolfssl)
-
-  set(WOLFSSL_SOURCE_DIR "${WITH_SSL}")
-  message(STATUS "- using WolfSSL sources at: ${WOLFSSL_SOURCE_DIR}")
-
-  # Note: This cmake file expects WOLFSSL_SOURCE_DIR to be set
-
-  add_subdirectory("${PROJECT_SOURCE_DIR}/extra/wolfssl")
-
-  message(STATUS "- WolfSSL version: ${WOLFSSL_VERSION_GLOBAL}")
-
-  add_library(SSL::ssl ALIAS wolfssl)
-  add_library(SSL::crypto ALIAS wolfcrypto)
-
-  set(WITH_SSL_WOLFSSL ON CACHE INTERNAL "Tells whether WolfSSL implementation is used")
-endfunction(use_wolfssl)
 
 
 main()
