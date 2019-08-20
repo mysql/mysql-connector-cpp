@@ -54,15 +54,8 @@ endif()
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
 #
-# WITH_SSL                tells if connector uses built-in SSL implementation
-#                         or relies on external OpenSSL libraries (*)
-#
 # WITH_BOOST              where to look for Boost if can not be found
 #                         at standard locations.
-#
-# *) If WITH_SSL is set to "builtin" or if it points at WoflSSL sources then
-#    it is assumed that connector has SSL support built-in. In all other cases
-#    it is assumed that connector uses OpenSSL libraries.
 #
 # Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
 # set.
@@ -126,18 +119,6 @@ if(NOT CONCPP_INCLUDE_DIR OR NOT CONCPP_LIB_DIR)
     " using WITH_CONCPP setting or set header/library paths with CONCPP_INCLUDE_DIR"
     " and CONCPP_LIB_DIR settings."
   )
-endif()
-
-
-set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
-  "Set to 'builtin' if connector was built with built-in SSL support"
-)
-
-if(NOT WITH_SSL)
-  # Set to the default if WITH_SSL is not defined
-  set(WITH_SSL "system")
-elseif(EXISTS "${WITH_SSL}/wolfssl/openssl/ssl.h")
-  set(WITH_SSL "builtin")
 endif()
 
 
@@ -333,15 +314,12 @@ if(NOT WIN32)
     endif()
 
     #
-    # If connector uses OpenSSL libraries, we need to
-    # link to them too.
+    # We need to link to OpenSSL libraries too.
     #
 
-    if(NOT WITH_SSL STREQUAL "builtin")
-      set_property(TARGET MySQL::conncpp-jdbc
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ssl crypto
-      )
-    endif()
+    set_property(TARGET MySQL::conncpp-jdbc
+      APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ssl crypto
+    )
 
 endif()
 
