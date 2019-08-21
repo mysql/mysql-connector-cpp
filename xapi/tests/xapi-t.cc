@@ -2521,6 +2521,7 @@ TEST_F(xapi, tls_ver_ciphers)
       OPT_USER(m_xplugin_usr),
       OPT_PWD(m_xplugin_pwd),
       OPT_SSL_MODE(SSL_MODE_REQUIRED),
+      OPT_TLS_VERSIONS("TLSv1.1,TLSv1.2"),
       OPT_TLS_CIPHERSUITES(
         "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
         "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"

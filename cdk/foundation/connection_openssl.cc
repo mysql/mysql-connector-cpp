@@ -357,7 +357,7 @@ void TLS_helper::setup(SSL_CTX *ctx)
     SSL_OP_NO_TLSv1_2
   );
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     if (1 != SSL_CTX_set_min_proto_version(ctx, m_ver_min))
       throw_openssl_error();
 
@@ -437,7 +437,7 @@ void TLS_helper::set_versions(const Versions_list &list)
     case 2:
       m_ver_mask &= ~SSL_OP_NO_TLSv1_2;
       break;
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+#if TLS1_3_VERSION
     case 3:
       // Note: Exclude mask works only up to version TLSv1.2 but exclustion
       // of TLSv1.3 (if requested) is handled by m_ver_max
