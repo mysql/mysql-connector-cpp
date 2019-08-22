@@ -59,7 +59,6 @@ TEST_F(Sess, tls_ver_ciphers)
     return str;
   };
 
-
   std::set<std::string> versions = {"TLSv1.1" ,"TLSv1.2"};
   std::map<std::string, std::string> suites_map = {
     { "DHE-RSA-AES128-GCM-SHA256", "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"},
@@ -119,7 +118,8 @@ TEST_F(Sess, tls_ver_ciphers)
       // Some ciphers invalid, but some are OK
       EXPECT_NO_THROW(
         mysqlx::Session sess(
-          uri.str() + "/?tls-ciphersuites=["
+          uri.str() + "/?tls-versions=[TLSv1.1,TLSv1.2]"
+          "&tls-ciphersuites=["
             "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
             "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
           "]"
@@ -144,9 +144,9 @@ TEST_F(Sess, tls_ver_ciphers)
       );
 
       // TODO: this test will not work when TLSv1.3 is supported
-      EXPECT_THROW(
-        mysqlx::Session sess(uri.str() + "/?tls-versions=[TLSv1.3]"), Error
-      );
+      //EXPECT_THROW(
+      //  mysqlx::Session sess(uri.str() + "/?tls-versions=[TLSv1.3]"), Error
+      //);
 
       // Negative: option defined twice
 
@@ -204,6 +204,7 @@ TEST_F(Sess, tls_ver_ciphers)
         SessionOption::USER, get_user(),
         SessionOption::PWD, get_password() ? get_password() : nullptr,
         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
         SessionOption::TLS_CIPHERSUITES,
           std::list<string>{ "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA"}
       ),
@@ -218,6 +219,7 @@ TEST_F(Sess, tls_ver_ciphers)
         SessionOption::USER, get_user(),
         SessionOption::PWD, get_password() ? get_password() : nullptr,
         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
         SessionOption::TLS_CIPHERSUITES,
           std::list<string>{
             "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA",
@@ -266,16 +268,16 @@ TEST_F(Sess, tls_ver_ciphers)
     );
 
     // TODO: this test will not work when TLSv1.3 is supported
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, "localhost",
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "TLSv1.3"
-      ), Error
-    );
+    //EXPECT_THROW(
+    //  mysqlx::Session sess(
+    //    SessionOption::HOST, "localhost",
+    //    SessionOption::PORT, get_port(),
+    //    SessionOption::USER, get_user(),
+    //    SessionOption::PWD, get_password() ? get_password() : nullptr,
+    //    SessionOption::SSL_MODE, SSLMode::REQUIRED,
+    //    SessionOption::TLS_VERSIONS, "TLSv1.3"
+    //  ), Error
+    //);
 
     // Negative: option defined twice
 
@@ -345,6 +347,7 @@ TEST_F(Sess, tls_ver_ciphers)
         SessionOption::USER, get_user(),
         SessionOption::PWD, get_password() ? get_password() : nullptr,
         SessionOption::SSL_MODE, SSLMode::REQUIRED,
+        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
         SessionOption::TLS_CIPHERSUITES, "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
           "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
       )
