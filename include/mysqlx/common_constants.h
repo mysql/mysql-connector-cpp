@@ -47,7 +47,7 @@
   are always > 0.
 */
 
-/*
+
   Note: the empty END_LIST macro at the end of list macros helps Doxygen
   correctly interpret documentation for the list item.
 */
@@ -107,11 +107,20 @@
     requests sending only the default attributes which is also the default
     behavior when this option is not set.
   */ \
-  OPT_STR(x,CONNECTION_ATTRIBUTES,13) \
-  OPT_STR(x,TLS_VERSIONS, 14) /*!< Expects single string or vector of string
-   values listing the available TLS versions >*/ \
-  OPT_STR(x,TLS_CIPHERSUITES, 15) /*!< Expects single string or vector of string
-   values listing the available TLS cipher suites >*/ \
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13)                                        \  
+  /*!
+    List of allowed TLS protocol versions, such as "TLSv1.2". The value can be
+    a single string with comma separated version names or an iterable container
+    with the names.
+  */                                                                         \
+  OPT_STR(x,TLS_VERSIONS, 14)                                                \
+  /*!
+    List of allowed TLS cipher suites. The value can be a single string with
+    comma separated IANA cipher suitenames (such as
+    "TLS_RSA_WITH_3DES_EDE_CBC_SHA") or an iterable container with the names.
+    Unknown cipher suites are silently ignored.
+  */                                                                         \
+  OPT_STR(x,TLS_CIPHERSUITES, 15)                                            \
   END_LIST
 
 
