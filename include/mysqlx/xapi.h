@@ -381,6 +381,8 @@ mysqlx_client_opt_type_t;
   value of `SSL_MODE_VERIFY_CA` or `SSL_MODE_VERIFY_IDENTITY`.
   If `MYSQLX_OPT_SSL_MODE` is not explicitly given then setting
   `MYSQLX_OPT_SSL_CA` implies `SSL_MODE_VERIFY_CA`.
+
+  \anchor opt_session
 */
 
 typedef enum mysqlx_opt_type_enum
@@ -616,7 +618,7 @@ PUBLIC_API void mysqlx_client_close(mysqlx_client_t *client);
 /**
   Create a new session
 
-  @param client     client pool to get session from
+  @param cli        client pool to get session from
   @param[out] error if error happens during connect the error object
                     is returned through this parameter
 
@@ -661,18 +663,6 @@ mysqlx_get_session(const char *host, int port, const char *user,
 /**
   Create a session using connection string or URL.
 
-  Connection sting has the form `"user:pass\@host:port/?option&option"`,
-  valid URL is like a connection string with a `mysqlx://` prefix. Host is
-  specified as either DNS name, IPv4 address of the form "nn.nn.nn.nn" or
-  IPv6 address of the form "[nn:nn:nn:...]".
-
-  Possible connection options are:
-
-  - `ssl-mode` : TLS connection mode
-  - `ssl-ca=`path : path to a PEM file specifying trusted root certificates
-
-  Specifying `ssl-ca` option implies `ssl-mode=VERIFY_CA`.
-
   @param conn_string  connection string
   @param[out] error   if error happens during connect the error object
                       is returned through this parameter
@@ -680,6 +670,63 @@ mysqlx_get_session(const char *host, int port, const char *user,
   @return session handle if session could be created, otherwise NULL
   is returned and the error information is returned through
   the error output parameter.
+
+
+  Connection sting has the form
+
+        "user:pass@connection-data/db?option&option"
+
+  with optional `mysqlx://` prefix.
+
+  The `connetction-data` part is either a single host address or a coma
+  separated list of hosts in square brackets: `[host1, host2, ..., hostN]`.
+  In the latter case the connection fail-over logic will be used when
+  creating the session.
+
+  A single host address is either a DNS host name, an IPv4 address of
+  the form `nn.nn.nn.nn` or an IPv6 address of the form `[nn:nn:nn:...]`.
+  On Unix systems a host can be specified as a path to a Unix domain
+  socket - this path must start with `/` or `.`.
+
+  Characters like `/` in the connection data, which otherwise have a special
+  meaning inside a connection string, must be represented using percent
+  encoding (e.g., `%2F` for `/`). Another option is to enclose a host name or
+  a socket path in round braces. For example, one can write
+
+      "mysqlx://(./path/to/socket)/db"
+
+  instead of
+
+      "mysqlx://.%2Fpath%2Fto%2Fsocket/db"
+
+  To specify priorities for hosts in a multi-host settings, use list of pairs
+  of the form `(address=host,priority=N)`. If priorities are specified, they
+  must be given to all hosts in the list.
+
+  The optional `db` part of the connection string defines the default schema
+  of the session.
+
+  Possible connection options are:
+
+  - `ssl-mode=...` : see `#MYSQLX_OPT_SSL_MODE`; the value is a case insensitive
+                     name of the SSL mode
+  - `ssl-ca=...` : see `#MYSQLX_OPT_SSL_CA`
+  - `auth=...`: see `#MYSQLX_OPT_AUTH`; the value is a case insensitive name of
+                the authentication method
+  - `connect-timeout=...`: see `#MYSQLX_OPT_CONNECT_TIMEOUT`
+  - `connection-attributes=[...]` : see `#MYSQLX_OPT_CONNECTION_ATTRIBUTES`
+    but the key-value pairs are not given by a JSON document but as a list;\n
+    Examples:\n
+    `"mysqlx://user@host?connection-attributes=[foo=bar,qux,baz=]"` -
+      specify additional attributes to be sent\n
+    `"mysqlx://user@host?connection-attributes=false"` -
+      send no connection attributes\n
+    `"mysqlx://user@host?connection-attributes=true"` -
+      send default connection attributes\n
+    `"mysqlx://user@host?connection-attributes=[]"` -
+      the same as setting to `true`\n
+    `"mysqlx://user@host?connection-attributes"` -
+      the same as setting to `true`
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.
@@ -1042,39 +1089,41 @@ PUBLIC_API void mysqlx_free_options(mysqlx_session_options_t *opt);
 /**
   Set session configuration options.
 
-  @param opt   handle to session configuration data object
-  @param   ...  variable parameters list consisting of (type, value) pairs
-          terminated by `PARAM_END`: type_id1, value1, type_id2, value2, ...,
-          type_id_n, value_n, `PARAM_END` (`PARAM_END` marks the end of
-          the parameters list).
-
-           type_id is the numeric identifier, which helps to determine the type
-           of the value provided as the next parameter. The user code must
-           ensure that type_id corresponds to the actual value type. Otherwise,
-           the value along with and all sequential types and values are most
-           likely to be corrupted.
-           Allowed types are listed in `mysqlx_opt_type_t` enum.
-           The X DevAPI for C defines the convenience macros that help to specify
-           the types and values: See `OPT_HOST()`, `OPT_PORT()`, `OPT_USER()`,
-           `OPT_PWD()`, `OPT_DB()`, `OPT_SSL_MODE()`, `OPT_SSL_CA()`,
-           `OPT_PRIORITY()`.
+  @param opth   handle to session configuration data object
+  @param   ...  variable parameters list consisting of (option, value) pairs
+          terminated by `PARAM_END`.
 
   @return `RESULT_OK` if option was successfully set; `RESULT_ERROR`
           is set otherwise (use `mysqlx_error()` to get the error
           information)
 
+  The variable parameter list is of the form
+
+      OPT_O1(val1), OPT_O2(val2), ..., OPT_On(valn), PARAM_END
+
+  or, equivalently,
+
+      MYSQLX_OPT_O1, val1, ..., MYSQLX_OPT_On, valn, PARAM_END
+
+  Possible options are defined by enumeration
+  \ref opt_session "mysqlx_opt_type_t". Type of option value `vali` (number,
+  string, etc.) must match the option `MYSQLX_OPT_Oi`, otherwise this value
+  along with all the sequential options and values are most likely
+  to be corrupted.
+
   @ingroup xapi_sess
 */
 
 PUBLIC_API int
-mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
+mysqlx_session_option_set(mysqlx_session_options_t *opth, ...);
 
 
 /**
   Read session configuration options.
 
-  @param opt   handle to session configuration data object
-  @param type  option type to get (see `mysqlx_opt_type_t` enum)
+  @param opth  handle to session configuration data object
+  @param opt   option whose value to read (see
+               \ref opt_session "mysqlx_opt_type_t")
   @param[out] ...  pointer to a buffer where to return the requested
                    value
 
@@ -1097,7 +1146,7 @@ mysqlx_session_option_set(mysqlx_session_options_t *opt, ...);
 */
 
 PUBLIC_API int
-mysqlx_session_option_get(mysqlx_session_options_t *opt, int type,
+mysqlx_session_option_get(mysqlx_session_options_t *opth, int opt,
                           ...);
 
 /*

@@ -79,15 +79,37 @@
   OPT_STR(x,USER,5)        /*!< user name */                                 \
   OPT_STR(x,PWD,6)         /*!< password */                                  \
   OPT_STR(x,DB,7)          /*!< default database */                          \
-  OPT_ANY(x,SSL_MODE,8)    /*!< define `SSLMode` option to be used */        \
+  /*!
+    Specify \ref SSLMode option to be used. In plain C code the value
+    should be a `#mysqlx_ssl_mode_t` enum constant.
+  */ \
+  OPT_ANY(x,SSL_MODE,8)                                                      \
   /*! path to a PEM file specifying trusted root certificates*/              \
   OPT_STR(x,SSL_CA,9)                                                        \
-  OPT_ANY(x,AUTH,10)      /*!< authentication method, PLAIN, MYSQL41, etc.*/ \
-  OPT_STR(x,SOCKET,11)    /*!< unix socket path*/                            \
-  OPT_NUM(x,CONNECT_TIMEOUT,12) /*!< timeout to connect*/                   \
-  OPT_STR(x,CONNECTION_ATTRIBUTES,13) /*!< Expects JSON with key:pair values*/ \
-
+  /*!
+    Authentication method to use, see \ref AuthMethod. In plain C code the value
+    should be a `#mysqlx_auth_method_t` enum constant.
+  */ \
+  OPT_ANY(x,AUTH,10)                                                        \
+  OPT_STR(x,SOCKET,11)    /*!< unix socket path */                          \
+  /*!
+    Sets connection timeout in milliseconds. In C++ code can be also set to
+    a `std::chrono::duration` value.
+  */ \
+  OPT_NUM(x,CONNECT_TIMEOUT,12)                                              \
+  /*!
+    Specifies connection attributes (key-value pairs) to be sent when a session
+    is created. The value is a JSON string (in C++ code can be also a `DbDoc`
+    object) defining additional attributes to be sent on top of the default
+    ones. Setting this option to `false` (in C++ code) or NULL (in plain C code)
+    disables sending any connection attributes (including the default ones).
+    Setting it to `true` (in C++ code) or empty string (in plain C code)
+    requests sending only the default attributes which is also the default
+    behavior when this option is not set.
+  */ \
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13)
   END_LIST
+
 
 #define OPT_STR(X,Y,N) X##_str(Y,N)
 #define OPT_BOOL(X,Y,N) X##_bool(Y,N)
@@ -98,6 +120,10 @@
 /*
   Names for options supported in the query part of a connection string and
   how they map to session options above.
+
+  Note: when adding new options to this list, also update doxygen docs
+  for mysqlx::SessionSettings URL ctor (include\mysqlx\devapi\settings.h) and
+  for mysqlx_get_session_from_url() (include\mysqlx\xapi.h).
 */
 
 #define URI_OPTION_LIST(X)  \

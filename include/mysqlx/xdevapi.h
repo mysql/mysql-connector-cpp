@@ -45,12 +45,14 @@
 
   Classes representing yet-to-be-executed database operations.
 
-  Such operations are created by various methods of @link mysqlx::Collection
-  `Collection`@endlink or @link mysqlx::Table `Table`@endlink classes. Database
-  operation classes define methods that specify additional operation
-  characteristics before it gets executed with `execute()` method. The latter
-  returns a @link mysqlx::Result `Result`@endlink, @link mysqlx::DocResult
-  `DocResult`@endlink or @link mysqlx::RowResult `RowResult`@endlink object,
+  Such operations are created by various methods of
+  @link mysqlx::abi2::r0::Collection `Collection`@endlink or
+  @link mysqlx::abi2::r0::Table `Table`@endlink classes. Database operation
+  classes define methods that specify additional operation characteristics
+  before it gets executed with `execute()` method. The latter
+  returns a @link mysqlx::abi2::r0::Result `Result`@endlink,
+  @link mysqlx::abi2::r0::DocResult `DocResult`@endlink or
+  @link mysqlx::abi2::r0::RowResult `RowResult`@endlink object,
   depending on the type of the operation.
 
   @defgroup devapi_res    Classes for result processing
