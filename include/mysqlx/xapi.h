@@ -729,7 +729,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
     `"mysqlx://user@host?connection-attributes=[]"` -
       the same as setting to `true`\n
     `"mysqlx://user@host?connection-attributes"` -
-      the same as setting to `true`
+      the same as setting to `true`\n
+  - `tls-versions=[...]` : see `#MYSQLX_OPT_TLS_VERSIONS`
+  - `tls-ciphersuites=[...]` : see `#MYSQLX_OPT_TLS_CIPHERSUITES`
+
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.

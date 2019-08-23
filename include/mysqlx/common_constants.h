@@ -109,15 +109,16 @@
   */ \
   OPT_STR(x,CONNECTION_ATTRIBUTES,13)                                        \  
   /*!
-    List of allowed TLS protocol versions, such as "TLSv1.2". The value can be
-    a single string with comma separated version names or an iterable container
-    with the names.
+    List of allowed TLS protocol versions, such as "TLSv1.2". The value is a
+    string with comma separated versions. In C++ code it can also be an
+    iterable container with versions.
   */                                                                         \
   OPT_STR(x,TLS_VERSIONS, 14)                                                \
   /*!
-    List of allowed TLS cipher suites. The value can be a single string with
+    List of allowed TLS cipher suites. The value is a string with
     comma separated IANA cipher suitenames (such as
-    "TLS_RSA_WITH_3DES_EDE_CBC_SHA") or an iterable container with the names.
+    "TLS_RSA_WITH_3DES_EDE_CBC_SHA"). In C++ code it can also be an iterable
+    container with names.
     Unknown cipher suites are silently ignored.
   */                                                                         \
   OPT_STR(x,TLS_CIPHERSUITES, 15)                                            \
