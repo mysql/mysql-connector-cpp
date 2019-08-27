@@ -44,6 +44,24 @@ POP_SYS_WARNINGS_CDK
 #include "connection_tcpip_base.h"
 
 
+/*
+  On Windows, external dependencies can be declared using
+  #pragma comment directive.
+*/
+
+#ifdef _WIN32
+  #pragma comment(lib,"ws2_32")
+  #if defined(WITH_SSL)
+    #if OPENSSL_VERSION_NUMBER < 0x10100000L
+      #pragma comment(lib,"ssleay32")
+      #pragma comment(lib,"libeay32")
+    #else
+      #pragma comment(lib,"libssl")
+      #pragma comment(lib,"libcrypto")
+    #endif
+  #endif
+#endif
+
 static const char tls_ciphers_list[]="ECDHE-ECDSA-AES128-GCM-SHA256:"
                                      "ECDHE-ECDSA-AES256-GCM-SHA384:"
                                      "ECDHE-RSA-AES128-GCM-SHA256:"
