@@ -91,10 +91,8 @@ Description: Debugging symbols for main library
 ")
 ELSEIF(DEB_CODENAME STREQUAL "bionic")
   SET (DEB_PLATFORMRELEASE "ubuntu18.04")
-ELSEIF(DEB_CODENAME STREQUAL "cosmic")
-  SET (DEB_PLATFORMRELEASE "ubuntu18.10")
-ELSEIF(DEB_CODENAME STREQUAL "disco")
-  SET (DEB_PLATFORMRELEASE "ubuntu19.04")
+ELSEIF(DEB_CODENAME STREQUAL "eoan")
+  SET (DEB_PLATFORMRELEASE "ubuntu19.10")
 ELSE()
   MESSAGE(STATUS
     "Skipping deb packaging on unsupported platform ${DEB_CODENAME}.")
