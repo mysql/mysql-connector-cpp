@@ -910,7 +910,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   }
 
   setAutoCommit(true);
-  setTransactionIsolation(sql::TRANSACTION_REPEATABLE_READ);
   // Different Values means we have to set different result set encoding
   if (characterSetResults.compare(defaultCharset)) {
     setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
