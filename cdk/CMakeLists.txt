@@ -146,7 +146,7 @@ endif()
 # Set higher warning level in maintainer mode.
 #
 
-if(MAINTAINER_MODE)
+if(0) #MAINTAINER_MODE)
 
 IF(MSVC)
 

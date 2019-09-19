@@ -335,10 +335,12 @@ if(WITH_HEADER_CHECKS)
   #
 
   SET(check_sources "")
+  SET(hdr_names "")
   FOREACH(hdr ${hdr_list})
     GET_FILENAME_COMPONENT(hdrn ${hdr} NAME_WE)
     #MESSAGE("processing header: ${hdrn}.h")
     LIST(APPEND check_sources "check_${hdrn}.cc")
+    LIST(APPEND hdr_names "${hdrn}.h")
     SET(HEADER "${CMAKE_CURRENT_SOURCE_DIR}/${hdrn}.h")
     SET(HEADERN "${hdrn}")
     CONFIGURE_FILE(${headers_dir}/check.source.in "${current_check_dir}/check_${hdrn}.cc" @ONLY)
@@ -351,7 +353,7 @@ if(WITH_HEADER_CHECKS)
   #
 
   FILE(APPEND ${check_cmakelists} "INCLUDE_DIRECTORIES(\"${CMAKE_CURRENT_BINARY_DIR}\")\n")
-  FILE(APPEND ${check_cmakelists} "ADD_LIBRARY(check_${hdr_prefix} STATIC ${check_sources})\n")
+  FILE(APPEND ${check_cmakelists} "ADD_LIBRARY(check_${hdr_prefix} STATIC ${check_sources} ${hdr_list})\n")
 
 endif()
 ENDMACRO(ADD_HEADER_CHECKS)
