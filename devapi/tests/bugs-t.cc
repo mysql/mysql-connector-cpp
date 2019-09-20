@@ -695,6 +695,9 @@ TEST_F(Bugs, is_false)
 TEST_F(Bugs, bug29394723)
 {
   SKIP_IF_NO_XPLUGIN
+  // connection attributes supported only from 8.0.15
+  SKIP_IF_SERVER_VERSION_LESS(8,0,15)
+
   // Check that the _os session attribute is present and not empty
   string _os = get_sess().sql("SELECT ATTR_VALUE FROM "
                             "performance_schema.session_account_connect_attrs "
