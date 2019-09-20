@@ -143,46 +143,14 @@ endif()
 
 
 #
-# Set higher warning level in maintainer mode.
+# Set higher warning level
 #
-
-if(0) #MAINTAINER_MODE)
 
 IF(MSVC)
 
   # TODO: move to /Wall when code base is ready for this
 
-  # 4127 = conditional expression is constant (needed for do {...} while(false))
-  # 4512 = assignment operator could not be generated
-  # 4100 = unreferenced formal parameter
-  # 4820 = byte padding added
-  # 4571 = SEH exceptions not caught by catch(...)
-  # 4710 = function not inlined
-  # 4514 = unreferenced inline function was removed
-  # 4464 = relative incl. path contains '..'
-  # 4625 = copy ctor was implicitly deleted (*)
-  # 4626 = copy assignment was implicitly deleted (*)
-  # 4711 = function 'function' selected for inline expansion
-  # 4520 = The class has multiple default constructors. The first constructor is
-  #        used.
-  #
-  # Note: 4512 is disabled because according to C++11 standard the situations
-  # that triggers this warning should be handled automatically by the compiler
-  # (and this is the case for MSVC 2015).
-  # See: http://en.cppreference.com/w/cpp/language/copy_assignment
-  #
-  # Note: 4711 is only informative (see https://msdn.microsoft.com/en-us/library/k402bt7y.aspx)
-  #
-  # Note (*): We use this a lot when inheriting from foundation::nocopy - this
-  # is our C++ way to disable copy semantics.
-  #
-  #
-  # Note: 4520 only present on Visual Studio 12
-
-  add_compile_options(
-    /W4 /wd4512 /wd4127 /wd4100
-    /wd4820 /wd4571 /wd4710 /wd4514 /wd4625 /wd4626 /wd4464 /wd4711 /wd4520
-  )
+  add_compile_options(/W4)
 
   # Note: We disable warnings related to C++11 language because we want this
   # to be pure C++ code.
@@ -202,6 +170,40 @@ IF(MSVC)
     add_compile_options(/wd4640)
   endif()
 
+  #
+  # Warnings that used to be there in older versions of MSVC but we don't see
+  # them any more.
+  #
+  # Note: 4512 is disabled because according to C++11 standard the situations
+  # that triggers this warning should be handled automatically by the compiler
+  # (and this is the case for MSVC 2015).
+  # See: http://en.cppreference.com/w/cpp/language/copy_assignment
+  #
+  # Note: 4711 is only informative (see https://msdn.microsoft.com/en-us/library/k402bt7y.aspx)
+  #
+  # Note (*): We use this a lot when inheriting from foundation::nocopy - this
+  # is our C++ way to disable copy semantics.
+  #
+  # Note: 4520 only present on Visual Studio 12
+
+  if (MSVC_VERSION LESS 1800)
+    add_compile_options(
+      /wd4127 # conditional expression is constant (needed for do {...} while(false))
+      /wd4512 # assignment operator could not be generated
+      /wd4100 # unreferenced formal parameter
+      /wd4820 # byte padding added
+      /wd4571 # SEH exceptions not caught by catch(...)
+      /wd4710 # function not inlined
+      /wd4514 # unreferenced inline function was removed
+      /wd4464 # relative incl. path contains '..'
+      /wd4625 # copy ctor was implicitly deleted (*)
+      /wd4626 # copy assignment was implicitly deleted (*)
+      /wd4711 # function 'function' selected for inline expansion
+      /wd4520 # The class has multiple default constructors.
+              # The first constructor is used.
+    )
+  endif()
+
 ELSE()
 
   if(SUNPRO)
@@ -212,8 +214,6 @@ ELSE()
   endif()
 
 ENDIF()
-
-endif()
 
 
 if(0)

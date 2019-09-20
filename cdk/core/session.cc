@@ -243,8 +243,8 @@ Session_builder::operator() (
 
 bool
 Session_builder::operator() (
-  const ds::TCPIP_old &ds,
-  const ds::TCPIP_old::Options &options
+  const ds::TCPIP_old&,
+  const ds::TCPIP_old::Options&
 )
 {
   throw Error(cdkerrc::generic_error, "Not supported");

@@ -119,7 +119,7 @@ namespace mysqlx {
 static void log_handler(LogLevel level, const char* filename, int line, const std::string& message);
 
 #ifdef _WIN32
-BOOL CALLBACK log_handler_init( PINIT_ONCE InitOnce, PVOID Parameter, PVOID *lpContext)
+BOOL CALLBACK log_handler_init(PINIT_ONCE, PVOID, PVOID*)
 {
   SetLogHandler(&log_handler);
   return TRUE;
@@ -288,7 +288,10 @@ Message* mk_message(Protocol_side side, msg_type_t msg_type)
   situation occurs in Protobuf (such as parsing error etc).
 */
 
-static void log_handler(LogLevel level, const char* filename, int line, const std::string& message)
+static void log_handler(
+  LogLevel level, const char* /*filename*/, int /*line*/,
+  const std::string& message
+)
 {
   switch(level)
   {
@@ -930,7 +933,7 @@ public:
 };
 
 
-void Rcv_command::process_msg(msg_type_t type, Message &msg)
+void Rcv_command::process_msg(msg_type_t type, Message&)
 {
   Cmd_processor prc= static_cast<Cmd_processor&>(*m_prc);
 

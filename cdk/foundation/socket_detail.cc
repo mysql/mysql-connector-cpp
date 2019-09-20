@@ -366,7 +366,9 @@ void thread_cleanup()
   delete[] m_openssl_mutex;
 }
 
-static void locking_function(int mode, int n, const char *file, int line)
+static void locking_function(
+  int mode, int n, const char* /*file*/, int /*line*/
+)
 {
   if(mode & CRYPTO_LOCK)
   {

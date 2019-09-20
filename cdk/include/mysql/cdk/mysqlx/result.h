@@ -731,7 +731,7 @@ public:
 
   // Row_processor
 
-  bool row_begin(row_count_t row) override
+  bool row_begin(row_count_t) override
   {
     return false;  // ignore all rows
   }

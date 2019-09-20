@@ -537,8 +537,9 @@ namespace mysqlx {
 
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDoneMoreResultsets &msg,
-                                       Row_processor &rp)
+void Rcv_result_base::process_msg_with(
+  Mysqlx::Resultset::FetchDoneMoreResultsets&, Row_processor &rp
+)
 {
   /*
     Inform the processor about finishing reading all rows from the
@@ -551,8 +552,9 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDoneMoreResultset
 
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDone &msg,
-                                       Row_processor &rp)
+void Rcv_result_base::process_msg_with(
+  Mysqlx::Resultset::FetchDone&, Row_processor &rp
+)
 {
   /*
     Fetching all rows from the cursor is finished.
@@ -565,8 +567,9 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::FetchDone &msg,
 
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Resultset::Row &row,
-                                       Row_processor &rp)
+void Rcv_result_base::process_msg_with(
+  Mysqlx::Resultset::Row &row, Row_processor &rp
+)
 {
   row_count_t rcount= m_rcount++;
 
@@ -609,8 +612,9 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::Row &row,
 
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_mdata,
-                                       Mdata_processor &mdata_proc)
+void Rcv_result_base::process_msg_with(
+  Mysqlx::Resultset::ColumnMetaData &col_mdata, Mdata_processor &mdata_proc
+)
 {
     col_count_t ccount= m_ccount++;
 
@@ -654,16 +658,16 @@ void Rcv_result_base::process_msg_with(Mysqlx::Resultset::ColumnMetaData &col_md
 }
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Ok &ok,
-                                       Mdata_processor &prc)
+void Rcv_result_base::process_msg_with(Mysqlx::Ok &ok, Mdata_processor &prc)
 {
   prc.ok(ok.msg());
 }
 
 
 template<>
-void Rcv_result_base::process_msg_with(Mysqlx::Sql::StmtExecuteOk &ok,
-                                       Stmt_processor &prc)
+void Rcv_result_base::process_msg_with(
+  Mysqlx::Sql::StmtExecuteOk&, Stmt_processor &prc
+)
 {
   prc.execute_ok();
 }
