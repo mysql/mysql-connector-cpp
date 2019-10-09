@@ -56,6 +56,6 @@ else()
   SET(CONCPP_LICENSE "GPL-2.0")
 endif()
 
-CONFIGURE_FILE(config.h.in   ${CMAKE_BINARY_DIR}/include/config.h)
+CONFIGURE_FILE(config.h.in   ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/include)
 

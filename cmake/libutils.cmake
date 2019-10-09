@@ -112,7 +112,7 @@ configure_file(
 if(NOT MSBUILD AND NOT TARGET save_linker_opts)
   add_executable(save_linker_opts ${LIBUTILS_SCRIPT_DIR}/save_linker_opts.cc)
   set_property(TARGET save_linker_opts PROPERTY
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
 
@@ -217,7 +217,7 @@ function(merge_libraries TARGET)
 
     add_dependencies(${TARGET}-deps save_linker_opts)
     set_target_properties(${TARGET}-deps PROPERTIES
-      RULE_LAUNCH_LINK "${CMAKE_BINARY_DIR}/save_linker_opts ${log_file}.STATIC "
+      RULE_LAUNCH_LINK "${CMAKE_CURRENT_BINARY_DIR}/save_linker_opts ${log_file}.STATIC "
     )
 
     # Arrange for ${TARGET}-deps to be built before ${TARGET}
@@ -235,7 +235,7 @@ function(merge_libraries TARGET)
     #
 
     set_target_properties(${TARGET} PROPERTIES
-      RULE_LAUNCH_LINK "${CMAKE_BINARY_DIR}/save_linker_opts ${log_file}.SHARED "
+      RULE_LAUNCH_LINK "${CMAKE_CURRENT_BINARY_DIR}/save_linker_opts ${log_file}.SHARED "
     )
 
   else(NOT MSBUILD)
