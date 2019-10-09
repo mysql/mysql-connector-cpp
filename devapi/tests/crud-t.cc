@@ -159,7 +159,7 @@ TEST_F(Crud, basic)
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
-    EXPECT_EQ(2, res.getColumnCount());
+    EXPECT_EQ(3, res.getColumnCount());
 
     Row row;
     unsigned row_count = 0;
