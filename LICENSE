@@ -1,6 +1,6 @@
 Licensing Information User Manual
 
-MySQL Connector/C++ (version 1.1.11 or later)
+MySQL Connector/C++ (version 1.1.11 and later)
      __________________________________________________________________
 
 Introduction
@@ -8,18 +8,18 @@ Introduction
    This License Information User Manual contains Oracle's product license
    and other licensing information, including licensing information for
    third-party software which may be included in this distribution of
-   MySQL Connector/C++ (version 1.1.11 or later).
+   MySQL Connector/C++ (version 1.1.11 and later).
 
-   Last updated: January 2019.
+   Last updated: October 2019
 
 Licensing Information
 
-   This is a release of MySQL Connector/C++ (version 1.1.11 or later),
+   This is a release of MySQL Connector/C++ (version 1.1.11 and later),
    brought to you by the MySQL team at Oracle. This software is released
    under version 2 of the GNU General Public License (GPLv2), as set forth
    below, with the following additional permissions:
 
-   This distribution of MySQL Connector/C++ (version 1.1.11 or later) is
+   This distribution of MySQL Connector/C++ (version 1.1.11 and later) is
    distributed with certain software that is licensed under separate
    terms, as designated in a particular file or component or in the
    license documentation. Without limiting your rights under the GPLv2,
@@ -470,11 +470,11 @@ The Universal FOSS Exception, Version 1.0
 Licenses for Third-Party Components
 
    The following sections contain licensing information for libraries that
-   we have included with the MySQL Connector/C++ (version 1.1.11 or later)
-   source and components used to test MySQL Connector/C++ (version 1.1.11
-   or later). Commonly used licenses referenced herein can be found in
-   Commonly Used Licenses. We are thankful to all individuals that have
-   created these.
+   we have included with the MySQL Connector/C++ (version 1.1.11 and
+   later) source and components used to test MySQL Connector/C++ (version
+   1.1.11 and later). Commonly used licenses referenced herein can be
+   found in Commonly Used Licenses. We are thankful to all individuals
+   that have created these.
 
 Boost Library
 
