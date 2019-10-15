@@ -40,17 +40,14 @@ PROJECT(MySQL_CONCPP_TEST)
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
 #
-# WITH_SSL                tells if connector uses built-in SSL implementation
-#                         or relies on external OpenSSL libraries (*)
+# WITH_SSL                if we use static linking with connector, we may have
+#                         to pass path to openssl package
 #
 # WITH_JDBC               also build JDBC API test application
 #
 # WITH_BOOST              where to look for Boost (required only when building
 #                         JDBC API application)
 #
-# *) If WITH_SSL is set to "builtin" or if it points at WoflSSL sources then
-#    it is assumed that connector has SSL support built-in. In all other cases
-#    it is assumed that connector uses OpenSSL libraries.
 #
 # Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
 # set.
@@ -125,13 +122,21 @@ set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
   "Set to 'builtin' if connector was built with built-in SSL support"
 )
 
-if(NOT WITH_SSL)
-  # Set to the default if WITH_SSL is not defined
-  set(WITH_SSL "system")
-elseif(EXISTS "${WITH_SSL}/wolfssl/openssl/ssl.h")
-  set(WITH_SSL "builtin")
+if(NOT WITH_SSL MATCHES "^(system|yes)$")
+
+  if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
+    set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
+  endif()
+
 endif()
 
+find_package(OpenSSL)
+
+if(OPENSSL_FOUND)
+  MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
+  MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
+  MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
+endif()
 
 option(WITH_JDBC "Also build the JDBC API test application" OFF)
 
@@ -288,10 +293,11 @@ if(NOT WIN32)
     # link to them too.
     #
 
-    if(NOT WITH_SSL STREQUAL "builtin")
+    if(OPENSSL_FOUND)
       set_property(TARGET MySQL::conncpp
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ssl crypto
-      )
+        APPEND PROPERTY INTERFACE_LINK_LIBRARIES
+        ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
+        )
     endif()
 
 endif()
@@ -398,8 +404,11 @@ endif()
 add_executable(devapi_test devapi_test.cc)
 target_link_libraries(devapi_test MySQL::conncpp)
 
+
+
 add_executable(xapi_test xapi_test.c)
 target_link_libraries(xapi_test MySQL::conncpp)
+
 
 #
 # Note: Connector/C++ library depends on C++ runtime library.
