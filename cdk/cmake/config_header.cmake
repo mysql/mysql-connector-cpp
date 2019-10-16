@@ -52,13 +52,13 @@ function(ADD_CONFIG var)
     set(${var} ${ARGV1} CACHE INTERNAL "config setting" FORCE)
     list(APPEND CONFIG_VARS_VAL ${var})
     list(REMOVE_DUPLICATES CONFIG_VARS_VAL)
-    set(CONFIG_VARS_VAL ${CONFIG_VARS_VAL} CACHE INERNAL "configuration settings" FORCE)
+    set(CONFIG_VARS_VAL ${CONFIG_VARS_VAL} CACHE INTERNAL "configuration settings" FORCE)
 
   else()
 
     list(APPEND CONFIG_VARS ${var})
     list(REMOVE_DUPLICATES CONFIG_VARS)
-    set(CONFIG_VARS ${CONFIG_VARS} CACHE INERNAL "configuration settings" FORCE)
+    set(CONFIG_VARS ${CONFIG_VARS} CACHE INTERNAL "configuration settings" FORCE)
 
   endif()
 
