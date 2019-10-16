@@ -98,6 +98,7 @@ if(NOT use_full_protobuf)
 
     add_custom_command(
       OUTPUT "${LITE}/${name}"
+	  COMMAND ${CMAKE_COMMAND} -E touch "${LITE}/${name}"
       DEPENDS prepare_pb_lite
       COMMENT ""
     )
