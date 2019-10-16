@@ -182,6 +182,24 @@ endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 
+if(NOT OPENSSL_FOUND)
+  if(NOT WITH_SSL MATCHES "^(system|yes)$")
+
+    if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
+      set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
+    endif()
+
+  endif()
+
+  find_package(OpenSSL)
+
+  if(OPENSSL_FOUND)
+    MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
+    MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
+    MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
+  endif()
+
+endif()
 
 #
 # Find Connector/C++ legacy library
@@ -313,13 +331,11 @@ if(NOT WIN32)
       )
     endif()
 
-    #
-    # We need to link to OpenSSL libraries too.
-    #
-
-    set_property(TARGET MySQL::conncpp-jdbc
-      APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ssl crypto
-    )
+    if(OPENSSL_FOUND)
+      set_property(TARGET MySQL::conncpp-jdbc
+        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
+        )
+    endif()
 
 endif()
 
@@ -410,6 +426,15 @@ endif(jdbc_test_stand_alone)
 
 add_executable(jdbc_test jdbc_test.cc)
 target_link_libraries(jdbc_test PRIVATE MySQL::conncpp-jdbc)
+
+#
+# We need to link to OpenSSL libraries too.
+#
+
+if(NOT WIN32 AND OPENSSL_FOUND)
+    target_link_libraries(jdbc_test PRIVATE ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
+    )
+endif()
 
 #
 # Set RPATH so that libraries in run/ folder are found by the executable
