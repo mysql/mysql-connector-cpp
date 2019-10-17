@@ -85,6 +85,10 @@ set(CONFIG_EXPR
   $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIG>>
 )
 
+set(set_toolset)
+if(CMAKE_GENERATOR_TOOLSET)
+  set(set_toolset -T ${CMAKE_GENERATOR_TOOLSET})
+endif()
 
 if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
 
@@ -102,6 +106,7 @@ if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
   execute_process(
     COMMAND ${CMAKE_COMMAND}
       -G "${CMAKE_GENERATOR}"
+	  ${set_toolset}
       ${set_build_type}
       -DSTATIC_MSVCRT=${STATIC_MSVCRT}
       -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
