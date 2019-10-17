@@ -37,6 +37,8 @@
 
 TEST_F(xapi, free_test)
 {
+  SKIP_IF_NO_XPLUGIN
+
   mysqlx_error_t *error;
   mysqlx_session_t *sess;
   mysqlx_schema_t *schema;
