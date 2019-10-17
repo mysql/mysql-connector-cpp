@@ -76,6 +76,9 @@ include(libutils)        # merge_libraries()
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
 #message("Compiler identification: ${CMAKE_CXX_COMPILER_ID}")
+if(DEFINED CMAKE_GENERATOR_TOOLSET)
+  message("Using toolset: ${CMAKE_GENERATOR_TOOLSET}")
+endif()
 
 
 if(SUNPRO)
