@@ -334,10 +334,15 @@ function(main)
 
   if(NOT MSVC)
     set_property(TARGET MySQL::client-static
-      PROPERTY INTERFACE_LINK_LIBRARIES "-L${MYSQL_DIR}/lib"
+      PROPERTY INTERFACE_LINK_LIBRARIES
+      "-L${MYSQL_DIR}/lib"
+      "-L${MYSQL_DIR}/lib/private"
+
     )
     set_property(TARGET MySQL::client-shared
-      PROPERTY INTERFACE_LINK_LIBRARIES "-L${MYSQL_DIR}/lib"
+      PROPERTY INTERFACE_LINK_LIBRARIES
+      "-L${MYSQL_DIR}/lib"
+      "-L${MYSQL_DIR}/lib/private"
     )
   endif()
 
@@ -485,8 +490,8 @@ function(use_mysql_config)
     # explicit dependencies.
 
     if(NOT lib MATCHES
-      "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic)"
-    )
+        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic)"
+      )
 
       list(APPEND MYSQL_EXTERNAL_DEPENDENCIES ${lib})
 
