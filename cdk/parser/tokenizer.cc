@@ -421,15 +421,6 @@ bool Tokenizer::iterator::parse_quotted_string(char qchar)
 */
 
 
-namespace {
-
-  // Note: be independent from the system locale settings.
-
-  std::locale c_loc("C");
-  const std::ctype<char> &ctf = std::use_facet<std::ctype<char>>(c_loc);
-
-}
-
 std::locale char_iterator::m_cloc("C");
 
 
