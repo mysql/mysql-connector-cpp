@@ -1023,7 +1023,10 @@ protected:
     if(!m_result_mdata.empty())
       m_result_mdata.pop();
     if (!m_result_cache.empty())
+    {
+      m_cache_it = m_result_cache.back().end();
       m_result_cache.pop();
+    }
     if (!m_result_cache_size.empty())
       m_result_cache_size.pop();
   }
