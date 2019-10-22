@@ -42,6 +42,7 @@ namespace mysql
 static const char MYURI_SOCKET_PREFIX[]=	"unix://";
 static const char MYURI_PIPE_PREFIX[]=		"pipe://";
 static const char MYURI_TCP_PREFIX[]=		"tcp://";
+static const char MYURI_MYSQL_PREFIX[]=		"mysql://";
 
 static const char MYURI_HOST_BEGIN=		'[';
 static const char MYURI_HOST_END=		']';
@@ -50,11 +51,8 @@ static const int DEFAULT_TCP_PORT=		3306;
 
 /* {{{ MySQL_Uri::MySQL_Uri() -I- */
 MySQL_Uri::MySQL_Uri()
-  :	protocol(NativeAPI::PROTOCOL_TCP),
-    port	(DEFAULT_TCP_PORT),
-    /* Perhaps `localhost` has to be default. so w/out any parameter
-       driver will still connect? */
-    host	(""),
+  : protocol(NativeAPI::PROTOCOL_TCP),
+    host_list({Host_data(util::LOCALHOST,DEFAULT_TCP_PORT)}),
     schema	("")
 {}
 /* }}} */
@@ -69,7 +67,7 @@ const sql::SQLString & MySQL_Uri::Host()
   switch (Protocol())
   {
   case NativeAPI::PROTOCOL_TCP:
-    return host;
+    return host_list[0].name;
   case NativeAPI::PROTOCOL_PIPE:
     return hostValue4Pipe;
   case NativeAPI::PROTOCOL_SOCKET:
@@ -77,11 +75,9 @@ const sql::SQLString & MySQL_Uri::Host()
 
   case NativeAPI::PROTOCOL_COUNT:
       throw sql::InvalidArgumentException("NativeAPI::PROTOCOL_COUNT shouldn't be used.");
-    break;
   }
 
-  // throw smoething maybe?
-  return host;
+  throw sql::InvalidArgumentException("Unexpected protocol.");
 }
 /* }}} */
 
@@ -95,7 +91,13 @@ const sql::SQLString & MySQL_Uri::SocketOrPipe()
     return emptystr;
   }
 
-  return host;
+  return host_list[0].name;
+}
+
+/* {{{ MySQL_Uri::Port() -I- */
+unsigned int MySQL_Uri::Port()
+{
+  return host_list[0].port;
 }
 /* }}} */
 
@@ -104,7 +106,22 @@ const sql::SQLString & MySQL_Uri::SocketOrPipe()
 void MySQL_Uri::setHost(const sql::SQLString &h)
 {
   setProtocol(NativeAPI::PROTOCOL_TCP);
-  host= h.c_str();
+  if(1 != host_list.size())
+  {
+    host_list.clear();
+    host_list.push_back(Host_data(h, DEFAULT_TCP_PORT));
+  }
+  else
+  {
+    host_list[0].name= h;
+  }
+}
+
+/* {{{ MySQL_Uri::addHost() -I- */
+void MySQL_Uri::addHost(const sql::SQLString &h, unsigned int port)
+{
+  setProtocol(NativeAPI::PROTOCOL_TCP);
+  host_list.push_back({h, port});
 }
 /* }}} */
 
@@ -113,7 +130,8 @@ void MySQL_Uri::setHost(const sql::SQLString &h)
 void MySQL_Uri::setSocket(const sql::SQLString &s)
 {
   setProtocol(NativeAPI::PROTOCOL_SOCKET);
-  host= s.c_str();
+  host_list.clear();
+  host_list.push_back(s);
 }
 /* }}} */
 
@@ -122,7 +140,8 @@ void MySQL_Uri::setSocket(const sql::SQLString &s)
 void MySQL_Uri::setPipe(const sql::SQLString &p)
 {
   setProtocol(NativeAPI::PROTOCOL_PIPE);
-  host= p.c_str();
+  host_list.clear();
+  host_list.push_back(p);
 }
 /* }}} */
 
@@ -133,6 +152,15 @@ void MySQL_Uri::setPort(uint16_t p)
   setProtocol(NativeAPI::PROTOCOL_TCP);
   has_port = true;
   port= p;
+  if(1 != host_list.size())
+  {
+    host_list.clear();
+    host_list.push_back(Host_data(util::LOCALHOST, p));
+  }
+  else
+  {
+    host_list[0].port = p;
+  }
 }
 
 
@@ -165,13 +193,18 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     return true;
   }
 
-  sql::SQLString host;
-  size_t start_sep, end_sep;
+  std::string host;
+
+  size_t end_sep;
 
   /* i wonder how did it work with "- 1"*/
-  if (!str.compare(0, sizeof(MYURI_TCP_PREFIX) - 1, MYURI_TCP_PREFIX) )
+  if (!str.compare(0, sizeof(MYURI_TCP_PREFIX) - 1, MYURI_TCP_PREFIX))
   {
     host= str.substr(sizeof(MYURI_TCP_PREFIX) - 1, sql::SQLString::npos);
+  }
+  else if ( !str.compare(0, sizeof(MYURI_MYSQL_PREFIX) - 1, MYURI_MYSQL_PREFIX))
+  {
+    host= str.substr(sizeof(MYURI_MYSQL_PREFIX) - 1, sql::SQLString::npos);
   }
   else
   {
@@ -180,52 +213,92 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     host= str.c_str();
   }
 
-  if (host[0] == MYURI_HOST_BEGIN)
-  {
-    end_sep= host.find(MYURI_HOST_END);
+  uri.clear();
 
-    /* No closing ] after [*/
-    if (end_sep == sql::SQLString::npos)
+  auto parse_host = [&uri] (std::string host) -> bool
+  {
+    // host countains [::1]:123 or hostname:123
+    size_t sep = 0;
+
+    std::string name;
+    unsigned int port = DEFAULT_TCP_PORT;
+
+    if (host[0] == MYURI_HOST_BEGIN)
+    {
+      sep= host.find(MYURI_HOST_END);
+      /* No closing ] after [*/
+      if (sep == std::string::npos)
+      {
+        return false;
+      }
+
+      name = host.substr(1, sep-1);
+      //sep points to next char after ]
+      sep++;
+    }
+    else
+    {
+      sep = host.find(':',0);
+      if (sep == std::string::npos)
+      {
+        name = host;
+      }
+      else
+      {
+          name = host.substr(0, sep);
+      }
+    }
+
+    if(host[sep] == ':')
+    {
+      //port
+      host = host.substr(sep+1);
+      long int val = std::atol(host.c_str());
+
+      /*
+        Note: strtol() returns 0 either if the number is 0
+        or conversion was not possible. We distinguish two cases
+        by cheking if end pointer was updated.
+      */
+
+      if (val == 0 && host.length()==0)
+        return false;
+
+      if (val > 65535 || val < 0)
+        return false;
+
+      port = static_cast<unsigned int>(val);
+    }
+    uri.addHost(name, port);
+    return true;
+  };
+
+  do
+  {
+    end_sep = host.find_first_of(",/");
+
+    if (!parse_host(host.substr(0, end_sep)))
     {
       return false;
     }
+    if(end_sep != std::string::npos)
+    {
+      host = host.substr(host[end_sep] == '/' ? end_sep : end_sep+1);
+    }
+  }while(end_sep != std::string::npos && host[end_sep] != '/');
 
-    uri.setHost(host.substr(1, end_sep - 1));
-    /* Cutting host to continue w/ port and schema reading */
-    host= host.substr(end_sep + 1);
-  }
 
   /* Looking where schema part begins */
-  start_sep = host.find('/');
-
-  if (start_sep != sql::SQLString::npos)
+  if (host[0] == '/')
   {
-    if ((host.length() - start_sep) > 1/*Slash*/)
+    if (host.length() > 1/*Slash*/)
     {
-      uri.setSchema(host.substr(start_sep + 1, host.length() - start_sep - 1));
+      uri.setSchema(host.substr(1));
     }
-
-    host= host.substr(0, start_sep);
   }
   else
   {
     uri.setSchema("");
-  }
-
-  /* Looking where port part begins*/
-  start_sep = host.find_last_of(':', sql::SQLString::npos);
-
-  if (start_sep != sql::SQLString::npos)
-  {
-    uri.setPort(atoi(host.substr(start_sep + 1, sql::SQLString::npos).c_str()));
-    host = host.substr(0, start_sep);
-  }
-
-  /* If host was enclosed in [], it has been already set, and "host" variable is
-     empty */
-  if (host.length() > 0)
-  {
-    uri.setHost(host);
   }
 
   return true;

@@ -34,6 +34,7 @@
 
 #include "nativeapi/native_connection_wrapper.h"
 #include <cppconn/sqlstring.h>
+#include <vector>
 
 namespace sql
 {
@@ -42,24 +43,55 @@ namespace mysql
 
 class MySQL_Uri
 {
+public:
+  struct Host_data
+  {
+    Host_data(sql::SQLString name_, unsigned int port_ = 0)
+      : name(name_)
+      , port(port_)
+    {}
+
+    sql::SQLString  name;
+    uint16_t        port;
+  };
+
+  using Host_List=std::vector<Host_data>;
+
 private:
   NativeAPI::Protocol_Type protocol;
   uint16_t                 port;
-  sql::SQLString           host;
+
+  Host_List                host_list;
+
   sql::SQLString           schema;
   bool                     has_port = false;
 
 public:
   MySQL_Uri();
 
-  const sql::SQLString &		Host();
-  const sql::SQLString &		SocketOrPipe();
-  uint16_t Port()		{return port;}
-  const sql::SQLString &		Schema()	{return schema;}
-  NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+  /*
+    Iterate over host list
+  */
+  Host_List::iterator begin() { return host_list.begin(); }
+  Host_List::iterator end() { return host_list.end(); }
+  size_t size() const { return host_list.size(); }
 
+  /*
+    Clear host list
+  */
+  void clear() { host_list.clear(); }
 
-  void setHost	(const sql::SQLString &h);
+  /*
+    return only first element for Host/Port
+  */
+  const sql::SQLString &            Host();
+  unsigned int                      Port();
+  const sql::SQLString &            SocketOrPipe();
+  inline	const sql::SQLString &		Schema()	{return schema;}
+  inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+
+  void addHost	(const sql::SQLString &host, unsigned int port);
+  void setHost  (const sql::SQLString &host);
   void setSocket	(const sql::SQLString &s);
   void setPipe	(const sql::SQLString &p);
   void setPort	(uint16_t p);

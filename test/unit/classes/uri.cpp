@@ -139,5 +139,54 @@ void uri::pipe()
   //ASSERT_EQUALS(0, _uri->Port());
 }
 
+void uri::failover()
+{
+  conn_string= "[2001:db8:0:f101::1],localhost:3306,[::1]:13000";
+  ::sql::mysql::parseUri(conn_string, *_uri);
+
+  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
+
+  //First host of the list
+  ASSERT_EQUALS("2001:db8:0:f101::1", _uri->Host());
+  ASSERT_EQUALS(3306, _uri->Port());
+  ASSERT_EQUALS("", _uri->Schema());
+
+  conn_string= "tcp://[2001:db8:0:f101::2]:3307/test";
+  ::sql::mysql::parseUri(conn_string, *_uri);
+
+  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
+
+  ASSERT_EQUALS("2001:db8:0:f101::2", _uri->Host());
+  ASSERT_EQUALS(3307, _uri->Port());
+
+  ASSERT_EQUALS("test", _uri->Schema());
+
+  conn_string= "[2001:db8:0:f101::2]:3307,localhost2:1,localhost3";
+  ::sql::mysql::parseUri(conn_string, *_uri);
+
+  int i = 0;
+  for(auto host : *_uri)
+  {
+    switch (i)
+    {
+      case 0:
+        ASSERT_EQUALS("2001:db8:0:f101::2", host.name);
+        ASSERT_EQUALS(3307, host.port);
+        break;
+      case 1:
+        ASSERT_EQUALS("localhost2", host.name);
+        ASSERT_EQUALS(1, host.port);
+        break;
+      case 2:
+        ASSERT_EQUALS("localhost3", host.name);
+        ASSERT_EQUALS(3306, host.port);
+        break;
+      default:
+        ASSERT(false);
+    }
+    ++i;
+  }
+}
+
 } /* namespace classes   */
 } /* namespace testsuite */

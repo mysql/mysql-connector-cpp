@@ -414,7 +414,10 @@ endif()
 
 endif(BUNDLE_DEPENDENCIES)
 
-# TODO: Building examples and unit tests
+add_config_option(WITH_JDBC_TESTS BOOL DEFAULT OFF
+  "Build JDBC Unit tests"
+)
+
 
 if(jdbc_stand_alone)
   show_config_options()

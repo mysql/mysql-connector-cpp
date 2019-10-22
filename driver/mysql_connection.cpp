@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <map>
 #include <vector>
+#include <algorithm>
 #include <random>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -94,6 +95,8 @@ namespace sql
 {
 namespace mysql
 {
+
+  using Host_data = MySQL_Uri::Host_data;
 
 /* {{{ MySQL_Savepoint::MySQL_Savepoint() -I- */
 MySQL_Savepoint::MySQL_Savepoint(const sql::SQLString &savepoint):
@@ -376,20 +379,15 @@ struct Prio
   }
 };
 
-struct Srv_host_detail
-{
-  std::string name;
-  uint16_t port;
-};
 
 #ifdef _WIN32
-std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
+std::multimap<Prio,Host_data> srv_list(const std::string &hostname,
                                              uint16_t &total_weight)
 {
   DNS_STATUS status;               //Return value of  DnsQuery_A() function.
   PDNS_RECORD pDnsRecord =nullptr;          //Pointer to DNS_RECORD structure.
 
-  std::multimap<Prio,Srv_host_detail> srv;
+  std::multimap<Prio,Host_data> srv;
 
   status = DnsQuery(hostname.c_str(), DNS_TYPE_SRV, DNS_QUERY_STANDARD, nullptr, &pDnsRecord, nullptr);
   if (!status)
@@ -401,13 +399,12 @@ std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
       {
         srv.insert(std::make_pair(
                      Prio({pRecord->Data.Srv.wPriority,
-                           pRecord->Data.Srv.wWeight}
-                          ),
-                     Srv_host_detail
-                     {
-                       pRecord->Data.Srv.pNameTarget,
-                       pRecord->Data.Srv.wPort
-                     }));
+                           pRecord->Data.Srv.wWeight}),
+                     Host_data
+                     (pRecord->Data.Srv.pNameTarget,
+                      pRecord->Data.Srv.wPort)
+                     ));
+
         total_weight+=pRecord->Data.Srv.wWeight;
       }
       pRecord = pRecord->pNext;
@@ -419,13 +416,14 @@ std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
 }
 #else
 
-std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
+//QUery and interprete SRV data from DNS server
+std::multimap<Prio,Host_data> srv_list(const std::string &hostname,
                                              uint16_t &total_weight)
 {
   struct __res_state state {};
   res_ninit(&state);
 
-  std::multimap<Prio,Srv_host_detail> srv;
+  std::multimap<Prio,Host_data> srv;
 
   unsigned char query_buffer[NS_PACKETSZ];
 
@@ -444,20 +442,18 @@ std::multimap<Prio,Srv_host_detail> srv_list(const std::string &hostname,
     auto process = [&msg, &name_buffer, &total_weight, &srv](const ns_rr &rr) -> void
     {
       const unsigned char* srv_data = ns_rr_rdata(rr);
-      Srv_host_detail host_data;
-      uint16_t prio, weight;
+      uint16_t port, prio, weight;
 
       //Each NS_GET16 call moves srv_data to next value
       NS_GET16(prio, srv_data);
       NS_GET16(weight, srv_data);
-      NS_GET16(host_data.port, srv_data);
+      NS_GET16(port, srv_data);
 
       dn_expand(ns_msg_base(msg), ns_msg_end(msg),
                 srv_data, name_buffer, sizeof(name_buffer));
 
-      host_data.name = name_buffer;
-
-      srv.insert(std::make_pair(Prio({prio, weight}), std::move(host_data)));
+      srv.insert(std::make_pair(Prio({prio, weight}),
+                                Host_data(name_buffer, port)));
 
       total_weight+=weight;
     };
@@ -957,7 +953,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   }
 #endif
 
-  proxy->use_protocol(uri.Protocol());
+
 
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
   try {
@@ -993,11 +989,21 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
      PROCESS_CONN_OPTION(int, intOptions);
   }
 
-  CPP_INFO_FMT("hostName=%s", uri.Host().c_str());
-  CPP_INFO_FMT("user=%s", userName.c_str());
-  CPP_INFO_FMT("port=%d", uri.Port());
-  CPP_INFO_FMT("schema=%s", uri.Schema().c_str());
-  CPP_INFO_FMT("socket/pipe=%s", uri.SocketOrPipe().c_str());
+  bool opt_multi_host = false;
+  it = properties.find("OPT_MULTI_HOST");
+  try {
+    if(it != properties.end())
+      opt_multi_host = it->second.get<bool>();
+  } catch (sql::InvalidArgumentException&) {
+    throw sql::InvalidArgumentException("Wrong type passed for OPT_MULTI_HOST, expected bool");
+  }
+
+  if(!opt_multi_host && uri.size() > 1)
+     throw sql::InvalidArgumentException("Missing option OPT_MULTI_HOST = true");
+
+  if(opt_dns_srv && uri.size() > 1)
+    throw sql::InvalidArgumentException("Specifying multiple hostnames with DNS SRV look up is not allowed.");
+
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
   auto connect = [this,flags,client_exp_pwd](
@@ -1008,6 +1014,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
                  uint16_t port,
                  const std::string &socketOrPipe)
   {
+    CPP_INFO_FMT("hostName=%s", host.c_str());
+    CPP_INFO_FMT("user=%s", user.c_str());
+    CPP_INFO_FMT("port=%d", port);
+    CPP_INFO_FMT("schema=%s", schema.c_str());
+    CPP_INFO_FMT("socket/pipe=%s", socketOrPipe.c_str());
 
     if (!proxy->connect(host,
                         user,
@@ -1046,6 +1057,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
   };
 
+
+  std::multimap<Prio,Host_data> host_list;
+
+  uint16_t total_weight = 0;
+
   if(opt_dns_srv)
   {
     if(uri.Protocol() != NativeAPI::PROTOCOL_TCP)
@@ -1058,24 +1074,34 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
     }
 
+    host_list = srv_list(uri.Host(),total_weight);
 
-    uint16_t total_weight = 0;
-
-    auto list = srv_list(uri.Host(),total_weight);
-
-    if(list.empty())
+    if(host_list.empty())
     {
       std::stringstream err;
       err << "Unable to locate any hosts for " << uri.Host();
       throw sql::InvalidArgumentException(err.str());
     }
 
+
+
+  }
+  else
+  {
+    for(auto host : uri)
+    {
+      host_list.insert(std::make_pair(Prio({0, 0}), host));
+    }
+  }
+
+  //Connect loop
+  {
     bool connected = false;
 
-    while(!list.empty() && !connected)
+    while(!host_list.empty() && !connected)
     {
-      auto same_range = list.equal_range(list.begin()->first);
-      std::vector<Srv_host_detail*> same_prio;
+      auto same_range = host_list.equal_range(host_list.begin()->first);
+      std::vector<Host_data*> same_prio;
       std::vector<uint16_t> weights;
 
 
@@ -1104,6 +1130,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           std::advance(weight_el, pos);
         }
 
+        proxy->use_protocol(uri.Protocol());
+
         try {
           connect((*el)->name, userName,
                   password,
@@ -1120,34 +1148,27 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         weights.erase(weight_el);
       }
 
-      list.erase(same_range.first, same_range.second);
+      host_list.erase(same_range.first, same_range.second);
 
     };
 
     if(!connected)
     {
       std::stringstream err;
-      err << "Unable to connect to any of the hosts of " << uri.Host() << " SRV";
+      if(opt_dns_srv)
+        err << "Unable to connect to any of the hosts of " << uri.Host() << " SRV";
+      else if (uri.size() >1) {
+        err << "Unable to connect to any of the hosts";
+      }
+      else {
+        err << "Unable to connect to " << uri.Host() << ":" << uri.Port();
+      }
       proxy.reset();
       throw sql::InvalidArgumentException(err.str());
     }
+  }
 
-  }
-  else
-  {
-    try {
-      connect(uri.Host(),
-              userName,
-              password,
-              uri.Schema() /* schema */,
-              uri.Port(),
-            uri.SocketOrPipe() /*socket or named pipe */);
-    } catch (sql::SQLException&)
-    {
-      proxy.reset();
-      throw;
-    }
-  }
+
 
   if (opt_reconnect) {
     try {

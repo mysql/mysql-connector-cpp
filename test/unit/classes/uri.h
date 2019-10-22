@@ -70,6 +70,7 @@ public:
     TEST_CASE(tcpIpV6);
     TEST_CASE(socket);
     TEST_CASE(pipe);
+    TEST_CASE(failover);
   }
 
   /**
@@ -99,6 +100,12 @@ public:
    *
    */
   void pipe();
+
+  /**
+   * Test uri::failover()
+   *
+   */
+  void failover();
 };
 
 REGISTER_FIXTURE(uri);
