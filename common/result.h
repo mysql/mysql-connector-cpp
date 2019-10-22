@@ -1024,6 +1024,22 @@ protected:
       m_result_mdata.pop();
     if (!m_result_cache.empty())
     {
+      /*
+        At this point m_cache_it can point inside the last entry of
+        m_result_cache that is just to be removed. Such dangling iterator
+        can cause issues when later it is assigned to a new value (as
+        compiler thinks it is still pointing inside old container and might
+        want to do some cleanups). To avoid dangling iterator, we reset it
+        to something neutral here.
+
+        Note: This "fix" works under assumption that "one past the end"
+        iterator is compatible between different containers, which seems to
+        be the case for all compilers we use.
+
+        TODO: A better solution would be to use std::option<> type for
+        m_cache_it.
+      */
+
       m_cache_it = m_result_cache.back().end();
       m_result_cache.pop();
     }
