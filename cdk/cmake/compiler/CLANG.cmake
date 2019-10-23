@@ -29,8 +29,10 @@
 
 function(enable_cxx11)
 
+  add_flags(CXX -std=c++11)
+
   #
-  # If Clang is used and deployment target is not specified
+  # If Clang is used on macOS and deployment target is not specified
   # with MACOSX_DEPLOYMENT_TARGET environment variable, make
   # sure that clang's native implementation of C++ std
   # libarary (libc++) is used. Otherwise clang defaults to
@@ -41,7 +43,9 @@ function(enable_cxx11)
   # so.
   #
 
-  add_flags(CXX -std=c++11 -stdlib=libc++)
+  if (MACOS)
+    add_flags(CXX -stdlib=libc++)
+  endif()
 
 endfunction()
 
