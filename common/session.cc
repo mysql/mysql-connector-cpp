@@ -401,15 +401,15 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   int prio = m_data.m_user_priorities ? -1 : 100;
 
   /*
-    Look for a priority after host/socket setting. If prio >= 0 then implicit
-    priorities are used and in that case only sanity checks are done.
-    Otherwise we expect that priority is explicitly given in the settings and
-    throw error if this is not the case.
+    Look for a priority after host/socket setting. If explicit priorities
+    are used, then we expect the priority setting to be present and we throw
+    error if this is not the case. Otherwise the given defalut priority is
+    not changed and only sanity checks are done.
   */
 
   auto check_prio = [this](iterator &it, int &prio) {
 
-    if (0 > prio)
+    if (m_data.m_user_priorities)
     {
       if (it == end() || Session_option_impl::PRIORITY != it->first)
         throw_error("No priority specified for host ...");
@@ -419,6 +419,12 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     }
 
     assert(0 <= prio && prio <= 100);
+
+    /*
+      Convert from decreasing priorities to increasing priorities used
+      by cdk::Multi_source.
+    */
+    prio = 100 - prio;
 
     /*
       If there are more options, there should be no PRIORITY option
@@ -475,7 +481,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     }
 #endif
 
-    src.add(cdk::ds::TCPIP(host, port), opts, (unsigned short)prio);
+    src.add_prio(cdk::ds::TCPIP(host, port), opts, (unsigned short)prio);
   };
 
   /*
@@ -497,12 +503,16 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
     check_prio(it, prio);
 
-    src.add(cdk::ds::Unix_socket(socket_path),
+    src.add_prio(cdk::ds::Unix_socket(socket_path),
       (cdk::ds::Unix_socket::Options&)opts,
       (unsigned short)prio);
 
   };
 #endif
+
+
+  // default prioirty of 1 is used if priorities are not explicitly specified
+  static const int default_prio = 1;
 
   /*
     Go through options and look for ones which define connections.
@@ -513,10 +523,10 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     switch (it->first)
     {
     case Session_option_impl::HOST:
-      add_host(it, prio--); break;
+      add_host(it, default_prio); break;
 
     case Session_option_impl::SOCKET:
-      add_socket(it, prio--); break;
+      add_socket(it, default_prio); break;
 
     /*
       Note: if m_host_cnt > 0 then a HOST setting must be before PORT setting,
@@ -524,7 +534,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     */
     case Session_option_impl::PORT:
       assert(0 == m_data.m_host_cnt);
-      add_host(it, prio--);
+      add_host(it, default_prio);
       break;
 
     default:

@@ -40,9 +40,10 @@ using std::unique_ptr;
 /*
   A class that creates a session from given data source.
 
-  Instances of this calss are callable objects which can be used as visitors
+  Instances of this class are callable objects which can be used as visitors
   for ds::Multi_source implementing in this case the failover logic.
 */
+
 struct Session_builder
 {
   using TLS   = cdk::connection::TLS;
@@ -398,7 +399,7 @@ Session::Session(ds::Multi_source &ds)
       throw_error(
         1 == sb.m_attempts ?
         "Could not connect to the given data source" :
-        "Could not connect ot any of the given data sources"
+        "Could not connect to any of the given data sources"
       );
   }
 

@@ -42,6 +42,38 @@ class Bugs : public mysqlx::test::Xplugin
 };
 
 
+TEST_F(Bugs, failover_error)
+{
+
+  try {
+
+    // None of these servers can be connected, so this
+    // will throw error.
+
+    mysqlx::Session sess(
+      SessionOption::USER, "user",
+      SessionOption::HOST, "bad_host_1",
+      SessionOption::HOST, "bad_host_2"
+    );
+
+  }
+  catch (const Error & err)
+  {
+    cout << "Expected error: " << err.what() << endl;
+
+    // In case of multiple hosts, the error thrown should say
+    // "Could not connect to any of the given data sources".
+
+    EXPECT_TRUE(
+      std::string::npos !=
+      std::string(err.what()).find(
+        "Could not connect to any of the given data sources"
+      )
+    );
+  };
+
+}
+
 
 TEST_F(Bugs, bug25505482)
 {

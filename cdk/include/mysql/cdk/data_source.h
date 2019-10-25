@@ -353,6 +353,7 @@ namespace ds {
 #endif //_WIN32
   typedef mysql::TCPIP TCPIP_old;
 
+
   template <typename DS_t, typename DS_opt>
   struct DS_pair : public std::pair<DS_t, DS_opt>
   {
@@ -360,7 +361,7 @@ namespace ds {
 #ifdef HAVE_MOVE_CTORS
     DS_pair(DS_pair&&) = default;
 #endif
-    DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
+    DS_pair(const DS_t &ds, const DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
     {}
   };
 
@@ -369,12 +370,12 @@ namespace ds {
     A data source which encapsulates several other data sources (all of which
     are assumed to hold the same data).
 
-    When adding data sources to a multi source, a priority and a weight can
-    be specified. When a visitor is visiting the multi source, the data sources
-    are presented to the visitor in decreasing priority order. If several data
-    sources have the same priority, they are presented in random order, taking
-    into account specified weights. If no priorities were specified, then data
-    sources are presented in the order in which they were added.
+    When adding data sources to a multi source, a priority can be specified.
+    When a visitor is visiting the multi source, the data sources it contains
+    are presented to the visitor in increasing priority order. If several data
+    sources have the same priority, they are presented in random order. If
+    no priorities were specified, then data sources are presented in the order
+    in which they were added.
 
     If priorities are specified, they must be specified for all data sources
     that are added to the multi source.
@@ -394,8 +395,8 @@ namespace ds {
     >
     DS_variant;
 
-    bool m_is_prioritized;
-    unsigned short m_counter;
+    bool m_is_prioritized = false;
+    unsigned short m_counter = 0;
 
     struct Prio
     {
@@ -412,79 +413,62 @@ namespace ds {
       }
     };
 
-    typedef std::multimap<Prio, DS_variant, std::greater<Prio>> DS_list;
+    typedef std::multimap<Prio, DS_variant, std::less<Prio>> DS_list;
     DS_list m_ds_list;
     uint32_t m_total_weight = 0;
 
   public:
 
-    Multi_source() : m_is_prioritized(false), m_counter(65535)
-    {
-      std::srand((unsigned int)time(NULL));
-    }
+    // Add data source without explicit priority.
 
     template <class DS_t, class DS_opt>
-    void add(const DS_t &ds, const DS_opt &opt,
-             unsigned short prio, uint16_t weight = 1)
+    void add(const DS_t& ds, const DS_opt& opt, uint16_t weight = 1)
     {
-      if (m_ds_list.size() == 0)
-      {
-        m_is_prioritized = (prio > 0);
-      }
-      else
-      {
-        if (m_is_prioritized && prio == 0)
-          throw Error(cdkerrc::generic_error,
-          "Adding un-prioritized items to prioritized list is not allowed");
-
-        if (!m_is_prioritized && prio > 0)
-          throw Error(cdkerrc::generic_error,
-          "Adding prioritized items to un-prioritized list is not allowed");
-      }
-
-      /*
-        The internal placement of priorities will be as this:
-        if list is a no-priority one the map has to retain the order of
-        elements at the time of the placement. Therefore, it will count-down
-        from max(unsigned short)
-      */
-      DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
-                               const_cast<DS_opt&>(opt));
       if (m_is_prioritized)
-        m_ds_list.emplace(Prio({prio,weight}), pair);
-      else
       {
-        /*
-          When list is not prioritized the map should keep the order of elements.
-          This is achieved by decrementing the counter every time a new element
-          goes into the list.
-        */
-        m_ds_list.emplace(Prio({m_counter--,weight}), pair);
+        throw_error(
+          "Adding un-prioritized items to prioritized list is not allowed"
+        );
       }
 
-      m_total_weight += weight;
+      m_ds_list.emplace(Prio{ m_counter++, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
     }
 
-    private:
+    // Add data source with priority.
+
+    template <class DS_t, class DS_opt>
+    void add_prio(const DS_t &ds, const DS_opt &opt, unsigned short prio, uint16_t weight = 1)
+    {
+      if (m_ds_list.size() == 0)
+        m_is_prioritized = true;
+
+      if (!m_is_prioritized)
+      {
+        throw_error(
+          "Adding prioritized items to un-prioritized list is not allowed"
+        );
+      }
+
+      m_ds_list.emplace(Prio{ prio, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
+    }
+
+  private:
 
     template <typename Visitor>
     struct Variant_visitor
     {
-      Visitor *vis;
-      bool stop_processing;
-
-      Variant_visitor() : stop_processing(false)
-      { }
+      Visitor *vis = nullptr;
+      bool stop_processing = false;
 
       template <class DS_t, class DS_opt>
       void operator () (const DS_pair<DS_t, DS_opt> &ds_pair)
       {
+        assert(vis);
         stop_processing = (bool)(*vis)(ds_pair.first, ds_pair.second);
       }
     };
 
-
-    public:
+  public:
 
     /*
       Call visitor(ds,opts) for each data source ds with options
@@ -496,80 +480,59 @@ namespace ds {
     template <class Visitor>
     void visit(Visitor &visitor)
     {
+      Variant_visitor<Visitor> variant_visitor;
+      variant_visitor.vis = &visitor;
+
+      std::random_device rnd;
       bool stop_processing = false;
-      std::vector<DS_variant*> same_prio;
       std::vector<uint16_t> weights;
-      std::random_device generator;
+      std::set<DS_variant*> same_prio;
 
       for (auto it = m_ds_list.begin(); !stop_processing;)
       {
-        DS_variant *item = NULL;
+        if (it == m_ds_list.end())
+          break;
 
-        if (m_is_prioritized)
+        assert(same_prio.empty());
+
         {
-          if (same_prio.empty())
+          //  Get items with the same priority and store them in same_prio set
+
+          auto same_range = m_ds_list.equal_range(it->first);
+          it = same_range.second;  // move it to the first element after the range
+
+          for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
           {
-            if (it == m_ds_list.end())
-              break;
-
-            //  Get items with the same priority and store them in same_prio set
-
-            auto same_range = m_ds_list.equal_range(it->first);
-            it = same_range.second;
-
-            for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
-            {
-              //If weight is not specified, we need to set all weight values
-              //with same, os that discrete_distribution works as expected
-              weights.push_back(it1->first.weight);
-              same_prio.push_back(&(it1->second));
-            }
+            same_prio.insert(&(it1->second));
+            weights.push_back(it1->first.weight);
           }
+        }
 
-          std::discrete_distribution<int> distribution(
-                weights.begin(), weights.end()
-          );
-
+        for (size_t size = same_prio.size(); size > 0; size = same_prio.size())
+        {
           auto el = same_prio.begin();
+          size_t pos = 0;
 
-          int pos = 0;
-
-          if (same_prio.size() > 1)
+          if (size > 1)
           {
-            pos = distribution(generator);
+            std::discrete_distribution<int> distr(
+              weights.begin(), weights.end()
+            );
+            pos = distr(rnd);
             std::advance(el, pos);
           }
 
-          item = *el;
-          same_prio.erase(same_prio.begin()+pos);
-          weights.erase(weights.begin()+pos);
+          (*el)->visit(variant_visitor);
+          stop_processing = variant_visitor.stop_processing;
 
-        } // if (m_is_prioritized)
-        else
-        {
-          if (it == m_ds_list.end())
+          if (stop_processing)
             break;
 
-          // Just get the next item from the list if no priority is given
-          item = &(it->second);
-          ++it;
+          same_prio.erase(el);
+          weights.erase(weights.begin() + pos);
         }
 
-        // Give values to the visitor
-        Variant_visitor<Visitor> variant_visitor;
-        variant_visitor.vis = &visitor;
-        /*
-          Cannot use lambda because auto type for lambdas is only
-          supported in C++14
-        */
-        item->visit(variant_visitor);
-        stop_processing = variant_visitor.stop_processing;
-
-        /* Exit if visit reported true or if we advanced to the end of the list */
-        if (stop_processing || it == m_ds_list.end())
-          break;
-
-      } // for
+      } // for m_ds_llist
     }
 
     void clear()
@@ -647,9 +610,7 @@ namespace ds {
         Options::TLS_options tls(m_opts.get_tls());
         tls.set_host_name(el.name);
         opt1.set_tls(tls);
-        //Prio is negative because for URI prio, less is better, but for
-        //SRV record, more is better
-        src.add(ds::TCPIP(el.name, el.port), opt1, -el.prio, el.weight);
+        src.add_prio(ds::TCPIP(el.name, el.port), opt1, el.prio, el.weight);
       }
 
       return src;
