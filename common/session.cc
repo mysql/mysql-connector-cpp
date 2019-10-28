@@ -336,13 +336,13 @@ void prepare_options(
     opts.set_auth_method(
       socket ? TCPIP_options::PLAIN : TCPIP_options::DEFAULT
     );
+  }
 
-    // DNS+SRV
+  // DNS+SRV
 
-    if(settings.has_option(Option::DNS_SRV))
-    {
-      opts.set_dns_srv(settings.get(Option::DNS_SRV).get_bool());
-    }
+  if(settings.has_option(Option::DNS_SRV))
+  {
+    opts.set_dns_srv(settings.get(Option::DNS_SRV).get_bool());
   }
 
 }
