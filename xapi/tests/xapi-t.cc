@@ -2328,7 +2328,7 @@ TEST_F(xapi, dns_srv)
   {
     auto opt = mysqlx_session_options_new();
 
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
                 opt,
                 OPT_HOST("_mysqlx._tcp.localhost"),
                 OPT_PORT(33060),
@@ -2337,8 +2337,7 @@ TEST_F(xapi, dns_srv)
                 PARAM_END
                 ));
 
-    EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
-    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
 
     mysqlx_free_options(opt);
   }
@@ -2354,7 +2353,7 @@ TEST_F(xapi, dns_srv)
   {
     auto opt = mysqlx_session_options_new();
 
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
                 opt,
                 OPT_SOCKET("/_mysqlx/_tcp/localhost"),
                 OPT_DNS_SRV(true),
@@ -2362,8 +2361,7 @@ TEST_F(xapi, dns_srv)
                 PARAM_END
                 ));
 
-    EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
-    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
 
     mysqlx_free_options(opt);
   }
@@ -2380,7 +2378,7 @@ TEST_F(xapi, dns_srv)
   {
     auto opt = mysqlx_session_options_new();
 
-    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
                 opt,
                 OPT_HOST("_mysqlx._tcp._notfound.localhost"),
                 OPT_HOST("_mysqlx._tcp._notfound.localhost"),
@@ -2389,11 +2387,9 @@ TEST_F(xapi, dns_srv)
                 PARAM_END
                 ));
 
-    EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
-    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
 
     mysqlx_free_options(opt);
-
   }
 
   //Scheme {scheme} is not valid.
@@ -2429,7 +2425,6 @@ TEST_F(xapi, dns_srv)
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
 
     mysqlx_free_options(opt);
-
   }
 
 

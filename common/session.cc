@@ -368,6 +368,35 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
   src.clear();
 
+  if (has_option(Session_option_impl::DNS_SRV))
+  {
+    /* 
+      Use DNS+SRV data source.
+
+      Note: option consistency checks are done by Setter
+    */
+
+    assert(1 == m_data.m_host_cnt);
+
+    cdk::ds::DNS_SRV_source dns_srv_src(
+      get(Session_option_impl::HOST).get_string(), opts
+    );
+
+    /*
+      Note: this assignment performs DNS lookup to populate the server list
+      in src. If no hosts are returned, method get() throws error.
+    */
+
+    src = dns_srv_src.get();
+
+    assert(src.size() > 0);
+    return;
+  }
+
+  /*
+    If DNS+SRV is not used, get list of hosts from the settings.
+  */
+
   // if priorities were not set explicitly, assign decreasing starting from 100
   int prio = m_data.m_user_priorities ? -1 : 100;
 
@@ -412,10 +441,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     if (Session_option_impl::PORT == it->first)
     {
       assert(0 == m_data.m_host_cnt);
-      if (opts.get_dns_srv())
-      {
-        throw_error("Specifying a port number with DNS SRV lookup is not allowed.");
-      }
     }
     else
     {
@@ -428,10 +453,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
     if (it != end() && Session_option_impl::PORT == it->first)
     {
-      if (opts.get_dns_srv())
-      {
-        throw_error("Specifying a port number with DNS SRV lookup is not allowed.");
-      }
       port = (unsigned short)it->second.get_uint();
       ++it;
     }
@@ -483,20 +504,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
   };
 #endif
 
-  auto add_connect_attr = [this](iterator &it) {
-    switch (it->second.get_type())
-    {
-      case Value::Type::BOOL:
-        if (!it->second.get_bool())
-          this->m_data.m_connection_attr.clear();
-        else
-          this->m_data.init_connection_attr();
-      break;
-      default:
-        break;
-    }
-  };
-
   /*
     Go through options and look for ones which define connections.
   */
@@ -509,12 +516,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       add_host(it, prio--); break;
 
     case Session_option_impl::SOCKET:
-      if(opts.get_dns_srv())
-      {
-        throw_error(
-              "Using Unix domain sockets with DNS SRV lookup is not allowed."
-              );
-      }
       add_socket(it, prio--); break;
 
     /*
@@ -530,17 +531,12 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       ++it;
     }
   }
+
   if (0 == src.size())
   {
     throw_error("No sources to connect");
   }
 
-  if(opts.get_dns_srv() && src.size() > 1)
-  {
-    throw_error(
-          "Specifying multiple hostnames with DNS SRV look up is not allowed."
-          );
-  }
 }
 
 

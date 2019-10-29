@@ -364,6 +364,22 @@ namespace ds {
     {}
   };
 
+
+  /*
+    A data source which encapsulates several other data sources (all of which
+    are assumed to hold the same data).
+
+    When adding data sources to a multi source, a priority and a weight can
+    be specified. When a visitor is visiting the multi source, the data sources
+    are presented to the visitor in decreasing priority order. If several data
+    sources have the same priority, they are presented in random order, taking
+    into account specified weights. If no priorities were specified, then data
+    sources are presented in the order in which they were added.
+
+    If priorities are specified, they must be specified for all data sources
+    that are added to the multi source.
+  */
+
   class Multi_source
   {
 
@@ -398,6 +414,7 @@ namespace ds {
 
     typedef std::multimap<Prio, DS_variant, std::greater<Prio>> DS_list;
     DS_list m_ds_list;
+    uint32_t m_total_weight = 0;
 
   public:
 
@@ -444,6 +461,8 @@ namespace ds {
         */
         m_ds_list.emplace(Prio({m_counter--,weight}), pair);
       }
+
+      m_total_weight += weight;
     }
 
     private:
@@ -480,89 +499,7 @@ namespace ds {
       bool stop_processing = false;
       std::vector<DS_variant*> same_prio;
       std::vector<uint16_t> weights;
-
-
-      struct DNS_SRV_visitor
-      {
-        Visitor &visitor;
-        cdk::ds::Multi_source src;
-        uint16_t total_weight = 0;
-        bool has_srv = false;
-
-        DNS_SRV_visitor(Visitor &_visitor)
-          : visitor(_visitor)
-        {}
-
-        bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &opts)
-        {
-          has_srv = opts.get_dns_srv();
-
-          if(has_srv)
-          {
-            ds::TCPIP::Options new_opts(opts);
-            new_opts.set_dns_srv(false);
-
-            auto list = cdk::foundation::connection::srv_list(ds.host());
-
-
-            if (list.empty())
-            {
-              std::string err = "Unable to locate any hosts for ";
-              err+= ds.host();
-              throw_error(err.c_str());
-            }
-
-            auto &tls= const_cast<ds::TCPIP::Options::TLS_options&>(opts.get_tls());
-
-            for (auto &el : list)
-            {
-              TCPIP::Options::TLS_options tls (new_opts.get_tls());
-              tls.set_host_name(el.name);
-              new_opts.set_tls(tls);
-              //Prio is negative because for URI prio, less is better, but for
-              //SRV record, more is better
-              src.add(ds::TCPIP(el.name, el.port),new_opts,-el.prio,el.weight);
-
-              total_weight+=el.weight;
-            }
-
-            src.visit(visitor);
-
-          }
-
-          return has_srv;
-        }
-
-
-
-      #ifndef WIN32
-        bool operator() (const ds::Unix_socket&ds, const ds::Unix_socket::Options &options)
-        {
-          return false;
-        }
-      #endif
-        bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options)
-        {
-          return false;
-        }
-
-      };
-
-      DNS_SRV_visitor dns_srv_visitor {visitor};
-
-      //SRV only possible with 1 host
-      if(m_ds_list.size() == 1)
-      {
-        // Give values to the visitor
-        Variant_visitor<DNS_SRV_visitor> variant_visitor;
-        variant_visitor.vis = &dns_srv_visitor;
-
-        m_ds_list.begin()->second.visit(variant_visitor);
-
-        if(variant_visitor.stop_processing)
-          return;
-      }
-
+      std::random_device generator;
 
       for (auto it = m_ds_list.begin(); !stop_processing;)
       {
@@ -584,17 +521,14 @@ namespace ds {
             {
               //If weight is not specified, we need to set all weight values
               //with same, os that discrete_distribution works as expected
-              weights.push_back(
-                    dns_srv_visitor.total_weight == 0 ? 1 : it1->first.weight);
+              weights.push_back(it1->first.weight);
               same_prio.push_back(&(it1->second));
             }
           }
 
-          std::random_device generator;
           std::discrete_distribution<int> distribution(
-                weights.begin(), weights.end());
-
-
+                weights.begin(), weights.end()
+          );
 
           auto el = same_prio.begin();
 
@@ -642,6 +576,7 @@ namespace ds {
     {
       m_ds_list.clear();
       m_is_prioritized = false;
+      m_total_weight = 0;
     }
 
     size_t size()
@@ -652,6 +587,81 @@ namespace ds {
     struct Access;
     friend Access;
   };
+
+
+  /*
+    A data source which takes data from one of the hosts obtained from
+    a DNS+SRV query.
+
+    Method get() issues a DNS+SRV query and returns its result as
+    a Multi_source which contains a list of TCPIP data sources for the
+    hosts returned from the query. Also the weights and priorites
+    obtained from the DNS+SRV query are used.
+
+    Example usage:
+
+      DNS_SRV_source dns_srv(name, opts);
+      Multi_source   src = dns_srv.get();
+
+    Note: Each call to get() issues new DNS query and can result in
+    different list of sources.
+  */
+
+  class DNS_SRV_source
+  {
+  public:
+
+    using Options = TCPIP::Options;
+
+    /*
+      Create DNS+SRV data source for the given DNS name and session options.
+
+      The DNS name is used to query DNS server when getting list of hosts.
+      Given session options are used for each host obtained from the DNS+SRV
+      query.
+    */
+
+    DNS_SRV_source(const std::string& host, const Options &opts)
+      : m_host(host), m_opts(opts)
+    {}
+
+    /*
+      Query DNS and return results as a Multi_source.
+    */
+
+    Multi_source get()
+    {
+      Multi_source src;
+
+      auto list = cdk::foundation::connection::srv_list(m_host);
+
+      if (list.empty())
+      {
+        std::string err = "Unable to locate any hosts for " + m_host;
+        throw_error(err.c_str());
+      }
+
+      for (auto& el : list)
+      {
+        Options opt1(m_opts);
+        Options::TLS_options tls(m_opts.get_tls());
+        tls.set_host_name(el.name);
+        opt1.set_tls(tls);
+        //Prio is negative because for URI prio, less is better, but for
+        //SRV record, more is better
+        src.add(ds::TCPIP(el.name, el.port), opt1, -el.prio, el.weight);
+      }
+
+      return src;
+    }
+
+  protected:
+
+    std::string m_host;
+    Options     m_opts;
+
+  };
+
 }
 
 
