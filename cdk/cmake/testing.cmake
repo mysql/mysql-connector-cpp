@@ -152,6 +152,7 @@ IF(WITH_TESTS)
 
     target_compile_definitions(${TEST} PRIVATE
       -D_SCL_SECURE_NO_WARNINGS
+      -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
     )
 
     target_compile_options(${TEST} PRIVATE
@@ -284,6 +285,11 @@ IF(WITH_TESTS)
   #
 
   if (MSVC)
+
+    target_compile_definitions(${target_run_unit_tests} PRIVATE
+      -D_SCL_SECURE_NO_WARNINGS
+      -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+    )
 
     target_compile_options(${target_run_unit_tests} PRIVATE
       /wd4244

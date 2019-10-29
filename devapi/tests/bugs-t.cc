@@ -145,6 +145,8 @@ TEST_F(Bugs, bug_26962725_double_bind)
 
 TEST_F(Bugs, bug_27727505_multiple_results)
 {
+  SKIP_IF_NO_XPLUGIN;
+
   mysqlx::Session &sess = get_sess();
   sess.dropSchema("bug_27727505_multiple_results");
   sess.createSchema("bug_27727505_multiple_results");

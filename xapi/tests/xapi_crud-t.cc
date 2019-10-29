@@ -52,6 +52,8 @@
 
 TEST_F(xapi, test_count)
 {
+  SKIP_IF_NO_XPLUGIN
+
   mysqlx_result_t *res;
   mysqlx_schema_t *schema;
   mysqlx_collection_t *collection;
@@ -3111,6 +3113,8 @@ TEST_F(xapi_bugs, session_invalid_password_deadlock)
 
 TEST_F(xapi_bugs, crash_empty_reply)
 {
+  SKIP_IF_NO_XPLUGIN
+
   mysqlx_result_t *res;
   mysqlx_schema_t *schema;
   mysqlx_collection_t *collection;

@@ -466,12 +466,4 @@ public:
 };
 
 
-struct mysqlx_row_struct
-  : public Mysqlx_diag
-  , public Row_impl<>
-{
-  using Row_impl<>::Row_impl;
-};
-
-
 #endif /* __MYSQLX_CC_INTERNAL_H__ */
