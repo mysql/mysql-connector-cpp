@@ -99,6 +99,35 @@ class Settings_impl::Setter
     return 0;
   }
 
+  /*
+    Note: Methods below would be best implemented inside Settings_impl::Data
+    class, but this can break ABI, so we put them here instead.
+  */
+
+  using iterator = option_list_t::const_reverse_iterator;
+
+  iterator find_opt(int opt, iterator start) const;
+
+  iterator find_opt(int opt) const
+  {
+    return find_opt(opt, m_data.m_options.crbegin());
+  }
+
+  iterator end() const
+  {
+    return m_data.m_options.crend();
+  }
+
+  bool has_option(Session_option_impl opt)
+  {
+    return end() != find_opt(opt);
+  }
+
+  bool has_option(Client_option_impl opt)
+  {
+    return end() != find_opt(-opt);
+  }
+
 public:
 
   Setter(Settings_impl &settings)
@@ -125,6 +154,42 @@ public:
 
   void commit()
   {
+    if (has_option(Session_option_impl::DNS_SRV))
+    {
+      if (0 == m_data.m_host_cnt)
+      {
+        throw_error("No DNS name specified for SRV lookup");
+      }
+
+      if (1 < m_data.m_host_cnt)
+      {
+        throw_error(
+          "Specifying multiple hostnames with DNS SRV look up is not allowed."
+        );
+      }
+
+      if (m_data.m_sock)
+      {
+        throw_error(
+          "Using Unix domain sockets with DNS SRV lookup is not allowed."
+        );
+      }
+
+      if (m_data.m_user_priorities)
+      {
+        throw_error(
+          "Specifying a priority with DNS SRV lookup is not allowed."
+        );
+      }
+
+      if (has_option(Session_option_impl::PORT))
+      {
+        throw_error(
+          "Specifying a port number with DNS SRV lookup is not allowed."
+        );
+      }
+    }
+
     /*
       If more hosts are added to the settings, error if the first host was
       defined by PORT only, without explicit HOST setting.
@@ -313,6 +378,16 @@ public:
 
   static int get_uri_option(const std::string&);
 };
+
+
+inline
+auto Settings_impl::Setter::find_opt(int opt, iterator start) const
+-> iterator
+{
+  return std::find_if(start, m_data.m_options.crend(),
+    [opt](opt_val_t el) -> bool { return el.first == opt; }
+  );
+}
 
 
 /*
@@ -512,6 +587,7 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SSL_CA>(
   add_option(Session_option_impl::SSL_CA, val);
 }
 
+
 template <>
 inline void
 Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::CONNECT_TIMEOUT>(
@@ -602,6 +678,21 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::AUTH>(
   }
 }
 
+
+// Other options that need special handling.
+
+
+//template<>
+//inline void
+//Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::DNS_SRV>(
+//  const bool &val
+//)
+//{
+//  m_data.m_dns_srv = val;
+//  add_option(Settings_impl::Session_option_impl::DNS_SRV, val);
+//}
+
+
 template<>
 inline void
 Settings_impl::Setter::set_option<
@@ -677,7 +768,6 @@ Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const std::string &va
 }
 
 
-// Other options that need special handling.
 // TODO: support std::string for PWD and other options that are ascii only?
 
 template<>
