@@ -2383,7 +2383,7 @@ TEST_F(Sess, dns_srv)
   try
   {
     auto cli = getClient("mysqlx+srv://root@_mysqlx._tcp.localhost:33060");
-    FAIL();
+    FAIL() << "Error expected if port is specified for mysqlx+srv settings";
   }
   catch(Error &e)
   {
@@ -2397,7 +2397,7 @@ TEST_F(Sess, dns_srv)
                          SessionOption::PORT, 33060,
                          SessionOption::DNS_SRV, true,
                          SessionOption::USER, "root");
-    FAIL();
+    FAIL() << "Error expected if PORT specified together with DNS_SRV";
   }
   catch(Error &e)
   {

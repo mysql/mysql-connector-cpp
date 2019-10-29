@@ -361,6 +361,9 @@ void Settings_impl::Data::erase(int opt)
   case Session_option_impl::SSL_MODE:
     m_ssl_mode = SSL_mode::LAST;
     break;
+  case Session_option_impl::CONNECTION_ATTRIBUTES:
+    clear_connection_attr();
+    break;
   default:
     break;
   }

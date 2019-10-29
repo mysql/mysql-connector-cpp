@@ -679,18 +679,19 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::AUTH>(
 }
 
 
-// Other options that need special handling.
+// Connection attributes.
 
 
-//template<>
-//inline void
-//Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::DNS_SRV>(
-//  const bool &val
-//)
-//{
-//  m_data.m_dns_srv = val;
-//  add_option(Settings_impl::Session_option_impl::DNS_SRV, val);
-//}
+template<>
+inline void
+Settings_impl::Setter::set_option<
+  Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const bool& val)
+{
+  if (val)
+    m_data.init_connection_attr();
+  else
+    m_data.clear_connection_attr();
+}
 
 
 template<>
@@ -700,9 +701,9 @@ Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const std::string &va
 {
 
   struct processor
-      : parser::JSON_parser::Processor
-      , Any_prc
-      , Scalar_prc
+    : parser::JSON_parser::Processor
+    , Any_prc
+    , Scalar_prc
   {
     Settings_impl::Data &m_data;
     string m_key;
@@ -942,9 +943,6 @@ void Settings_impl::Setter::null()
   case Session_option_impl::USER:
     throw_error("Option ... can not be unset");
     break;
-  case Session_option_impl::CONNECTION_ATTRIBUTES:
-    m_data.clear_connection_attr();
-    break;
   case Session_option_impl::LAST:
     break;
   default:
@@ -955,27 +953,44 @@ void Settings_impl::Setter::null()
 
 
 inline
-void Settings_impl::Setter::yesno(bool b)
+void Settings_impl::Setter::yesno(bool val)
 {
+
+#define SET_OPTION_BOOL_bool(X,N) \
+  case Session_option_impl::X: return set_option<Session_option_impl::X, bool>(val);
+#define SET_OPTION_BOOL_any(X,N) break;
+#define SET_OPTION_BOOL_num(X,N) SET_OPTION_BOOL_any(X,N)
+#define SET_OPTION_BOOL_str(X,N) SET_OPTION_BOOL_any(X,N)
+
+#define SET_CLI_OPTION_BOOL_bool(X,N) \
+  case Client_option_impl::X: return set_option<Client_option_impl::X, bool>(val);
+#define SET_CLI_OPTION_BOOL_any(X,N) SET_OPTION_BOOL_any(X,N)
+#define SET_CLI_OPTION_BOOL_num(X,N) SET_OPTION_BOOL_any(X,N)
+#define SET_CLI_OPTION_BOOL_str(X,N) SET_OPTION_BOOL_any(X,N)
+
   switch (m_cur_opt)
   {
-  case Client_option_impl::POOLING:
-    add_option(m_cur_opt, b);
-    return;
-
-  case Session_option_impl::CONNECTION_ATTRIBUTES:
-      if (b)
-        m_data.init_connection_attr();
-      else
-        m_data.clear_connection_attr();
-      return;
-  case Session_option_impl::DNS_SRV:
-    add_option(m_cur_opt, b);
-    return;
-    default:break;
+    SESSION_OPTION_LIST(SET_OPTION_BOOL)
+    CLIENT_OPTION_LIST(SET_CLI_OPTION_BOOL)
+  default:
+    break;
   }
+
+  /*
+    Special handling of CONNECTION_ATTRIBUTES option which is declared
+    as string option, but it can be also set to a bool value.
+  */
+
+  switch (m_cur_opt)
+  {
+    SET_OPTION_BOOL_bool(CONNECTION_ATTRIBUTES, val)
+  default:
+    break;
+  }
+
   throw_error("Option ... can not be bool");
 }
+
 
 // URI processor
 
