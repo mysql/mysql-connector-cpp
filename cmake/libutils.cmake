@@ -207,6 +207,7 @@ function(merge_libraries TARGET)
 
     add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.cc")
     target_link_libraries(${TARGET}-deps ${ARGN})
+    set_target_properties(${TARGET}-deps PROPERTIES FOLDER "Misc")
 
     #
     # We set RULE_LAUNCH_LINK property of the -deps target to intercept the
@@ -281,6 +282,7 @@ function(merge_libraries TARGET)
     #
 
     add_library(${TARGET}-deps SHARED EXCLUDE_FROM_ALL "${LIBUTILS_SCRIPT_DIR}/empty.cc")
+    set_target_properties(${TARGET}-deps PROPERTIES FOLDER "Misc")
     target_link_libraries(${TARGET}-deps ${ARGN})
 
     add_custom_command(TARGET ${TARGET} PRE_BUILD

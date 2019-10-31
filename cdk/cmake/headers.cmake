@@ -406,6 +406,7 @@ if(WITH_HEADER_CHECKS)
     COMMENT "Header checks"
     SOURCES ${all_headers}
   )
+  set_target_properties(Headers PROPERTIES FOLDER "Tests")
 
   #
   # Configure the sanity checks project. All CMakeLists.txt files defining the project

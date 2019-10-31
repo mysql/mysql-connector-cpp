@@ -238,6 +238,8 @@ add_custom_target(build_protobuf
   SOURCES "${build_stamp}"
 )
 
+set_target_properties(build_protobuf PROPERTIES FOLDER "Misc")
+
 add_dependencies(Protobuf::pb-full build_protobuf)
 add_dependencies(Protobuf::pb-lite build_protobuf)
 add_dependencies(Protobuf::protoc  build_protobuf)
