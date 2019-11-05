@@ -500,11 +500,25 @@ namespace ds {
 
           auto same_range = m_ds_list.equal_range(it->first);
           it = same_range.second;  // move it to the first element after the range
+          unsigned total_weight = 0;
 
           for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
           {
             same_prio.insert(&(it1->second));
             weights.push_back(it1->first.weight);
+            total_weight += it1->first.weight;
+          }
+
+          /*
+            If all weights are 0 then all servers should be picked with the
+            same probability. Set the weights to 1 because discrete_distribiton<>
+            does not work when all weights are 0.
+          */
+
+          if (0 == total_weight)
+          {
+            for (auto& w : weights)
+              w = 1;
           }
         }
 
@@ -515,6 +529,20 @@ namespace ds {
 
           if (size > 1)
           {
+            /*
+              Note: std::discrete_distribution will never pick hosts that have
+              0 weight. But according to the DNS+SRV RFC [*], there should be
+              a small probablity that they are picked. For now we leave it
+              as is, as this is a corner case (normally weights should be > 0).
+              We might consider improving the implementation later.
+
+              Also note that we separately handle the case of all hosts having
+              0 weight - in this case we pick them randomly with equal
+              probability, as expected.
+
+              [*] https://tools.ietf.org/html/rfc2782
+            */
+
             std::discrete_distribution<int> distr(
               weights.begin(), weights.end()
             );
