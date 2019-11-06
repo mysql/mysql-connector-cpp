@@ -561,6 +561,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   bool opt_reconnect = false;
   int  client_exp_pwd = false;
   bool opt_dns_srv = false;
+  bool opt_multi_host = false;
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
   bool secure_auth= true;
 #endif
@@ -806,12 +807,22 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       try {
         p_b = (it->second).get<bool>();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for OPT_DNS_SRV expected bool");
+        throw sql::InvalidArgumentException("Wrong type passed for OPT_DNS_SRV, expected bool");
       }
       if (!(p_b)) {
         throw sql::InvalidArgumentException("No bool value passed for OPT_DNS_SRV");
       }
       opt_dns_srv = *p_b;
+    } else if (!it->first.compare("OPT_MULTI_HOST")) {
+      try {
+        p_b = (it->second).get<bool>();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for OPT_MULTI_HOST, expected bool");
+      }
+      if (!(p_b)) {
+        throw sql::InvalidArgumentException("No bool value passed for OPT_MULTI_HOST");
+      }
+      opt_multi_host = *p_b;
     } else if (!it->first.compare("OPT_CHARSET_NAME")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
@@ -987,15 +998,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   if (it != properties.end())
   {
      PROCESS_CONN_OPTION(int, intOptions);
-  }
-
-  bool opt_multi_host = false;
-  it = properties.find("OPT_MULTI_HOST");
-  try {
-    if(it != properties.end())
-      opt_multi_host = it->second.get<bool>();
-  } catch (sql::InvalidArgumentException&) {
-    throw sql::InvalidArgumentException("Wrong type passed for OPT_MULTI_HOST, expected bool");
   }
 
   if(!opt_multi_host && uri.size() > 1)
