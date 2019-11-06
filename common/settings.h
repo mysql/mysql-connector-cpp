@@ -437,7 +437,7 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SOCKET>(
 #endif
 )
 {
-#if _WIN32
+#ifdef _WIN32
 
   throw_error("SOCKET option not supported on Windows");
 
