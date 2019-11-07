@@ -146,6 +146,15 @@ struct Upsert_cmd : public Executable<Result, Upsert_cmd>
 };
 
 
+/*
+  A helper class used by Collection_detail::add_or_replace_one().
+
+  It is a wrapper around CDK expression m_expr that describes a document.
+  The wrapper forwards this description to a processor, but at the same
+  time checks if the value of the (top-level) "_id" field equals the value
+  given in the constructor.
+*/
+
 struct Value_expr_check_id
   : cdk::Expression
     , cdk::Expression::Processor
@@ -157,6 +166,19 @@ struct Value_expr_check_id
   Processor *m_prc;
   Doc_prc *m_doc_prc;
 
+  /*
+    This class defines m_any_prc member which is used below
+    to check the value of "_id" field as reported by the
+    source expression. Before using this class, m_id_prc must be
+    set to point at the sub-processor that was given for processing
+    the value of the "_id" field (this is done by key_val() callback in
+    the main class).
+
+    Then all callbacks are forwarded to this sub-processor (or its
+    sub-processors) and in case of calling scalar str() callback that
+    gives string value of the "_id" field, the check is done first.
+  */
+
   struct Any_processor_check
       : cdk::Expression::Processor::Doc_prc::Any_prc
       , cdk::Expression::Processor::Doc_prc::Any_prc::Scalar_prc
@@ -165,9 +187,9 @@ struct Value_expr_check_id
     Any_prc *m_id_prc;
     Scalar_prc *m_scalar_prc;
     Value_prc *m_value_prc;
-    const string& m_id;
+    const std::string &m_id;
 
-    Any_processor_check(const string& id)
+    Any_processor_check(const std::string& id)
       : m_id(id)
     {}
 
@@ -231,6 +253,7 @@ struct Value_expr_check_id
     }
 
     // Value processor implementation
+
     void null() override { m_value_prc->null();}
 
     void value(cdk::Type_info type,
@@ -246,6 +269,7 @@ struct Value_expr_check_id
         throw mysqlx::Error(R"(Document "_id" and replace id are different!)");
       m_value_prc->str(val);
     }
+
     void num(int64_t  val) override { m_value_prc->num(val); }
     void num(uint64_t val) override { m_value_prc->num(val); }
     void num(float    val) override { m_value_prc->num(val); }
@@ -256,7 +280,7 @@ struct Value_expr_check_id
 
   Any_processor_check m_any_prc;
 
-  Value_expr_check_id(mysqlx::Value_expr &expr, bool is_expr, const string& id)
+  Value_expr_check_id(mysqlx::Value_expr &expr, bool is_expr, const std::string& id)
     : m_expr(expr)
     , m_is_expr(is_expr)
     , m_any_prc(id)
@@ -324,7 +348,14 @@ Collection_detail::add_or_replace_one(
   const mysqlx::string &id, mysqlx::Value &&doc, bool replace
 )
 {
+  /*
+    This is implemented by executing Replace_cmd or Upsert_command
+    which internally use Op_collection_replace or Op_collection_upsert
+    to perform relevant operation on the server.
+  */
+
   Object_ref coll(get_schema().m_name, m_name);
+  std::string id_str(id);
 
 
   if (!Value::Access::is_expr(doc) &&
@@ -333,13 +364,29 @@ Collection_detail::add_or_replace_one(
     doc = DbDoc(doc.get<string>());
   }
 
+  /*
+    expr is a CDK expression object which describes the document
+    to be added.
+  */
+
   Value_expr expr(doc, parser::Parser_mode::DOCUMENT);
 
   if (replace)
   {
-    Value_expr_check_id check_id(expr, Value::Access::is_expr(doc), id);
+    /*
+      Replace_cmd executes Op_collection_replace which picks a document
+      with the given id and replaes it with the document given as the last
+      argument.
 
-    Replace_cmd cmd(m_sess, coll, std::string(id), check_id);
+      The document expression is wrapped in Value_expr_check_id to check
+      if the "_id" field (if present) stores the correct document id
+      and throws error if it is not the case (otherwise Replace_cmd
+      would modify the "_id" field to match the given id).
+    */
+
+    Value_expr_check_id check_id(expr, Value::Access::is_expr(doc), id_str);
+
+    Replace_cmd cmd(m_sess, coll, id_str, check_id);
     return cmd.execute();
   }
   else
