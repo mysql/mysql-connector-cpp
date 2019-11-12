@@ -1888,24 +1888,25 @@ TEST_F(Sess, pool_ttl)
 
 #endif
 
-  {
+  // Temporary disabled, bug#30532629
 
+#if 0
+  {
     std::cout << "Not threaded" << std::endl;
 
     settings.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::seconds(100),
-    ClientOption::POOL_MAX_IDLE_TIME, std::chrono::seconds(10));
+      ClientOption::POOL_MAX_IDLE_TIME, std::chrono::seconds(10));
 
     mysqlx::Client client(settings);
 
 
-    auto get_sessions = [&client, &max_connections] ()
+    auto get_sessions = [&client, &max_connections]()
     {
       std::list<mysqlx::Session> sessions;
-      for(int i = 0; i < max_connections; ++i)
+      for (int i = 0; i < max_connections; ++i)
       {
         sessions.emplace_back(client);
         EXPECT_EQ(1, sessions.back().sql("select 1").execute()
-                     .fetchOne()[0].get<int>());
       }
     };
 
@@ -1917,15 +1918,13 @@ TEST_F(Sess, pool_ttl)
 
     int this_thread_id = sql("SELECT CONNECTION_ID()").fetchOne()[0].get<int>();
 
-    std::list<Row> rows =sql("show processlist").fetchAll();
+    std::list<Row> rows = sql("show processlist").fetchAll();
 
     for (auto row : rows)
     {
       auto val = row.get(7);
       int thread_id = row.get(0).get<int>();
       if (val.isNull() ||
-          val.get<string>() != string("PLUGIN") ||
-          thread_id == this_thread_id)
         continue;
 
       proccess_ids.push_back(thread_id);
@@ -1953,6 +1952,9 @@ TEST_F(Sess, pool_ttl)
     std::cout << "set global mysqlx_wait_timeout=28800" << std::endl;
     client.getSession().sql("set global mysqlx_wait_timeout=28800").execute();
   }
+
+#endif // 0
+
 
   {
     settings.set(ClientOption::POOL_MAX_SIZE, 1);
