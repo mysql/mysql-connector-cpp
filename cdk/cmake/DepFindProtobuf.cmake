@@ -225,12 +225,19 @@ endif()
 # Try using parallel builds for protobuf.
 #
 
+include(ProcessorCount)
+ProcessorCount(N)
+
+MESSAGE("Processor Count: ${N}")
+
 set(opt_build)
 set(opt_tool)
-if(NOT CMAKE_VERSION VERSION_LESS 3.12)
-  set(opt_build --parallel)
-elseif(CMAKE_MAKE_PROGRAM MATCHES "make")
-  set(opt_tool -j)
+if(NOT N EQUAL 0)
+  if(NOT CMAKE_VERSION VERSION_LESS 3.12)
+    set(opt_build --parallel ${N})
+  elseif(CMAKE_MAKE_PROGRAM MATCHES "make")
+    set(opt_tool -j${N})
+  endif()
 endif()
 
 add_custom_command(OUTPUT "${build_stamp}"
@@ -314,4 +321,3 @@ function(mysqlx_protobuf_generate_cpp SRCS HDRS)
   SET(${HDRS} ${hdrs} PARENT_SCOPE)
 
 endfunction(mysqlx_protobuf_generate_cpp)
-
