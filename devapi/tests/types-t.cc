@@ -515,6 +515,8 @@ const CollationInfo* get_collation(unsigned id)
 
 TEST_F(Types, collations)
 {
+  SKIP_IF_NO_XPLUGIN;
+
   using col_data = std::pair<unsigned, string>;
   std::vector<col_data> unknown;
 

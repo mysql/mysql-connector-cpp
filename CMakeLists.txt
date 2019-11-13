@@ -55,6 +55,10 @@ ENDIF()
 #
 set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 
+#
+# Enable grouping targets into folders for IDE tools
+#
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 ##########################################################################
@@ -193,6 +197,7 @@ add_config_option(BUILD_STATIC BOOLEAN DEFAULT OFF
 )
 
 if(BUILD_STATIC)
+
   message("Building static connector library")
   set(BUILD_SHARED_LIBS OFF)
 
@@ -203,6 +208,7 @@ if(BUILD_STATIC)
   )
 
 else()
+
   message("Building shared connector library")
   set(BUILD_SHARED_LIBS ON)
 
@@ -309,6 +315,9 @@ endif()
 
 add_subdirectory(cdk)
 
+foreach(T cdk cdk_foundation cdk_mysqlx cdk_proto_mysqlx cdk_parser)
+  set_target_properties(${T} PROPERTIES FOLDER "CDK")
+endforeach()
 
 #
 # Unit tests framework
@@ -557,6 +566,7 @@ ENDIF (WITH_TESTS)
 add_executable(try EXCLUDE_FROM_ALL try.cc)
 target_link_libraries(try connector)
 
+
 if(WITH_JDBC)
 
   add_executable(try_jdbc EXCLUDE_FROM_ALL try_jdbc.cc)
@@ -648,6 +658,8 @@ add_custom_target(link_test
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/link_test
   VERBATIM
 )
+
+set_target_properties(link_test PROPERTIES FOLDER "Tests")
 
 add_dependencies(link_test connector)
 #if(TARGET connector-merge)

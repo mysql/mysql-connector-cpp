@@ -2469,21 +2469,29 @@ TEST_F(Crud, single_document)
   Schema sch = getSchema("test");
   Collection coll = sch.createCollection("c1", true);
 
+  cout << "Adding documents..." << endl;
+
   coll.remove("true").execute();
 
-  coll.add(R"({"_id":"id1", "name":"foo", "age": 1 })" )
-      .add(R"({"_id":"id2", "name":"bar", "age": 2 })" )
-      .add(R"({"_id":"id3", "name":"baz", "age": 3 })" )
-      .execute();
+  coll.add(R"({"_id":"id1", "name":"foo", "age": 1 })")
+    .add(R"({"_id":"id2", "name":"bar", "age": 2 })")
+    .add(R"({"_id":"id3", "name":"baz", "age": 3 })")
+    .execute();
+
+  cout << "getOne()" << endl;
 
   EXPECT_EQ(string("foo"), coll.getOne("id1")["name"].get<string>());
   EXPECT_EQ(string("bar"), coll.getOne("id2")["name"].get<string>());
   EXPECT_TRUE(coll.getOne("idZ").isNull());
 
+  cout << "removeOne()" << endl;
+
   EXPECT_EQ(1, coll.removeOne("id1").getAffectedItemsCount());
   EXPECT_EQ(0, coll.removeOne("id1").getAffectedItemsCount());
 
   EXPECT_TRUE(coll.getOne("id1").isNull());
+
+  cout << "replaceOne()" << endl;
 
   // Replace existing document
   EXPECT_EQ(1, coll.replaceOne(
@@ -2492,6 +2500,8 @@ TEST_F(Crud, single_document)
             .getAffectedItemsCount());
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(4, coll.getOne("id3")["age"].get<int>());
+
+  cout << "replaceOne(): change id" << endl;
 
   // Setting a different _id on document should throw error
   // Document passed as string
@@ -2508,13 +2518,20 @@ TEST_F(Crud, single_document)
   // Document passed as DbDoc
   EXPECT_THROW(coll.replaceOne("id3", DbDoc("{\"_id\": \"id4\", \"name\": \"baz\" }")),
                Error);
+
+  cout << "getOne(): array" << endl;
+
   EXPECT_EQ(string("qux"), coll.getOne("id3")["name"].get<string>());
   EXPECT_EQ(string("id3"), coll.getOne("id3")["_id"].get<string>());
+
+  cout << "replaceOne(): non-existing" << endl;
 
   // should affect none
   EXPECT_EQ(0,
     coll.replaceOne("id4", expr(R"({"name": "baz" })"))
         .getAffectedItemsCount());
+
+  cout << "Done!" << endl;
 }
 
 

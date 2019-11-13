@@ -1846,7 +1846,8 @@ TEST_F(Sess, pool_opts)
 
 
   std::stringstream uri;
-  uri << "mysqlx://" << get_user()<< "@localhost:"<< get_port() <<"/test";
+  uri << "mysqlx://" << (get_user() ? get_user() : "user")
+      << "@localhost:" << get_port() <<"/test";
 
   ClientSettings working_settings(uri.str(),
                         R"( { "pooling": {
