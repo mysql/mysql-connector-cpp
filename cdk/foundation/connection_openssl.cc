@@ -106,7 +106,7 @@ POP_SYS_WARNINGS_CDK
   differently from pre-TLSv1.3 suites that have OpenSSL specific names.
 */
 
-#define TLS_CIPHERS_APPROVED(X) \
+#define TLS_CIPHERS_APPROVED1(X) \
   X("TLS_AES_128_GCM_SHA256", "") \
   X("TLS_AES_256_GCM_SHA384", "") \
   X("TLS_CHACHA20_POLY1305_SHA256", "") \
@@ -125,6 +125,9 @@ POP_SYS_WARNINGS_CDK
   X("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384", "DHE-RSA-AES256-GCM-SHA384") \
   X("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256", "ECDHE-ECDSA-CHACHA20-POLY1305") \
   X("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", "ECDHE-RSA-CHACHA20-POLY1305") \
+
+
+#define TLS_CIPHERS_APPROVED2(X) \
   X("TLS_DH_DSS_WITH_AES_128_GCM_SHA256", "DH-DSS-AES128-GCM-SHA256") \
   X("TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", "ECDH-ECDSA-AES128-GCM-SHA256") \
   X("TLS_DH_DSS_WITH_AES_256_GCM_SHA384", "DH-DSS-AES256-GCM-SHA384") \
@@ -154,7 +157,8 @@ POP_SYS_WARNINGS_CDK
 
 #define TLS_CIPHERS_DEFAULT(X) \
   TLS_CIPHERS_MANDATORY(X) \
-  TLS_CIPHERS_APPROVED(X) \
+  TLS_CIPHERS_APPROVED1(X) \
+  TLS_CIPHERS_APPROVED2(X) \
   TLS_CIPHERS_COMPAT(X) \
 
 
@@ -406,7 +410,7 @@ void TLS_helper::set_versions(const Versions_list &list)
         SSL_OP_NO_TLSv1_1 |
         SSL_OP_NO_TLSv1_2;
 
-  auto process_version = [&](const char *str, int val, TLS_version ver)
+  auto process_version = [&](const char *, int val, TLS_version ver)
   {
     if (0 == list.count(ver))
       return;
@@ -462,6 +466,13 @@ void TLS_helper::set_versions(const Versions_list &list)
 
 void TLS_helper::set_ciphers(const Ciphers_list &list)
 {
+  /*
+    Note: This function is written so that only one iteration through
+    the list is needed. We avoid iterating over all default ciphers,
+    because in most cases the list of default ciphers will be much longer
+    than the list of ciphers specified by the user.
+  */
+
   m_cipher_list.clear();
   m_cipher_list_13.clear();
 
@@ -472,25 +483,44 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
     list.append(name);
   };
 
+  /*
+    Mapping from IANA cipher names to OpenSSL names and priorities.
+  */
 
-  static std::map<std::string, std::string> cipher_name_map =
+  static std::map<std::string, std::pair<std::string, unsigned>> cipher_name_map =
   {
-#define TLS_CIPHER_MAP(A,B)  {A,B},
-    TLS_CIPHERS(TLS_CIPHER_MAP)
+#define TLS_CIPHER_MAP0(A,B)  {A,{B,0}},
+#define TLS_CIPHER_MAP1(A,B)  {A,{B,1}},
+#define TLS_CIPHER_MAP2(A,B)  {A,{B,2}},
+#define TLS_CIPHER_MAP3(A,B)  {A,{B,3}},
+
+    TLS_CIPHERS_MANDATORY(TLS_CIPHER_MAP0)
+    TLS_CIPHERS_APPROVED1(TLS_CIPHER_MAP1)
+    TLS_CIPHERS_APPROVED2(TLS_CIPHER_MAP2)
+    TLS_CIPHERS_COMPAT(TLS_CIPHER_MAP3)
   };
 
+  /*
+    For each priority, store a separate list of ciphers of that priority
+    to later combine them in the correct priority order.
+  */
+
+  std::string cipher_list[4];
 
   for (const std::string &cipher : list)
   {
     try {
-      const std::string &name = cipher_name_map.at(cipher);
+      const auto &name_prio = cipher_name_map.at(cipher);
 
-      // Empty name means that this is TLSv1.3+ cipher.
+      /*
+        Empty name means that this is TLSv1.3+ cipher. Otherwise append the
+        openssl name to the correct priority list.
+      */
 
-      if (name.empty())
+      if (name_prio.first.empty())
         add_cipher(m_cipher_list_13, cipher);
       else
-        add_cipher(m_cipher_list, name);
+        add_cipher(cipher_list[name_prio.second], name_prio.first);
     }
     catch (const std::out_of_range&)
     {
@@ -500,6 +530,13 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
       */
     }
   }
+
+  // Build final list of ciphers taking priorities into account.
+
+  m_cipher_list = cipher_list[0]
+    + ":" + cipher_list[1]
+    + ":" + cipher_list[2]
+    + ":" + cipher_list[3];
 
 }
 

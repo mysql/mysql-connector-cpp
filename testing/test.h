@@ -200,6 +200,16 @@ protected:
     return m_password;
   }
 
+  std::string get_uri() const
+  {
+    std::stringstream uri;
+    uri << "mysqlx://" << get_user();
+    if (get_password() && *get_password())
+      uri << ":" << get_password();
+    uri << "@" << get_host() << ":" << get_port();
+    return uri.str();
+  }
+
   bool has_xplugin() const
   {
     return NULL == m_status;
