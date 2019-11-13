@@ -159,7 +159,9 @@ TEST_F(Crud, basic)
     cout << "Query sent, reading rows..." << endl;
     cout << "There are " << res.getColumnCount() << " columns in the result" << endl;
 
-    EXPECT_EQ(3, res.getColumnCount());
+    //From server 8.0.19, 3 columns are expected
+    //have 2 columns
+    EXPECT_GE(res.getColumnCount(), 2);
 
     Row row;
     unsigned row_count = 0;

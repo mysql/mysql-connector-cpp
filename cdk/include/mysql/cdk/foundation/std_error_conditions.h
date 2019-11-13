@@ -98,7 +98,7 @@
   X (operation_not_permitted,       EPERM)            \
   X (operation_not_supported,       EOPNOTSUPP)       \
   X (operation_would_block,         EWOULDBLOCK)      \
-  X (owner_dead,                    EOWNERDEAD)       \
+/*  X (owner_dead,                    EOWNERDEAD)     */\
   X (permission_denied,             EACCES)           \
   X (protocol_error,                EPROTO)           \
   X (protocol_not_supported,        EPROTONOSUPPORT)  \
@@ -106,7 +106,7 @@
   X (resource_deadlock_would_occur, EDEADLK)          \
   X (resource_unavailable_try_again, EAGAIN)          \
   X (result_out_of_range,           ERANGE)           \
-  X (state_not_recoverable,         ENOTRECOVERABLE)  \
+/*  X (state_not_recoverable,         ENOTRECOVERABLE)*/\
 /*  X (stream_timeout,                ETIME)          */\
   X (text_file_busy,                ETXTBSY)          \
   X (timed_out,                     ETIMEDOUT)        \

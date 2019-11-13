@@ -440,8 +440,6 @@ public:
 
 private:
 
-  friend Stmt_op;
-
   // Send Connection Attributes
   void send_connection_attr(const Options &options);
   // Authentication (cdk::protocol::mysqlx::Auth_processor)

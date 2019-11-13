@@ -39,84 +39,87 @@ ENDMACRO(SETUP_GTEST)
 
 SET(WITH_GTEST $ENV{WITH_GTEST} CACHE PATH "Location of gtest")
 
-#
-# TODO: Try to find gtest in system-wide locations if WITH_GTEST is
-# not set
-#
 
-if(DEFINED WITH_GTEST)
-  set(GTEST_ROOT ${WITH_GTEST})
-endif()
+if(NOT WITH_GTEST)
 
-find_package(GTest)
+  #
+  # Try to find gtest in system-wide locations
+  #
 
-if(NOT GTEST_FOUND)
+  find_package(GTest)
 
-IF(NOT DEFINED WITH_GTEST)
-  MESSAGE(FATAL_ERROR "This project requires gtest libraries"
-          " but WITH_GTEST option was not specified."
-          " Please set it to the location where gtest"
-          " was built from sources using cmake.")
-ENDIF()
+  if(NOT GTEST_FOUND)
+    message(FATAL_ERROR "This project requires gtest libraries"
+            " but WITH_GTEST option was not specified."
+            " Please set it to the location where gtest"
+            " was built from sources using cmake.")
+  endif()
 
-message("Looking for gtest build in: ${WITH_GTEST}")
+  list(GET GTEST_LIBRARIES 0 gtest_location)
+  list(GET GTEST_MAIN_LIBRARIES 0  gtest_main_location)
 
-#
-# TODO: Configure gtest build if sources location is given
-#
+else(NOT WITH_GTEST)
 
-IF(NOT EXISTS "${WITH_GTEST}/CMakeCache.txt")
-MESSAGE(FATAL_ERROR
-  "Could not find gtest build in this location: ${WITH_GTEST}"
-)
-ENDIF()
+  message("Looking for gtest build in: ${WITH_GTEST}")
 
-#
-# Read source location from build configuration cache and set
-# GTEST_INCLUDE_DIR.
-#
+  #
+  # TODO: Configure gtest build if source location is given
+  #
 
-LOAD_CACHE(${WITH_GTEST} READ_WITH_PREFIX GTEST_
-    CMAKE_PROJECT_NAME)
-#MESSAGE(STATUS "Gtest project name: ${GTEST_CMAKE_PROJECT_NAME}")
+  if(NOT EXISTS "${WITH_GTEST}/CMakeCache.txt")
+    message(FATAL_ERROR
+      "Could not find gtest build in this location: ${WITH_GTEST}"
+    )
+  endif()
 
-LOAD_CACHE(${WITH_GTEST} READ_WITH_PREFIX GTEST_
-    ${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR)
+  #
+  # Read source location from build configuration cache and set
+  # GTEST_INCLUDE_DIR.
+  #
 
-FIND_PATH(GTEST_INCLUDE_DIRS
-        NAMES gtest/gtest.h
-        PATHS ${GTEST_${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR}/include ${GTEST_${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR}/gtest/include
-        NO_DEFAULT_PATH
-          )
+  load_cache(${WITH_GTEST} READ_WITH_PREFIX GTEST_
+    CMAKE_PROJECT_NAME
+  )
+  #MESSAGE(STATUS "Gtest project name: ${GTEST_CMAKE_PROJECT_NAME}")
 
-IF(NOT EXISTS "${GTEST_INCLUDE_DIRS}/gtest/gtest.h")
-  MESSAGE(FATAL_ERROR "Could not find gtest headers at: ${GTEST_INCLUDE_DIRS}")
-ENDIF()
+  load_cache(${WITH_GTEST} READ_WITH_PREFIX GTEST_
+    ${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR
+  )
 
-#
-# TODO: Run build if libraries can not be found in expected locations
-#
+  message("Gtest sources at: ${GTEST_${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR}")
 
-FIND_LIBRARY(gtest_location
-  NAMES libgtest gtest
-  PATHS ${WITH_GTEST} ${WITH_GTEST}/gtest
-  PATH_SUFFIXES . Release RelWithDebInfo Debug
-  NO_DEFAULT_PATH
-)
+  find_path(GTEST_INCLUDE_DIRS
+    NAMES gtest/gtest.h
+    PATHS
+      ${GTEST_${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
+      ${GTEST_${GTEST_CMAKE_PROJECT_NAME}_SOURCE_DIR}/gtest/include
+    NO_DEFAULT_PATH
+  )
 
-FIND_LIBRARY(gtest_main_location
-  NAMES libgtest_main gtest_main
-  PATHS ${WITH_GTEST} ${WITH_GTEST}/gtest
-  PATH_SUFFIXES . Release RelWithDebInfo Debug
-  NO_DEFAULT_PATH
-)
+  if(NOT EXISTS "${GTEST_INCLUDE_DIRS}/gtest/gtest.h")
+    message(FATAL_ERROR "Could not find gtest headers at: ${GTEST_INCLUDE_DIRS}")
+  endif()
 
-else()
+  #
+  # TODO: Run build if libraries can not be found in expected locations
+  #
 
-list(GET GTEST_LIBRARIES 0 gtest_location)
-list(GET GTEST_MAIN_LIBRARIES 0  gtest_main_location)
+  find_library(gtest_location
+    NAMES libgtest gtest
+    PATHS ${WITH_GTEST} ${WITH_GTEST}/gtest
+    PATH_SUFFIXES . Release RelWithDebInfo Debug
+    NO_DEFAULT_PATH
+  )
 
-endif(NOT GTEST_FOUND)
+  find_library(gtest_main_location
+    NAMES libgtest_main gtest_main
+    PATHS ${WITH_GTEST} ${WITH_GTEST}/gtest
+    PATH_SUFFIXES . Release RelWithDebInfo Debug
+    NO_DEFAULT_PATH
+  )
+
+endif(NOT WITH_GTEST)
+
 
 MESSAGE(STATUS "GTEST_INCLUDE_DIRS: ${GTEST_INCLUDE_DIRS}")
 
