@@ -37,6 +37,7 @@ using std::cout;
 using std::endl;
 using namespace mysqlx;
 
+
 class Sess : public mysqlx::test::Xplugin
 {
 public:
@@ -70,6 +71,16 @@ public:
     return check_var(get_sess(), var);
   }
 
+  SessionSettings get_opt() const
+  {
+    return {
+        SessionOption::HOST, get_host(),
+        SessionOption::PORT, get_port(),
+        SessionOption::USER, get_user(),
+        SessionOption::PWD, get_password() ? get_password() : nullptr,
+    };
+  }
+
   /*
     Returns OpenSSL name of the cipher if supported,
     otherwise an empty string.
@@ -79,11 +90,9 @@ public:
   {
     try {
 
-      SessionSettings opt(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
+      SessionSettings opt = get_opt();
+
+      opt.set(
         SessionOption::SSL_MODE, SSLMode::REQUIRED,
         SessionOption::TLS_CIPHERSUITES, name
       );
@@ -98,6 +107,27 @@ public:
     catch (const Error&)
     {
       return {};
+    }
+  }
+
+  bool check_tls_ver(const char* tls_ver)
+  {
+    try {
+
+      SessionSettings opt = get_opt();
+
+      opt.set(
+        SessionOption::SSL_MODE, SSLMode::REQUIRED,
+        SessionOption::TLS_VERSIONS, tls_ver
+      );
+
+      mysqlx::Session sess(opt);
+
+      return true;
+    }
+    catch (const Error&)
+    {
+      return false;
     }
   }
 
@@ -125,15 +155,14 @@ TEST_F(Sess, tls_ciphers_prio)
 
   std::list<string> ciphers = { d1, a1 };
 
-  mysqlx::Session sess(
-    SessionOption::HOST, get_host(),
-    SessionOption::PORT, get_port(),
-    SessionOption::USER, get_user(),
-    SessionOption::PWD, get_password() ? get_password() : nullptr,
+  SessionSettings opt = get_opt();
+  opt.set(
     SessionOption::SSL_MODE, SSLMode::REQUIRED,
     SessionOption::TLS_VERSIONS, "TLSv1.2",
     SessionOption::TLS_CIPHERSUITES, ciphers
   );
+
+  mysqlx::Session sess(opt);
 
   // We expect that higher priority cipher is selected.
 
@@ -172,124 +201,28 @@ TEST_F(Sess, tls_ver_ciphers)
     suites.push_back(c.second);
   }
 
+
   {
     cout << "TLS VERSIONS AND CIPHERS URL TEST" << endl;
 
-    {
-      std::stringstream str;
-      str << get_uri() << "/?tls-versions=[" << versions_str << "]&"
-        << "tls-ciphersuites=[" << suites_str << "]";
+    std::stringstream str;
+    str << get_uri() << "/?tls-versions=[" << versions_str << "]&"
+      << "tls-ciphersuites=[" << suites_str << "]";
 
-      mysqlx::Session sess(str.str());
-
-      EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
-      EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
-
-
-      // Negative: invalid or not accepted ciphers
-
-      // No valid ciphers
-      EXPECT_THROW(
-        mysqlx::Session sess(
-          get_uri() + "/?tls-ciphersuites=["
-          "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA"
-          "]"
-        ),
-        Error
-      );
-
-      // Some ciphers invalid, but some are OK
-      EXPECT_NO_THROW(
-        mysqlx::Session sess(
-          get_uri() + "/?tls-versions=[TLSv1.1,TLSv1.2]"
-          "&tls-ciphersuites=["
-            "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
-            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
-          "]"
-        );
-      );
-
-
-      // Negative: wrong version name
-
-      EXPECT_THROW(
-        mysqlx::Session sess(get_uri() + "/?tls-versions=[SSLv1]"), Error
-      );
-
-      EXPECT_THROW(
-        mysqlx::Session sess(get_uri() + "/?tls-versions=[foo]"), Error
-      );
-
-      // Negative: no valid version given
-
-      EXPECT_THROW(
-        mysqlx::Session sess(get_uri() + "/?tls-versions=[]"), Error
-      );
-
-      // TODO: this test will not work when TLSv1.3 is supported
-      //EXPECT_THROW(
-      //  mysqlx::Session sess(uri.str() + "/?tls-versions=[TLSv1.3]"), Error
-      //);
-
-      // Negative: option defined twice
-
-      EXPECT_THROW(
-        mysqlx::Session sess(get_uri() + "&tls-versions=[TLSv1.3]"), Error
-      );
-
-      EXPECT_THROW(
-        mysqlx::Session sess(
-          get_uri() + "&tls-ciphersuites=[TLS_RSA_WITH_IDEA_CBC_SHA]"
-        ),
-        Error
-      );
-
-      EXPECT_THROW(
-        mysqlx::Session sess(
-          get_uri() + "/?tls-versions=[]&tls-versions=[TLSv1.3]"
-        ),
-        Error
-      );
-
-      EXPECT_THROW(
-        mysqlx::Session sess(
-          get_uri() + "/?tls-ciphersuites=[]"
-          + "&tls-ciphersuites=[TLS_RSA_WITH_IDEA_CBC_SHA]"
-        ),
-        Error
-      );
-    }
-  }
-
-  {
-    cout << "TLS VERSIONS AND CIPHERS OPTIONS CONTAINTERS TEST" << endl;
-
-    mysqlx::Session sess(
-      SessionOption::HOST, get_host(),
-      SessionOption::PORT, get_port(),
-      SessionOption::USER, get_user(),
-      SessionOption::PWD, get_password() ? get_password() : nullptr,
-      SessionOption::SSL_MODE, SSLMode::REQUIRED,
-      SessionOption::TLS_VERSIONS, versions,
-      SessionOption::TLS_CIPHERSUITES, suites
-    );
+    mysqlx::Session sess(str.str());
 
     EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
     EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
+
 
     // Negative: invalid or not accepted ciphers
 
     // No valid ciphers
     EXPECT_THROW(
       mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
-        SessionOption::TLS_CIPHERSUITES,
-          std::list<string>{ "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA"}
+        get_uri() + "/?tls-ciphersuites=["
+        "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA"
+        "]"
       ),
       Error
     );
@@ -297,171 +230,208 @@ TEST_F(Sess, tls_ver_ciphers)
     // Some ciphers invalid, but some are OK
     EXPECT_NO_THROW(
       mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
-        SessionOption::TLS_CIPHERSUITES,
-          std::list<string>{
-            "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA",
-            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
-          }
-      )
+        get_uri() + "/?tls-versions=[TLSv1.1,TLSv1.2]"
+        "&tls-ciphersuites=["
+          "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
+          "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+        "]"
+      );
     );
 
 
     // Negative: wrong version name
 
     EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "SSLv1"
-      ), Error
+      mysqlx::Session sess(get_uri() + "/?tls-versions=[SSLv1]"), Error
     );
 
     EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "foo"
-      ), Error
+      mysqlx::Session sess(get_uri() + "/?tls-versions=[foo]"), Error
     );
 
     // Negative: no valid version given
 
     EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, std::vector<string>()
-      ), Error
+      mysqlx::Session sess(get_uri() + "/?tls-versions=[]"), Error
     );
 
-    // TODO: this test will not work when TLSv1.3 is supported
-    //EXPECT_THROW(
-    //  mysqlx::Session sess(
-    //    SessionOption::HOST, get_host(),
-    //    SessionOption::PORT, get_port(),
-    //    SessionOption::USER, get_user(),
-    //    SessionOption::PWD, get_password() ? get_password() : nullptr,
-    //    SessionOption::SSL_MODE, SSLMode::REQUIRED,
-    //    SessionOption::TLS_VERSIONS, "TLSv1.3"
-    //  ), Error
-    //);
+    if (!check_tls_ver("TLSv1.3"))
+    {
+      EXPECT_THROW(
+        mysqlx::Session sess(get_uri() + "/?tls-versions=[TLSv1.3]"), Error
+      );
+    }
 
     // Negative: option defined twice
 
     EXPECT_THROW(
+      mysqlx::Session sess(get_uri() + "&tls-versions=[TLSv1.3]"), Error
+    );
+
+    EXPECT_THROW(
       mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, "one",
-        SessionOption::TLS_VERSIONS, "two"
+        get_uri() + "&tls-ciphersuites=[TLS_RSA_WITH_IDEA_CBC_SHA]"
       ),
       Error
     );
 
     EXPECT_THROW(
       mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_CIPHERSUITES, "one",
-        SessionOption::TLS_CIPHERSUITES, "two"
+        get_uri() + "/?tls-versions=[]&tls-versions=[TLSv1.3]"
+      ),
+      Error
+    );
+
+    EXPECT_THROW(
+      mysqlx::Session sess(
+        get_uri() + "/?tls-ciphersuites=[]"
+        + "&tls-ciphersuites=[TLS_RSA_WITH_IDEA_CBC_SHA]"
       ),
       Error
     );
   }
 
+
   {
-    cout << "TLS VERSIONS AND CIPHERS OPTIONS COMMA SEPARATED TEST" << endl;
+    cout << "TLS VERSIONS AND CIPHERS SETTINGS TEST" << endl;
 
-    mysqlx::Session sess(
-                         SessionOption::HOST, get_host(),
-                         SessionOption::PORT, get_port(),
-                         SessionOption::USER, get_user(),
-                         SessionOption::PWD, get_password() ? get_password() : nullptr,
-                         SessionOption::SSL_MODE, SSLMode::REQUIRED,
-                         SessionOption::TLS_VERSIONS, versions_str,
-                         SessionOption::TLS_CIPHERSUITES, suites_str
-    );
+    SessionSettings opt0 = get_opt();
+    opt0.set(SessionOption::SSL_MODE, SSLMode::REQUIRED);
 
-    EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
-    EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
+    {
+      SessionSettings opt = opt0;
+      opt.set(
+        SessionOption::TLS_VERSIONS, versions,
+        SessionOption::TLS_CIPHERSUITES, suites
+      );
+
+      mysqlx::Session sess(opt);
+
+      EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
+      EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
+    }
 
     // Negative: invalid or not accepted ciphers
 
-    // No valid ciphers
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_CIPHERSUITES, "foo, TLS_DHE_RSA_WITH_DES_CBC_SHA"
-      ),
-      Error
-    );
+    {
+      // No valid ciphers
 
-    // Some ciphers invalid, but some are OK
-    EXPECT_NO_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
+      SessionSettings opt = opt0;
+      opt.set(
         SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
-        SessionOption::TLS_CIPHERSUITES, "foo,TLS_DHE_RSA_WITH_DES_CBC_SHA,"
-          "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_3DES_EDE_CBC_SHA"
-      )
-    );
+        SessionOption::TLS_CIPHERSUITES,
+        std::list<string>{ "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA"}
+      );
+
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+
+      opt.erase(SessionOption::TLS_CIPHERSUITES);
+      opt.set(
+        SessionOption::TLS_CIPHERSUITES, "foo, TLS_DHE_RSA_WITH_DES_CBC_SHA"
+      );
+
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+    }
+
+    {
+      // Some ciphers invalid, but some are OK
+
+      SessionSettings opt = opt0;
+      opt.set(
+        SessionOption::TLS_VERSIONS, "TLSv1.1,TLSv1.2",
+        SessionOption::TLS_CIPHERSUITES,
+        std::list<string>{
+        "foo", "TLS_DHE_RSA_WITH_DES_CBC_SHA",
+          "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+          "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+        }
+      );
+
+      EXPECT_NO_THROW(mysqlx::Session sess(opt));
+
+      opt.erase(SessionOption::TLS_CIPHERSUITES);
+      opt.set(
+        SessionOption::TLS_CIPHERSUITES,
+        "foo, TLS_DHE_RSA_WITH_DES_CBC_SHA"
+        ",TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+        ",TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+      );
+
+      EXPECT_NO_THROW(mysqlx::Session sess(opt));
+    }
+
+
+    // Negative: wrong version name
+
+    {
+      SessionSettings opt = opt0;
+
+      opt.erase(SessionOption::TLS_VERSIONS);
+      opt.set(SessionOption::TLS_VERSIONS, "SSLv1");
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+
+      opt.erase(SessionOption::TLS_VERSIONS);
+      opt.set(SessionOption::TLS_VERSIONS, "foo");
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+    }
+
 
     // Negative: no valid version given
 
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, ""
-      ), Error
-    );
+    {
+      SessionSettings opt = opt0;
 
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        SessionOption::HOST, get_host(),
-        SessionOption::PORT, get_port(),
-        SessionOption::USER, get_user(),
-        SessionOption::PWD, get_password() ? get_password() : nullptr,
-        SessionOption::SSL_MODE, SSLMode::REQUIRED,
-        SessionOption::TLS_VERSIONS, string()
-      ), Error
-    );
+      opt.set(SessionOption::TLS_VERSIONS, std::vector<string>());
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+
+      opt.erase(SessionOption::TLS_VERSIONS);
+      opt.set(SessionOption::TLS_VERSIONS, "");
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+
+      opt.erase(SessionOption::TLS_VERSIONS);
+      opt.set(SessionOption::TLS_VERSIONS, string());
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+    }
+
+    if (!check_tls_ver("TLSv1.3"))
+    {
+      SessionSettings opt = opt0;
+
+      /*
+        It is OK to select TLSv1.3 inside TLS_VERSIONS, but connection will
+        fail because this version is not supported.
+      */
+
+      EXPECT_NO_THROW(opt.set(SessionOption::TLS_VERSIONS, "TLSv1.3"));
+      EXPECT_THROW(mysqlx::Session sess(opt), Error);
+    }
+
+    // Negative: option defined twice
+
+    {
+      SessionSettings opt = opt0;
+
+      EXPECT_THROW(
+        opt.set(
+          SessionOption::TLS_VERSIONS, "one",
+          SessionOption::TLS_VERSIONS, "two"
+        ),
+        Error
+      );
+
+      EXPECT_THROW(
+        opt.set(
+          SessionOption::TLS_CIPHERSUITES, "one",
+          SessionOption::TLS_CIPHERSUITES, "two"
+        ),
+        Error
+      );
+    }
+
   }
 
 }
+
 
 TEST_F(Sess, databaseObj)
 {

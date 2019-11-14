@@ -362,11 +362,19 @@ void TLS_helper::setup(SSL_CTX *ctx)
   );
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
+  if (m_ver_min)
+  {
     if (1 != SSL_CTX_set_min_proto_version(ctx, m_ver_min))
       throw_openssl_error();
+  }
 
+  if (m_ver_max)
+  {
     if (1 != SSL_CTX_set_max_proto_version(ctx, m_ver_max))
       throw_openssl_error();
+  }
+
 #endif
 
   long result_mask = SSL_CTX_set_options(ctx, m_ver_mask);
@@ -392,7 +400,23 @@ void TLS_helper::setup(SSL_CTX *ctx)
   SSL_CTX_set_cipher_list(ctx, m_cipher_list.c_str());
 
 #if OPENSSL_VERSION_NUMBER>=0x1010100fL
-  SSL_CTX_set_ciphersuites(ctx, m_cipher_list_13.c_str());
+
+  /*
+    Note: If TLSv1.3 is not enabled, there is no need to restrict
+    1.3 ciphers as they won't be used anyway. Also, it turns out
+    that setting any 1.3 ciphers while TLSv1.3 is not disabled breaks
+    connections that otherwise could down-grade to TLSv1.2. As if
+    calling SSL_CTX_set_ciphersuites() in this situation would set
+    minimum TLS version to TLSv1.3.
+
+    Note: m_ver_max == 0 means that there is no limit.
+  */
+
+  if (!m_ver_max || m_ver_max > TLS1_2_VERSION)
+  {
+    SSL_CTX_set_ciphersuites(ctx, m_cipher_list_13.c_str());
+  }
+
 #endif
 
 }
