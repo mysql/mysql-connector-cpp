@@ -582,7 +582,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         Parsing uri prior to processing all parameters, so indivudually
         specified parameters precede over those in the uri
       */
-      parseUri(*p_s, uri);
+      if(!parseUri(*p_s, uri))
+        throw sql::InvalidArgumentException("Invalid hostname URI");
+
     } else {
       throw sql::InvalidArgumentException("No string value passed for hostName");
     }
