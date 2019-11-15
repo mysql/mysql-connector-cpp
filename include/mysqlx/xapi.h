@@ -601,6 +601,9 @@ mysqlx_get_client_from_options(mysqlx_session_options_t *opt,
   Sessions created by this client are closed, but their resources are not freed.
   `mysqlx_session_close()` has to be called to prevent memory leaks.
 
+  After a call to this function the given client handle becomes invalid.
+  Any attempt to use the handle after this, results in undefined behavior.
+
 
   @param client client handle
 
@@ -772,6 +775,9 @@ mysqlx_get_session_from_options(mysqlx_session_options_t *opt,
   Closing session frees all related resources, including those
   allocated by statements and results belonging to the session.
 
+  After a call to this function the given session handle becomes invalid.
+  Any attempt to use the handle after this, results in undefined behavior.
+
   @param session session handle
 
   @ingroup xapi_sess
@@ -789,6 +795,10 @@ PUBLIC_API void mysqlx_session_close(mysqlx_session_t *session);
 
   @note The function checks only the internal session status without
     communicating with server(s).
+
+  @note This function cannot be called for a session that was closed,
+    because in this case the session handle itself is invalid and
+    cannot be used in API calls.
 
   @ingroup xapi_sess
 */
@@ -2545,6 +2555,9 @@ mysqlx_set_row_locking(mysqlx_stmt_t *stmt, int locking, int contention);
 
   After calling this function on a handle it becomes invalid and
   should not be used any more.
+
+  @note This function should not be called on a client or session handle
+        - use `mysqlx_client_close()` or `mysqlx_session_close()` instead.
 
   @note Statement, result, schema, collection, table and some error
         handles are also freed automatically when the session is closed.
