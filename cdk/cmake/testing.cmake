@@ -143,6 +143,7 @@ IF(WITH_TESTS)
   set_global(test_tests ${test_tests})
 
   add_library(${TEST} OBJECT ${ARGN})
+  set_target_properties(${TEST} PROPERTIES FOLDER "Tests")
 
   target_include_directories(${TEST} PRIVATE ${test_includes})
 
@@ -152,6 +153,7 @@ IF(WITH_TESTS)
 
     target_compile_definitions(${TEST} PRIVATE
       -D_SCL_SECURE_NO_WARNINGS
+      -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
     )
 
     target_compile_options(${TEST} PRIVATE
@@ -276,6 +278,7 @@ IF(WITH_TESTS)
                  ${CMAKE_CURRENT_BINARY_DIR}/tests_main.cc
                  ${test_sources}
   )
+  set_target_properties(${target_run_unit_tests} PROPERTIES FOLDER "Tests")
 
   TARGET_LINK_LIBRARIES(${target_run_unit_tests} gtest)
 
@@ -284,6 +287,11 @@ IF(WITH_TESTS)
   #
 
   if (MSVC)
+
+    target_compile_definitions(${target_run_unit_tests} PRIVATE
+      -D_SCL_SECURE_NO_WARNINGS
+      -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+    )
 
     target_compile_options(${target_run_unit_tests} PRIVATE
       /wd4244
@@ -344,6 +352,8 @@ IF(WITH_TESTS)
      run_unit_tests --generate_test_groups=${test_group_defs}
      SOURCES ${tests_dir}/test_main.in
   )
+
+  set_target_properties(${cdk_target_prefix}update_test_groups PROPERTIES FOLDER "Tests")
 
 ENDIF()
 ENDMACRO(ADD_TEST_TARGET)

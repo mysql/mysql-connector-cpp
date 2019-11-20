@@ -45,6 +45,14 @@ using namespace ::mysqlx;
 uint32_t get_type(const Format_info&);
 
 
+struct mysqlx_row_struct
+  : public Mysqlx_diag
+  , public Row_impl<>
+{
+  using Row_impl<>::Row_impl;
+};
+
+
 struct mysqlx_result_struct
   : public Mysqlx_diag
   , Result_impl
@@ -103,7 +111,6 @@ public:
   const char *get_next_generated_id();
 
 };
-
 
 
 struct mysqlx_stmt_struct : public Mysqlx_diag

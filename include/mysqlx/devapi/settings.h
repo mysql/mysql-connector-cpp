@@ -475,7 +475,9 @@ public:
       `"mysqlx://user@host?connection-attributes=[]"` -
         the same as setting to `true`\n
       `"mysqlx://user@host?connection-attributes"` -
-        the same as setting to `true`
+        the same as setting to `true`\n
+    - `tls-versions=[...]` : see `SessionOption::TLS_VERSIONS`
+    - `tls-ciphersuites=[...]` : see `SessionOption::TLS_CIPHERSUITES`
   */
 
   SessionSettings(const string &uri)

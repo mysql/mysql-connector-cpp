@@ -85,10 +85,19 @@ set(CONFIG_EXPR
   $<$<CONFIG:Static>:Release>$<$<NOT:$<CONFIG:Static>>:$<CONFIG>>
 )
 
+set(set_arch)
+if(CMAKE_GENERATOR_PLATFORM)
+  set(set_arch -A ${CMAKE_GENERATOR_PLATFORM})
+endif()
+
+set(set_toolset)
+if(CMAKE_GENERATOR_TOOLSET)
+  set(set_toolset -T ${CMAKE_GENERATOR_TOOLSET})
+endif()
 
 if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
 
-  message("==== Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR}")
+  message("==== Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR} ${set_arch} ${set_toolset}")
 
   file(REMOVE "${PB_BINARY_DIR}/CMakeCache.txt")
   file(MAKE_DIRECTORY "${PB_BINARY_DIR}")
@@ -102,6 +111,8 @@ if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
   execute_process(
     COMMAND ${CMAKE_COMMAND}
       -G "${CMAKE_GENERATOR}"
+      ${set_arch}
+      ${set_toolset}
       ${set_build_type}
       -DSTATIC_MSVCRT=${STATIC_MSVCRT}
       -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
@@ -250,6 +261,8 @@ add_custom_command(OUTPUT "${build_stamp}"
 add_custom_target(build_protobuf
   SOURCES "${build_stamp}"
 )
+
+set_target_properties(build_protobuf PROPERTIES FOLDER "Misc")
 
 add_dependencies(Protobuf::pb-full build_protobuf)
 add_dependencies(Protobuf::pb-lite build_protobuf)

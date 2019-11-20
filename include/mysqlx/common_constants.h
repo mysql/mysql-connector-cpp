@@ -45,12 +45,16 @@
 
   Note: Value of 0 is reserved for special uses and thus constant values
   are always > 0.
-*/
 
-/*
   Note: the empty END_LIST macro at the end of list macros helps Doxygen
   correctly interpret documentation for the list item.
 */
+
+#define OPT_STR(X,Y,N) X##_str(Y,N)
+#define OPT_BOOL(X,Y,N) X##_bool(Y,N)
+#define OPT_NUM(X,Y,N) X##_num(Y,N)
+#define OPT_ANY(X,Y,N) X##_any(Y,N)
+
 
 #undef END_LIST
 #define END_LIST
@@ -107,14 +111,22 @@
     requests sending only the default attributes which is also the default
     behavior when this option is not set.
   */ \
-  OPT_STR(x,CONNECTION_ATTRIBUTES,13)
+  OPT_STR(x,CONNECTION_ATTRIBUTES,13)                                        \
+  /*!
+    List of allowed TLS protocol versions, such as "TLSv1.2". The value is a
+    string with comma separated versions. In C++ code it can also be an
+    iterable container with versions.
+  */                                                                         \
+  OPT_STR(x,TLS_VERSIONS, 14)                                                \
+  /*!
+    List of allowed TLS cipher suites. The value is a string with
+    comma separated IANA cipher suitenames (such as
+    "TLS_RSA_WITH_3DES_EDE_CBC_SHA"). In C++ code it can also be an iterable
+    container with names.
+    Unknown cipher suites are silently ignored.
+  */                                                                         \
+  OPT_STR(x,TLS_CIPHERSUITES, 15)                                            \
   END_LIST
-
-
-#define OPT_STR(X,Y,N) X##_str(Y,N)
-#define OPT_BOOL(X,Y,N) X##_bool(Y,N)
-#define OPT_NUM(X,Y,N) X##_num(Y,N)
-#define OPT_ANY(X,Y,N) X##_any(Y,N)
 
 
 /*
@@ -131,7 +143,9 @@
   X("ssl-ca", SSL_CA)       \
   X("auth", AUTH)           \
   X("connect-timeout", CONNECT_TIMEOUT) \
-  X("connection-attributes",CONNECTION_ATTRIBUTES)
+  X("connection-attributes",CONNECTION_ATTRIBUTES)\
+  X("tls-versions", TLS_VERSIONS) \
+  X("tls-ciphersuites", TLS_CIPHERSUITES)
   END_LIST
 
 

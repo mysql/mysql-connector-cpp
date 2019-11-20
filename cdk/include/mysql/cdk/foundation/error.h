@@ -85,6 +85,8 @@ namespace foundation {
   X (no_transaction,    10, "No transaction") \
   X (tls_error,         11, "TLS error") \
   X (bad_savepoint,     12, "Bad savepoint") \
+  X (tls_ciphers,       13, "No valid TLS cipher suite configured") \
+  X (tls_versions,      14, "No valid TLS protocol versions configured") \
 
 // Define constants for CDK error conditions in cdkerrc structure
 

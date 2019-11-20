@@ -62,6 +62,7 @@ class Settings_impl::Setter
   , public parser::URI_processor
   , cdk::JSON::Processor::Any_prc
   , cdk::JSON::Processor::Any_prc::Scalar_prc
+  , cdk::JSON::Processor::Any_prc::List_prc
 {
   Settings_impl &m_settings;
   Settings_impl::Data m_data;
@@ -71,33 +72,7 @@ class Settings_impl::Setter
   // ClientOption is < 0
   int m_cur_opt = 0;
 
-  int get_option_from_name(const std::string& key)
-  {
-
-    //Client options object
-    std::string upper_key = to_upper(key);
-    if (!m_inside_client_opts && upper_key == "POOLING")
-    {
-      m_inside_client_opts = true;
-      return 0;
-    }
-    else if (m_inside_client_opts)
-    {
-      if (upper_key == "ENABLED")
-        return Client_option_impl::POOLING;
-      else if (upper_key == "MAXSIZE")
-        return Client_option_impl::POOL_MAX_SIZE;
-      else if (upper_key == "QUEUETIMEOUT")
-        return Client_option_impl::POOL_QUEUE_TIMEOUT;
-      else if (upper_key == "MAXIDLETIME")
-        return Client_option_impl::POOL_MAX_IDLE_TIME;
-    }
-
-    std::string msg = "Invalid client option: " + key;
-    throw_error(msg.c_str());
-    // Quiet compiler warnings
-    return 0;
-  }
+  void set_comma_separated(int opt, const std::string& val);
 
 public:
 
@@ -156,17 +131,29 @@ public:
 
   void doc_end() override
   {
-    if (m_inside_client_opts)
-    {
-      m_inside_client_opts = false;
-    }
-    else
-      commit();
+    commit();
   }
 
   Any_prc* key_val(const string &opt) override
   {
-    return key_val(get_option_from_name(opt));
+    /*
+      Note: This overload is used only when getting options from a
+      JSON document. Currently only client options can be set that way,
+      and the only possible top-level client option is 'pooling'.
+
+      TODO: Generic infrastructure for handling an alternative way of setting
+      options using structured documents (current implementation assumes
+      flat options structure).
+    */
+
+    if (to_upper(opt) != "POOLING")
+    {
+      std::string msg = "Invalid client option: " + opt;
+      throw_error(msg.c_str());
+      return nullptr;
+    }
+
+    return key_val(Client_option_impl::POOLING);
   }
 
   Any_prc* key_val(int opt)
@@ -191,9 +178,15 @@ private:
   bool m_port = false;
   bool m_socket = false;
   bool m_prio = false;
-  bool m_inside_client_opts = false;
   std::set<int> m_opt_set;
   int m_prev_option = 0;
+
+  /*
+    Certaion options can be defined multiple times only if m_multi is true.
+    This is used to handle options that take list of values.
+  */
+
+  bool m_multi = false;
 
   // Set option value doing all consistency checks.
 
@@ -236,17 +229,73 @@ private:
     return this;
   }
 
+  // Array values.
+
   List_prc* arr() override
   {
-    throw_error("Option ... does not accept list values");
-    return nullptr;
+    switch (m_cur_opt)
+    {
+    // Note: allow multiple definitions of these options to store list
+    // of values, but only if they were not defined before.
+
+    case Session_option_impl::TLS_CIPHERSUITES:
+      m_multi = !m_data.m_tls_ciphers;
+      m_data.m_tls_ciphers = true;
+      break;
+
+    case Session_option_impl::TLS_VERSIONS:
+      m_multi = !m_data.m_tls_vers;
+      m_data.m_tls_vers = true;
+      break;
+
+    default:
+      {
+        std::stringstream err_msg;
+        err_msg << "Option " << option_name(m_cur_opt) <<
+          " does not accept array values";
+        throw_error(err_msg.str().c_str());
+      }
+      return nullptr; // Keep compiler happy
+    }
+
+    // Even if no values given for a list option, we still consider it set to
+    // an empty list
+    m_opt_set.insert(m_cur_opt);
+    return this;
   }
+
+  virtual void list_end() override
+  {
+    m_multi = false;
+  }
+
+  Element_prc* list_el() override
+  {
+    return this;
+  }
+
+  // Document values.
 
   Doc_prc* doc() override
   {
-    if (!m_inside_client_opts || m_cur_opt > 0)
-      throw_error("Option ... does not accept document values");
-    return this;
+    switch (m_cur_opt)
+    {
+    case Client_option_impl::POOLING:
+      return &m_pool_processor;
+
+    case Session_option_impl::CONNECTION_ATTRIBUTES:
+      return &m_attr_processor;
+
+    default:
+      {
+        std::stringstream err_msg;
+        err_msg << "Option " << option_name(m_cur_opt) <<
+          " does not accept document values";
+        throw_error(err_msg.str().c_str());
+      }
+    }
+
+    return nullptr;
   }
 
   // Scalar processor
@@ -311,6 +360,128 @@ public:
   void key_val(const std::string &key, const std::list<std::string>&) override;
 
   static int get_uri_option(const std::string&);
+
+private:
+
+  // Processors for processing document option values.
+
+  // Connection attributes.
+
+  struct Attr_processor
+      : parser::JSON_parser::Processor
+      , Any_prc
+      , Scalar_prc
+  {
+    Settings_impl::Data &m_data;
+    string m_key;
+    Attr_processor(Settings_impl::Data &data) //ings_impl::Data &data)
+      : m_data(data)
+    {}
+
+    Any_prc* key_val(const string &key) override
+    {
+      if (key.length() == 0)
+        throw_error("Invalid empty key on connection attributes");
+      if (key[0] == '_')
+        throw_error("Connection attribute names cannot start with \"_\".");
+      m_key = key;
+      return this;
+    }
+
+    Scalar_prc* scalar() override
+    {
+      return this;
+    }
+
+    // Arrays and documents are not valid... throw error
+    List_prc*   arr() override
+    {
+      throw_error("Connection attribute can not be an array");
+      return nullptr;
+    }
+
+    // Report that any value is a document.
+
+    Doc_prc*    doc() override
+    {
+      throw_error("Connection attribute can not be a document");
+      return nullptr;
+    }
+
+    void null() override
+    {
+      m_data.m_connection_attr[m_key];
+    }
+    void str(const string &val) override
+    {
+      m_data.m_connection_attr[m_key] = val;
+    }
+    virtual void num(uint64_t)override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(int64_t) override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(float)   override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(double)  override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void yesno(bool)  override
+    {throw_error("Connection attributes values can't be of boolean type");}
+
+  }
+  m_attr_processor{ m_data };
+
+  // Pool settings.
+
+  struct Pool_processor
+      : parser::JSON_parser::Processor
+      , Any_prc
+  {
+    Setter &m_setter;
+    string m_key;
+
+    Pool_processor(Setter &setter) //ings_impl::Data &data)
+      : m_setter(setter)
+    {}
+
+    Any_prc* key_val(const string &key) override
+    {
+      std::string upper_key = to_upper(key);
+
+      if (upper_key == "ENABLED")
+        return this;
+      else if (upper_key == "MAXSIZE")
+        return m_setter.key_val(Client_option_impl::POOL_MAX_SIZE);
+      else if (upper_key == "QUEUETIMEOUT")
+        return m_setter.key_val(Client_option_impl::POOL_QUEUE_TIMEOUT);
+      else if (upper_key == "MAXIDLETIME")
+        return m_setter.key_val(Client_option_impl::POOL_MAX_IDLE_TIME);
+
+      std::string msg = "Invalid pooling option: " + key;
+      throw_error(msg.c_str());
+      // Quiet compiler warnings
+      return nullptr;
+    }
+
+    Scalar_prc* scalar() override
+    {
+      // 'pooling.enabled' is equivalent to scalar value of POOLING option
+      return m_setter.key_val(Client_option_impl::POOLING)->scalar();
+    }
+
+    List_prc*   arr() override
+    {
+      throw_error("Value of 'pooling.enabled' option can be only true or false");
+      return nullptr;
+    }
+
+    Doc_prc*    doc() override
+    {
+      throw_error("Value of 'pooling.enabled' option can be only true or false");
+      return nullptr;
+    }
+  }
+  m_pool_processor{ *this };
+
 };
 
 
@@ -606,73 +777,12 @@ inline void
 Settings_impl::Setter::set_option<
 Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const std::string &val)
 {
-
-  struct processor
-      : parser::JSON_parser::Processor
-      , Any_prc
-      , Scalar_prc
-  {
-    Settings_impl::Data &m_data;
-    string m_key;
-    processor(Settings_impl::Data &data)
-      : m_data(data)
-    {}
-
-    Any_prc* key_val(const string &key) override
-    {
-      if (key.length() == 0)
-        throw_error("Invalid empty key on connection attributes");
-      if (key[0] == '_')
-        throw_error("Connection attribute names cannot start with \"_\".");
-      m_key = key;
-      return this;
-    }
-
-    Scalar_prc* scalar() override
-    {
-      return this;
-    }
-
-    // Arrays and documents are not valid... throw error
-    List_prc*   arr() override
-    {
-      throw_error("Connection attribute can not be an array");
-      return nullptr;
-    }
-
-    // Report that any value is a document.
-
-    Doc_prc*    doc() override
-    {
-      throw_error("Connection attribute can not be a document");
-      return nullptr;
-    }
-
-    void null() override
-    {
-      m_data.m_connection_attr[m_key];
-    }
-    void str(const string &val) override
-    {
-      m_data.m_connection_attr[m_key] = val;
-    }
-    virtual void num(uint64_t)override
-    {throw_error("Connection attributes values can't be of integer type");}
-    virtual void num(int64_t) override
-    {throw_error("Connection attributes values can't be of integer type");}
-    virtual void num(float)   override
-    {throw_error("Connection attributes values can't be of integer type");}
-    virtual void num(double)  override
-    {throw_error("Connection attributes values can't be of integer type");}
-    virtual void yesno(bool)  override
-    {throw_error("Connection attributes values can't be of boolean type");}
-
-  };
+  // Treat string as JSON document - parse it and report to JSON processor.
 
   parser::JSON_parser parser(val);
-  processor prc(m_data);
-
-  parser.process(prc);
+  auto *prc = doc();
+  assert(prc);
+  parser.process(*prc);
 }
 
 
@@ -701,6 +811,73 @@ Settings_impl::Setter::set_cli_option<
   add_option(Settings_impl::Client_option_impl::POOL_MAX_SIZE, val);
 }
 
+inline void
+Settings_impl::Setter::set_comma_separated(int opt, const std::string& val)
+{
+  std::string lval = "";
+
+  for (auto it = val.begin(); it != val.end(); it++)
+  {
+    const char c = *it;
+    if (isspace(static_cast<unsigned char>(c)) ||
+        c == ',')
+    {
+      if (lval.length())
+      {
+        add_option(opt, lval);
+        lval = "";
+
+        // If first add_option() was OK, then we disable duplicate checks
+        // to allow adding remaining values of the option in the
+        // following iterations
+
+        m_multi = true; // _state = LIST_PROCESS;
+      }
+      continue;
+    }
+    lval += c;
+  }
+
+  if (lval.length())
+    add_option(opt, lval); // Add the last value
+
+  m_multi = false; // _state = LIST_END;
+}
+
+template<>
+inline void
+Settings_impl::Setter::set_option<
+  Settings_impl::Session_option_impl::TLS_CIPHERSUITES
+>(const std::string &val)
+{
+  m_data.m_tls_ciphers = true;  // record that the option was set
+
+  // If in multi mode, the value is a single list element, otherwise
+  // the value can be a comma separated list
+
+  if (!m_multi)
+    set_comma_separated((int)Settings_impl::Session_option_impl::TLS_CIPHERSUITES, val);
+  else
+    add_option((int)Settings_impl::Session_option_impl::TLS_CIPHERSUITES, val);
+}
+
+template<>
+inline void
+Settings_impl::Setter::set_option<
+  Settings_impl::Session_option_impl::TLS_VERSIONS
+>(const std::string &val)
+{
+  m_data.m_tls_vers = true;  // record that the option was set
+
+  // If in multi mode, the value is a single list element, otherwise
+  // the value can be a comma separated list
+
+  if (!m_multi)
+    set_comma_separated((int)Settings_impl::Session_option_impl::TLS_VERSIONS, val);
+  else
+    add_option((int)Settings_impl::Session_option_impl::TLS_VERSIONS, val);
+}
+
 
 // Generic add_option() method.
 
@@ -720,6 +897,16 @@ void Settings_impl::Setter::add_option(int opt, const T &val)
   case Session_option_impl::PRIORITY:
     options.emplace_back(opt, val);
     return;
+
+  case Session_option_impl::TLS_CIPHERSUITES:
+  case Session_option_impl::TLS_VERSIONS:
+    if (m_multi)
+    {
+      options.emplace_back(opt, val);
+      m_opt_set.insert(opt);  // needed for double check when m_multi is false
+      return;
+    }
+    // if multi mode not enabled, fall-through to check for doubled option
 
   default:
     // Check for doubled option
@@ -868,18 +1055,17 @@ void Settings_impl::Setter::yesno(bool b)
   case Client_option_impl::POOLING:
     add_option(m_cur_opt, b);
     return;
+
+  case Session_option_impl::CONNECTION_ATTRIBUTES:
+    if (b)
+      m_data.init_connection_attr();
+    else
+      m_data.clear_connection_attr();
+    return;
+
   default: break;
   }
-  switch(m_cur_opt)
-  {
-    case Session_option_impl::CONNECTION_ATTRIBUTES:
-      if (b)
-        m_data.init_connection_attr();
-      else
-        m_data.clear_connection_attr();
-      return;
-    default:break;
-  }
+
   throw_error("Option ... can not be bool");
 }
 
@@ -994,7 +1180,8 @@ void Settings_impl::Setter::key_val(const std::string &key,
                                     const std::list<std::string> &list)
 {
   try {
-    switch(get_uri_option(key))
+    int option = get_uri_option(key);
+    switch(option)
     {
       case Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES:
         for(auto el : list)
@@ -1011,6 +1198,25 @@ void Settings_impl::Setter::key_val(const std::string &key,
 
         }
         break;
+
+      case Settings_impl::Session_option_impl::TLS_CIPHERSUITES:
+      case Settings_impl::Session_option_impl::TLS_VERSIONS:
+        {
+          auto *prc = key_val(option)->arr();
+          if (!prc)
+            break;
+
+          prc->list_begin();
+          for (auto el : list)
+          {
+            if (el.empty())
+              continue;
+            safe_prc(prc->list_el())->scalar()->str(el);
+          }
+          prc->list_end();
+        }
+        break;
+
       default:
         std::stringstream err;
         err << "Option " << key << " does not accept a list value";

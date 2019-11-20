@@ -315,6 +315,39 @@ void prepare_options(
     socket = true;  // so that PLAIN auth method is used below
 
     TLS_options tls_opt(get_ssl_mode(mode));
+
+    for (const auto &opt_val : settings)
+    {
+      switch (opt_val.first)
+      {
+      case Option::TLS_VERSIONS:
+        tls_opt.add_version(opt_val.second.get_string());
+        break;
+      case Option::TLS_CIPHERSUITES:
+        tls_opt.add_ciphersuite(opt_val.second.get_string());
+        break;
+      default:
+        break;
+      }
+    }
+
+    /*
+      Note: CDK will not report errors below if no versions or no ciphers
+      were specified, because in that case CDK uses default lists.
+    */
+
+    if (
+      settings.has_option(Option::TLS_VERSIONS)
+      && tls_opt.get_tls_versions().empty()
+    )
+      throw cdk::Error(cdk::cdkerrc::tls_versions);
+
+    if (
+      settings.has_option(Option::TLS_CIPHERSUITES)
+      && tls_opt.get_ciphersuites().empty()
+    )
+      throw cdk::Error(cdk::cdkerrc::tls_ciphers);
+
     if (settings.has_option(Option::SSL_CA))
       tls_opt.set_ca(settings.get(Option::SSL_CA).get_string());
     opts.set_tls(tls_opt);
@@ -437,6 +470,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
       tls.set_host_name(host);
       opts.set_tls(tls);
     }
+
 #endif
 
     src.add(cdk::ds::TCPIP(host, port), opts, (unsigned short)prio);

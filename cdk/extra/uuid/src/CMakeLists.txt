@@ -41,6 +41,7 @@ SET (UUID_SRCS uuid_gen.cc)
 ADD_LIBRARY(uuid_gen STATIC ${UUID_SRCS})
 
 SET_TARGET_PROPERTIES(uuid_gen PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(uuid_gen PROPERTIES FOLDER "Misc")
 
 get_filename_component(INC_DIR "../include" ABSOLUTE)
 target_include_directories(uuid_gen PUBLIC ${INC_DIR})

@@ -91,8 +91,8 @@ protected:
     m_client = NULL;
     m_sess = NULL;
 
-    const char *xplugin_host = getenv("XPLUGIN_HOST");
-    if (!xplugin_host)
+    m_host = getenv("XPLUGIN_HOST");
+    if (!m_host)
       m_host = "localhost";
 
     const char *xplugin_port = getenv("XPLUGIN_PORT");
@@ -114,6 +114,7 @@ protected:
 
         try {
           m_client = new mysqlx::Client(
+            SessionOption::HOST, m_host,
             SessionOption::PORT, m_port,
             SessionOption::USER, m_user,
             SessionOption::PWD, m_password
@@ -127,7 +128,8 @@ protected:
           m_client = NULL;
           m_sess = NULL;
           m_status = e.what();
-          FAIL() << "Could not connect to xplugin at " << m_port << ": " << e;
+          FAIL() << "Could not connect to xplugin at " << m_port
+            << " (" << m_host << ")" << ": " << e;
         }
 
     // Drop and re-create test schema to clear up after previous tests.
@@ -196,6 +198,16 @@ protected:
   const char* get_password() const
   {
     return m_password;
+  }
+
+  std::string get_uri() const
+  {
+    std::stringstream uri;
+    uri << "mysqlx://" << get_user();
+    if (get_password() && *get_password())
+      uri << ":" << get_password();
+    uri << "@" << get_host() << ":" << get_port();
+    return uri.str();
   }
 
   bool has_xplugin() const

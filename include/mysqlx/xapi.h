@@ -411,6 +411,9 @@ mysqlx_opt_type_t;
 #define OPT_AUTH(A)     MYSQLX_OPT_AUTH, (unsigned int)(A)
 #define OPT_CONNECT_TIMEOUT(A) MYSQLX_OPT_CONNECT_TIMEOUT, (unsigned int)(A)
 #define OPT_CONNECTION_ATTRIBUTES(A) MYSQLX_OPT_CONNECTION_ATTRIBUTES, (A)
+#define OPT_TLS_VERSIONS(A) MYSQLX_OPT_TLS_VERSIONS, (A)
+#define OPT_TLS_CIPHERSUITES(A) MYSQLX_OPT_TLS_CIPHERSUITES, (A)
+
 
 /**
   Session SSL mode values for use with `mysqlx_session_option_get()`
@@ -729,7 +732,10 @@ mysqlx_get_session(const char *host, int port, const char *user,
     `"mysqlx://user@host?connection-attributes=[]"` -
       the same as setting to `true`\n
     `"mysqlx://user@host?connection-attributes"` -
-      the same as setting to `true`
+      the same as setting to `true`\n
+  - `tls-versions=[...]` : see `#MYSQLX_OPT_TLS_VERSIONS`
+  - `tls-ciphersuites=[...]` : see `#MYSQLX_OPT_TLS_CIPHERSUITES`
+
 
   @note The session returned by the function must be properly closed using
         `mysqlx_session_close()`.

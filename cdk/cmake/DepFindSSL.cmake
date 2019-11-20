@@ -118,6 +118,7 @@ function(main)
     add_library(openssl-applink STATIC "${OPENSSL_INCLUDE_DIR}/openssl/applink.c")
     target_link_libraries(SSL::ssl INTERFACE openssl-applink)
 
+    set_target_properties(openssl-applink PROPERTIES FOLDER "Misc")
     # Remove warnings from openssl applink.c
     target_compile_options(openssl-applink PRIVATE /wd4152 /wd4996)
 

@@ -35,6 +35,9 @@
 #include "stream.h"
 #include "error.h"
 
+#include <vector>
+#include <set>
+#include <iostream>
 #include <functional>
 
 namespace cdk {
@@ -91,6 +94,45 @@ public:
     VERIFY_IDENTITY
   };
 
+  struct TLS_version
+  {
+    unsigned m_major = 0;
+    unsigned m_minor = 0;
+
+    TLS_version(unsigned a, unsigned b)
+      : m_major(a), m_minor(b)
+    {}
+
+    TLS_version(const std::string &);
+
+    // Note: needed for STL containers
+    bool operator<(const TLS_version &other) const
+    {
+      return 1000 * m_major + m_minor < 1000 * other.m_major + other.m_minor;
+    }
+
+    struct Error
+      : Error_class<Error>
+    {
+      Error(const std::string &ver)
+        : Error_base(nullptr, cdkerrc::tls_error), m_ver(ver)
+      {}
+
+      const std::string& get_ver() const
+      {
+        return m_ver;
+      }
+
+    private:
+
+      std::string m_ver;
+    };
+
+  };
+
+  typedef std::set<TLS_version> TLS_versions_list;
+  typedef std::vector<std::string> TLS_ciphersuites_list;
+
   Options(SSL_MODE ssl_mode = SSL_MODE::PREFERRED)
     : m_ssl_mode(ssl_mode)
   {}
@@ -113,6 +155,26 @@ public:
     m_host_name = host_name;
   }
 
+  void add_version(const TLS_version& version)
+  {
+    m_tls_versions.insert(version);
+  }
+
+  void add_ciphersuite(const std::string& suite)
+  {
+    m_tls_ciphersuites.push_back(suite);
+  }
+
+  const TLS_versions_list& get_tls_versions()
+  {
+    return m_tls_versions;
+  }
+
+  const TLS_ciphersuites_list& get_ciphersuites()
+  {
+    return m_tls_ciphersuites;
+  }
+
 protected:
 
   SSL_MODE m_ssl_mode;
@@ -120,7 +182,8 @@ protected:
   std::string m_ca;
   std::string m_ca_path;
   std::string m_host_name;
-
+  TLS_versions_list m_tls_versions;
+  TLS_ciphersuites_list m_tls_ciphersuites;
 };
 
 
