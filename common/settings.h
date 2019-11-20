@@ -74,6 +74,35 @@ class Settings_impl::Setter
 
   void set_comma_separated(int opt, const std::string& val);
 
+  /*
+    Note: Methods below would be best implemented inside Settings_impl::Data
+    class, but this can break ABI, so we put them here instead.
+  */
+
+  using iterator = option_list_t::const_reverse_iterator;
+
+  iterator find_opt(int opt, iterator start) const;
+
+  iterator find_opt(int opt) const
+  {
+    return find_opt(opt, m_data.m_options.crbegin());
+  }
+
+  iterator end() const
+  {
+    return m_data.m_options.crend();
+  }
+
+  bool has_option(Session_option_impl opt)
+  {
+    return end() != find_opt(opt);
+  }
+
+  bool has_option(Client_option_impl opt)
+  {
+    return end() != find_opt(-opt);
+  }
+
 public:
 
   Setter(Settings_impl &settings)
@@ -100,6 +129,42 @@ public:
 
   void commit()
   {
+    if (has_option(Session_option_impl::DNS_SRV))
+    {
+      if (0 == m_data.m_host_cnt)
+      {
+        throw_error("No DNS name specified for SRV lookup");
+      }
+
+      if (1 < m_data.m_host_cnt)
+      {
+        throw_error(
+          "Specifying multiple hostnames with DNS SRV look up is not allowed."
+        );
+      }
+
+      if (m_data.m_sock)
+      {
+        throw_error(
+          "Using Unix domain sockets with DNS SRV lookup is not allowed."
+        );
+      }
+
+      if (m_data.m_user_priorities)
+      {
+        throw_error(
+          "Specifying a priority with DNS SRV lookup is not allowed."
+        );
+      }
+
+      if (has_option(Session_option_impl::PORT))
+      {
+        throw_error(
+          "Specifying a port number with DNS SRV lookup is not allowed."
+        );
+      }
+    }
+
     /*
       If more hosts are added to the settings, error if the first host was
       defined by PORT only, without explicit HOST setting.
@@ -329,6 +394,7 @@ public:
 
   // URI processor
 
+  void scheme(const std::string &) override;
   void user(const std::string &usr) override;
   void password(const std::string &pwd) override;
   void schema(const std::string &db) override;
@@ -485,6 +551,16 @@ private:
 };
 
 
+inline
+auto Settings_impl::Setter::find_opt(int opt, iterator start) const
+-> iterator
+{
+  return std::find_if(start, m_data.m_options.crend(),
+    [opt](opt_val_t el) -> bool { return el.first == opt; }
+  );
+}
+
+
 /*
   Logic for handling individual options.
 */
@@ -532,7 +608,7 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SOCKET>(
 #endif
 )
 {
-#if _WIN32
+#ifdef _WIN32
 
   throw_error("SOCKET option not supported on Windows");
 
@@ -682,6 +758,7 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SSL_CA>(
   add_option(Session_option_impl::SSL_CA, val);
 }
 
+
 template <>
 inline void
 Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::CONNECT_TIMEOUT>(
@@ -772,21 +849,97 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::AUTH>(
   }
 }
 
+
+// Connection attributes.
+
+
+template<>
+inline void
+Settings_impl::Setter::set_option<
+  Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const bool& val)
+{
+  if (val)
+    m_data.init_connection_attr();
+  else
+    m_data.clear_connection_attr();
+}
+
+
 template<>
 inline void
 Settings_impl::Setter::set_option<
 Settings_impl::Session_option_impl::CONNECTION_ATTRIBUTES>(const std::string &val)
 {
-  // Treat string as JSON document - parse it and report to JSON processor.
+
+  struct processor
+    : parser::JSON_parser::Processor
+    , Any_prc
+    , Scalar_prc
+  {
+    Settings_impl::Data &m_data;
+    string m_key;
+    processor(Settings_impl::Data &data)
+      : m_data(data)
+    {}
+
+    Any_prc* key_val(const string &key) override
+    {
+      if (key.length() == 0)
+        throw_error("Invalid empty key on connection attributes");
+      if (key[0] == '_')
+        throw_error("Connection attribute names cannot start with \"_\".");
+      m_key = key;
+      return this;
+    }
+
+    Scalar_prc* scalar() override
+    {
+      return this;
+    }
+
+    // Arrays and documents are not valid... throw error
+    List_prc*   arr() override
+    {
+      throw_error("Connection attribute can not be an array");
+      return nullptr;
+    }
+
+    // Report that any value is a document.
+
+    Doc_prc*    doc() override
+    {
+      throw_error("Connection attribute can not be a document");
+      return nullptr;
+    }
+
+    void null() override
+    {
+      m_data.m_connection_attr[m_key];
+    }
+    void str(const string &val) override
+    {
+      m_data.m_connection_attr[m_key] = val;
+    }
+    virtual void num(uint64_t)override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(int64_t) override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(float)   override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void num(double)  override
+    {throw_error("Connection attributes values can't be of integer type");}
+    virtual void yesno(bool)  override
+    {throw_error("Connection attributes values can't be of boolean type");}
+
+  };
 
   parser::JSON_parser parser(val);
-  auto *prc = doc();
-  assert(prc);
-  parser.process(*prc);
+  processor prc(m_data);
+
+  parser.process(prc);
 }
 
 
-// Other options that need special handling.
 // TODO: support std::string for PWD and other options that are ascii only?
 
 template<>
@@ -974,6 +1127,8 @@ void Settings_impl::Setter::str(const string &val)
     throw_error("Can not convert to integer value"); \
   }
 
+  #define SET_OPTION_STR_bool(X,N) SET_OPTION_STR_num(X,N)
+
   switch (m_cur_opt)
   {
     SESSION_OPTION_LIST(SET_OPTION_STR)
@@ -991,6 +1146,7 @@ void Settings_impl::Setter::num(uint64_t val)
 #define SET_OPTION_NUM_num(X,N) \
   case Session_option_impl::X: return set_option<Session_option_impl::X,unsigned>((unsigned)val);
 #define SET_OPTION_NUM_any(X,N) SET_OPTION_NUM_num(X,N)
+#define SET_OPTION_NUM_bool(X,N) SET_OPTION_NUM_num(X,N)
 #define SET_OPTION_NUM_str(X,N)
 
 #define SET_CLI_OPTION_NUM_num(X,N) \
@@ -1035,9 +1191,6 @@ void Settings_impl::Setter::null()
   case Session_option_impl::USER:
     throw_error("Option ... can not be unset");
     break;
-  case Session_option_impl::CONNECTION_ATTRIBUTES:
-    m_data.clear_connection_attr();
-    break;
   case Session_option_impl::LAST:
     break;
   default:
@@ -1048,28 +1201,55 @@ void Settings_impl::Setter::null()
 
 
 inline
-void Settings_impl::Setter::yesno(bool b)
+void Settings_impl::Setter::yesno(bool val)
 {
+
+#define SET_OPTION_BOOL_bool(X,N) \
+  case Session_option_impl::X: return set_option<Session_option_impl::X, bool>(val);
+#define SET_OPTION_BOOL_any(X,N) \
+  case Session_option_impl::X: break;
+#define SET_OPTION_BOOL_num(X,N) SET_OPTION_BOOL_any(X,N)
+#define SET_OPTION_BOOL_str(X,N) SET_OPTION_BOOL_any(X,N)
+
+#define SET_CLI_OPTION_BOOL_bool(X,N) \
+  case Client_option_impl::X: return set_option<Client_option_impl::X, bool>(val);
+#define SET_CLI_OPTION_BOOL_any(X,N) \
+  case Client_option_impl::X: break;
+#define SET_CLI_OPTION_BOOL_num(X,N) SET_CLI_OPTION_BOOL_any(X,N)
+#define SET_CLI_OPTION_BOOL_str(X,N) SET_CLI_OPTION_BOOL_any(X,N)
+
   switch (m_cur_opt)
   {
-  case Client_option_impl::POOLING:
-    add_option(m_cur_opt, b);
-    return;
+    SESSION_OPTION_LIST(SET_OPTION_BOOL)
+    CLIENT_OPTION_LIST(SET_CLI_OPTION_BOOL)
+  default:
+    break;
+  }
 
-  case Session_option_impl::CONNECTION_ATTRIBUTES:
-    if (b)
-      m_data.init_connection_attr();
-    else
-      m_data.clear_connection_attr();
-    return;
+  /*
+    Special handling of CONNECTION_ATTRIBUTES option which is declared
+    as string option, but it can be also set to a bool value.
+  */
 
-  default: break;
+  switch (m_cur_opt)
+  {
+    SET_OPTION_BOOL_bool(CONNECTION_ATTRIBUTES, val)
+  default:
+    break;
   }
 
   throw_error("Option ... can not be bool");
 }
 
+
 // URI processor
+
+inline
+void Settings_impl::Setter::scheme(const std::string &_scheme)
+{
+  if(_scheme == "mysqlx+srv")
+    set_option<Session_option_impl::DNS_SRV>(true);
+}
 
 inline
 void Settings_impl::Setter::user(const std::string &usr)

@@ -1930,6 +1930,13 @@ mysqlx_session_option_set(mysqlx_session_options_struct *opt, ...)
 
 #define OPT_SET_any(X,N)  OPT_SET_num(X,N)
 
+#define OPT_SET_bool(X,N) \
+        case N: \
+        { \
+          uint_data = va_arg(args, unsigned); \
+          set.key_val(Option::X)->scalar()->num(uint_data); }; \
+        break;
+
         SESSION_OPTION_LIST(OPT_SET)
 
 #define CLIENT_OPT_SET_bool(X,N) \
@@ -2024,6 +2031,8 @@ mysqlx_session_option_get(
       *uint_data = (unsigned)val; }; break;
 
 #define OPT_GET_any(X,N) OPT_GET_num(X,N)
+
+#define OPT_GET_bool(X,N) OPT_GET_num(X,N)
 
     SESSION_OPTION_LIST(OPT_GET)
     default:

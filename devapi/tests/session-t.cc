@@ -2763,6 +2763,171 @@ TEST_F(Sess, connection_attributes)
 
   }
 
-
 }
 
+TEST_F(Sess, dns_srv)
+{
+
+  //ERRORS MODE
+
+  //Specifying a port number with DNS SRV lookup is not allowed.
+
+  try
+  {
+    auto cli = getClient("mysqlx+srv://root@_mysqlx._tcp.localhost:33060");
+    FAIL() << "Error expected if port is specified for mysqlx+srv settings";
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  try
+  {
+    auto cli = getClient(SessionOption::HOST, "_mysqlx._tcp.localhost",
+                         SessionOption::PORT, 33060,
+                         SessionOption::DNS_SRV, true,
+                         SessionOption::USER, "root");
+    FAIL() << "Error expected if PORT specified together with DNS_SRV";
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  //Using Unix domain sockets with DNS SRV lookup is not allowed.
+
+#ifndef _WIN32
+  try {
+    auto cli = getClient("mysqlx+srv://root@(/_mysqlx/_tcp/localhost)");
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  try {
+    auto cli = getClient(SessionOption::SOCKET, "/_mysqlx/_tcp/localhost",
+                         SessionOption::DNS_SRV, true,
+                         SessionOption::USER, "root");
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+#endif
+
+  //Specifying multiple hostnames with DNS SRV look up is not allowed.
+
+  try
+  {
+    auto cli = getClient("mysqlx+srv://root@[_mysqlx._tcp.localhost,_mysqlx._tcp.host2]");
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+
+  try
+  {
+    auto cli = getClient(SessionOption::HOST, "_mysqlx._tcp._notfound.localhost",
+                         SessionOption::HOST, "_mysqlx._tcp._notfound.localhost",
+                         SessionOption::DNS_SRV, true,
+                         SessionOption::USER, "root");
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  //Scheme {scheme} is not valid.
+
+  try
+  {
+    auto cli = getClient("mysqlx+foo://root@_mysqlx._tcp.localhost");
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  //Unable to locate any hosts for {hostname}
+
+  try
+  {
+    auto cli = getClient("mysqlx+srv://root@_mysqlx._tcp._notfound.localhost");
+    cli.getSession();
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+  try
+  {
+    auto cli = getClient(SessionOption::HOST, "_mysqlx._tcp._notfound.localhost",
+                         SessionOption::DNS_SRV, true,
+                         SessionOption::USER, "root");
+    cli.getSession();
+    FAIL();
+  }
+  catch(Error &e)
+  {
+    std::cout << "Expected: " << e.what() << std::endl;
+    SUCCEED() << "Expected: " << e.what() << std::endl;
+  }
+
+
+  //WORKING MODE
+
+  SKIP_IF_NO_XPLUGIN;
+  SKIP_IF_NO_SRV_SERVICE;
+
+
+  try {
+
+    std::stringstream uri;
+
+    uri << "mysqlx+srv://" << get_user();
+    if(get_password())
+      uri << ":" << get_password();
+    uri << "@" << get_srv();
+
+    auto client = getClient(uri.str());
+
+    std::list<mysqlx::Session> session_list;
+    for(int i=0; i < 10; ++i)
+    {
+      session_list.emplace_back(client);
+    }
+
+    session_list.emplace_back(mysqlx::Session(uri.str()));
+
+    SessionSettings ss(SessionOption::HOST, get_srv(),
+                       SessionOption::DNS_SRV, true,
+                       SessionOption::USER, get_user(),
+                       SessionOption::PWD, get_password());
+
+    session_list.emplace_back(mysqlx::Session(ss));
+
+  } catch (Error &e)
+  {
+    std::cout << e << std::endl;
+    FAIL() << e.what();
+  }
+}

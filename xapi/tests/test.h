@@ -83,6 +83,7 @@ protected:
   const char *m_xplugin_host;
   const char *m_xplugin_port;
   const char *m_xplugin_socket;
+  const char *m_xplugin_srv;
 
   xapi() : m_port(0), m_status(NULL), m_sess(NULL)
   {
@@ -98,6 +99,7 @@ protected:
       m_status = "invalid port number in XPLUGIN_PORT";
 
     m_xplugin_socket = getenv("MYSQLX_SOCKET");
+    m_xplugin_srv = getenv("MYSQLX_SRV");
 
     m_xplugin_usr = getenv("XPLUGIN_USER");
     m_xplugin_pwd = getenv("XPLUGIN_PASSWORD");
@@ -329,6 +331,10 @@ public:
 
 #define SKIP_IF_NO_UNIX_SOCKET  \
   if (!m_xplugin_socket) { std::cerr << "SKIPPED: No Unix Socket" <<std::endl; return; }
+
+#define SKIP_IF_NO_SRV_SERVICE  \
+  if (!m_xplugin_srv) { std::cerr <<"SKIPPED: No MYSQLX_SRV defined." <<std::endl; return; }
+
 
 // TODO: remove this when prepare is ok again
 #define SKIP_TEST(A) \

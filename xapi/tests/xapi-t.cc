@@ -32,6 +32,7 @@
 #include <climits>
 #include <chrono>
 #include <iostream>
+#include <list>
 #include <map>
 #include "test.h"
 
@@ -2307,6 +2308,174 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_free_options(opt);
   }
+}
+
+
+TEST_F(xapi, dns_srv)
+{
+
+  //ERRORS MODE
+  mysqlx_error_t* error;
+
+  //Specifying a port number with DNS SRV lookup is not allowed.
+
+  {
+
+    EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@_mysqlx._tcp.localhost:33060",
+      nullptr, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST("_mysqlx._tcp.localhost"),
+      OPT_PORT(33060),
+      OPT_USER("root"),
+      OPT_DNS_SRV(true),
+      PARAM_END
+    ));
+
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
+
+    mysqlx_free_options(opt);
+  }
+
+  //Using Unix domain sockets with DNS SRV lookup is not allowed.
+#ifndef _WIN32
+  {
+    EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@(/_mysqlx/_tcp/localhost)",
+      nullptr, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_SOCKET("/_mysqlx/_tcp/localhost"),
+      OPT_DNS_SRV(true),
+      OPT_USER("root"),
+      PARAM_END
+    ));
+
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
+
+    mysqlx_free_options(opt);
+  }
+#endif
+
+  //Specifying multiple hostnames with DNS SRV look up is not allowed.
+
+  {
+    EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@[_mysqlx._tcp.localhost,_mysqlx._tcp.host2]",
+      nullptr, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+      opt,
+      OPT_HOST("_mysqlx._tcp._notfound.localhost"),
+      OPT_HOST("_mysqlx._tcp._notfound.localhost"),
+      OPT_DNS_SRV(true),
+      OPT_USER("root"),
+      PARAM_END
+    ));
+
+    std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
+
+    mysqlx_free_options(opt);
+  }
+
+  //Scheme {scheme} is not valid.
+
+  {
+    EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+foo://root@_mysqlx._tcp.localhost",
+      nullptr, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+  }
+
+  //Unable to locate any hosts for {hostname}
+
+  {
+    auto cli = mysqlx_get_client_from_url("mysqlx+srv://root@_mysqlx._tcp._notfound.localhost",
+      nullptr, &error);
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_client(cli, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_client_close(cli);
+  }
+
+  {
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST("_mysqlx._tcp._notfound.localhost"),
+      OPT_DNS_SRV(true),
+      OPT_USER("root"),
+      PARAM_END
+    ));
+
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
+    std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+
+    mysqlx_free_options(opt);
+  }
+
+  //WORKING MODE
+
+  SKIP_IF_NO_XPLUGIN;
+  SKIP_IF_NO_SRV_SERVICE;
+
+  {
+
+    std::stringstream uri;
+
+    uri << "mysqlx+srv://" << m_xplugin_usr;
+    if (m_xplugin_pwd)
+      uri << ":" << m_xplugin_pwd;
+    uri << "@" << m_xplugin_srv;
+
+    auto client = mysqlx_get_client_from_url(uri.str().c_str(), nullptr, &error);
+
+
+    std::list<mysqlx_session_t*> session_list;
+    for (int i = 0; i < 10; ++i)
+    {
+      session_list.emplace_back(mysqlx_get_session_from_client(client, &error));
+    }
+
+    session_list.emplace_back(mysqlx_get_session_from_url(uri.str().c_str(), &error));
+
+
+    auto opt = mysqlx_session_options_new();
+
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
+      opt,
+      OPT_HOST(m_xplugin_srv),
+      OPT_DNS_SRV(true),
+      OPT_USER(m_xplugin_usr),
+      OPT_PWD(m_xplugin_pwd),
+      PARAM_END
+    ));
+
+    session_list.emplace_back(mysqlx_get_session_from_options(opt, &error));
+
+    for (auto s : session_list)
+    {
+      mysqlx_session_close(s);
+    }
+
+    mysqlx_client_close(client);
+
+  }
+
 }
 
 

@@ -40,12 +40,20 @@ PUSH_SYS_WARNINGS_CDK
 #include <sstream>
 #include <mutex>
 #include <thread>
+#include <forward_list>
+#include <map>
+#include <functional>
+#include <iostream>
 
 #ifndef _WIN32
 #include <arpa/inet.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <poll.h>
+#include <resolv.h>
+#include <arpa/nameser.h>
+#else
+#include <windns.h>
 #endif
 POP_SYS_WARNINGS_CDK
 
@@ -1045,5 +1053,96 @@ std::string get_local_hostname()
   return buf;
 }
 
+#ifdef _WIN32
+std::forward_list<Srv_host_detail> srv_list(const std::string &hostname)
+{
+  DNS_STATUS status;               //Return value of  DnsQuery_A() function.
+  PDNS_RECORD pDnsRecord =nullptr;          //Pointer to DNS_RECORD structure.
+
+  using Srv_list = std::forward_list<Srv_host_detail>;
+  Srv_list srv;
+  Srv_list::const_iterator srv_it = srv.before_begin();
+
+  status = DnsQuery(hostname.c_str(), DNS_TYPE_SRV, DNS_QUERY_STANDARD, nullptr, &pDnsRecord, nullptr);
+  if (!status)
+  {
+    PDNS_RECORD pRecord = pDnsRecord;
+    while (pRecord)
+    {
+      if (pRecord->wType == DNS_TYPE_SRV)
+      {
+        srv_it = srv.emplace_after(srv_it,
+          Srv_host_detail
+        {
+          pRecord->Data.Srv.wPriority,
+          pRecord->Data.Srv.wWeight,
+          pRecord->Data.Srv.wPort,
+          pRecord->Data.Srv.pNameTarget
+        }
+        );
+      }
+      pRecord = pRecord->pNext;
+    }
+
+    DnsRecordListFree(pDnsRecord, DnsFreeRecordListDeep);
+  }
+  return srv;
+}
+#else
+
+std::forward_list<Srv_host_detail> srv_list(const std::string &hostname)
+{
+  struct __res_state state {};
+  res_ninit(&state);
+
+  using Srv_list = std::forward_list<Srv_host_detail>;
+  Srv_list srv;
+  Srv_list::const_iterator srv_it = srv.before_begin();
+
+  unsigned char query_buffer[NS_PACKETSZ];
+
+
+  //let get
+  int res = res_nsearch(&state, hostname.c_str(), ns_c_in, ns_t_srv, query_buffer, sizeof (query_buffer) );
+
+  if (res >= 0)
+  {
+    ns_msg msg;
+    char name_buffer[NS_MAXDNAME];
+    Srv_host_detail host_data;
+    ns_initparse(query_buffer, res, &msg);
+
+
+    auto process = [&msg, &name_buffer, &host_data, &srv, &srv_it](const ns_rr &rr) -> void
+    {
+      const unsigned char* srv_data = ns_rr_rdata(rr);
+
+      //Each NS_GET16 call moves srv_data to next value
+      NS_GET16(host_data.prio, srv_data);
+      NS_GET16(host_data.weight, srv_data);
+      NS_GET16(host_data.port, srv_data);
+
+      dn_expand(ns_msg_base(msg), ns_msg_end(msg),
+                srv_data, name_buffer, sizeof(name_buffer));
+
+      host_data.name = name_buffer;
+
+      srv_it = srv.emplace_after(
+                 srv_it,
+                 std::move(host_data));
+    };
+
+    for(int x= 0; x < ns_msg_count(msg, ns_s_an); x++)
+    {
+          ns_rr rr;
+          ns_parserr(&msg, ns_s_an, x, &rr);
+          process(rr);
+    }
+  }
+  res_nclose(&state);
+
+  return srv;
+}
+#endif
 
 }}}} // cdk::foundation::connection::detail

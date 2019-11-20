@@ -76,6 +76,7 @@ protected:
   const char *m_user;
   const char *m_password;
   const char *m_socket;
+  const char *m_srv;
 
   // You can define per-test set-up and tear-down logic as usual.
   virtual void SetUp()
@@ -86,6 +87,7 @@ protected:
     m_host = NULL;
     m_port = 0;
     m_socket = NULL;
+    m_srv = nullptr;
     m_user = NULL;
     m_password = NULL;
     m_client = NULL;
@@ -104,6 +106,8 @@ protected:
     m_port = (short)atoi(xplugin_port);
 
     m_socket = getenv("MYSQLX_SOCKET");
+
+    m_srv = getenv("MYSQLX_SRV");
 
     // By default use "root" user without any password.
     m_user = getenv("XPLUGIN_USER");
@@ -183,6 +187,11 @@ protected:
   const char* get_socket() const
   {
     return m_socket;
+  }
+
+  const char* get_srv() const
+  {
+    return m_srv;
   }
 
   unsigned short get_port() const
@@ -314,6 +323,9 @@ public:
 
 #define SKIP_IF_NO_SOCKET  \
   if (!get_socket()) { std::cerr <<"SKIPPED: No unix socket" <<std::endl; return; }
+
+#define SKIP_IF_NO_SRV_SERVICE  \
+  if (!get_srv()) { std::cerr <<"SKIPPED: No MYSQLX_SRV defined." <<std::endl; return; }
 
 #define SKIP_IF_SERVER_VERSION_LESS(x,y,z)\
   if (is_server_version_less(x, y, z)) \

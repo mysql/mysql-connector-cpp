@@ -324,8 +324,7 @@ void URI_parser::parse(Processor &prc)
 {
   // Note: check_scheme() resets parser state.
 
-  check_scheme(m_force_uri);
-
+  parse_scheme(m_force_uri, prc);
   parse_connection(prc);
   parse_path(prc);
   parse_query(prc);
@@ -910,11 +909,11 @@ bool URI_parser::next_token_in(const TokSet &toks) const
   the initial parser state.
 
   If parameter 'force' is true, error is thrown if the
-  'mysqlx:://' scheme prefix is not present. Otherwise scheme
-  is optional, but if present it must be 'mysqlx'.
+  'mysqlx:://' or 'mysqlx+srv:://' scheme prefix is not present. Otherwise scheme
+  is optional, but if present it must be 'mysqlx' or 'mysqlx+srv:://'.
 */
 
-bool URI_parser::check_scheme(bool force)
+void URI_parser::parse_scheme(bool force, Processor &prc)
 {
   std::stack<State> new_state;
   new_state.emplace(Token(), 0, 0);
@@ -929,8 +928,16 @@ bool URI_parser::check_scheme(bool force)
   if (pos != std::string::npos)
   {
     m_has_scheme = true;
-    if (m_uri.substr(0, pos) != "mysqlx")
-      parse_error("Expected URI scheme 'mysqlx'");
+    std::string scheme = m_uri.substr(0, pos);
+    if (scheme != "mysqlx" && scheme != "mysqlx+srv")
+    {
+      std::string error_msg = "Scheme ";
+      error_msg+= scheme;
+      error_msg+= " is not valid";
+      parse_error(error_msg);
+    }
+
+    prc.scheme(scheme);
 
     // move to the first token after '://'
     state.m_pos_next = pos + 3;
@@ -951,8 +958,6 @@ bool URI_parser::check_scheme(bool force)
   }
 
   get_token();
-
-  return m_has_scheme;
 }
 
 

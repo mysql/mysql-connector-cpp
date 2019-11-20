@@ -39,6 +39,7 @@
 #include "stream.h"
 #include "opaque_impl.h"
 #include "error.h"
+#include <forward_list>
 
 
 namespace cdk {
@@ -49,11 +50,34 @@ namespace connection {
 class TCPIP;
 class TLS;
 
+namespace detail{
+  struct Srv_host_detail;
+}
+
 /**
    @brief get_local_hostname returns hostname of the current machine
  */
 std::string get_local_hostname();
 
+
+struct SRV_host
+{
+  SRV_host(detail::Srv_host_detail&&);
+
+  uint16_t prio;
+  uint16_t weight;
+  uint16_t port;
+  string name;
+
+
+};
+
+
+/*
+   Return SRV records for name 'host_name' obtained from DNS.
+*/
+
+std::forward_list<SRV_host> srv_list(const std::string &host_name);
 
 
 /*

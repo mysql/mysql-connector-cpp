@@ -391,6 +391,7 @@ typedef enum mysqlx_opt_type_enum
 #define XAPI_OPT_ENUM_str(X,N)  MYSQLX_OPT_##X = N,
 #define XAPI_OPT_ENUM_num(X,N)  MYSQLX_OPT_##X = N,
 #define XAPI_OPT_ENUM_any(X,N)  MYSQLX_OPT_##X = N,
+#define XAPI_OPT_ENUM_bool(X,N)  MYSQLX_OPT_##X = N,
 
   SESSION_OPTION_LIST(XAPI_OPT_ENUM)
   MYSQLX_OPT_LAST
@@ -402,6 +403,7 @@ mysqlx_opt_type_t;
 #ifndef _WIN32
 #define OPT_SOCKET(A)   MYSQLX_OPT_SOCKET, (A)
 #endif //_WIN32
+#define OPT_DNS_SRV(A)  MYSQLX_OPT_DNS_SRV, (A)
 #define OPT_USER(A)     MYSQLX_OPT_USER, (A)
 #define OPT_PWD(A)      MYSQLX_OPT_PWD, (A)
 #define OPT_DB(A)       MYSQLX_OPT_DB, (A)

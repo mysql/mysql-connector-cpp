@@ -33,6 +33,7 @@
 #include <mysql/cdk/foundation/error.h>
 
 #include "connection_tcpip_base.h"
+#include <list>
 
 using namespace ::cdk::foundation;
 
@@ -164,6 +165,28 @@ std::string get_local_hostname()
   socket_system_initialize();
 
   return detail::get_local_hostname();
+}
+
+
+SRV_host::SRV_host(detail::Srv_host_detail &&detail)
+  : prio(detail.prio)
+  , weight(detail.weight)
+  , port(detail.port)
+  , name(std::move(detail.name))
+{}
+
+
+std::forward_list<SRV_host> srv_list(const std::string &host_name)
+{
+ std::forward_list<SRV_host> list;
+ std::forward_list<SRV_host>::const_iterator it = list.before_begin();
+
+ for(auto &el : detail::srv_list(host_name))
+ {
+   it = list.insert_after(it, std::move(el));
+ }
+
+ return list;
 }
 
 

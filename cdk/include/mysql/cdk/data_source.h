@@ -37,6 +37,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <functional>
 #include <algorithm>
 #include <set>
+#include <random>
 #include "api/expression.h"
 POP_SYS_WARNINGS_CDK
 
@@ -238,6 +239,8 @@ private:
   cdk::connection::TLS::Options m_tls_options;
 #endif
 
+  bool m_dns_srv = false;
+
 public:
 
   Options()
@@ -257,6 +260,16 @@ public:
   const TLS_options& get_tls() const
   {
     return m_tls_options;
+  }
+
+  bool get_dns_srv() const
+  {
+    return m_dns_srv;
+  }
+
+  void set_dns_srv(bool dns_srv)
+  {
+    m_dns_srv = dns_srv;
   }
 
 #endif
@@ -340,6 +353,7 @@ namespace ds {
 #endif //_WIN32
   typedef mysql::TCPIP TCPIP_old;
 
+
   template <typename DS_t, typename DS_opt>
   struct DS_pair : public std::pair<DS_t, DS_opt>
   {
@@ -347,9 +361,25 @@ namespace ds {
 #ifdef HAVE_MOVE_CTORS
     DS_pair(DS_pair&&) = default;
 #endif
-    DS_pair(DS_t &ds, DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
+    DS_pair(const DS_t &ds, const DS_opt &opt) : std::pair<DS_t, DS_opt>(ds, opt)
     {}
   };
+
+
+  /*
+    A data source which encapsulates several other data sources (all of which
+    are assumed to hold the same data).
+
+    When adding data sources to a multi source, a priority can be specified.
+    When a visitor is visiting the multi source, the data sources it contains
+    are presented to the visitor in increasing priority order. If several data
+    sources have the same priority, they are presented in random order. If
+    no priorities were specified, then data sources are presented in the order
+    in which they were added.
+
+    If priorities are specified, they must be specified for all data sources
+    that are added to the multi source.
+  */
 
   class Multi_source
   {
@@ -365,79 +395,80 @@ namespace ds {
     >
     DS_variant;
 
-    bool m_is_prioritized;
-    unsigned short m_counter;
+    bool m_is_prioritized = false;
+    unsigned short m_counter = 0;
 
-    typedef std::multimap<unsigned short, DS_variant, std::greater<unsigned short>> DS_list;
+    struct Prio
+    {
+      unsigned short prio;
+      uint16_t weight;
+      operator unsigned short() const
+      {
+        return prio;
+      }
+
+      bool operator < (const Prio &other) const
+      {
+        return prio < other.prio;
+      }
+    };
+
+    typedef std::multimap<Prio, DS_variant, std::less<Prio>> DS_list;
     DS_list m_ds_list;
+    uint32_t m_total_weight = 0;
 
   public:
 
-    Multi_source() : m_is_prioritized(false), m_counter(65535)
-    {
-      std::srand((unsigned int)time(NULL));
-    }
+    // Add data source without explicit priority.
 
     template <class DS_t, class DS_opt>
-    void add(const DS_t &ds, const DS_opt &opt,
-             unsigned short prio)
+    void add(const DS_t& ds, const DS_opt& opt, uint16_t weight = 1)
     {
-      if (m_ds_list.size() == 0)
-      {
-        m_is_prioritized = (prio > 0);
-      }
-      else
-      {
-        if (m_is_prioritized && prio == 0)
-          throw Error(cdkerrc::generic_error,
-          "Adding un-prioritized items to prioritized list is not allowed");
-
-        if (!m_is_prioritized && prio > 0)
-          throw Error(cdkerrc::generic_error,
-          "Adding prioritized items to un-prioritized list is not allowed");
-      }
-
-      /*
-        The internal placement of priorities will be as this:
-        if list is a no-priority one the map has to retain the order of
-        elements at the time of the placement. Therefore, it will count-down
-        from max(unsigned short)
-      */
-      DS_pair<DS_t, DS_opt> pair(const_cast<DS_t&>(ds),
-                               const_cast<DS_opt&>(opt));
       if (m_is_prioritized)
-        m_ds_list.emplace(prio, pair);
-      else
       {
-        /*
-          When list is not prioritized the map should keep the order of elements.
-          This is achieved by decrementing the counter every time a new element
-          goes into the list.
-        */
-        m_ds_list.emplace(m_counter--, pair);
+        throw_error(
+          "Adding un-prioritized items to prioritized list is not allowed"
+        );
       }
+
+      m_ds_list.emplace(Prio{ m_counter++, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
     }
 
-    private:
+    // Add data source with priority.
+
+    template <class DS_t, class DS_opt>
+    void add_prio(const DS_t &ds, const DS_opt &opt, unsigned short prio, uint16_t weight = 1)
+    {
+      if (m_ds_list.size() == 0)
+        m_is_prioritized = true;
+
+      if (!m_is_prioritized)
+      {
+        throw_error(
+          "Adding prioritized items to un-prioritized list is not allowed"
+        );
+      }
+
+      m_ds_list.emplace(Prio{ prio, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
+    }
+
+  private:
 
     template <typename Visitor>
     struct Variant_visitor
     {
-      Visitor *vis;
-      bool stop_processing;
-
-      Variant_visitor() : stop_processing(false)
-      { }
+      Visitor *vis = nullptr;
+      bool stop_processing = false;
 
       template <class DS_t, class DS_opt>
       void operator () (const DS_pair<DS_t, DS_opt> &ds_pair)
       {
+        assert(vis);
         stop_processing = (bool)(*vis)(ds_pair.first, ds_pair.second);
       }
     };
 
-
-    public:
+  public:
 
     /*
       Call visitor(ds,opts) for each data source ds with options
@@ -449,69 +480,94 @@ namespace ds {
     template <class Visitor>
     void visit(Visitor &visitor)
     {
+      Variant_visitor<Visitor> variant_visitor;
+      variant_visitor.vis = &visitor;
+
+      std::random_device rnd;
       bool stop_processing = false;
+      std::vector<uint16_t> weights;
       std::set<DS_variant*> same_prio;
 
       for (auto it = m_ds_list.begin(); !stop_processing;)
       {
-        DS_variant *item = NULL;
-
-        if (m_is_prioritized)
-        {
-          if (same_prio.empty())
-          {
-            if (it == m_ds_list.end())
-              break;
-
-            //  Get items with the same priority and store them in same_prio set
-
-            auto same_range = m_ds_list.equal_range(it->first);
-            it = same_range.second;
-
-            for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
-              same_prio.insert(&(it1->second));
-          }
-
-          auto el = same_prio.begin();
-
-          if (same_prio.size() > 1)
-            std::advance(el, std::rand() % same_prio.size());
-
-          item = *el;
-          same_prio.erase(el);
-
-        } // if (m_is_prioritized)
-        else
-        {
-          if (it == m_ds_list.end())
-            break;
-
-          // Just get the next item from the list if no priority is given
-          item = &(it->second);
-          ++it;
-        }
-
-        // Give values to the visitor
-        Variant_visitor<Visitor> variant_visitor;
-        variant_visitor.vis = &visitor;
-        /*
-          Cannot use lambda because auto type for lambdas is only
-          supported in C++14
-        */
-        item->visit(variant_visitor);
-        stop_processing = variant_visitor.stop_processing;
-
-        /* Exit if visit reported true or if we advanced to the end of the list */
-        if (stop_processing || it == m_ds_list.end())
+        if (it == m_ds_list.end())
           break;
 
-      } // for
+        assert(same_prio.empty());
+
+        {
+          //  Get items with the same priority and store them in same_prio set
+
+          auto same_range = m_ds_list.equal_range(it->first);
+          it = same_range.second;  // move it to the first element after the range
+          unsigned total_weight = 0;
+
+          for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
+          {
+            same_prio.insert(&(it1->second));
+            weights.push_back(it1->first.weight);
+            total_weight += it1->first.weight;
+          }
+
+          /*
+            If all weights are 0 then all servers should be picked with the
+            same probability. Set the weights to 1 because discrete_distribiton<>
+            does not work when all weights are 0.
+          */
+
+          if (0 == total_weight)
+          {
+            for (auto& w : weights)
+              w = 1;
+          }
+        }
+
+        for (size_t size = same_prio.size(); size > 0; size = same_prio.size())
+        {
+          auto el = same_prio.begin();
+          size_t pos = 0;
+
+          if (size > 1)
+          {
+            /*
+              Note: std::discrete_distribution will never pick hosts that have
+              0 weight. But according to the DNS+SRV RFC [*], there should be
+              a small probablity that they are picked. For now we leave it
+              as is, as this is a corner case (normally weights should be > 0).
+              We might consider improving the implementation later.
+
+              Also note that we separately handle the case of all hosts having
+              0 weight - in this case we pick them randomly with equal
+              probability, as expected.
+
+              [*] https://tools.ietf.org/html/rfc2782
+            */
+
+            std::discrete_distribution<int> distr(
+              weights.begin(), weights.end()
+            );
+            pos = distr(rnd);
+            std::advance(el, pos);
+          }
+
+          (*el)->visit(variant_visitor);
+          stop_processing = variant_visitor.stop_processing;
+
+          if (stop_processing)
+            break;
+
+          same_prio.erase(el);
+          weights.erase(weights.begin() + pos);
+        }
+
+      } // for m_ds_llist
     }
 
     void clear()
     {
       m_ds_list.clear();
       m_is_prioritized = false;
+      m_total_weight = 0;
     }
 
     size_t size()
@@ -522,6 +578,79 @@ namespace ds {
     struct Access;
     friend Access;
   };
+
+
+  /*
+    A data source which takes data from one of the hosts obtained from
+    a DNS+SRV query.
+
+    Method get() issues a DNS+SRV query and returns its result as
+    a Multi_source which contains a list of TCPIP data sources for the
+    hosts returned from the query. Also the weights and priorites
+    obtained from the DNS+SRV query are used.
+
+    Example usage:
+
+      DNS_SRV_source dns_srv(name, opts);
+      Multi_source   src = dns_srv.get();
+
+    Note: Each call to get() issues new DNS query and can result in
+    different list of sources.
+  */
+
+  class DNS_SRV_source
+  {
+  public:
+
+    using Options = TCPIP::Options;
+
+    /*
+      Create DNS+SRV data source for the given DNS name and session options.
+
+      The DNS name is used to query DNS server when getting list of hosts.
+      Given session options are used for each host obtained from the DNS+SRV
+      query.
+    */
+
+    DNS_SRV_source(const std::string& host, const Options &opts)
+      : m_host(host), m_opts(opts)
+    {}
+
+    /*
+      Query DNS and return results as a Multi_source.
+    */
+
+    Multi_source get()
+    {
+      Multi_source src;
+
+      auto list = cdk::foundation::connection::srv_list(m_host);
+
+      if (list.empty())
+      {
+        std::string err = "Unable to locate any hosts for " + m_host;
+        throw_error(err.c_str());
+      }
+
+      for (auto& el : list)
+      {
+        Options opt1(m_opts);
+        Options::TLS_options tls(m_opts.get_tls());
+        tls.set_host_name(el.name);
+        opt1.set_tls(tls);
+        src.add_prio(ds::TCPIP(el.name, el.port), opt1, el.prio, el.weight);
+      }
+
+      return src;
+    }
+
+  protected:
+
+    std::string m_host;
+    Options     m_opts;
+
+  };
+
 }
 
 

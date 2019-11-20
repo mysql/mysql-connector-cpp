@@ -64,6 +64,7 @@ class SessionOption
 #define SESS_OPT_ENUM_any(X,N) X = N,
 #define SESS_OPT_ENUM_num(X,N) X = N,
 #define SESS_OPT_ENUM_str(X,N) X = N,
+#define SESS_OPT_ENUM_bool(X,N) X = N,
 
 public:
 
@@ -184,6 +185,7 @@ std::string OptionName(ClientOption opt)
 #define SESS_OPT_NAME_any(X,N) case SessionOption::X: return #X;
 #define SESS_OPT_NAME_num(X,N) SESS_OPT_NAME_any(X,N)
 #define SESS_OPT_NAME_str(X,N) SESS_OPT_NAME_any(X,N)
+#define SESS_OPT_NAME_bool(X,N) SESS_OPT_NAME_any(X,N)
 
 
   switch (opt)

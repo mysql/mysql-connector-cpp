@@ -61,7 +61,7 @@
 
 
 #define CLIENT_OPTION_LIST(x)                                                  \
-  OPT_BOOL(x,POOLING,1) /*!< disable/enable the pool. (Enabled by default)*/    \
+  OPT_BOOL(x,POOLING,1) /*!< disable/enable the pool. (Enabled by default)*/   \
   OPT_NUM(x,POOL_MAX_SIZE,2) /*!< size of the pool. (Defaults to 25)*/         \
   OPT_NUM(x,POOL_QUEUE_TIMEOUT,3) /*!< timeout for waiting for a connection in
   the pool (ms). (No timeout by default)*/                                     \
@@ -75,10 +75,12 @@
   /*! DNS name of the host, IPv4 address or IPv6 address */                  \
   OPT_STR(x,HOST,2)                                                          \
   OPT_NUM(x,PORT,3)        /*!< X Plugin port to connect to */               \
-  /*! Assign a priority (a number in range 1 to 100) to the last specified
-      host; these priorities are used to determine the order in which multiple
-      hosts are tried by the connection fail-over logic (see description
-      of `Session` class) */                                                 \
+  /*!
+    Assign a priority (a number in range 1 to 100) to the last specified
+    host; these priorities are used to determine the order in which multiple
+    hosts are tried by the connection fail-over logic (see description
+    of `Session` class)
+  */                                                                         \
   OPT_NUM(x,PRIORITY,4)                                                      \
   OPT_STR(x,USER,5)        /*!< user name */                                 \
   OPT_STR(x,PWD,6)         /*!< password */                                  \
@@ -126,6 +128,11 @@
     Unknown cipher suites are silently ignored.
   */                                                                         \
   OPT_STR(x,TLS_CIPHERSUITES, 15)                                            \
+  /*!
+    If enabled (true) will check hostname for DNS SRV record and use its
+    configuration (hostname, port, priority and weight) to connect.
+  */                                                                        \
+  OPT_BOOL(x, DNS_SRV, 16)                                                  \
   END_LIST
 
 
@@ -145,7 +152,7 @@
   X("connect-timeout", CONNECT_TIMEOUT) \
   X("connection-attributes",CONNECTION_ATTRIBUTES)\
   X("tls-versions", TLS_VERSIONS) \
-  X("tls-ciphersuites", TLS_CIPHERSUITES)
+  X("tls-ciphersuites", TLS_CIPHERSUITES) \
   END_LIST
 
 
