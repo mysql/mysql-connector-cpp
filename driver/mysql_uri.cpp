@@ -285,7 +285,7 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     {
       host = host.substr(host[end_sep] == '/' ? end_sep : end_sep+1);
     }
-  }while(end_sep != std::string::npos && host[end_sep] != '/');
+  }while(end_sep != std::string::npos && host[0] != '/');
 
 
   /* Looking where schema part begins */
