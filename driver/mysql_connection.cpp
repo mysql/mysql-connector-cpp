@@ -1101,6 +1101,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   //Connect loop
   {
     bool connected = false;
+    std::random_device generator;
 
     while(!host_list.empty() && !connected)
     {
@@ -1120,7 +1121,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
       while (!weights.empty() && !connected)
       {
-        std::random_device generator;
+
         std::discrete_distribution<int> distribution(
               weights.begin(), weights.end());
 
@@ -1145,8 +1146,28 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           connected = true;
           break;
         }
-        catch (sql::SQLException&)
-        {}
+        catch (sql::SQLException& e)
+        {
+          switch (e.getErrorCode())
+          {
+          case ER_CON_COUNT_ERROR:
+          case CR_SOCKET_CREATE_ERROR:
+          case CR_CONNECTION_ERROR:
+          case CR_CONN_HOST_ERROR:
+          case CR_IPSOCK_ERROR:
+          case CR_UNKNOWN_HOST:
+            //On Network errors, continue
+            break;
+          default:
+            //If SQLSTATE not 08xxx, which is used for network errors
+            if(e.getSQLState().compare(0,2, "08") != 0)
+            {
+              //Re-throw error and do not try another host
+              throw;
+            }
+          }
+
+        }
 
         same_prio.erase(el);
         weights.erase(weight_el);
