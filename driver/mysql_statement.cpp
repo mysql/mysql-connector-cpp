@@ -33,6 +33,8 @@
 #include <memory>
 #include <algorithm>
 #include <sstream>
+#include <cstring>
+
 
 /*
  * mysql_util.h includes private_iface, ie libmysql headers. and they must go
@@ -133,6 +135,8 @@ MySQL_Statement::get_resultset()
   } catch (::sql::SQLException & e) {
     CPP_ERR_FMT("Error during %s_result : %d:(%s) %s", resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY? "use":"store",
       proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+    if(e.getErrorCode() == 0 && strlen(e.what()) == 0)
+      throw ::sql::SQLException("No result available");
     throw e;
   }
 
