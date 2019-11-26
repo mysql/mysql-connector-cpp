@@ -277,15 +277,35 @@ function(bundle_ssl_libs)
     return()
   endif()
 
-  # Very simplistic approach
+  # Note: We want to bundle the shared libraries, like libssl.so.1.1,
+  # not symlinks that point to them
 
-  file(GLOB glob1
-    "${OPENSSL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
-  )
+  if(EXISTS ${OPENSSL_LIBRARY} AND EXISTS ${CRYPTO_LIBRARY})
 
-  file(GLOB glob2
-    "${OPENSSL_LIB_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
-  )
+    # Read symlinks
+
+    foreach(lib ${OPENSSL_LIBRARY} ${CRYPTO_LIBRARY})
+
+      get_filename_component(path ${lib} REALPATH)
+      list(APPEND glob1 ${path})
+
+    endforeach()
+
+  else()
+
+    # Very simplistic approach - assuming that OPENSSL_LIB_DIR points
+    # at OpenSSL installation grab all shared libraries that can be
+    # found there.
+
+    file(GLOB glob1
+      "${OPENSSL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+    )
+
+    file(GLOB glob2
+      "${OPENSSL_LIB_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+    )
+
+  endif()
 
   foreach(lib ${glob1} ${glob2})
 
