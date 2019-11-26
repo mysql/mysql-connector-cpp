@@ -371,13 +371,14 @@ if(MYSQL_EXTERNAL_DEPENDENCIES)
   foreach(lib ${MYSQL_EXTERNAL_DEPENDENCIES})
 
     #message("-- looking for: ${MYSQL_LIB_DIR}/*${lib}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    file(GLOB _bundled "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    file(GLOB _bundled1 "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    file(GLOB _bundled2 "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
-    if(_bundled)
+    if(_bundled1 OR _bundled2)
 
-      message("found bundled libs: ${_bundled}")
+      message("found bundled libs: ${_bundled1} ${_bundled2}")
 
-      install(FILES ${_bundled}
+      install(FILES ${_bundled1} ${_bundled2}
         DESTINATION "${INSTALL_LIB_DIR}"
         COMPONENT JDBCDll
       )
