@@ -245,11 +245,11 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
       }
       else
       {
-          name = host.substr(0, sep);
+        name = host.substr(0, sep);
       }
     }
 
-    if(host[sep] == ':')
+    if(sep < host.size() && host[sep] == ':')
     {
       //port
       host = host.substr(sep+1);
