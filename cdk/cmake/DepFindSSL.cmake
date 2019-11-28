@@ -277,12 +277,12 @@ function(bundle_ssl_libs)
     return()
   endif()
 
-  # Note: We want to bundle the shared libraries, like libssl.so.1.1,
-  # not symlinks that point to them
 
-  if(EXISTS ${OPENSSL_LIBRARY} AND EXISTS ${CRYPTO_LIBRARY})
+  if(NOT WIN32 AND EXISTS ${OPENSSL_LIBRARY} AND EXISTS ${CRYPTO_LIBRARY})
 
-    # Read symlinks
+    # Note: On U**ix systems the files we link to are symlinks to
+    # the actual shared libs, so we read these symlinks here and
+    # bundle their targets.
 
     foreach(lib ${OPENSSL_LIBRARY} ${CRYPTO_LIBRARY})
 
