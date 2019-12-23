@@ -287,16 +287,8 @@ size_t str_decode(
   rapidjson::EncodedInputStream<FROM, Mem_stream<char> > input(bytes);
   Str_stream<typename TO::Ch>   output(out);
 
-  /*
-    Note: EncodedInputStream looks for BOM mark and for that reason
-    the underlying byte stream is ahead of the current position in the
-    stream.
-  */
-
-  for(bool more = true; more;)
+  while(input.Peek() != '\0')
   {
-    more = bytes.hasData();
-
     if (!Transcoder::Transcode(input, output))
     {
       // TODO: add some context info from the input stream.

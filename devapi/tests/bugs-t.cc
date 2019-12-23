@@ -754,3 +754,21 @@ TEST_F(Bugs, bug29394723)
   cout << "_platform: " << _platform << endl;
   EXPECT_NE("", _platform);
 }
+
+TEST_F(Bugs, bug29847865)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  get_sess().sql("DROP TABLE IF EXISTS test.t").execute();
+  get_sess().sql("CREATE TABLE test.t(a TEXT)").execute();
+  Table t = get_sess().getSchema("test").getTable("t");
+
+  string foo = u"\x00000281\x00000282\x00000283\x00000284\x00000285\x00000286";
+
+  t.insert().values(foo).execute();
+  Row r = t.select().limit(1).execute().fetchOne();
+  string bar = r.get(0);
+
+  EXPECT_EQ(foo.size(), bar.size());
+  EXPECT_EQ(foo, bar);
+}
