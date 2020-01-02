@@ -1,4 +1,4 @@
-# Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -192,8 +192,9 @@ function(find_openssl)
   )
 
   #message("== OPENSSL_VERSION_NUMBER: ${OPENSSL_VERSION_NUMBER}")
+  # define OPENSSL_VERSION_TEXT "OpenSSL 1.1.1d-freebsd 10 Sep 2019"
   STRING(REGEX REPLACE
-    "^.*OPENSSL_VERSION_TEXT[\t ]+\"OpenSSL[\t ]([0-9]+)\\.([0-9]+)\\.([0-9]+)([a-z]*)[\t ].*$"
+    "^.*OPENSSL_VERSION_TEXT[\t ]+\"OpenSSL[\t ]([0-9]+)\\.([0-9]+)\\.([0-9]+)([a-z]|)[\t \\-].*$"
     "\\1;\\2;\\3;\\4"
     version_list "${OPENSSL_VERSION_NUMBER}"
   )
