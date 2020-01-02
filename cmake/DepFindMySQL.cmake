@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -490,7 +490,7 @@ function(use_mysql_config)
     # explicit dependencies.
 
     if(NOT lib MATCHES
-        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic)"
+        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic|^unwind|^execinfo)"
       )
 
       list(APPEND MYSQL_EXTERNAL_DEPENDENCIES ${lib})

@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -190,9 +190,9 @@ add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 target_link_libraries(jdbc PUBLIC Boost::boost)
 
 IF(WIN32)
-target_link_libraries(jdbc PRIVATE Dnsapi)
-ELSE()
-target_link_libraries(jdbc PRIVATE resolv)
+  target_link_libraries(jdbc PRIVATE Dnsapi)
+ELSEIF(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  target_link_libraries(jdbc PRIVATE resolv)
 ENDIF()
 
 if (MYSQLCLIENT_STATIC_BINDING)

@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -430,7 +430,7 @@ target_link_libraries(jdbc_test PRIVATE MySQL::conncpp-jdbc)
 if(WIN32)
   # Connector needs to Link with Dnsapi
   target_link_libraries(jdbc_test PRIVATE Dnsapi)
-else()
+elseif(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
   # Connector needs to Link with libresolv
   target_link_libraries(jdbc_test PRIVATE resolv)
 endif()
