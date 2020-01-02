@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -85,7 +85,7 @@ if(WITH_CONCPP)
      set(CONCPP_INCLUDE_DIR "${WITH_CONCPP}/include")
   endif()
   if(NOT CONCPP_LIB_DIR)
-    if(IS64BIT)
+    if(IS64BIT AND EXISTS "${WITH_CONCPP}/lib64")
       set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib64")
     else()
       set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib")
@@ -300,10 +300,12 @@ if(NOT WIN32)
         )
     endif()
 
-    # Connector needs to Link with libresolv
-    set_property(TARGET MySQL::conncpp
-      APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
-    )
+    if(NOT FREEBSD)
+      # Connector needs to Link with libresolv
+      set_property(TARGET MySQL::conncpp
+	APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
+      )
+    endif()
 
 else()
   # Connector needs to Link with Dnsapi
