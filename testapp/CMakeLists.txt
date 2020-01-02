@@ -300,7 +300,7 @@ if(NOT WIN32)
         )
     endif()
 
-    if(NOT FREEBSD)
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
       # Connector needs to Link with libresolv
       set_property(TARGET MySQL::conncpp
 	APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
