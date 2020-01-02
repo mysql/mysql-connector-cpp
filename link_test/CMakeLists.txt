@@ -436,6 +436,14 @@ elseif(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
 endif()
 
 #
+# FreeBSD has other dependencies
+#
+
+if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  target_link_libraries(jdbc_test PRIVATE execinfo unwind)
+endif()
+
+#
 # We need to link to OpenSSL libraries too.
 #
 
