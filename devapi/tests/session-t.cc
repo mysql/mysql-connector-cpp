@@ -2165,6 +2165,8 @@ TEST_F(Sess, pool_ttl)
   std::chrono::seconds queue_timeout(50);
   std::chrono::milliseconds pool_ttl(500);
 
+  get_sess().createSchema("pool_ttl", true);
+
   ClientSettings settings(ClientOption::POOLING, true,
                           SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
                           SessionOption::SSL_MODE, SSLMode::DISABLED,
@@ -2179,9 +2181,7 @@ TEST_F(Sess, pool_ttl)
                           SessionOption::PRIORITY, 1,
                           SessionOption::USER, get_user(),
                           SessionOption::PWD, get_password(),
-                          SessionOption::DB, "test");
-
-#if 1
+                          SessionOption::DB, "pool_ttl");
 
   // threaded example
   {
@@ -2277,11 +2277,6 @@ TEST_F(Sess, pool_ttl)
 
   }
 
-#endif
-
-  // Temporary disabled, bug#30532629
-
-#if 0
   {
     std::cout << "Not threaded" << std::endl;
 
@@ -2291,13 +2286,13 @@ TEST_F(Sess, pool_ttl)
     mysqlx::Client client(settings);
 
 
-    auto get_sessions = [&client, &max_connections]()
+    auto get_sessions = [&client, max_connections]()
     {
       std::list<mysqlx::Session> sessions;
       for (int i = 0; i < max_connections; ++i)
       {
         sessions.emplace_back(client);
-        EXPECT_EQ(1, sessions.back().sql("select 1").execute()
+        EXPECT_EQ(1, sessions.back().sql("select 1").execute().count());
       }
     };
 
@@ -2307,17 +2302,29 @@ TEST_F(Sess, pool_ttl)
 
     std::vector<int> proccess_ids;
 
-    int this_thread_id = sql("SELECT CONNECTION_ID()").fetchOne()[0].get<int>();
+    auto proccesslist = sql("show processlist");
 
-    std::list<Row> rows = sql("show processlist").fetchAll();
+    unsigned db_idx = 0;
 
-    for (auto row : rows)
+    for(auto column : proccesslist.getColumns())
     {
-      auto val = row.get(7);
-      int thread_id = row.get(0).get<int>();
-      if (val.isNull() ||
-        continue;
+      if (column.getColumnLabel() == "db" )
+      {
+        break;
+      }
+      ++db_idx;
+    }
 
+    EXPECT_LT(db_idx,proccesslist.getColumnCount());
+
+    for (auto row : proccesslist)
+    {
+      //UT created sessions all use pool_ttl schema, so we will look for
+      //connections having that schema to kill them
+      auto db = row.get(db_idx);
+      if (db.isNull() || db.get<string>() != "pool_ttl")
+        continue;
+      int thread_id = row.get(0).get<int>();
       proccess_ids.push_back(thread_id);
     }
 
@@ -2334,18 +2341,22 @@ TEST_F(Sess, pool_ttl)
 
     sql("set global mysqlx_wait_timeout=20");
 
-    get_sessions();
-
-    std::this_thread::sleep_for(std::chrono::seconds(20));
+    std::cout << "Get sessions" << std::endl;
 
     get_sessions();
 
+    std::cout << "Wait 25s to timeout sessions" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(25));
+
+    std::cout << "Get sessions" << std::endl;
+
+    get_sessions();
+
+    //Create a new session, since previous has timed-out!
+    create_session();
     std::cout << "set global mysqlx_wait_timeout=28800" << std::endl;
-    client.getSession().sql("set global mysqlx_wait_timeout=28800").execute();
+    sql("set global mysqlx_wait_timeout=28800");
   }
-
-#endif // 0
-
 
   {
     settings.set(ClientOption::POOL_MAX_SIZE, 1);

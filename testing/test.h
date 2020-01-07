@@ -116,25 +116,7 @@ protected:
 
     m_password = getenv("XPLUGIN_PASSWORD");
 
-        try {
-          m_client = new mysqlx::Client(
-            SessionOption::HOST, m_host,
-            SessionOption::PORT, m_port,
-            SessionOption::USER, m_user,
-            SessionOption::PWD, m_password
-          );
-          m_sess = new mysqlx::Session(*m_client);
-        }
-        catch (const Error &e)
-        {
-          delete m_client;
-          delete m_sess;
-          m_client = NULL;
-          m_sess = NULL;
-          m_status = e.what();
-          FAIL() << "Could not connect to xplugin at " << m_port
-            << " (" << m_host << ")" << ": " << e;
-        }
+    create_session();
 
     // Drop and re-create test schema to clear up after previous tests.
 
@@ -177,6 +159,34 @@ protected:
     if (!m_sess)
       throw m_status;
     return *m_sess;
+  }
+
+  void create_session()
+  {
+    try {
+      if(!m_client)
+      {
+        m_client = new mysqlx::Client(
+                     SessionOption::HOST, m_host,
+                     SessionOption::PORT, m_port,
+                     SessionOption::USER, m_user,
+                     SessionOption::PWD, m_password
+                     );
+      }
+      delete m_sess;
+      m_sess = nullptr;
+      m_sess = new mysqlx::Session(*m_client);
+    }
+    catch (const Error &e)
+    {
+      delete m_client;
+      delete m_sess;
+      m_client = NULL;
+      m_sess = NULL;
+      m_status = e.what();
+      FAIL() << "Could not connect to xplugin at " << m_port
+        << " (" << m_host << ")" << ": " << e;
+    }
   }
 
   const char* get_host() const

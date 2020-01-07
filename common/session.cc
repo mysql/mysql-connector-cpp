@@ -403,7 +403,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
 
   if (has_option(Session_option_impl::DNS_SRV))
   {
-    /* 
+    /*
       Use DNS+SRV data source.
 
       Note: option consistency checks are done by Setter
@@ -744,9 +744,7 @@ void Session_pool::close()
         el.second.m_cleanup->cleanup();
       el.first->close();
     } catch(...)
-    {
-      assert(false);
-    }
+    {}
   }
   m_pool.clear();
 
