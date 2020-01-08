@@ -803,8 +803,8 @@ protected:
   );
 
   bool parse_schema_ident(Token::Type (*types)[2] = NULL);
-  void parse_column_ident(Path_prc*);
-  void parse_column_ident1(Path_prc*);
+  void parse_column_ident(Processor *);
+  void parse_column_ident1(Processor*);
   bool get_ident(string&);
 
   void parse_document_field(Path_prc*, bool prefix = false);
@@ -968,54 +968,6 @@ public:
   void process(Document_processor &prc) const
   {
     const_cast<Projection_parser*>(this)->parse_doc_mode(prc);
-  }
-
-};
-
-/*
-  Class Used to parse Table fields.
-  Format: table.column->@.field.arr[]
-*/
-
-class Table_field_parser
-    : public cdk::api::Column_ref
-    , public cdk::Doc_path
-{
-  parser::Column_ref    m_col;
-  cdk::Doc_path_storage m_path;
-
-public:
-
-  Table_field_parser(bytes table_field)
-  {
-    Tokenizer toks(table_field);
-
-    It begin = toks.begin();
-    const It end = toks.end();
-
-    Expr_parser_base parser(begin, end, Parser_mode::TABLE);
-    parser.parse_column_ident(&m_path);
-    m_col = parser.m_col_ref;
-  }
-
-  const cdk::string name() const
-  {
-    return m_col.name();
-  }
-
-  const cdk::api::Table_ref *table() const
-  {
-    return m_col.table();
-  }
-
-  bool has_path() const
-  {
-    return !m_path.is_empty();
-  }
-
-  void process(Processor &prc) const
-  {
-    m_path.process(prc);
   }
 
 };
@@ -1614,6 +1566,56 @@ Expression* Expr_parser_base::parse(Start start, Processor *prc)
     return NULL;
   }
 }
+
+
+/*
+  Class Used to parse Table fields.
+  Format: table.column->@.field.arr[]
+*/
+
+class Table_field_parser
+    : public cdk::api::Column_ref
+    , public cdk::Doc_path
+{
+  parser::Column_ref    m_col;
+  Stored_any m_path;
+
+public:
+
+  Table_field_parser(bytes table_field)
+  {
+    Tokenizer toks(table_field);
+
+    It begin = toks.begin();
+    const It end = toks.end();
+
+    Expr_parser_base parser(begin, end, Parser_mode::TABLE);
+    parser.parse_column_ident(&m_path);
+    m_col = parser.m_col_ref;
+  }
+
+  const cdk::string name() const
+  {
+    return m_col.name();
+  }
+
+  const cdk::api::Table_ref *table() const
+  {
+    return m_col.table();
+  }
+
+  bool has_path() const
+  {
+    return m_path.m_scalar && !m_path.m_scalar->m_doc_path.is_empty();
+  }
+
+  void process(Processor &prc) const
+  {
+    if(m_path.m_scalar)
+      m_path.m_scalar->m_doc_path.process(prc);
+  }
+
+};
 
 
 }  // parser

@@ -476,7 +476,7 @@ bool Expr_parser_base::parse_schema_ident(Token::Type (*types)[2])
 }
 
 
-void Expr_parser_base::parse_column_ident(Path_prc *prc)
+void Expr_parser_base::parse_column_ident(Processor *prc)
 {
   if (!parse_schema_ident())
     parse_error("Expected a column identifier");
@@ -484,7 +484,7 @@ void Expr_parser_base::parse_column_ident(Path_prc *prc)
 }
 
 
-void Expr_parser_base::parse_column_ident1(Path_prc *prc)
+void Expr_parser_base::parse_column_ident1(Processor *prc)
 {
   /*
     Note: at this point we assume that an (possibly schema qualified) identifier
@@ -512,8 +512,27 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
       m_col_ref.set(table->name());
   }
 
-  if (consume_token(Token::ARROW) || consume_token(Token::ARROW2))
+  auto t = peek_token();
+
+  Safe_prc<Processor> sprc(prc);
+
+  if (t && (t->get_type() == Token::ARROW || t->get_type() == Token::ARROW2))
   {
+    Safe_prc<cdk::Expr_processor::Args_prc> args = nullptr;
+    if(t->get_type() == Token::ARROW2)
+    {
+      Table_ref json_unquote;
+      json_unquote.set("JSON_UNQUOTE");
+      args =sprc->scalar()->call(json_unquote);
+      args->list_begin();
+      //Will override previous processor, so from now on, this will be the one
+      //used
+      sprc = args->list_el();
+    }
+
+    consume_token();
+
+    cdk::Doc_path_storage path;
 
     if (Token_base::cur_token_type_in({ Token::QSTRING, Token::QQSTRING }))
     {
@@ -522,16 +541,23 @@ void Expr_parser_base::parse_column_ident1(Path_prc *prc)
       It last  = toks.end();
       Expr_parser_base path_parser(first, last, m_parser_mode);
       // TODO: Translate parse errors
-      path_parser.parse_document_field(prc, true);
+      path_parser.parse_document_field(&path, true);
       if (first != last)
         parse_error("Unexpected characters in a quoted path component");
     }
     else
     {
-      parse_document_field(prc, true);
+      parse_document_field(&path, true);
     }
-  }
 
+    sprc->scalar()->ref(m_col_ref,&path);
+
+    args->list_end();
+  }
+  else
+  {
+    sprc->scalar()->ref(m_col_ref,nullptr);
+  }
 }
 
 
@@ -1108,13 +1134,13 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   if (!prc)
     prc = stored.reset(new Stored_any());
 
-  Safe_prc<Processor::Scalar_prc> sprc(prc->scalar());
+  Safe_prc<Processor> sprc(prc);
 
   // parameters, nullary operators, CAST
 
   if (consume_token(Token::COLON))
   {
-    sprc->param(consume_token_throw(
+    sprc->scalar()->param(consume_token_throw(
       Token::WORD,
       "Expected parameter name after ':'"
     ).get_text());
@@ -1123,12 +1149,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
 
   if (consume_token(Op::STAR))
   {
-    sprc->op(Op::name(Op::STAR));
+    sprc->scalar()->op(Op::name(Op::STAR));
     // NOTE: arguments processor is ignored as there are no arguments
     return stored.release();
   }
 
-  if (parse_cast(sprc))
+  if (parse_cast(prc->scalar()))
   {
     return stored.release();
   }
@@ -1153,21 +1179,21 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       break;
     }
     // otherwise report as unary operator
-    argsp = sprc->op(Op::name(op));
+    argsp = sprc->scalar()->op(Op::name(op));
     break;
   }
 
   case Op::NEG:
     consume_token();
-    argsp = sprc->op(Op::name(Op::NEG));
+    argsp = sprc->scalar()->op(Op::name(Op::NEG));
     break;
   case Op::NOT:
     consume_token();
-    argsp = sprc->op(Op::name(Op::NOT));
+    argsp = sprc->scalar()->op(Op::name(Op::NOT));
     break;
   case Op::BITNEG:
     consume_token();
-    argsp = sprc->op(Op::name(Op::BITNEG));
+    argsp = sprc->scalar()->op(Op::name(Op::BITNEG));
     break;
 
   default:
@@ -1195,13 +1221,13 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   {
 
   case Keyword::L_NULL:
-    sprc->val()->null();
+    sprc->scalar()->val()->null();
     consume_token();
     return stored.release();
 
   case Keyword::L_TRUE:
   case Keyword::L_FALSE:
-    sprc->val()->yesno(Keyword::L_TRUE == kw);
+    sprc->scalar()->val()->yesno(Keyword::L_TRUE == kw);
     consume_token();
     return stored.release();
 
@@ -1219,18 +1245,18 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     case Token::QSTRING:
       if (m_strings_as_blobs)
       {
-        sprc->val()->value(
+        sprc->scalar()->val()->value(
           cdk::TYPE_BYTES, Format_info(), consume_token()->get_bytes()
         );
       }
       else
-        sprc->val()->str(consume_token()->get_text());
+        sprc->scalar()->val()->str(consume_token()->get_text());
       return stored.release();
 
     case Token::NUMBER:
       {
         double val = strtod(consume_token()->get_utf8());
-        sprc->val()->num(neg ? -val : val);
+        sprc->scalar()->val()->num(neg ? -val : val);
         return stored.release();
       }
 
@@ -1238,12 +1264,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       if (neg)
       {
         int64_t val = strtoi(consume_token()->get_utf8());
-        sprc->val()->num(-val);
+        sprc->scalar()->val()->num(-val);
       }
       else
       {
         uint64_t val = strtoui(consume_token()->get_utf8());
-        sprc->val()->num(val);
+        sprc->scalar()->val()->num(val);
       }
       return stored.release();
 
@@ -1251,12 +1277,12 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       if (neg)
       {
         int64_t val = strtoi(consume_token()->get_utf8(), 16);
-        sprc->val()->num(-val);
+        sprc->scalar()->val()->num(-val);
       }
       else
       {
         uint64_t val = strtoui(consume_token()->get_utf8(), 16);
-        sprc->val()->num(val);
+        sprc->scalar()->val()->num(val);
       }
       return stored.release();
 
@@ -1315,7 +1341,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
   {
     assert(m_col_ref.table());
 
-    if (parse_function_call(*m_col_ref.table(), sprc))
+    if (parse_function_call(*m_col_ref.table(), sprc.scalar()))
       return stored.release();
   }
 
@@ -1323,8 +1349,6 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     Otherwise we must have either a document path (in DOCUMENT mode) or
     a column identifier, possibly followed by a path (in TABLE mode).
   */
-
-  cdk::Doc_path_storage path;
 
   if (Parser_mode::TABLE == m_parser_mode)
   {
@@ -1341,8 +1365,8 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
       the processor.
     */
 
-    parse_column_ident1(&path);
-    sprc->ref(m_col_ref, path.is_empty() ? NULL : &path);
+    parse_column_ident1(prc);
+
     return stored.release();
   }
 
@@ -1363,6 +1387,8 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     field.
   */
 
+  cdk::Doc_path_storage path;
+
   if (m_col_ref.table() && m_col_ref.table()->schema())
   {
     parse_document_field(
@@ -1380,7 +1406,7 @@ Expression* Expr_parser_base::parse_atomic(Processor *prc)
     parse_document_field(&path, true);
   }
 
-  sprc->ref(path);
+  sprc->scalar()->ref(path);
 
   return stored.release();
 }

@@ -1062,9 +1062,9 @@ TEST_F(Crud, table)
     Table tbl = sch.getTable("crud_table");
 
     res = tbl.insert("c0","c1")
-             .values("{\"foo\": 1}", 1 )
-             .values("{\"foo\": 2}", 2 )
-             .values("{\"foo\": 3}", 3 ).execute();
+             .values("{\"foo\": 1, \"bar\":\"1\"}", 1 )
+             .values("{\"foo\": 2, \"bar\":\"2\"}", 2 )
+             .values("{\"foo\": 3, \"bar\":\"2\"}", 3 ).execute();
 
     EXPECT_EQ(3U, res.getAffectedItemsCount());
 
@@ -1073,6 +1073,18 @@ TEST_F(Crud, table)
     Row r = res.fetchOne();
 
     EXPECT_EQ(2, static_cast<int>(r[0]));
+    EXPECT_EQ(2, static_cast<int>(r[1]));
+
+    res = tbl.select("c0->$.foo", "c1").where("c0->$.bar > 1 AND c1 < 3").execute();
+    EXPECT_NE(1, res.count());
+
+    res = tbl.select("c0->>$.bar", "c1").where("c0->>$.bar > 1 AND c1 < 3").execute();
+
+    EXPECT_EQ(1, res.count());
+
+    r = res.fetchOne();
+
+    EXPECT_EQ("2", static_cast<std::string>(r[0]));
     EXPECT_EQ(2, static_cast<int>(r[1]));
 
   }
