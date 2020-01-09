@@ -542,6 +542,7 @@ auto Result_detail::get_warning(size_t pos) -> Warning
   if (!common::check_num_limits<unsigned>(pos))
     throw std::out_of_range("No diagnostic entry at position ...");
 
+  get_warning_count();
   auto &impl = get_impl();
   auto &it = impl.get_entries(cdk::api::Severity::WARNING);
   size_t curr = SIZE_MAX;

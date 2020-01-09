@@ -1137,6 +1137,7 @@ inline
 unsigned Result_impl::get_warning_count() const
 {
   auto self = const_cast<Result_impl*>(this);
+  self->store_all_results();
   return self->entry_count(cdk::api::Severity::WARNING);
 }
 

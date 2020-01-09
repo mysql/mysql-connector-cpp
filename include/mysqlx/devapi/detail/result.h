@@ -160,7 +160,7 @@ protected:
 
   WarningList get_warnings()
   {
-    assert(m_impl);
+    get_warning_count();
     return { *this };
   }
 

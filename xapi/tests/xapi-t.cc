@@ -221,6 +221,7 @@ TEST_F(xapi, compression_test_doc)
   mysqlx_session_close(sess);
 }
 
+
 TEST_F(xapi, free_test)
 {
   SKIP_IF_NO_XPLUGIN
@@ -655,9 +656,6 @@ TEST_F(xapi, warnings_test)
 
   /* All rows have to be read before getting warnings */
   mysqlx_store_result(res, NULL);
-
-  // Bug #28047970
-  SKIP_TEST("Bug #28047970");
 
   EXPECT_EQ(7, mysqlx_result_warning_count(res));
   warn_count = 0;

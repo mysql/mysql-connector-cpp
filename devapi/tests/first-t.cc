@@ -565,55 +565,67 @@ TEST_F(First, warnings_multi_rset)
 
   mysqlx::Session &sess = get_sess();
 
-  sess.createSchema("test", true);
+  get_sess().createSchema("test", true);
 
-  sess.sql("DROP PROCEDURE IF EXISTS test.Get").execute();
+  sql("DROP PROCEDURE IF EXISTS test.p");
 
-  sess.sql("CREATE PROCEDURE test.Get()"\
-           "BEGIN"\
-           "  SELECT 1/0;"\
-           "  SELECT 1/0;"\
-           "END"
-           )
-      .execute();
+  sql(
+    "CREATE PROCEDURE test.p()"
+    "BEGIN"
+    "  SELECT 1;"
+    "  SELECT 1/0;"
+    "  SELECT 2/'a';"
+    "END"
+  );
 
-
-  SqlResult res = sess.sql("call test.Get()").execute();
-
-  std::vector<Row> rows = res.fetchAll();
-
-  /*
-    We are in the middle of processing query result (only
-    1st rset has been consumed. Thus getWarnings() might not
-    report all the warnings yet. The protocol does not specify
-    when during result transfer the warnings will be reported.
-  */
-
-  EXPECT_NO_THROW(res.getWarningsCount());
-  EXPECT_NO_THROW(res.getWarnings());
-
-  res.nextResult();
-
-  rows = res.fetchAll();
-
-  /*
-    We have consumed whole query results so all warnings
-    should be available now.
-  */
-
-  std::vector<Warning> warnings = res.getWarnings();
-
-  // Bug #28047970
-  SKIP_TEST("Bug #28047970");
-
-  EXPECT_EQ(1, warnings.size());
-  EXPECT_EQ(1, res.getWarningsCount());
-
-  for(auto warn : warnings)
   {
-    std::cout << warn << std::endl;
+    SqlResult res = sql("call test.p()");
+
+    std::vector<Row> rows = res.fetchAll();
+
+    /*
+      We are in the middle of processing query result (only
+      1st rset has been consumed).
+    */
+
+    EXPECT_EQ(2, res.getWarningsCount());
+
+    std::vector<Warning> warnings = res.getWarnings();
+    EXPECT_EQ(2, warnings.size());
+
+    for(auto warn : warnings)
+    {
+      std::cout << warn << std::endl;
+    }
+  }
+
+  {
+    // getWarnings() without getWarningsCount()
+
+    SqlResult res = sql("call test.p()");
+
+    unsigned cnt = 0;
+    for (Warning warn : res.getWarnings())
+    {
+      std::cout << warn << std::endl;
+      cnt++;
+    }
+    EXPECT_EQ(2, cnt);
+
+    // Check that results are still available.
+
+    EXPECT_EQ(1, res.fetchOne()[0].get<int>());
+  }
+
+  {
+    // getWarning() without getWarningsCount()
+
+    SqlResult res = sql("call test.p()");
+
+    EXPECT_NE(0, res.getWarning(0).getCode());
   }
 }
+
 
 TEST_F(First, parser_xplugin)
 {
