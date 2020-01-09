@@ -115,7 +115,8 @@ mysqlx_protobuf_generate_cpp(PB_SRCS PB_HDRS ${proto_mysqlx_defs})
 file(GLOB HEADERS *.h)
 
 ADD_LIBRARY(cdk_proto_mysqlx STATIC
-            protocol.cc session.cc rset.cc stmt.cc crud.cc
+            protocol.cc protocol_compression.cc session.cc rset.cc
+            stmt.cc crud.cc
             ${PB_SRCS}
             ${proto_mysqlx_defs}
             ${HEADERS}
@@ -132,7 +133,7 @@ else()
   target_link_libraries(cdk_proto_mysqlx PRIVATE Protobuf::pb-lite)
 endif()
 
-target_link_libraries(cdk_proto_mysqlx PRIVATE cdk_foundation)
+target_link_libraries(cdk_proto_mysqlx PRIVATE cdk_foundation zlib lz4 zstd)
 
 ADD_COVERAGE(cdk_proto_mysqlx)
 

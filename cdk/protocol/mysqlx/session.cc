@@ -101,6 +101,12 @@ void Protocol::clear_Pipeline()
   get_impl().clear_Pipeline();
 }
 
+void Protocol::set_compression(Compression_type::value compression_type,
+                               size_t threshold)
+{
+  get_impl().set_compression(compression_type, threshold);
+}
+
 Protocol::Op& Protocol::snd_CapabilitiesSet(const api::Any::Document& caps)
 {
   Mysqlx::Connection::CapabilitiesSet msg;

@@ -91,7 +91,8 @@ enum ClientMessages_Type {
   ClientMessages_Type_PREPARE_DEALLOCATE = 42,
   ClientMessages_Type_CURSOR_OPEN = 43,
   ClientMessages_Type_CURSOR_CLOSE = 44,
-  ClientMessages_Type_CURSOR_FETCH = 45
+  ClientMessages_Type_CURSOR_FETCH = 45,
+  ClientMessages_Type_COMPRESSION = 46
 };
 
 enum ServerMessages_Type {
@@ -107,7 +108,9 @@ enum ServerMessages_Type {
   ServerMessages_Type_RESULTSET_FETCH_SUSPENDED = 15,
   ServerMessages_Type_RESULTSET_FETCH_DONE_MORE_RESULTSETS = 16,
   ServerMessages_Type_SQL_STMT_EXECUTE_OK = 17,
-  ServerMessages_Type_RESULTSET_FETCH_DONE_MORE_OUT_PARAMS = 18
+  ServerMessages_Type_RESULTSET_FETCH_DONE_MORE_OUT_PARAMS = 18,
+  ServerMessages_Type_COMPRESSION = 19
+
 };
 
 
@@ -171,6 +174,7 @@ enum ServerMessages_Type {
     MSG_CLIENT(X, Mysqlx::Cursor::Open, CursorOpen, CURSOR_OPEN)\
     MSG_CLIENT(X, Mysqlx::Cursor::Close, CursorClose, CURSOR_CLOSE)\
     MSG_CLIENT(X, Mysqlx::Cursor::Fetch, CursorFetch, CURSOR_FETCH)\
+    MSG_CLIENT(X, Mysqlx::Connection::Compression, Compression, COMPRESSION)\
 \
     MSG_SERVER(X, Mysqlx::Ok, \
                Ok, OK) \
@@ -201,6 +205,8 @@ enum ServerMessages_Type {
                RESULTSET_FETCH_DONE_MORE_OUT_PARAMS) \
     MSG_SERVER(X, Mysqlx::Sql::StmtExecuteOk, \
                StmtExecuteOk, SQL_STMT_EXECUTE_OK) \
+    MSG_SERVER(X, Mysqlx::Connection::Compression, \
+               Compression, COMPRESSION) \
 
 
 #define MSG_CLIENT(X,MSG,N,C)  MSG_CLIENT_##X(MSG,N,C)
@@ -454,6 +460,12 @@ struct Expectations:
 };
 
 
+struct Compression_type
+{
+  enum value { NONE = 0, DEFLATE = 1, LZ4 = 2, ZSTD = 3 };
+};
+
+
 struct Protocol_fields
 {
   /*
@@ -461,7 +473,7 @@ struct Protocol_fields
     so they must be as 2^N
   */
   enum value { ROW_LOCKING = 1 , UPSERT = 2, PREPARED_STATEMENTS = 4,
-               KEEP_OPEN = 8 };
+               KEEP_OPEN = 8, COMPRESSION = 16};
 };
 
 }  // api namespace
@@ -520,6 +532,9 @@ class Protocol
   , foundation::nocopy
 {
 public:
+
+  void set_compression(api::Compression_type::value compression_type,
+                       size_t threshold);
 
   typedef cdk::api::Async_op<size_t> Op;
 

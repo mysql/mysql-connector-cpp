@@ -85,7 +85,7 @@ public:
 #define SETTINGS_OPT_ENUM_any(X,N)  X = N,
 #define SETTINGS_OPT_ENUM_bool(X,N) X = N,
 
-  enum Session_option_impl {
+  enum Session_option_impl{
     SESSION_OPTION_LIST(SETTINGS_OPT_ENUM)
     LAST
   };
@@ -126,6 +126,13 @@ public:
   };
 
   static  const char* auth_method_name(Auth_method method);
+
+  enum class Compression_mode {
+    COMPRESSION_MODE_LIST(SETTINGS_VAL_ENUM)
+    LAST
+  };
+
+  static const char* compression_mode_name(Compression_mode mode);
 
 protected:
 
@@ -234,6 +241,7 @@ protected:
 
 
 #define SETTINGS_OPT_NAME_str(X,N)  case N: return #X;
+#define SETTINGS_OPT_NAME_bool(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_num(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_any(X,N)  case N: return #X;
 #define SETTINGS_OPT_NAME_bool(X,N)  case N: return #X;
@@ -276,12 +284,22 @@ const char* Settings_impl::auth_method_name(Auth_method method)
 {
   switch (unsigned(method))
   {
-    SSL_MODE_LIST(SETTINGS_VAL_NAME)
+    AUTH_METHOD_LIST(SETTINGS_VAL_NAME)
     default:
       return nullptr;
   }
 }
 
+inline
+const char* Settings_impl::compression_mode_name(Compression_mode mode)
+{
+  switch (unsigned(mode))
+  {
+    COMPRESSION_MODE_LIST(SETTINGS_VAL_NAME)
+    default:
+      return nullptr;
+  }
+}
 
 /*
   Note: For options that can repeat, returns the last value.

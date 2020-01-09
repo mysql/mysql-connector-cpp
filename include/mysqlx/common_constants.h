@@ -133,6 +133,7 @@
     configuration (hostname, port, priority and weight) to connect.
   */                                                                        \
   OPT_BOOL(x, DNS_SRV, 16)                                                  \
+  OPT_ANY(x,COMPRESSION,17) /*!< enable or disable compression */
   END_LIST
 
 
@@ -153,6 +154,7 @@
   X("connection-attributes",CONNECTION_ATTRIBUTES)\
   X("tls-versions", TLS_VERSIONS) \
   X("tls-ciphersuites", TLS_CIPHERSUITES) \
+  X("compression", COMPRESSION) \
   END_LIST
 
 
@@ -272,6 +274,14 @@
                         locked from the query results.  */ \
   END_LIST
 
+#define COMPRESSION_MODE_LIST(x) \
+  x(DISABLED,1)        /*!< Disables the compression.  */ \
+  x(PREFERRED,2)       /*!< Request compression, but not return error
+                         if compression is requested, but could not be 
+                         used */ \
+  x(REQUIRED,3)        /*!< Request compression and return error if
+                         compression is not supported by the server */ \
+  END_LIST
 
 // ----------------------------------------------------------------------------
 

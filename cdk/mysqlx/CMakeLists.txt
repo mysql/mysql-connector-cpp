@@ -49,6 +49,7 @@ ADD_LIBRARY(cdk_mysqlx STATIC
   )
 
 target_link_libraries(cdk_mysqlx PUBLIC cdk_proto_mysqlx cdk_foundation)
+
 # this is used by auth_hash.cc
 target_link_libraries(cdk_mysqlx PRIVATE SSL::ssl)
 

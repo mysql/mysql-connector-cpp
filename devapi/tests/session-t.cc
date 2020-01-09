@@ -133,6 +133,76 @@ public:
 
 };
 
+void check_compress(mysqlx::Session &sess)
+{
+  {
+    std::string query = "SELECT '";
+    for (int i = 0; i < 5000; ++i)
+      query.append("Test ");
+
+    query.append("' as test_text UNION SELECT '");
+
+    for (int i = 0; i < 5000; ++i)
+      query.append("0123 ");
+
+    query.append("'");
+
+    SqlResult res = sess.sql(query).execute();
+    Row row;
+    while ((row = res.fetchOne()))
+    {
+      cout << "Uncompressed data: " << row[0] << endl;
+    }
+  }
+
+  {
+    SqlResult res = sess.sql("SHOW STATUS LIKE 'Mysqlx%compress%'").execute();
+    Row row;
+    int actual_row_count = 0;
+    while((row = res.fetchOne()))
+    {
+      cout << row[0] << " : " << row[1] << endl;
+      ++actual_row_count;
+      EXPECT_TRUE(std::stol((std::string)row[1], nullptr, 0) > 0);
+    }
+    cout << "Status rows fetched: " << actual_row_count;
+    EXPECT_TRUE(actual_row_count > 0);
+  }
+};
+
+
+TEST_F(Sess, compression)
+{
+  SKIP_IF_NO_XPLUGIN
+
+    SessionSettings mysqldefault_set(
+      SessionOption::USER, "root",
+      SessionOption::HOST, "localhost",
+      SessionOption::PORT, get_port(),
+      SessionOption::COMPRESSION, CompressionMode::PREFERRED
+    );
+
+    std::stringstream uri;
+    uri << "mysqlx://" << get_user();
+    if (get_password() && *get_password())
+      uri << ":" << get_password();
+    uri << "@" << "localhost:" << get_port();
+    uri << "/?compression=PREFERRED";
+
+  try {
+    mysqlx::Session s(mysqldefault_set);
+    check_compress(s);
+
+
+    mysqlx::Session s2(uri.str());
+    check_compress(s2);
+
+  }
+
+  catch (Error e) {
+    FAIL() << "Unexpected throw!" << e;
+  }
+}
 
 
 TEST_F(Sess, tls_ciphers_prio)

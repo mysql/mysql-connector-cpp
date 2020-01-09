@@ -223,6 +223,26 @@ TCPIP_options::auth_method_t get_auth(unsigned m)
   return CDK_type(0); // quiet compiler warnings
 }
 
+TCPIP_options::compression_mode_t get_compression(unsigned m)
+{
+  using DevAPI_type = Settings_impl::Compression_mode;
+  using CDK_type = TCPIP_options::compression_mode_t;
+
+  switch (DevAPI_type(m))
+  {
+#define COMPRESSION_TO_CDK(X,N) \
+  case DevAPI_type::X: return CDK_type::X;
+
+    COMPRESSION_MODE_LIST(COMPRESSION_TO_CDK)
+
+  default:
+    // Note: caller should ensure that argument has correct value
+    assert(false);
+  }
+
+  return CDK_type(0); // quiet compiler warnings
+}
+
 TLS_options::SSL_MODE get_ssl_mode(unsigned m)
 {
   using DevAPI_type = Settings_impl::SSL_mode;
@@ -230,10 +250,10 @@ TLS_options::SSL_MODE get_ssl_mode(unsigned m)
 
   switch (DevAPI_type(m))
   {
-#define AUTH_TO_CDK(X,N) \
+#define SSL_TO_CDK(X,N) \
   case DevAPI_type::X: return CDK_type::X;
 
-    SSL_MODE_LIST(AUTH_TO_CDK)
+    SSL_MODE_LIST(SSL_TO_CDK)
 
   default:
     // Note: caller should ensure that argument has correct value
@@ -369,6 +389,12 @@ void prepare_options(
     opts.set_auth_method(
       socket ? TCPIP_options::PLAIN : TCPIP_options::DEFAULT
     );
+  }
+
+  if (settings.has_option(Option::COMPRESSION))
+  {
+    opts.set_compression(get_compression(
+      (unsigned)settings.get(Option::COMPRESSION).get_uint()));
   }
 
   // DNS+SRV

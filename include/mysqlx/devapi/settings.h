@@ -62,6 +62,7 @@ MYSQLX_ABI_BEGIN(2,0)
 class SessionOption
 {
 #define SESS_OPT_ENUM_any(X,N) X = N,
+#define SESS_OPT_ENUM_bool(X,N) X = N,
 #define SESS_OPT_ENUM_num(X,N) X = N,
 #define SESS_OPT_ENUM_str(X,N) X = N,
 #define SESS_OPT_ENUM_bool(X,N) X = N,
@@ -183,6 +184,7 @@ std::string OptionName(ClientOption opt)
 #define CLT_OPT_NAME_str(X,N) CLT_OPT_NAME_any(X,N)
 
 #define SESS_OPT_NAME_any(X,N) case SessionOption::X: return #X;
+#define SESS_OPT_NAME_bool(X,N) SESS_OPT_NAME_any(X,N)
 #define SESS_OPT_NAME_num(X,N) SESS_OPT_NAME_any(X,N)
 #define SESS_OPT_NAME_str(X,N) SESS_OPT_NAME_any(X,N)
 #define SESS_OPT_NAME_bool(X,N) SESS_OPT_NAME_any(X,N)
@@ -281,6 +283,39 @@ std::string AuthMethodName(AuthMethod m)
 
 /// @endcond
 
+/**
+  Values to be used with `COMPRESSION` option
+  \anchor CompressionMode
+*/
+
+enum_class CompressionMode
+{
+#define COMPRESSION_ENUM(X,N) X = N,
+
+  COMPRESSION_MODE_LIST(COMPRESSION_ENUM)
+};
+
+/// @cond DISABLED
+
+inline
+std::string CompressionModeName(CompressionMode m)
+{
+#define COMPRESSION_NAME(X,N) case CompressionMode::X: return #X;
+
+  switch (m)
+  {
+    COMPRESSION_MODE_LIST(COMPRESSION_NAME)
+  default:
+    {
+      std::ostringstream buf;
+      buf << "<UKNOWN (" << unsigned(m) << ")>" << std::ends;
+      return buf.str();
+    }
+  };
+}
+
+/// @endcond
+
 
 namespace internal {
 
@@ -292,10 +327,11 @@ namespace internal {
 
 struct Settings_traits
 {
-  using Options    = mysqlx::SessionOption;
-  using COptions   = mysqlx::ClientOption;
-  using SSLMode    = mysqlx::SSLMode;
-  using AuthMethod = mysqlx::AuthMethod;
+  using Options         = mysqlx::SessionOption;
+  using COptions        = mysqlx::ClientOption;
+  using SSLMode         = mysqlx::SSLMode;
+  using AuthMethod      = mysqlx::AuthMethod;
+  using CompressionMode = mysqlx::CompressionMode;
 
   static std::string get_mode_name(SSLMode mode)
   {

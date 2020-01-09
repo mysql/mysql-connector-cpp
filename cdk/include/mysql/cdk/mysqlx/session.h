@@ -121,6 +121,7 @@ class Stmt_op;
 
 typedef Stmt_op* Reply_init;
 typedef protocol::mysqlx::api::Protocol_fields Protocol_fields;
+typedef protocol::mysqlx::api::Compression_type Compression_type;
 
 
 /*
@@ -251,18 +252,50 @@ protected:
 public:
 
   typedef ds::Options<ds::mysqlx::Protocol_options> Options;
+  using compression_mode_t = ds::mysqlx::Protocol_options::compression_mode_t;
 
   template <class C>
   Session(C &conn, const Options &options)
     : m_protocol(conn)
   {
+
+    /*
+      Check if the compression is needed and the compression type
+      supported by the server
+    */
+    Compression_type::value compression = Compression_type::NONE;
+
+    if (options.compression() != compression_mode_t::DISABLED)
+    {
+      compression = negotiate_compression();
+
+      if (compression == Compression_type::NONE &&
+          options.compression() == compression_mode_t::REQUIRED)
+        throw_error("Compression requested but the server does not support it.");
+    }
     send_connection_attr(options);
     authenticate(options, conn.is_secure());
     m_isvalid = true;
     // TODO: make "lazy" checks instead, deferring to the time when given
     // feature is used.
     check_protocol_fields();
+
+    // start using compression now with the default threshold (1000)
+    m_protocol.set_compression(compression, 1000);
   }
+
+  /*
+    Get the most suitable compression type supported by the server.
+    Function prioritizes compression types as follows:
+      LZ4
+      DEFLATE
+
+    If the higher priority type is not available the function will
+    check a lower priority type.
+
+    NONE is returned if the server does not support compression
+  */
+  Compression_type::value negotiate_compression();
 
   virtual ~Session();
 

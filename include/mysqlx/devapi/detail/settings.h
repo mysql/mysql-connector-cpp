@@ -58,6 +58,7 @@ class Settings_detail
   using COption     = typename Traits::COptions;
   using SSLMode     = typename Traits::SSLMode;
   using AuthMethod  = typename Traits::AuthMethod;
+  using CompressionMode = typename Traits::CompressionMode;
 
 public:
 
@@ -124,6 +125,15 @@ protected:
     if (opt != Session_option_impl::AUTH)
       throw Error(
         "SessionSettings::AuthMethod value can only be used on AUTH setting."
+      );
+    return unsigned(m);
+  }
+
+  static Value opt_val(int opt, CompressionMode m)
+  {
+    if (opt != Session_option_impl::COMPRESSION)
+      throw Error(
+        "SessionSettings::CompressionMode value can only be used on COMPRESSION setting."
       );
     return unsigned(m);
   }

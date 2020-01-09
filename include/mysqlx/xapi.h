@@ -415,6 +415,7 @@ mysqlx_opt_type_t;
 #define OPT_CONNECTION_ATTRIBUTES(A) MYSQLX_OPT_CONNECTION_ATTRIBUTES, (A)
 #define OPT_TLS_VERSIONS(A) MYSQLX_OPT_TLS_VERSIONS, (A)
 #define OPT_TLS_CIPHERSUITES(A) MYSQLX_OPT_TLS_CIPHERSUITES, (A)
+#define OPT_COMPRESSION(A) MYSQLX_OPT_COMPRESSION, (unsigned int)(A)
 
 
 /**
@@ -445,6 +446,14 @@ typedef enum mysqlx_auth_method_enum
 }
 mysqlx_auth_method_t;
 
+
+typedef enum mysqlx_compression_mode_enum
+{
+#define XAPI_COMPRESSION_ENUM(X,N)  MYSQLX_COMPRESSION_##X = N,
+
+  COMPRESSION_MODE_LIST(XAPI_COMPRESSION_ENUM)
+}
+mysqlx_compression_mode_t;
 
 /**
   Constants for defining the row locking options for

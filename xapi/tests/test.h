@@ -205,6 +205,31 @@ protected:
     }
   }
 
+  std::string get_basic_uri()
+  {
+    std::string conn_str_basic = "mysqlx://";
+    if (m_xplugin_usr)
+    {
+      conn_str_basic += m_xplugin_usr;
+    }
+
+    if (m_xplugin_pwd)
+    {
+      conn_str_basic += ":";
+      conn_str_basic += m_xplugin_pwd;
+    }
+
+    conn_str_basic += "@";
+    conn_str_basic += m_xplugin_host;
+
+    if (m_xplugin_port)
+    {
+      conn_str_basic += ":";
+      conn_str_basic += m_xplugin_port;
+    }
+    return conn_str_basic;
+  }
+
 
   std::string get_ca_file()
   {

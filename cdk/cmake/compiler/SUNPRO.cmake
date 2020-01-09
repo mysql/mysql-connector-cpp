@@ -68,6 +68,7 @@ endfunction()
 
 function(enable_pic)
   add_flags(CXX -KPIC)
+  add_flags(C -KPIC)
 endfunction()
 
 

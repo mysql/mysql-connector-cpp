@@ -36,6 +36,190 @@
 #include <map>
 #include "test.h"
 
+void check_compress(mysqlx_session_t *sess)
+{
+  std::string query = "SELECT '";
+  for (int i = 0; i < 5000; ++i)
+    query.append("Test ");
+
+  query.append("' as test_text UNION SELECT '");
+
+  for (int i = 0; i < 5000; ++i)
+    query.append("0123 ");
+
+  query.append("'");
+
+  mysqlx_result_t *res;
+  mysqlx_row_t *row;
+
+  CRUD_CHECK(res = mysqlx_sql(sess, query.c_str(), strlen(query.c_str())), sess);
+
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char *buf = new char[65536];
+    size_t buf_len = 65536;
+    memset(buf, 0, buf_len);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buf_len));
+    printf("Uncompressed data: %s\n", buf);
+    delete[] buf;
+  }
+
+  const char *query2 = (const char*)"SHOW STATUS LIKE 'Mysqlx%compress%'";
+  CRUD_CHECK(res = mysqlx_sql(sess, query2, strlen(query2)), sess);
+  int actual_row_count = 0;
+  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  {
+    char buf1[256], buf2[256];
+    size_t buf1_len = sizeof(buf1);
+    memset(buf1, 0, buf1_len);
+    size_t buf2_len = sizeof(buf2);
+    memset(buf2, 0, buf2_len);
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf1, &buf1_len));
+    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf2, &buf2_len));
+    EXPECT_TRUE(buf1_len > 0);
+    EXPECT_TRUE(buf2_len > 0);
+    ++actual_row_count;
+
+    printf("%s : %s\n", buf1, buf2);
+  }
+  printf("Status rows fetched: %i \n", actual_row_count);
+  EXPECT_TRUE(actual_row_count > 0);
+};
+
+int check_compress2(mysqlx_session_t* m_sess) {
+  mysqlx_result_t* res = NULL;
+  mysqlx_schema_t* schema;
+  mysqlx_collection_t* collection;
+  mysqlx_stmt_t* crud = NULL;
+  const char* sName = "test";
+  const char* cName = "coll1";
+  char json_buf[1024];
+  int retVal = 0;
+  int i = 0;
+
+  schema = mysqlx_get_schema(m_sess, sName, 1);
+  mysqlx_collection_drop(schema, cName);
+  mysqlx_collection_create(schema, cName);
+  collection = mysqlx_get_collection(schema, cName, 1);
+  crud = mysqlx_collection_add_new(collection);
+
+  /*Inserting large data*/
+  for (i = 0; i < 5000; ++i)
+  {
+    sprintf(json_buf, "{\"K1\":\"%d\", \"K2\": \"%d\",\"id\": \"%d\"}", i, i, i);
+    mysqlx_set_add_document(crud, json_buf);
+  }
+
+  res = mysqlx_execute(crud);
+  printf("\nInsert Success\n");
+
+  return retVal;
+
+}
+
+
+TEST_F(xapi, compression_test)
+{
+  mysqlx_error_t *error;
+  mysqlx_session_t *sess;
+  mysqlx_session_options_t *opt;
+
+  opt = mysqlx_session_options_new();
+
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+              OPT_HOST(m_xplugin_host), OPT_PORT(m_port),
+              OPT_USER(m_xplugin_usr), OPT_PWD(m_xplugin_pwd),
+              OPT_COMPRESSION(MYSQLX_COMPRESSION_REQUIRED),
+              PARAM_END));
+
+  sess = mysqlx_get_session_from_options(opt, &error);
+  mysqlx_free(opt);
+
+  if (sess == NULL)
+  {
+    std::stringstream str;
+    str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+    mysqlx_free(error);
+    FAIL() << str.str();
+  }
+  check_compress(sess);
+
+  mysqlx_session_close(sess);
+
+  std::string uri_basic = get_basic_uri();
+  uri_basic += "/?cOmpressION=RequiRed";
+
+  sess = mysqlx_get_session_from_url(uri_basic.c_str(), &error);
+
+  if (sess == NULL)
+  {
+    std::stringstream str;
+    str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+    mysqlx_free(error);
+    FAIL() << str.str();
+  }
+  check_compress(sess);
+
+  mysqlx_session_close(sess);
+
+  // Check that the session works if compression is explicitly disabled
+  uri_basic = get_basic_uri() + "/?compression=DISABLED";
+  sess = mysqlx_get_session_from_url(uri_basic.c_str(), &error);
+
+  if (sess == NULL)
+  {
+    std::stringstream str;
+    str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+    mysqlx_free(error);
+    FAIL() << str.str();
+  }
+  mysqlx_session_close(sess);
+
+}
+
+TEST_F(xapi, compression_test_doc)
+{
+  mysqlx_session_t* sess = NULL;
+  mysqlx_error_t *error = NULL;
+  std::string uri = get_basic_uri() + "?compression=PREFERRED";
+  sess = mysqlx_get_session_from_url(uri.c_str(), &error);
+
+  if (sess == NULL)
+  {
+    std::stringstream str;
+    str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+    mysqlx_free(error);
+    FAIL() << str.str();
+  }
+
+  const char* schema_name = "compression_test";
+  mysqlx_schema_drop(sess, schema_name);
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_schema_create(sess, schema_name));
+
+  mysqlx_schema_t *schema = mysqlx_get_schema(sess, schema_name, true);
+
+  const char* coll_name = "compression_coll";
+  EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, coll_name));
+
+  mysqlx_collection_t *collection =
+    mysqlx_get_collection(schema, coll_name, 1);
+
+  mysqlx_stmt_t *crud = mysqlx_collection_add_new(collection);
+
+  /*Inserting large data*/
+  for (int i = 0; i < 5000; ++i)
+  {
+    std::stringstream str;
+    str << "{\"K1\":\"" << i << "\", \"K2\": \""
+        << i << "\",\"id\": \"" << i << "\"}";
+    mysqlx_set_add_document(crud, str.str().c_str());
+  }
+
+  mysqlx_result_t *res = mysqlx_execute(crud);
+  EXPECT_TRUE(res != NULL);
+  mysqlx_session_close(sess);
+}
 
 TEST_F(xapi, free_test)
 {
@@ -540,28 +724,11 @@ TEST_F(xapi, conn_string_test)
 
   unsigned short port = 0;
   mysqlx_error_t *error = NULL;
-  std::string  conn_str_basic;
 
   bool ssl_enable = false;
 
   mysqlx_session_t *local_sess;
-
-  conn_str_basic = m_xplugin_usr;
-
-  if (m_xplugin_pwd)
-  {
-    conn_str_basic += ":";
-    conn_str_basic += m_xplugin_pwd;
-  }
-
-  conn_str_basic += "@";
-  conn_str_basic += m_xplugin_host;
-
-  if (m_xplugin_port)
-  {
-    conn_str_basic += ":";
-    conn_str_basic += m_xplugin_port;
-  }
+  std::string conn_str_basic = get_basic_uri();
 
 DO_CONNECT:
 

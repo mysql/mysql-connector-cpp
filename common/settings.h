@@ -700,6 +700,51 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::PRIORITY>(
 }
 
 
+template<>
+inline void
+Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::COMPRESSION>(
+  const unsigned &val
+)
+{
+  if (val >= size_t(Compression_mode::LAST))
+    throw_error("Invalid Compression value");
+  add_option(Session_option_impl::COMPRESSION, val);
+}
+
+template<>
+inline void
+Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::COMPRESSION>(
+  const std::string &val
+  )
+{
+  using std::map;
+
+#define COMPRESSION_MAP(X,N) { #X, Compression_mode::X },
+
+  static map< std::string, Compression_mode > compression_map{
+    COMPRESSION_MODE_LIST(COMPRESSION_MAP)
+  };
+
+  try {
+
+    Compression_mode m = compression_map.at(to_upper(val));
+
+    if (Compression_mode::LAST == m)
+      throw std::out_of_range("");
+
+    set_option<Session_option_impl::COMPRESSION>(unsigned(m));
+    return;
+  }
+  catch (const std::out_of_range&)
+  {
+    std::string msg = "Invalid compression mode: " + val;
+    throw_error(msg.c_str());
+    // Quiet compiler warnings
+    return;
+  }
+}
+
+
 // SSL options.
 
 
@@ -1116,6 +1161,7 @@ void Settings_impl::Setter::str(const string &val)
 #define SET_OPTION_STR_str(X,N) \
   case Session_option_impl::X: return set_option<Session_option_impl::X,std::string>(utf8_val);
 #define SET_OPTION_STR_any(X,N) SET_OPTION_STR_str(X,N)
+#define SET_OPTION_STR_bool(X,N) SET_OPTION_STR_num(X,N)
 #define SET_OPTION_STR_num(X,N) \
   case Session_option_impl::X: \
   try \

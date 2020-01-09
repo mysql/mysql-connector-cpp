@@ -31,3 +31,29 @@ if(WITH_TESTS)
 add_subdirectory(ngs_mockup)
 
 endif()
+
+# Compression libraries
+enable_pic()
+add_subdirectory(zlib)
+
+target_include_directories(zlib PUBLIC
+  ${PROJECT_BINARY_DIR}/extra/zlib
+  ${PROJECT_SOURCE_DIR}/extra/zlib
+)
+
+
+ADD_LIBRARY(lz4 STATIC
+    lz4/lz4.c
+    lz4/lz4frame.c
+    lz4/lz4hc.c
+    lz4/xxhash.c
+)
+
+target_include_directories(lz4 PUBLIC lz4)
+
+add_subdirectory(zstd)
+
+target_include_directories(zstd PUBLIC
+  ${PROJECT_BINARY_DIR}/extra/zstd/lib
+  ${PROJECT_SOURCE_DIR}/extra/zstd/lib
+)

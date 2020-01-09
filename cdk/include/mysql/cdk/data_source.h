@@ -191,7 +191,14 @@ class Protocol_options
     SHA256_MEMORY
   };
 
+  enum compression_mode_t {
+    DISABLED,
+    PREFERRED,
+    REQUIRED
+  };
+
   virtual auth_method_t auth_method() const = 0;
+  virtual compression_mode_t compression() const = 0;
 
 };
 
@@ -203,6 +210,7 @@ class Options
 protected:
 
   auth_method_t m_auth_method = DEFAULT;
+  compression_mode_t m_compression = DISABLED;
 
 public:
 
@@ -221,6 +229,16 @@ public:
   auth_method_t auth_method() const
   {
     return m_auth_method;
+  }
+
+  void set_compression(compression_mode_t val)
+  {
+    m_compression = val;
+  }
+
+  compression_mode_t compression() const
+  {
+    return m_compression;
   }
 
 };

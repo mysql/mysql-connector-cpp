@@ -43,6 +43,72 @@ POP_SYS_WARNINGS_CDK
 namespace cdk {
 namespace mysqlx {
 
+Compression_type::value Session::negotiate_compression()
+{
+  Compression_type::value compression = Compression_type::NONE;
+
+  struct : cdk::protocol::mysqlx::api::Any::Document
+  {
+    std::string m_algorithm = "lz4_message";
+
+    void process(Processor &prc) const
+    {
+      prc.doc_begin();
+      {
+        auto doc_prc = cdk::safe_prc(prc)->key_val("compression")->doc();
+        doc_prc.doc_begin();
+
+        doc_prc.key_val("algorithm")->scalar()->str(m_algorithm);
+        doc_prc.key_val("server_combine_mixed_messages")->scalar()->yesno(false);
+
+        doc_prc.doc_end();
+      }
+      prc.doc_end();
+    }
+  } compress_caps;
+
+  struct : cdk::protocol::mysqlx::Reply_processor
+  {
+    bool m_compression_ok = true;
+
+    void ok(string msg)
+    {
+      m_compression_ok = true;
+    }
+
+    void error(unsigned int, short int,
+               cdk::protocol::mysqlx::sql_state_t, const string&)
+    {
+      m_compression_ok = false;
+    }
+  } cap_prc;
+
+  /*
+    The compression types must be attempted with increaing
+    priority. The last successful type will be applied.
+  */
+  compress_caps.m_algorithm = "deflate_stream";
+  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+  compress_caps.m_algorithm = "lz4_message";
+  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+  compress_caps.m_algorithm = "zstd_stream";
+  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+
+  m_protocol.rcv_Reply(cap_prc).wait();
+  if (cap_prc.m_compression_ok)
+    compression = Compression_type::DEFLATE;
+
+  m_protocol.rcv_Reply(cap_prc).wait();
+  if (cap_prc.m_compression_ok)
+    compression = Compression_type::LZ4;
+
+  m_protocol.rcv_Reply(cap_prc).wait();
+  if (cap_prc.m_compression_ok)
+    compression = Compression_type::ZSTD;
+
+  return compression;
+}
+
 /*
   A structure to check if xplugin we are connecting supports a
   specific field
@@ -102,6 +168,9 @@ struct Proto_field_checker
       break;
     case Protocol_fields::KEEP_OPEN:
       m_data = bytes("6.1");
+      break;
+    case Protocol_fields::COMPRESSION:
+      m_data = bytes("46");
       break;
     default:
       return 0;
@@ -627,6 +696,7 @@ void Session::check_protocol_fields()
     m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
     m_proto_fields |= field_checker.is_supported(Protocol_fields::PREPARED_STATEMENTS);
     m_proto_fields |= field_checker.is_supported(Protocol_fields::KEEP_OPEN);
+    m_proto_fields |= field_checker.is_supported(Protocol_fields::COMPRESSION);
   }
 }
 

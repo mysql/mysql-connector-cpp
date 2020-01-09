@@ -35,7 +35,7 @@
 #include <mysql/cdk/protocol/mysqlx.h>
 #include <mysql/cdk/foundation/opaque_impl.i>
 #include <mysql/cdk/config.h>
-
+#include "protocol_compression.h"
 
 PUSH_PB_WARNINGS
 
@@ -115,7 +115,6 @@ const size_t max_rd_size= max_wr_size;
 #define THROW_PROTOCOL_ERROR(ERR) throw ERR
 
 
-
 enum Protocol_side { SERVER, CLIENT};
 
 inline
@@ -138,13 +137,23 @@ class Op_rcv;
 
 */
 
+typedef Mysqlx::Connection::Compression Compression;
+
+
 class Protocol_impl : public Processor_base
 {
+private:
+
+  bool m_preamble = false; //Used for processing compressed frames
+
 public:
 
   Protocol::Stream *m_str;
   /// The side from which we *receive* messages
   Protocol_side m_side;
+  size_t m_compress_threshold = 0;
+
+  void set_compression(Compression_type::value, size_t);
 
   Placeholder_conv_imp m_args_conv;
 
@@ -222,14 +231,27 @@ protected:
   bool rd_cont();
   void rd_wait();
 
-  byte   *m_rd_buf;
-  size_t  m_rd_size;
+  byte   *m_rd_buf;              // Reading buffer or data after uncompression
+  size_t  m_rd_size;             // Size of allocated m_rd_buf
+
   scoped_ptr<Protocol::Stream::Op> m_rd_op;
+
+  Protocol_compression m_compressor;
+
+
 
   // Info extracted from message header
 
-  msg_type_t m_msg_type;
-  size_t     m_msg_size;
+  msg_type_t m_msg_type = 0;                // Message type
+  size_t     m_msg_size = 0;                // Message size
+
+  msg_type_t m_msg_compressed_type = 0;     // Set to non-zero value while
+                                            // processing compressed message
+                                            //  payload.
+
+  size_t     m_msg_uncompressed_size = 0;   // Uncompressed payload size
+
+  Compression m_compressed_msg;
 
   /*
     Writing raw message frames
@@ -246,6 +268,7 @@ protected:
   */
 
 
+  void write(byte *buf);
   void write();
   void write_msg(msg_type_t, Message&);
   bool wr_cont();

@@ -254,6 +254,7 @@ set(configuration_header "${PROJECT_BINARY_DIR}/include/mysql/cdk/config.h")
 
 #INCLUDE(testing)
 #SETUP_TESTING()
+ADD_SUBDIRECTORY(extra)
 
 
 #

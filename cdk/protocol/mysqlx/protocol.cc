@@ -36,6 +36,7 @@
 // Note: on Windows this includes windows.h
 
 #include <mysql/cdk/foundation/common.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 
 /*
   Note: On Windows the INIT_ONCE structure was added only in later
@@ -143,22 +144,23 @@ Protocol_impl::Protocol_impl(Protocol::Stream *str, Protocol_side side)
   , m_msg_state(PAYLOAD)
   , m_msg_size(0)
 {
-	// Warning can be disabled because the handler is not called, only registered
-	PUSH_MSVC17_WARNINGS_CDK
-	EXECUTE_ONCE(&log_handler_once, &log_handler_init);
-	POP_MSVC17_VARNINGS_CDK
+  // Warning can be disabled because the handler is not called, only registered
+  PUSH_MSVC17_WARNINGS_CDK
+    EXECUTE_ONCE(&log_handler_once, &log_handler_init);
+  POP_MSVC17_VARNINGS_CDK
 
-  // Allocate initial I/O buffers
+    // Allocate initial I/O buffers
 
-  m_wr_size= m_rd_size= 512;
-  m_rd_buf= (byte*)malloc(m_rd_size);
-  m_wr_buf= (byte*)malloc(m_wr_size);
+  m_wr_size = m_rd_size = 1024;
+  m_rd_buf = (byte*)malloc(m_rd_size);
+  m_wr_buf = (byte*)malloc(m_wr_size);
 
   if (!m_rd_buf)
     throw_error("Could not allocate initial input buffer");
 
   if (!m_wr_buf)
     throw_error("Could not allocate initial output buffer");
+
 }
 
 Protocol_impl::~Protocol_impl()
@@ -167,7 +169,6 @@ Protocol_impl::~Protocol_impl()
   free(m_wr_buf);
   delete m_str;
 }
-
 
 class Invalid_msg_error : public Error_class<Invalid_msg_error>
 {
@@ -320,32 +321,62 @@ static void log_handler(
   }
 }
 
+/*
+  Implementation of protobuf's ZeroCopyOutputStream which stores
+  data in the given memory buffer.
+  ==============================
+*/
+
+class ArrayStream : public google::protobuf::io::ZeroCopyOutputStream
+{
+  byte *m_buf;
+  size_t m_size;
+  size_t m_bytes_count;
+
+  public:
+
+  ArrayStream(byte * buf, size_t size) : m_buf(buf), m_size(size),
+                                         m_bytes_count(0)
+  {}
+
+  virtual bool Next(void ** data, int * size)
+  {
+    if (m_bytes_count >= m_size)
+      return false;
+
+    *data = m_buf + m_bytes_count;
+    *size = (int)(m_size - m_bytes_count);
+    m_bytes_count = m_size; // We always guess that all buffer is used
+
+    return true;
+  }
+
+  virtual void BackUp(int count)
+  {
+    assert((int)m_bytes_count >= count);
+    m_bytes_count -= count;
+  }
+
+  int64 ByteCount() const
+  {
+    return (int64)m_bytes_count;
+  }
+};
 
 /*
   Writing/reading message frames
   ==============================
 */
 
-
 void Protocol_impl::write_msg(msg_type_t msg_type, Message &msg)
 {
   if (m_wr_op)
-    THROW("Can't write message while another one is written");
+    THROW("Can't write message while another one is being written");
 
   msg_size_t net_size = static_cast<unsigned>(msg.ByteSize()) + 1;
 
   if (!resize_buf(CLIENT, header_length + net_size))
     THROW("Not enough memory for output buffer");
-
-  // Construct message header
-
-  HTONSIZE(net_size);
-  memcpy((void*)wr_buffer(), (const void*)&net_size, sizeof(net_size));
-  wr_buffer()[header_length - 1] = (byte)msg_type;
-
-  // Convert net_size back to original endian before using it later
-
-  NTOHSIZE(net_size);
 
   // Serialize message
 
@@ -359,21 +390,83 @@ void Protocol_impl::write_msg(msg_type_t msg_type, Message &msg)
     throw_error(cdkerrc::protobuf_error, "Serialization error!");
   }
 
+  byte *wr_buf = wr_buffer();
+  size_t total_write_size = 0;
+
+  if (m_compressor.m_compression_type != Compression_type::NONE &&
+      net_size > m_compress_threshold)
+  {
+    HTONSIZE(net_size);
+    memcpy((void*)wr_buf, (const void*)&net_size, sizeof(net_size));
+    NTOHSIZE(net_size);
+    wr_buf[header_length - 1] = (byte)msg_type;
+
+    // Do not take into account the msg type when using compression
+    msg_size_t payload_size = net_size - 1;
+    msg_size_t compressed_size = (msg_size_t)m_compressor.
+      do_compress(m_wr_buf, payload_size + header_length);
+
+    if (compressed_size == 0)
+      throw_error("Failed to compress the data");
+
+    /*
+      Two messages are required in order to ensure that
+      the message type and uncompressed size are sent before
+      the payload.
+    */
+    Mysqlx::Connection::Compression first_fields;
+    Mysqlx::Connection::Compression compression_payload;
+
+    first_fields.set_client_messages(
+      static_cast<::Mysqlx::ClientMessages_Type>(msg_type));
+    first_fields.set_uncompressed_size(payload_size + header_length);
+    byte *cmp_out_buf = m_compressor.get_out_buf();
+    compression_payload.set_payload(cmp_out_buf, compressed_size);
+
+    // The Compressed message will add only a few bytes
+    // to the compressed payload. It should not be more than 128.
+    if (!resize_buf(CLIENT, compressed_size + 128))
+      THROW("Not enough memory for output buffer");
+
+    wr_buf = wr_buffer();
+
+    ArrayStream astr(wr_buf + header_length, wr_size());
+    first_fields.SerializePartialToZeroCopyStream(&astr);
+    compression_payload.SerializePartialToZeroCopyStream(&astr);
+
+    // First 4 bytes of frame length are not counted as payload
+    net_size = static_cast<msg_size_t>(astr.ByteCount()) + 1;
+    msg_type = msg_type::cli_Compression;
+
+  }
+
+  // Construct message header
+  HTONSIZE(net_size);
+  memcpy((void*)wr_buf, (const void*)&net_size, sizeof(net_size));
+  wr_buf[header_length - 1] = (byte)msg_type;
+  // Convert net_size back to original endian before using it later
+  NTOHSIZE(net_size);
+  total_write_size = net_size + header_length - 1;
+
   // Create write operation to send message payload
-
-
-  m_pipeline_size+=net_size+header_length - 1;
+  m_pipeline_size += total_write_size;
 
   if (!m_pipeline)
   {
-    write();
+    write(wr_buf);
   }
+}
+
+
+void Protocol_impl::write(byte *buf)
+{
+  m_wr_op.reset(m_str->write(buffers(buf, m_pipeline_size)));
+  clear_Pipeline();
 }
 
 void Protocol_impl::write()
 {
-  m_wr_op.reset(m_str->write(buffers(m_wr_buf, m_pipeline_size)));
-  clear_Pipeline();
+  write(m_wr_buf);
 }
 
 
@@ -405,12 +498,38 @@ void Protocol_impl::read_header()
   if (HEADER == m_msg_state)
     return;
 
+  m_msg_state= HEADER;
+
+  if (m_msg_compressed_type)
+  {
+    /*
+      If we are processing compressed messages, and there is more compressed
+      data, uncompress next message header. Otherwise (no more compressed data),
+      get out of compressed mode and proceed to reading next message header
+      from the input stream.
+    */
+
+    if (!m_compressor.uncompression_finished())
+    {
+      if (!m_compressor.uncompress(m_rd_buf, 5))
+        THROW("Error uncompressing the message header");
+      return;
+    }
+    else
+    {
+      m_msg_compressed_type = 0;
+      m_compressor.reset();  // clean up compressor
+    }
+  }
+
+
   if (m_rd_op)
     THROW("can't read header when reading payload is not completed");
 
-  m_rd_op.reset(m_str->read(buffers(m_rd_buf,4)));
-  m_msg_state= HEADER;
+  // Read length and message type
+  m_rd_op.reset(m_str->read(buffers(m_rd_buf, 5)));
 }
+
 
 void Protocol_impl::read_payload()
 {
@@ -420,68 +539,78 @@ void Protocol_impl::read_payload()
   if (HEADER != m_msg_state)
     THROW("payload can be read only after header");
 
+  m_msg_state = PAYLOAD;
+
+  // Nothing to do if message has no payload.
+
+  if (0 == m_msg_size)
+    return;
+
+  if (!resize_buf(SERVER, m_msg_size))
+    THROW("Not enough memory for input buffer");
+
+  /*
+    If we process compressed data, request compressor to decompress next
+    payload. Otherwise read payload directly from input stream.
+  */
+
+  if (m_msg_compressed_type)
+  {
+    if (!m_compressor.uncompress(m_rd_buf, m_msg_size))
+      THROW("Error uncompressing the message payload");
+    return;
+  }
+
   if (m_rd_op)
     THROW("can't read payload when reading header is not completed");
 
-  if (!resize_buf(SERVER, m_msg_size))
-      THROW("Not enough memory for input buffer");
-
-  if (m_msg_size > 0)
-    m_rd_op.reset(m_str->read(buffers(m_rd_buf, m_msg_size)));
-  m_msg_state= PAYLOAD;
+  m_rd_op.reset(m_str->read(buffers(m_rd_buf, m_msg_size)));
 }
 
 
 bool Protocol_impl::rd_cont()
 {
-  if (!m_rd_op)
-    return true;
+  // First try to finish m_rd_op, if set.
 
-  if (!m_rd_op->cont())
+  if (m_rd_op && !m_rd_op->cont())
     return false;
 
+  // Call rd_process when IO is finished (orthere is no IO to begin with).
+
   m_rd_op.reset();
-
-  if (PAYLOAD == m_msg_state)
-    return true;
-
   rd_process();
 
-  return true;
+  // We are done only if rd_process() did not set up a new IO operation.
+
+  return !m_rd_op;
 }
 
 
 void Protocol_impl::rd_wait()
 {
-  if (m_rd_op)
+  while (!rd_cont())
   {
+    // Note: rd_cont() returns false only if there is pending IO
+    assert(m_rd_op);
     m_rd_op->wait();
-    m_rd_op.reset();
-
-    if (PAYLOAD == m_msg_state)
-      return;
-
-    rd_process();
   }
 }
 
 
 bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
 {
-  byte*  &buf= (side == SERVER ? m_rd_buf : m_wr_buf);
-  size_t &buf_size= (side == SERVER ? m_rd_size : m_wr_size);
+  byte*  &buf = (side == SERVER ? m_rd_buf :m_wr_buf);
 
-  if (side == SERVER ?
-      requested_size < buf_size :
-      requested_size < wr_size())
+  size_t &buf_size = (side == SERVER ? m_rd_size : m_wr_size);
+
+  if (requested_size < buf_size)
     return true;
 
-  // Note that since requested_size >= available space, the available size is
+  // Note that since requested_size >= buf_size, the buffer size is
   // at least doubled here.
 
   size_t new_size = buf_size + requested_size;
-
-  byte *ptr= (byte*) realloc(buf, new_size);
+  byte *ptr = (byte*)realloc(buf, new_size);
 
   // If allocating buffer with margin failed, try allocating
   // exact required amount.
@@ -489,35 +618,110 @@ bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
   if (!ptr)
   {
     if (side == CLIENT)
-      new_size= m_pipeline_size+requested_size;
+      new_size = m_pipeline_size + requested_size;
     else
-      new_size= requested_size;
-    ptr= (byte*) realloc(buf, new_size);
+      new_size = requested_size;
+    ptr = (byte*)realloc(buf, new_size);
   }
 
   if (!ptr)
     return false;
 
   buf_size = new_size;
-  buf= ptr;
+  buf = ptr;
 
   return true;
 }
 
+#define GET_PAYLOAD_SIZE(S, B) S = *(msg_size_t*)(B); \
+                           NTOHSIZE(S)
+
+
+/*
+  Note: Called from rd_wait() or rd_cont() when the async IO m_rd_op
+  is completed.
+*/
 
 void Protocol_impl::rd_process()
 {
-  m_msg_size= *(msg_size_t*)m_rd_buf;
-  NTOHSIZE(m_msg_size);
-  assert(m_msg_size > 0);
-  m_msg_size--;
+  /*
+    At this point m_rd_op is completed. We have any more
+    work to do here only if we are in HEADER mode and we
+    need to parse the header data that is now available.
+  */
 
-  m_rd_op.reset(m_str->read(buffers(m_rd_buf, 1)));
-  m_rd_op->wait();
-  m_rd_op.reset();
-  m_msg_type= m_rd_buf[0];
+  if (HEADER != m_msg_state)
+    return;
+
+  if (m_msg_compressed_type == 0)
+  {
+    GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
+    m_msg_size--;
+    // The read buffer already contains the message type
+    m_msg_type = m_rd_buf[4];
+
+    if (m_msg_type == msg_type::Compression)
+    {
+      m_msg_compressed_type = m_msg_type;
+      // Make sure the reading buffer is large enough
+      if (!resize_buf(SERVER, m_msg_size))
+        THROW("Not enough memory for input buffer");
+
+      m_rd_op.reset(m_str->read(buffers(m_rd_buf, m_msg_size)));
+      m_preamble = true;
+      return;
+    }
+  }
+  else
+  {
+    /*
+      We are processing compressed frame, looking for next message (since
+      m_msg_state is HEADER).
+
+      If compressor was not initialized yet, we are looking at the 5 bytes
+      preamble containing info about compressed data and we can initalize
+      compressor using that data and request uncompressing first payload size.
+
+      Otherwise (compressor already intialized) m_rd_buf contains 4 byte
+      size of the next payload which is stored in m_msg_size.
+    */
+
+    if (m_preamble)
+    {
+      m_preamble = false;
+      m_compressed_msg.Clear();
+      if (!m_compressed_msg.ParseFromArray(m_rd_buf, (int)m_msg_size))
+        throw_error("Invalid Compression message");
+
+      m_compressor.set_compressed_buf((byte*)m_compressed_msg.payload().data(),
+        m_compressed_msg.payload().length(),
+        (size_t)m_compressed_msg.uncompressed_size());
+
+      if (!m_compressor.uncompress(m_rd_buf, 5))
+        throw_error("Error uncompressing the message header");
+
+      GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
+      --m_msg_size; // Subtract 1 byte of msg type, which we already know
+      m_msg_type = (msg_type_t)m_rd_buf[4];
+    }
+    else
+    {
+      if (!m_compressor.uncompression_finished())
+      {
+        GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
+        --m_msg_size; // Subtract 1 byte of msg type, which we already know
+      }
+    }
+  }
 }
 
+void
+Protocol_impl::set_compression(Compression_type::value compression_type,
+                                    size_t threshold)
+{
+  m_compressor.set_compression_type(compression_type);
+  m_compress_threshold = threshold;
+}
 
 /*
   Processing incoming messages
@@ -640,7 +844,9 @@ bool Op_rcv::do_read_msg(bool async)
         // process the payload
 
         if (m_prc && !m_error)
+        {
           process_payload();
+        }
 
         /*
           call message_end() - the return value can tell us to stop
@@ -709,7 +915,7 @@ void Op_rcv::process_payload()
   assert(m_prc);
   assert(PAYLOAD == m_stage);
 
-  // Send raw message bytes to m_proto if requested (m_read_window > 0).
+  // Send raw message bytes to m_prc if requested (m_read_window > 0).
 
   try {
 
@@ -726,12 +932,11 @@ void Op_rcv::process_payload()
     while (cur_pos < end_pos && m_read_window)
     {
       size_t new_window = m_prc->message_data(bytes(cur_pos,
-                                 cur_pos + m_read_window < end_pos ?
-                                 m_read_window : end_pos - cur_pos));
+                                  cur_pos + m_read_window < end_pos ?
+                                  m_read_window : end_pos - cur_pos));
       cur_pos += m_read_window;
       m_read_window= new_window;
     }
-
     m_prc->message_received(m_msg_size);
 
   }
