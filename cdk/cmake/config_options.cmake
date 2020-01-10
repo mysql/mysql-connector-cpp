@@ -108,6 +108,10 @@ function(add_config_option OPT TYPE)
     message(FATAL_ERROR "Option ${OPT} set to path that does not exist: ${${OPT}}")
   endif()
 
+  if(${TYPE} MATCHES "BOOL|BOOLEAN")
+    set(TYPE "STRING")
+  endif()
+
   if(DEFINED ${OPT})
     set(${OPT} "${${OPT}}" CACHE ${TYPE} ${doc_string})
   endif()
