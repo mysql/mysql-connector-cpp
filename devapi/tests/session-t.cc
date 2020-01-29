@@ -133,6 +133,7 @@ public:
 
 };
 
+
 void check_compress(mysqlx::Session &sess)
 {
   {
@@ -148,15 +149,28 @@ void check_compress(mysqlx::Session &sess)
     query.append("'");
 
     SqlResult res = sess.sql(query).execute();
-    Row row;
-    while ((row = res.fetchOne()))
+
+    auto test_row = [](const std::string &data, const std::string &row)
     {
-      cout << "Uncompressed data: " << row[0] << endl;
-    }
+      size_t len = data.length();
+      for (int i = 0; i < 5000; ++i)
+        if(row.substr(i*len,len) != data)
+          FAIL() << "Data differs at position" << 5*len;
+    };
+
+    Row row;
+
+    EXPECT_TRUE(row = res.fetchOne());
+    test_row("Test ", row[0].get<std::string>());
+
+    EXPECT_TRUE(row = res.fetchOne());
+    test_row("0123 ", row[0].get<std::string>());
+
+    cout << "Data is correct" << endl;
   }
 
   {
-    SqlResult res = sess.sql("SHOW STATUS LIKE 'Mysqlx%compress%'").execute();
+    SqlResult res = sess.sql("SHOW STATUS LIKE 'Mysqlx_bytes%compress%'").execute();
     Row row;
     int actual_row_count = 0;
     while((row = res.fetchOne()))
@@ -165,7 +179,7 @@ void check_compress(mysqlx::Session &sess)
       ++actual_row_count;
       EXPECT_TRUE(std::stol((std::string)row[1], nullptr, 0) > 0);
     }
-    cout << "Status rows fetched: " << actual_row_count;
+    cout << "Status rows fetched: " << actual_row_count << endl;
     EXPECT_TRUE(actual_row_count > 0);
   }
 };
@@ -282,7 +296,7 @@ TEST_F(Sess, tls_ver_ciphers)
     mysqlx::Session sess(str.str());
 
     EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
-    EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
+    EXPECT_NO_THROW((void)suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
 
 
     // Negative: invalid or not accepted ciphers
@@ -378,7 +392,7 @@ TEST_F(Sess, tls_ver_ciphers)
       mysqlx::Session sess(opt);
 
       EXPECT_TRUE(0 < versions.count(check_var(sess, "Mysqlx_ssl_version")));
-      EXPECT_NO_THROW(suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
+      EXPECT_NO_THROW((void)suites_map.at(check_var(sess, "Mysqlx_ssl_cipher")));
     }
 
     // Negative: invalid or not accepted ciphers

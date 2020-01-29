@@ -52,19 +52,36 @@ void check_compress(mysqlx_session_t *sess)
   mysqlx_result_t *res;
   mysqlx_row_t *row;
 
-  CRUD_CHECK(res = mysqlx_sql(sess, query.c_str(), strlen(query.c_str())), sess);
-
-  while ((row = mysqlx_row_fetch_one(res)) != NULL)
+  auto test_row = [](const std::string &data, const std::string &row)
   {
-    char *buf = new char[65536];
-    size_t buf_len = 65536;
-    memset(buf, 0, buf_len);
-    EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buf_len));
-    printf("Uncompressed data: %s\n", buf);
-    delete[] buf;
-  }
+    size_t len = data.length();
+    for (int i = 0; i < 5000; ++i)
+      if (row.substr(i * len, len) != data)
+        FAIL() << "Data differs at position" << 5 * len;
+  };
 
-  const char *query2 = (const char*)"SHOW STATUS LIKE 'Mysqlx%compress%'";
+  CRUD_CHECK(res = mysqlx_sql(sess, query.c_str(), query.length()), sess);
+
+  char *buf = new char[65536];
+  size_t buf_len;
+  
+  buf_len = 65536;
+  memset(buf, 0, buf_len);
+  EXPECT_NE(nullptr, row = mysqlx_row_fetch_one(res));
+  EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buf_len));
+  test_row("Test ", buf);
+
+  buf_len = 65536;
+  memset(buf, 0, buf_len);
+  EXPECT_NE(nullptr, row = mysqlx_row_fetch_one(res));
+  EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, buf, &buf_len));
+  test_row("0123 ", buf);
+
+  delete[] buf;
+
+  cout << "Data is correct" << endl;
+
+  const char *query2 = (const char*)"SHOW STATUS LIKE 'Mysqlx_bytes%compress%'";
   CRUD_CHECK(res = mysqlx_sql(sess, query2, strlen(query2)), sess);
   int actual_row_count = 0;
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
@@ -81,12 +98,15 @@ void check_compress(mysqlx_session_t *sess)
     ++actual_row_count;
 
     printf("%s : %s\n", buf1, buf2);
+    EXPECT_TRUE(std::stol((std::string)buf2, nullptr, 0) > 0);
   }
   printf("Status rows fetched: %i \n", actual_row_count);
   EXPECT_TRUE(actual_row_count > 0);
 };
 
-int check_compress2(mysqlx_session_t* m_sess) {
+
+int check_compress2(mysqlx_session_t* m_sess)
+{
   mysqlx_result_t* res = NULL;
   mysqlx_schema_t* schema;
   mysqlx_collection_t* collection;
@@ -114,12 +134,13 @@ int check_compress2(mysqlx_session_t* m_sess) {
   printf("\nInsert Success\n");
 
   return retVal;
-
 }
 
 
 TEST_F(xapi, compression_test)
 {
+  SKIP_IF_NO_XPLUGIN
+
   mysqlx_error_t *error;
   mysqlx_session_t *sess;
   mysqlx_session_options_t *opt;
@@ -179,6 +200,8 @@ TEST_F(xapi, compression_test)
 
 TEST_F(xapi, compression_test_doc)
 {
+  SKIP_IF_NO_XPLUGIN
+
   mysqlx_session_t* sess = NULL;
   mysqlx_error_t *error = NULL;
   std::string uri = get_basic_uri() + "?compression=PREFERRED";
@@ -2725,7 +2748,7 @@ TEST_F(xapi, tls_ver_ciphers)
       size_t sz = sizeof(buf);
       mysqlx_get_bytes(row, 1, 0, buf, &sz);
       printf("Mysqlx_ssl_cipher=%s\n", buf);
-      EXPECT_NO_THROW(suites_map.at(buf));
+      EXPECT_NO_THROW((void)suites_map.at(buf));
     }
 
     mysqlx_free_options(opt);
