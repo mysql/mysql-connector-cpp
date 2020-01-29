@@ -52,6 +52,8 @@ SET(ZSTD_SRCS
 )
 
 ADD_LIBRARY(zstd STATIC ${ZSTD_SRCS})
+set_target_properties(zstd PROPERTIES FOLDER "Misc")
+
 #-----------------------------------------------------------------------------
 # Add extra compilation flags
 #-----------------------------------------------------------------------------

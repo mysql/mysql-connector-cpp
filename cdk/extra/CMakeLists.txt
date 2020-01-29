@@ -49,6 +49,8 @@ ADD_LIBRARY(lz4 STATIC
     lz4/xxhash.c
 )
 
+set_target_properties(lz4 PROPERTIES FOLDER "Misc")
+
 target_include_directories(lz4 PUBLIC lz4)
 
 add_subdirectory(zstd)
