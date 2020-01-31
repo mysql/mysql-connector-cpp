@@ -155,6 +155,14 @@ convert(cdk::bytes data, Format_descr<cdk::TYPE_DOCUMENT>&)
 }
 
 
+Value
+mysqlx::impl::common::
+convert(cdk::foundation::bytes data, Format_descr<cdk::TYPE_DATETIME> &)
+{
+  return{ data.begin(), data.size()};
+}
+
+
 
 /*
   Result implementation

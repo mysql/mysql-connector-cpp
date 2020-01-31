@@ -777,7 +777,8 @@ TEST_F(Types, datetime)
     "  c0 DATE,"
     "  c1 TIME,"
     "  c2 DATETIME,"
-    "  c3 TIMESTAMP"
+    "  c3 TIMESTAMP,"
+    "  c4 DATETIME"
     ")"
     );
 
@@ -789,6 +790,7 @@ TEST_F(Types, datetime)
   data[1] = "10:40:23.456";
   data[2] = "2014-05-11 10:40";
   data[3] = "2014-05-11 11:35:00.000";
+  data[4] = Value();
 
   types.insert().values(data).execute();
 
@@ -812,6 +814,10 @@ TEST_F(Types, datetime)
   cout << "column #3 type: " << c3.getType() << endl;
   EXPECT_EQ(Type::TIMESTAMP, c3.getType());
 
+  const Column &c4 = res.getColumn(4);
+  cout << "column #4 type: " << c4.getType() << endl;
+  EXPECT_EQ(Type::DATETIME, c4.getType());
+
 
   Row row = res.fetchOne();
 
@@ -822,7 +828,25 @@ TEST_F(Types, datetime)
   for (unsigned j = 0; j < res.getColumnCount(); ++j)
   {
     cout << "- col#" << j << ": " << row[j] << endl;
+    if(j==4)
+    {
+      EXPECT_TRUE(row[j].isNull());
+      break;
+    }
     EXPECT_EQ(Value::RAW, row[j].getType());
+    switch(res.getColumn(j).getType())
+    {
+    case Type::DATE:
+    case Type::TIME:
+      EXPECT_EQ(4, row[j].getRawBytes().size());
+      break;
+    case Type::DATETIME:
+    case Type::TIMESTAMP:
+      EXPECT_EQ(6, row[j].getRawBytes().size());
+      break;
+    default:
+      FAIL() << "Unexpected type! Update UT";
+    }
   }
 }
 
