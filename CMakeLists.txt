@@ -243,11 +243,6 @@ set(INFO_PREFIX "jdbc-")
 merge_libraries(connector-jdbc jdbc)
 target_link_libraries(connector-jdbc PUBLIC Boost::boost)
 
-if(MAINTAINER_MODE)
-  merge_libraries(connector-jdbc-static STATIC jdbc)
-  target_link_libraries(connector-jdbc-static PUBLIC Boost::boost)
-endif()
-
 
 #
 # Install specifications
@@ -319,19 +314,6 @@ INSTALL(FILES ${MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS}
 file(COPY ${MYSQLCPPCONN_SPECIFIC_INSTALL_HEADERS}
   DESTINATION "${CMAKE_BINARY_DIR}/include/jdbc"
 )
-
-if(TARGET connector-jdbc-static)
-
-  set_property(TARGET connector-jdbc-static PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
-
-  install(TARGETS connector-jdbc-static
-    CONFIGURATIONS Static
-    ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}" COMPONENT JDBCDev
-    RUNTIME DESTINATION "${INSTALL_LIB_DIR}" COMPONENT JDBCDev
-    LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT JDBCDev
-  )
-
-endif()
 
 #  export(TARGETS mysqlcppconn
 #    APPEND FILE "${PROJECT_BINARY_DIR}/exports.cmake"
