@@ -27,6 +27,30 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+# ======================================================================
+# Install manifest
+# ======================================================================
+
+# Generate and install install_manifest.cmake file which contains
+# information about install components and files in each component.
+# See the install_mainfest.cmake script in this directory.
+
+add_custom_target(generate_manifest
+  ALL
+  COMMAND ${CMAKE_COMMAND}
+    -D INSTALL_DIR=${CMAKE_INSTALL_PREFIX}
+    -D BUILD_DIR=${PROJECT_BINARY_DIR}
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/install_manifest.cmake"
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  COMMENT "Generating install manifest"
+)
+
+install(
+  FILES "${PROJECT_BINARY_DIR}/install_manifest.cmake"
+  DESTINATION .
+  COMPONENT Auxiliary
+)
+
 
 # ======================================================================
 # Licenses for binary packages
