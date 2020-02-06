@@ -47,7 +47,7 @@
     <Media Id='1' Cabinet='product.cab' EmbedCab='yes' />
 
     <!-- Upgrade for 8.0.12 version -->
-    <?if "@Platform@"="x64"?>
+    <?if "@PLATFORM@"="x64"?>
       <Upgrade Id="@UPGRADE_CODE_OLD@">
         <?if '@PATCH_VERSION@' != '0'?>
           <UpgradeVersion 
@@ -88,7 +88,7 @@
     </InstallExecuteSequence>
 
     <?if "@STATIC_MSVCRT@"="OFF" AND "@BUNDLE_RUNTIME_LIBRARIES@"="OFF" ?>
-      <?if "@Platform@"="x64"?>
+      <?if "@PLATFORM@"="x64"?>
         <Property Id="VS14REDISTX64"> 
           <RegistrySearch Id="FindRedistVS14"
               Root="HKLM"
@@ -143,7 +143,7 @@
     <Property Id="GETINSTALLDIR">
       <RegistrySearch Id="FindInstallLocation"
           Root="HKLM"
-          Win64="@Is64bit@"
+          Win64="@IS64BIT@"
           Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[OLDERVERSIONBEINGUPGRADED]"
           Name="InstallLocation"
           Type="raw" />
@@ -155,7 +155,7 @@
     <Property Id="GETINSTALLDIR_OLD">
       <RegistrySearch Id="FindInstallLocationOld"
           Root="HKLM"
-          Win64="@Is64bit@"
+          Win64="@IS64BIT@"
           Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[OLDERVERSIONBEINGUPGRADED_OLD]"
           Name="InstallLocation"
           Type="raw" />
@@ -178,17 +178,17 @@
 
     <!-- UI -->
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"></Property>
-    <UIRef Id="@CPACK_WIX_UI@" />
+    <UIRef Id="@WIX_UI@" />
     <UIRef Id="WixUI_ErrorProgressText" />
     <WixVariable
       Id="WixUIBannerBmp"
-      Value="@CMAKE_CURRENT_SOURCE_DIR@/AdminHeader.jpg" />
+      Value="@SOURCE_DIR@/AdminHeader.jpg" />
     <WixVariable
       Id="WixUIDialogBmp"
-      Value="@CMAKE_CURRENT_SOURCE_DIR@/AdminBackground.jpg" />
+      Value="@SOURCE_DIR@/AdminBackground.jpg" />
     <Icon
       Id="icon.ico"
-      SourceFile="@CMAKE_CURRENT_SOURCE_DIR@/MySQLConnector.ico"/> 
+      SourceFile="@SOURCE_DIR@/MySQLConnector.ico"/> 
     <Property
       Id="ARPPRODUCTICON"
       Value="icon.ico" />
@@ -200,7 +200,7 @@
 
     <!-- Installation root-->
     <Directory Id='TARGETDIR' Name='SourceDir'>
-      <Directory Id='@PlatformProgramFilesFolder@'>
+      <Directory Id='@PROGRAM_FILES_FOLDER@'>
         <Directory Id='directory.MySQL' Name='MySQL'>
           <Directory Id='INSTALLDIR' Name='@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@'>
           </Directory>
@@ -208,7 +208,7 @@
       </Directory>
     </Directory>
 
-    <!-- CPACK_WIX_FEATURES -->
+    <!-- WIX_FEATURES -->
     <Feature  Id='XDEVAPI'
      Title='New X DevAPI connector'
      Description='New X DevAPI connector'
@@ -261,25 +261,25 @@
      ConfigurableDirectory='INSTALLDIR'
      Level='1' Display='hidden' > 
     <Feature Id='Readme' 
-       Title='CPACK_COMPONENT_README_DISPLAY_NAME'
-       Description='CPACK_COMPONENT_README_DESCRIPTION'
+       Title='COMPONENT_README_DISPLAY_NAME'
+       Description='COMPONENT_README_DESCRIPTION'
        ConfigurableDirectory='INSTALLDIR'
        Level='1'>
        <ComponentGroupRef Id='componentgroup.Readme'/>
     </Feature>
    </Feature>
     
-    <!-- CPACK_WIX_DIRECTORIES -->
-    @CPACK_WIX_DIRECTORIES@
+    <!-- WIX_DIRECTORIES -->
+    @WIX_DIRECTORIES@
     
-    <!--CPACK_WIX_COMPONENTS-->
-    @CPACK_WIX_COMPONENTS@
+    <!--WIX_COMPONENTS-->
+    @WIX_COMPONENTS@
     
-    <!--CPACK_WIX_COMPONENTS_GROUPS -->
-    @CPACK_WIX_COMPONENT_GROUPS@
+    <!--WIX_COMPONENTS_GROUPS -->
+    @WIX_COMPONENT_GROUPS@
     
-    <!--CPACK_WIX_INCLUDES -->
-    @CPACK_WIX_INCLUDES@
+    <!--WIX_INCLUDES -->
+    @WIX_INCLUDES@
   </Product>
 
 </Wix>
