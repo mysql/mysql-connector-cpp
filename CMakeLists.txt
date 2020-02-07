@@ -379,12 +379,6 @@ endif(MAINTAINER_MODE)
 
 
 #
-# We use UUID generator taken from server sources.
-#
-
-add_subdirectory(cdk/extra/uuid uuid)
-
-#
 # Connector/C++ components
 #
 

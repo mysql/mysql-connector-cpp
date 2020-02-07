@@ -29,7 +29,6 @@
  */
 
 #include <mysqlx/xdevapi.h>
-#include <uuid_gen.h>
 
 PUSH_SYS_WARNINGS
 #include <time.h>
@@ -42,7 +41,6 @@ POP_SYS_WARNINGS
 using namespace ::mysqlx::impl::common;
 using namespace ::mysqlx::internal;
 using namespace ::mysqlx;
-using namespace ::uuid;
 
 /*
   Code in this file defines implementations for various CRUD operations used

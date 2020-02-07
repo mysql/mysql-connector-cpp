@@ -33,7 +33,7 @@ add_library(common STATIC
   ${HEADERS}
 )
 
-target_link_libraries(common cdk uuid_gen)
+target_link_libraries(common cdk)
 
 #
 #  Generate version info
