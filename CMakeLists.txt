@@ -106,12 +106,6 @@ endif()
 
 
 #
-# Connector System Configuration
-#
-include(config.cmake)
-
-
-#
 # Install settings
 # ================
 #
@@ -695,9 +689,7 @@ message("Connector libraries will be installed at: ${INSTALL_LIB_DIR}")
 option(WITH_PACKAGES "Configure for building binary/source packages" OFF)
 
 if(WITH_PACKAGES)
-  include(PackageSpecs.cmake)
   ADD_SUBDIRECTORY(packaging)
-  ADD_SUBDIRECTORY(packaging/WiX)
 endif()
 
 

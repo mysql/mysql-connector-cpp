@@ -35,4 +35,31 @@ add_library(common STATIC
 
 target_link_libraries(common cdk uuid_gen)
 
+#
+#  Generate version info
+#
+
+set(CLIENT_VERSION ${CONCPP_VERSION})
+
+if(EXTRA_NAME_SUFFIX STREQUAL "-commercial")
+  SET(CONCPP_LICENSE "COMMERCIAL")
+else()
+  SET(CONCPP_LICENSE "GPL-2.0")
+endif()
+
+#
+# Note: generated version_info.h is placed in the build location
+# and the common target is configured to include it before the
+# original version in the sources
+#
+
+configure_file(version_info.h version_info.h @ONLY)
+
+# FIXME: This include path is made public, because other components
+# such as devapi use private headers of the common component.
+
+target_include_directories(common
+  BEFORE PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 add_subdirectory(tests)

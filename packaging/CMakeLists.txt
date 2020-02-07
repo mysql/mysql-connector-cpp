@@ -27,5 +27,89 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+
+# ======================================================================
+# Licenses for binary packages
+# ======================================================================
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
+  set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
+else()
+  set(LIC_FILE "LICENSE") # Without ".txt" extension
+endif()
+
+if(WIN32)
+  set(info_ext ".txt")
+  set(newline WIN32)
+else()
+  set(info_ext "")
+  set(newline UNIX)
+endif()
+
+set(info_files README ${LIC_FILE})
+
+foreach(file ${info_files})
+
+  set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
+  set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
+
+  configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
+  install(FILES "${file_bin}" DESTINATION ${INSTALL_DOC_DIR} COMPONENT Readme)
+
+endforeach()
+
+set(CPACK_RESOURCE_FILE_README  "${CMAKE_BINARY_DIR}/README${info_ext}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/${LIC_FILE}${info_ext}")
+#set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
+
+
+# ======================================================================
+# Package specifications
+# ======================================================================
+
+if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
+endif()
+
+
+include(PackageSpecs.cmake)
+
 CONFIGURE_FILE(mysql-connector-c++.spec.in ${CMAKE_CURRENT_BINARY_DIR}/mysql-connector-c++.spec @ONLY)
 ADD_SUBDIRECTORY(deb-in)
+
+
+# ======================================================================
+# Custom target to build packages.
+# ======================================================================
+#
+# Note: target build_packages builds TGZ/ZIP packages using cpack.
+# Other package types are built outside of cmake/cpack, cmake is only
+# used to prepare information necessary to build them.
+#
+# Note: For information on building MSI packages look at WiX/CMakeLists.txt
+#
+
+
+add_custom_target(build_packages
+  COMMAND cpack --config CPackConfig.cmake --verbose -C $<CONFIGURATION>
+  COMMAND cpack --config CPackSourceConfig.cmake
+  DEPENDS clean_source_tree
+)
+
+add_custom_target(clean_source_tree
+  COMMAND git clean -x -d -f
+  COMMAND git submodule foreach --recursive git clean -x -d -f
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  COMMENT "Cleaning source tree"
+)
+
+set_property(TARGET clean_source_tree build_packages
+  PROPERTY EXCLUDE_FROM_ALL 1
+)
+
+set_property(TARGET clean_source_tree build_packages
+  PROPERTY EXCLUDE_FROM_DEFAULT_BUILD 1
+)
+
+
+include(CPack)

@@ -62,25 +62,9 @@ set(
   CACHE INTERNAL "version info"
 )
 
-# **** IMPORTANT ****
-#
-# The code below needs to be replaced when moving from one version
-# series to another. I.e. when moving from 4.0 to 4.1, from 4.13 to
-# 5.0 and so on.
-#
-# You DON'T change this code for patchlevel version changes, i.e.
-# when only the third part of the version is changed.
-#
-# You can use any GUID generator that produces random GUID codes. You
-# can also or invent a code of your own if you follow the syntax rules.
 
-set(CONCPP_MINORMAJOR_UPGRADE_CODE "a1195164-bc2d-45fb-a5e5-1ba834771ce8")
-
-set(CONCPP_PACKAGE_BASE_VERSION
-    "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}")
-set(CONCPP_PACKAGE_NUMERIC_VERSION
-    "${CONCPP_PACKAGE_BASE_VERSION}.${CONCPP_VERSION_MICRO}")
-set(CONCPP_PACKAGE_VERSION
-    "${CONCPP_PACKAGE_NUMERIC_VERSION}${CONCPP_VERSION_LEVEL}")
-
-message("Building version ${CONCPP_PACKAGE_VERSION}")
+message(
+  "Building version "
+  "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}.${CONCPP_VERSION_MICRO}"
+  "${CONCPP_VERSION_LEVEL}"
+)

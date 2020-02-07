@@ -41,7 +41,6 @@
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 
-#include "../global.h"
 #include "../common/result.h"
 #include "../common/op_impl.h"
 

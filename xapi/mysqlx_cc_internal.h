@@ -33,7 +33,6 @@
 
 #include <mysql/cdk.h>
 
-#include "../global.h"
 #include "../common/session.h"
 #include "../common/settings.h"
 #include "../common/db_object.h"

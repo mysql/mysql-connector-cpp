@@ -29,11 +29,15 @@
 #
 # Specifications for Connector/C++ binary and source packages
 #
-# TODO
-# - Generate HTML docs with Doxygen and include in bin packages
-#
 # Note: CPACK_XXX variables must be set before include(CPack)
 #
+
+set(CONCPP_PACKAGE_BASE_VERSION
+    "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}")
+set(CONCPP_PACKAGE_NUMERIC_VERSION
+    "${CONCPP_PACKAGE_BASE_VERSION}.${CONCPP_VERSION_MICRO}")
+set(CONCPP_PACKAGE_VERSION
+    "${CONCPP_PACKAGE_NUMERIC_VERSION}${CONCPP_VERSION_LEVEL}")
 
 # ======================================================================
 # Set some initial CPack variables
@@ -75,8 +79,7 @@ if(PLATFORM_NAME)
 
 elseif(WIN32)
 
-  include(CheckTypeSize)
-  if(CMAKE_SIZEOF_VOID_P MATCHES 8)
+  if(IS64BIT)
     set(CPACK_SYSTEM_NAME "winx64")
   else()
     set(CPACK_SYSTEM_NAME "win32")
@@ -118,46 +121,6 @@ endif()
 
 message("Binary package name: ${CPACK_PACKAGE_FILE_NAME}")
 
-# FIXME maybe place elsewhere?
-if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  message(FATAL_ERROR "To create packages for OSX, build with clang compiler.")
-endif()
-
-
-# ======================================================================
-# Licenses for binary packages
-# ======================================================================
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE.mysql.txt")
-  set(LIC_FILE "LICENSE.mysql")       # Without ".txt" extension
-else()
-  set(LIC_FILE "LICENSE") # Without ".txt" extension
-endif()
-
-if(WIN32)
-  set(info_ext ".txt")
-  set(newline WIN32)
-else()
-  set(info_ext "")
-  set(newline UNIX)
-endif()
-
-set(info_files README ${LIC_FILE})
-
-foreach(file ${info_files})
-
-  set(file_src "${CMAKE_SOURCE_DIR}/${file}.txt")
-  set(file_bin "${CMAKE_BINARY_DIR}/${file}${info_ext}")
-
-  configure_file("${file_src}" "${file_bin}" NEWLINE_STYLE ${newline})
-  install(FILES "${file_bin}" DESTINATION ${INSTALL_DOC_DIR} COMPONENT Readme)
-
-endforeach()
-
-set(CPACK_RESOURCE_FILE_README  "README${info_ext}")
-set(CPACK_RESOURCE_FILE_LICENSE "${LIC_FILE}${info_ext}")
-#set(CPACK_RESOURCE_FILE_INSTALL "...")    # FIXME
-
 
 # ======================================================================
 # Specs for source package
@@ -179,30 +142,4 @@ list(APPEND CPACK_SOURCE_IGNORE_FILES "\\\\.git.*")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/jenkins/")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "CTestConfig.cmake")
 
-include(CPack)
 
-
-# ======================================================================
-# Custom target to build packages.
-# ======================================================================
-
-add_custom_target(build_packages
-  COMMAND cpack --config CPackConfig.cmake --verbose -C $<CONFIGURATION>
-  COMMAND cpack --config CPackSourceConfig.cmake
-  DEPENDS clean_source_tree
-)
-
-add_custom_target(clean_source_tree
-  COMMAND git clean -x -d -f
-  COMMAND git submodule foreach --recursive git clean -x -d -f
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  COMMENT "Cleaning source tree"
-)
-
-set_property(TARGET clean_source_tree build_packages
-  PROPERTY EXCLUDE_FROM_ALL 1
-)
-
-set_property(TARGET clean_source_tree build_packages
-  PROPERTY EXCLUDE_FROM_DEFAULT_BUILD 1
-)

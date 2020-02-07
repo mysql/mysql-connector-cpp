@@ -26,6 +26,10 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# Note: Seems not needed any more, but leaving it just in case
+#
+
 IF(CMAKE_SYSTEM_NAME MATCHES "Windows")
   STRING(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" SYSTEM_VERSION "${CMAKE_SYSTEM_VERSION}")
   SET(SYSTEM_PLATFORM "${CMAKE_SYSTEM_NAME}-${SYSTEM_VERSION}")
@@ -56,6 +60,6 @@ else()
   SET(CONCPP_LICENSE "GPL-2.0")
 endif()
 
-CONFIGURE_FILE(config.h.in   ${CMAKE_BINARY_DIR}/include/config.h)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/include)
+#CONFIGURE_FILE(config.h.in   ${CMAKE_BINARY_DIR}/include/config.h)
+#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/include)
 

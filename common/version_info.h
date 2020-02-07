@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -28,44 +28,23 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#ifndef MYSQLX_GLOBAL_H
-#define MYSQLX_GLOBAL_H
+#ifndef MYSQLX_COMMON_VERSION_INFO
+#define MYSQLX_COMMON_VERSION_INFO
 
 /*
-  This header contains global declarations that are used by both DevAPI
-  and XAPI. This is only implementation-side stuff - No public header
-  should depend on this one.
+  Version information which is used for example for default
+  connection attributes.
+
+  When build system is configured by cmake, a new file is generated
+  from this one with version and license values substituted by
+  cmake and build system is configured so that the generated
+  header takes precedence over this one. But code can be built even
+  if header with real values was not generated - in that case the
+  values specified here will be used.
 */
 
-#include "cdk/extra/uuid/include/uuid_gen.h"
-
-namespace mysqlx {
-
-/*
-  Wrapper around uuid generator which ensures that it is properly
-  initialized using process id (so that concurrent processes use
-  different UUIDs).
-*/
-
-inline
-void generate_uuid(uuid::uuid_type &buf)
-{
-  /*
-    Note: This static initializer instance will be constructed
-    only once.
-  */
-  static struct Initializer
-  {
-    Initializer()
-    {
-      uuid::set_seed_from_time_pid();
-    }
-  }
-  uuid_init;
-
-  uuid::generate_uuid(buf);
-}
-
-}
+#define CONCPP_NAME    "mysql-connector-cpp"
+#define CONCPP_VERSION "@CONCPP_VERSION@"
+#define CONCPP_LICENSE "@CONCPP_LICENSE@"
 
 #endif
