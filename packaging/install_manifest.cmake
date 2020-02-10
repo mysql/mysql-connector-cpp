@@ -124,8 +124,14 @@ endfunction(file)
 # script.
 #
 
-set(CMAKE_INSTALL_CONFIG_NAME "Release")
+if(CONFIG)
+  set(CMAKE_INSTALL_CONFIG_NAME ${CONFIG})
+else()
+  set(CMAKE_INSTALL_CONFIG_NAME "Release")
+endif()
 set(CMAKE_INSTALL_PREFIX ".")
+
+message("Install manifest for build configuration: ${CMAKE_INSTALL_CONFIG_NAME}")
 
 foreach(COMP ${CPACK_COMPONENTS_ALL})
   set(CMAKE_INSTALL_COMPONENT ${COMP})

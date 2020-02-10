@@ -40,6 +40,7 @@ add_custom_target(generate_manifest
   COMMAND ${CMAKE_COMMAND}
     -D INSTALL_DIR=${CMAKE_INSTALL_PREFIX}
     -D BUILD_DIR=${PROJECT_BINARY_DIR}
+    -D CONFIG=$<CONFIG>
     -P "${CMAKE_CURRENT_SOURCE_DIR}/install_manifest.cmake"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT "Generating install manifest"
