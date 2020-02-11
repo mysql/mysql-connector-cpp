@@ -31,14 +31,17 @@
 # Install manifest
 # ======================================================================
 
-# Generate and install install_manifest.cmake file which contains
-# information about install components and files in each component.
+# If requested, generate install manifest file which contains information
+# about install components and files in each component. INSTALL_MANIFEST
+# should be a path to the manifest file.
 # See the install_mainfest.cmake script in this directory.
+
+if(DEFINED INSTALL_MANIFEST)
 
 add_custom_target(generate_manifest
   ALL
   COMMAND ${CMAKE_COMMAND}
-    -D INSTALL_DIR=${CMAKE_INSTALL_PREFIX}
+    -D MANIFEST_FILE=${INSTALL_MANIFEST}
     -D BUILD_DIR=${PROJECT_BINARY_DIR}
     -D CONFIG=$<CONFIG>
     -P "${CMAKE_CURRENT_SOURCE_DIR}/install_manifest.cmake"
@@ -46,11 +49,7 @@ add_custom_target(generate_manifest
   COMMENT "Generating install manifest"
 )
 
-install(
-  FILES "${PROJECT_BINARY_DIR}/install_manifest.cmake"
-  DESTINATION .
-  COMPONENT Auxiliary
-)
+endif()
 
 
 # ======================================================================

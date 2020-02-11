@@ -45,9 +45,6 @@
 # the same install location).
 #
 
-# The output file
-
-set(MANIFEST_FILE ${BUILD_DIR}/install_manifest.cmake)
 
 # Check if requiret input files exist
 
@@ -62,7 +59,7 @@ endif()
 # Read existing information to be extended (if present) and CPackConfig.cmake
 # to get list of install components. Update COMPONENTS basead on this.
 
-include("${INSTALL_DIR}/install_manifest.cmake" OPTIONAL)
+include("${MANIFEST_FILE}" OPTIONAL)
 include("${BUILD_DIR}/CPackConfig.cmake")
 
 list(APPEND COMPONENTS ${CPACK_COMPONENTS_ALL})
