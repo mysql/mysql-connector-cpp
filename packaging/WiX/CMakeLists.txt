@@ -313,6 +313,10 @@ function(set_wix_components)
   out("</DirectoryRef>")
 
   # Define components
+  # Note: Currently we do not put Debuginfo component into MSI, only ZIP
+
+  set(COMPONENTS ${COMPONENTS})
+  list(REMOVE_ITEM COMPONENTS "Debuginfo")
 
   set(OUT_VAR WIX_COMPONENTS)
 
@@ -321,7 +325,7 @@ function(set_wix_components)
     get_dir_id(${d_suffix} d_id)
 
     foreach(C ${COMPONENTS})
-      
+
       if(NOT FILES${C}${d_suffix})
         continue()
       endif()
