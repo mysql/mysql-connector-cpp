@@ -159,6 +159,8 @@ endif()
 ADD_LIBRARY(zlib STATIC
   ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
+set_target_properties(zlib PROPERTIES FOLDER "Misc")
+
 if(NOT CYGWIN)
     # This property causes shared libraries on Linux to have the full version
     # encoded into their final filename.  We disable this on Cygwin because
@@ -181,5 +183,5 @@ elseif(UNIX)
    endif()
 endif()
 
-ADD_EXECUTABLE(try_zlib try.cc)
-TARGET_LINK_LIBRARIES(try_zlib zlib)
+#ADD_EXECUTABLE(try_zlib try.cc)
+#TARGET_LINK_LIBRARIES(try_zlib zlib)
