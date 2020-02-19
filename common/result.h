@@ -693,6 +693,7 @@ Value convert(cdk::bytes, Format_descr<cdk::TYPE_STRING>&);
 Value convert(cdk::bytes, Format_descr<cdk::TYPE_INTEGER>&);
 Value convert(cdk::bytes, Format_descr<cdk::TYPE_FLOAT>&);
 Value convert(cdk::bytes, Format_descr<cdk::TYPE_DOCUMENT>&);
+Value convert(cdk::bytes, Format_descr<cdk::TYPE_DATETIME>&);
 
 /*
   Generic template used when no type-specific specialization is defined.

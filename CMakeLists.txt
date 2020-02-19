@@ -198,7 +198,7 @@ if(BUILD_STATIC)
   set_property(
     DIRECTORY .
     APPEND PROPERTY COMPILE_DEFINITIONS
-    $<$<NOT:$<CONFIG:Static>>:CONCPP_BUILD_STATIC>
+    CONCPP_BUILD_STATIC
   )
 
 else()
@@ -221,30 +221,13 @@ else()
   set_property(
     DIRECTORY .
     APPEND PROPERTY COMPILE_DEFINITIONS
-    $<$<NOT:$<CONFIG:Static>>:CONCPP_BUILD_SHARED>
+    CONCPP_BUILD_SHARED
   )
   #add_compile_options($<$<NOT:$<CONFIG:Static>>:-DCONCPP_BUILD_SHARED>)
 
   # Hide all symbols that are not explicitly exported.
 
   set_visibility(hidden)
-
-endif()
-
-if(MAINTAINER_MODE)
-
-  list(APPEND CMAKE_CONFIGURATION_TYPES Static)
-
-  set(CMAKE_CXX_FLAGS_STATIC ${CMAKE_CXX_FLAGS_RELEASE})
-  set(CMAKE_C_FLAGS_STATIC ${CMAKE_C_FLAGS_RELEASE})
-  set(CMAKE_SHARED_LINKER_FLAGS_STATIC ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
-  set(CMAKE_EXE_LINKER_FLAGS_STATIC ${CMAKE_EXE_LINKER_FLAGS_RELEASE})
-
-  set_property(
-    DIRECTORY .
-    APPEND PROPERTY COMPILE_DEFINITIONS
-    $<$<CONFIG:Static>:CONCPP_BUILD_STATIC>
-  )
 
 endif()
 
@@ -399,13 +382,6 @@ add_subdirectory(devapi)
 merge_libraries(connector xapi devapi)
 target_include_directories(connector PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
-if(MAINTAINER_MODE)
-
-  merge_libraries(connector-static STATIC xapi devapi)
-  target_include_directories(connector-static PUBLIC "${PROJECT_SOURCE_DIR}/include")
-
-endif()
-
 
 #
 # Embed rpath information in the connector library.
@@ -489,29 +465,6 @@ if(MSVC AND NOT BUILD_STATIC)
     DESTINATION "${INSTALL_LIB_DIR}/debug"
     COMPONENT Debuginfo
   )
-
-endif()
-
-
-if(TARGET connector-static)
-
-  set_property(TARGET connector-static PROPERTY OUTPUT_NAME ${LIB_NAME_STATIC})
-
-  set_target_properties(connector-static PROPERTIES
-    VERSION "${ABI_VERSION_MAJOR}.${CONCPP_VERSION}"
-    SOVERSION "${ABI_VERSION_MAJOR}"
-  )
-
-  install(TARGETS connector-static
-    CONFIGURATIONS Static
-    ARCHIVE DESTINATION "${INSTALL_LIB_DIR_STATIC}" COMPONENT XDevAPIDev
-    RUNTIME DESTINATION "${INSTALL_LIB_DIR}" COMPONENT XDevAPIDll
-    LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT XDevAPIDll
-  )
-
-  if(TARGET connector-jdbc-static)
-    add_dependencies(connector-static connector-jdbc-static)
-  endif()
 
 endif()
 
