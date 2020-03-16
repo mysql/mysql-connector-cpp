@@ -76,7 +76,7 @@ DbDoc::DbDoc(const std::shared_ptr<Impl> &impl)
 
 const char* DbDoc::get_json() const
 {
-  return m_impl ? m_impl->get_json() : nullptr;
+  return m_impl ? m_impl->get_json() : "";
 }
 
 

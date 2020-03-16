@@ -49,6 +49,7 @@ class Session;
 class Schema;
 class Table;
 class Collection;
+class CollectionOptions;
 
 namespace common {
   class Session_impl;
@@ -221,7 +222,11 @@ public:
 
 protected:
 
-  void  create_collection(const string &name, bool reuse);
+
+  void  create_collection(const mysqlx::string &name,
+                          CollectionOptions options);
+  void  modify_collection(const mysqlx::string &name,
+                         CollectionOptions options);
   void  drop_collection(const string &name);
 
   friend Collection_detail;

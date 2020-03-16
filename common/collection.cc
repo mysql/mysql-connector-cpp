@@ -344,3 +344,110 @@ void Op_idx_create::process(cdk::Any::Document::Processor &prc) const
 
   prc.doc_end();
 }
+
+/*
+  Collection create/modify json options
+*/
+
+
+struct Collection_options_converter
+  : public cdk::Converter< cdk::Doc_prc_converter<JSON_val_conv> >
+{
+  typedef cdk::Converter< cdk::Doc_prc_converter<JSON_val_conv> >  Base;
+
+  typedef typename Base::Prc_from Prc_from;
+  typedef typename Base::Prc_to   Prc_to;
+  using Base::m_proc;
+
+  typedef cdk::Any_prc_converter<JSON_val_conv> Any_conv;
+  typedef typename Prc_from::Any_prc Any_prc;
+
+  void doc_begin() { m_proc->doc_begin(); }
+  void doc_end()   { m_proc->doc_end(); }
+
+  Any_conv m_any_conv;
+
+  Any_prc* key_val(const string &key)
+  {
+    typename Prc_to::Any_prc *ap;
+    if(key == "reuseExisting")
+    {
+      ap = m_proc->key_val("reuse_existing");
+    }
+    else {
+      ap = m_proc->key_val(key);
+    }
+
+    if (!ap)
+      return NULL;
+    m_any_conv.reset(*ap);
+    return &m_any_conv;
+  }
+
+};
+
+void Op_create_modify_base::process(cdk::Any::Document::Processor &prc) const
+{
+
+  prc.doc_begin();
+
+  for (auto it : m_map)
+  {
+    Value_scalar val(it.second);
+    val.process_if(prc.key_val(it.first));
+  }
+
+  if(!m_options.empty())
+  {
+    const parser::JSON_parser parser(m_options);
+    Collection_options_converter conv;
+    auto * options =
+        m_validation_options ?
+          prc.key_val("options")->doc()->key_val("validation")->doc()
+        : prc.key_val("options")->doc();
+    if(options)
+    {
+      conv.reset(*options);
+      parser.process(conv);
+    }
+    prc.doc_end();
+    return;
+  }
+
+  if(!m_validation_level.empty() || !m_validation_schema.empty())
+  {
+    auto options =safe_prc(prc.key_val("options"))->doc();
+    options->doc_begin();
+
+    if (!m_validation_level.empty() || !m_validation_schema.empty())
+    {
+      //validation
+      auto validation = options->key_val("validation")->doc();
+      validation->doc_begin();
+
+      if(!m_validation_level.empty())
+      {
+        validation->key_val("level")->scalar()->str(m_validation_level);
+      }
+
+      if(!m_validation_schema.empty())
+      {
+        const parser::JSON_parser parser(m_validation_schema);
+        cdk::Doc_prc_converter<JSON_val_conv> conv;
+        auto schema = validation->key_val("schema")->doc();
+        if(schema)
+        {
+          conv.reset(*schema);
+          parser.process(conv);
+        }
+      }
+
+      validation->doc_end();
+    }
+
+    options->doc_end();
+  }
+  prc.doc_end();
+  return;
+
+}

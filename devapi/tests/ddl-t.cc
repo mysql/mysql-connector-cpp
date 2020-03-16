@@ -335,6 +335,228 @@ TEST_F(Ddl, create_index)
   cout << "Done!" << endl;
 }
 
+TEST_F(Ddl, schema_validation)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 20);
+
+  auto schema = get_sess().createSchema("test", true);
+
+  schema.dropCollection("places");
+
+  CollectionOptions opts_reuse_strict(
+        R"({
+        "reuseExisting": true,
+        "validation": {
+        "level": "Strict",
+        "schema":
+        {
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+        "latitude": {
+        "type": "number"
+        },
+        "longitude": {
+        "type": "number"
+        }
+        },
+        "required": ["latitude", "longitude"]
+        }
+        }
+        })");
+
+  CollectionOptions opts_strict(
+        R"({
+        "validation": {
+        "level": "Strict",
+        "schema":
+        {
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+        "latitude": {
+        "type": "number"
+        },
+        "longitude": {
+        "type": "number"
+        }
+        },
+        "required": ["latitude", "longitude"]
+        }
+        }
+        })");
+
+  CollectionValidation validation_off(
+          CollectionValidation::LEVEL,
+          CollectionValidation::OFF,
+          CollectionValidation::SCHEMA,
+          R"(
+          {
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-06/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties":
+            {
+              "latitude":
+              {
+                "type": "number"
+              },
+              "longitude":
+              {
+                "type": "number"
+              }
+            },
+            "required": ["latitude", "longitude"]
+          })"
+          );
+
+  auto places = schema.createCollection(
+                  "places",
+                  opts_reuse_strict
+                  );
+
+  places.add(R"({"location":"Almeirim", "latitude":39.2092349, "longitude": -8.6290121})").execute();
+  EXPECT_THROW(places.add(R"({"location":"Santarem"})").execute(), Error);
+
+  //Has Reuse... throw error
+  EXPECT_THROW(
+  schema.modifyCollection("places",
+                          opts_reuse_strict
+                          ),
+        Error);
+
+
+  schema.modifyCollection("places",
+                          CollectionValidation(
+                          CollectionValidation::LEVEL, CollectionValidation::OFF,
+                          CollectionValidation::SCHEMA,
+                          R"(
+                          {
+                            "id": "http://json-schema.org/geo",
+                            "$schema": "http://json-schema.org/draft-06/schema#",
+                            "description": "A geographical coordinate",
+                            "type": "object",
+                            "properties":
+                            {
+                              "latitude":
+                              {
+                                "type": "number"
+                              },
+                              "longitude":
+                              {
+                                "type": "number"
+                              }
+                            },
+                            "required": ["latitude", "longitude"]
+                          })")
+                          );
+
+  auto res = places.add(R"({"location":"Santarem"})").execute();
+
+
+  EXPECT_THROW(
+  opts_reuse_strict.set(CollectionValidation::LEVEL, CollectionValidation::STRICT), Error);
+
+  EXPECT_THROW(
+  opts_reuse_strict.set(CollectionValidation::SCHEMA, "{}"), Error);
+
+  EXPECT_THROW(
+  opts_reuse_strict.set(CollectionOptions::REUSE, true), Error);
+
+  EXPECT_THROW(
+  opts_reuse_strict.set(CollectionOptions::VALIDATION, validation_off), Error);
+
+
+  EXPECT_THROW(
+  schema.modifyCollection("places",
+                          opts_strict
+                          ), Error);
+
+  //Removing the document that doesn't respect the validation, it should now work
+
+  places.remove(R"({"_ix"::id})").bind("id", *res.getGeneratedIds().begin()).execute();
+
+  schema.modifyCollection("places",
+                          opts_strict
+                          );
+
+  EXPECT_THROW(
+        places.add(R"({"location":"Lisbon"})").execute(),
+        Error);
+
+  places.add(R"({"location":"Lisbon", "latitude":38.722321, "longitude": -9.139336})")
+      .execute();
+
+
+
+  {
+    auto places2 = schema.createCollection(
+                     "places2",
+                     CollectionValidation::LEVEL, CollectionValidation::STRICT,
+                     CollectionOptions::REUSE, true,
+                     CollectionValidation::SCHEMA,
+                     R"(
+                     {
+                     "id": "http://json-schema.org/geo",
+                     "$schema": "http://json-schema.org/draft-06/schema#",
+                     "description": "A geographical coordinate",
+                     "type": "object",
+                     "properties":
+                     {
+                     "latitude":
+                     {
+                     "type": "number"
+                     },
+                     "longitude":
+                     {
+                     "type": "number"
+                     }
+                     },
+                     "required": ["latitude", "longitude"]
+                     })"
+                     );
+
+    places2.add(R"({"location":"Lisbon", "latitude":38.722321, "longitude": -9.139336})")
+        .execute();
+
+    EXPECT_THROW(
+          places2.add(R"({"location":"Lisbon"})").execute(),
+          Error);
+  }
+
+  //Check REUSE
+
+  EXPECT_THROW(
+        places = schema.createCollection(
+                   "places",
+                   opts_strict
+                   ),
+        Error);
+
+  places = schema.createCollection(
+             "places",
+             opts_reuse_strict
+             );
+
+  schema.modifyCollection("places", opts_strict);
+
+  EXPECT_THROW(
+        places.add(R"({"location":"Lisbon"})").execute(),
+        Error);
+
+  schema.modifyCollection(
+        "places",
+        CollectionOptions::VALIDATION, validation_off);
+
+  places.add(R"({"location":"Lisbon"})").execute();
+}
 
 TEST_F(Ddl, bugs)
 {
@@ -378,3 +600,4 @@ TEST_F(Ddl, bugs)
     r = result.fetchOne();
   }
 }
+

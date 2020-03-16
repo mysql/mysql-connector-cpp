@@ -157,6 +157,7 @@ typedef object_id* MYSQLX_GUID;
 #define MYSQLX_ERROR_MISSING_TABLE_NAME_MSG "Missing table name"
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG "Missing collection name"
+#define MYSQLX_ERROR_MISSING_COLLECTION_OPT_MSG "Missing collection options"
 #define MYSQLX_ERROR_MISSING_VIEW_NAME_MSG "Missing view name"
 #define MYSQLX_ERROR_MISSING_KEY_NAME_MSG "Missing key name"
 #define MYSQLX_ERROR_MISSING_HOST_NAME "Missing host name"
@@ -225,6 +226,14 @@ typedef struct mysqlx_client_struct mysqlx_client_t;
 
 typedef struct mysqlx_session_options_struct mysqlx_session_options_t;
 
+/**
+  Type of handles for collection create/modify options.
+
+  @see mysqlx_collection_options_new(), mysqlx_collection_options_set(),
+  mysqlx_free().
+*/
+
+typedef struct mysqlx_collection_options_struct mysqlx_collection_options_t;
 
 /**
   Type of database schema handles.
@@ -446,6 +455,60 @@ typedef enum mysqlx_auth_method_enum
 }
 mysqlx_auth_method_t;
 
+/**
+  Collection create/modify options
+
+  \anchor opt_collection
+*/
+
+typedef enum mysqlx_collection_opt_enum
+{
+
+#define XAPI_COLLECTION_OPT_ENUM(X,N)  MYSQLX_OPT_COLLECTION_##X = N,
+
+  COLLECTION_OPTIONS_OPTION(XAPI_COLLECTION_OPT_ENUM)
+  MYSQLX_OPT_COLLECTION_LAST
+}
+mysqlx_collection_opt_t;
+
+/**
+  Collection validation options
+
+  \anchor opt_collection_validation
+*/
+
+typedef enum mysqlx_collection_validation_opt_enum
+{
+
+#define XAPI_COLLECTION_VALIDATION_OPT_ENUM(X,N)  MYSQLX_OPT_COLLECTION_VALIDATION_##X = 1024+N,
+
+  COLLECTION_VALIDATION_OPTION(XAPI_COLLECTION_VALIDATION_OPT_ENUM)
+  MYSQLX_OPT_COLLECTION_VALIDATION_LAST
+}
+mysqlx_collection_validation_opt_t;
+
+/**
+  Collection validation level options
+  \anchor opt_collection_validation_level
+*/
+
+typedef enum mysqlx_collection_validation_level_enum
+{
+
+#define XAPI_COLLECTION_VALIDATION_LEVEL_ENUM(X,N)  MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL_##X = 2048+N,
+
+  COLLECTION_VALIDATION_LEVEL(XAPI_COLLECTION_VALIDATION_LEVEL_ENUM)
+  MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL_LAST
+}
+mysqlx_collection_validation_level_t;
+
+#define VALIDATION_OFF MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL_OFF
+#define VALIDATION_STRICT MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL_STRICT
+
+#define OPT_COLLECTION_REUSE(X) MYSQLX_OPT_COLLECTION_REUSE, (unsigned int)X
+#define OPT_COLLECTION_VALIDATION(X) MYSQLX_OPT_COLLECTION_VALIDATION, (const char*)X
+#define OPT_COLLECTION_VALIDATION_LEVEL(X) MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL, (unsigned int)X
+#define OPT_COLLECTION_VALIDATION_SCHEMA(X) MYSQLX_OPT_COLLECTION_VALIDATION_SCHEMA, (const char*)X
 
 typedef enum mysqlx_compression_mode_enum
 {
@@ -3155,6 +3218,137 @@ mysqlx_schema_drop(mysqlx_session_t *sess, const char *schema);
 
 PUBLIC_API int
 mysqlx_collection_create(mysqlx_schema_t *schema, const char *collection);
+
+
+/**
+  Allocate a new create/modify collection options data.
+
+  @return collection create/modify options handle
+
+  @note The session returned by the function must be properly freed using
+        `mysqlx_free()`.
+
+  @ingroup xapi_ddl
+*/
+
+PUBLIC_API mysqlx_collection_options_t *
+mysqlx_collection_options_new();
+
+
+/**
+  Set collection options.
+  @param options	handle created by mysqlx_collection_options_new() function
+  @param ...  variable parameters list consisting of (option, value) pairs
+          terminated by `PARAM_END`.
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+          The error handle can be obtained from the options
+          using `mysqlx_error()` function.
+
+  The variable parameter list is of the form
+
+      OPT_COLLECTION_O1(val1), OPT_COLLECTION_O2(val2), ..., PARAM_END
+
+  or, equivalently,
+
+      MYSQLX_OPT_COLLECTION_O1, val1, MYSQLX_OPT_COLLECTION_02, val2,...,
+  PARAM_END
+
+  Possible options are defined by enumerations
+  \ref opt_collection "mysqlx_collection_opt_t" and
+  \ref opt_collection_validation "mysqlx_collection_validation_opt_t".
+  Type of option value `vali` (number, string, etc.) must match the option
+  `MYSQLX_OPT_COLLECTION_Oi`, otherwise this value  along with all the
+  sequential options and values are most likely to be corrupted.
+
+  @ingroup xapi_ddl
+*/
+
+PUBLIC_API int
+mysqlx_collection_options_set(mysqlx_collection_options_t * options,...);
+
+
+/**
+  Create a new collection in a specified schema
+
+  @param schema schema handle
+  @param collection collection name to create
+  @param options handle created by mysqlx_collection_options_new() function
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+          The error handle can be obtained from the session
+          using `mysqlx_error()` function.
+
+  @ingroup xapi_ddl
+*/
+
+PUBLIC_API int
+mysqlx_collection_create_with_options(mysqlx_schema_t *schema,
+                                      const char *collection,
+                                      mysqlx_collection_options_t *options);
+
+/**
+  Create a new collection in a specified schema
+
+  @param schema schema handle
+  @param collection collection name to create
+  @param json_options json with options:
+  ~~~~~~
+  {
+    "reuseExisting": true,
+    "validation":
+    {
+      "level": "Strict",
+      "schema":
+      {
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties":
+        {
+          "latitude":
+          {
+            "type": "number"
+          },
+          "longitude":
+          {
+            "type": "number"
+          }
+        },
+        "required": ["latitude", "longitude"]
+        }
+      }
+    }
+  }
+  ~~~~~~
+
+  Document keys:
+  - `reuseExisting` : Same as @ref opt_collection "MYSQLX_OPT_COLLECTION_REUSE";
+  - `validation` : Same as @ref opt_collection "MYSQLX_OPT_COLLECTION_VALIDATION";
+
+
+  @return `RESULT_OK` - on success; `RESULT_ERR` - on error
+          The error handle can be obtained from the session
+          using `mysqlx_error()` function.
+
+  @ingroup xapi_ddl
+*/
+PUBLIC_API int
+mysqlx_collection_create_with_json_options(mysqlx_schema_t *schema,
+                                           const char *collection,
+                                           const char* json_options);
+
+PUBLIC_API int
+mysqlx_collection_modify_with_options(mysqlx_schema_t *schema,
+                                      const char *collection,
+                                      mysqlx_collection_options_t *options);
+
+PUBLIC_API int
+mysqlx_collection_modify_with_json_options(mysqlx_schema_t *schema,
+                                           const char* collection,
+                                           const char* json_options);
+
 
 
 /**

@@ -1191,11 +1191,6 @@ void STDCALL mysqlx_free(void *objs)
       mysqlx_stmt_struct *stmt = (mysqlx_stmt_struct*)obj;
       stmt->get_session().rm_stmt(stmt);
     }
-    else if (typeid(*obj) == typeid(mysqlx_dyn_error_struct))
-    {
-      mysqlx_dyn_error_struct *err = (mysqlx_dyn_error_struct*)obj;
-      delete err;
-    }
     else if (typeid(*obj) == typeid(mysqlx_session_options_struct))
     {
       mysqlx_free_options((mysqlx_session_options_struct*)obj);
@@ -1203,6 +1198,11 @@ void STDCALL mysqlx_free(void *objs)
     else if (typeid(*obj) == typeid(mysqlx_result_struct))
     {
       mysqlx_result_free((mysqlx_result_struct*)obj);
+    }
+    else if (typeid(*obj) == typeid(mysqlx_dyn_error_struct) ||
+             typeid(*obj) == typeid(mysqlx_collection_options_struct))
+    {
+      delete obj;
     }
   }
 }
@@ -1282,6 +1282,224 @@ mysqlx_collection_create(mysqlx_schema_struct *schema, const char *collection)
   SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
   PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
   schema->create_collection(collection, true);
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(schema, RESULT_ERROR)
+}
+
+mysqlx_collection_options_t * STDCALL
+mysqlx_collection_options_new()
+{
+  return new mysqlx_collection_options_struct();
+}
+
+template<mysqlx_collection_opt_enum OPT>
+void
+set_collection_opt(mysqlx_collection_options_t&, va_list&)
+{
+  throw Mysqlx_exception("Unexpected collection option");
+}
+
+template<>
+void
+set_collection_opt<MYSQLX_OPT_COLLECTION_REUSE>(
+    mysqlx_collection_options_t &options,
+    va_list &args)
+{
+  if(options.m_usage.test(mysqlx_collection_options_t::REUSE))
+    throw Mysqlx_exception("Option reuse already set.");
+  options.m_usage.set(mysqlx_collection_options_t::REUSE);
+  options.m_reuse = va_arg(args, unsigned int);
+}
+
+template<>
+void
+set_collection_opt<MYSQLX_OPT_COLLECTION_VALIDATION>(
+    mysqlx_collection_options_t &options,
+    va_list &args)
+{
+  if(options.m_usage.test(mysqlx_collection_options_t::VALIDATION) ||
+     options.m_usage.test(mysqlx_collection_options_t::VALIDATION_LEVEL) ||
+     options.m_usage.test(mysqlx_collection_options_t::VALIDATION_SCHEMA))
+    throw Mysqlx_exception("Collection validation already set.");
+
+  options.m_usage.set(mysqlx_collection_options_t::VALIDATION);
+
+  options.m_validation = va_arg(args, char*);
+}
+
+template <mysqlx_collection_validation_opt_enum OPT>
+void
+set_collection_validation_opt(mysqlx_collection_options_t&, va_list&)
+{
+  throw Mysqlx_exception("Unexpected collection validation option");
+}
+
+
+
+template <>
+void
+set_collection_validation_opt<MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL>(
+    mysqlx_collection_options_t &options, va_list &args)
+{
+
+  if(options.m_usage.test(mysqlx_collection_options_t::VALIDATION) ||
+     options.m_usage.test(mysqlx_collection_options_t::VALIDATION_LEVEL))
+    throw Mysqlx_exception("Validation level already set.");
+
+  options.m_usage.set(mysqlx_collection_options_t::VALIDATION_LEVEL);
+
+
+#define SCHEMA_VALIDATION_LEVEL_CASE(X,Y)\
+  case MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL_##X:\
+    options.m_validation_level = #X;\
+  break;
+
+  switch (va_arg(args, int)) {
+  COLLECTION_VALIDATION_LEVEL(SCHEMA_VALIDATION_LEVEL_CASE)
+  }
+}
+
+template<>
+void
+set_collection_validation_opt<MYSQLX_OPT_COLLECTION_VALIDATION_SCHEMA>(
+    mysqlx_collection_options_t &options, va_list &args)
+{
+
+  if(options.m_usage.test(mysqlx_collection_options_t::VALIDATION) ||
+     options.m_usage.test(mysqlx_collection_options_t::VALIDATION_SCHEMA))
+    throw Mysqlx_exception("Validation schema already set.");
+
+  options.m_usage.set(mysqlx_collection_options_t::VALIDATION_SCHEMA);
+
+  options.m_validation_schema = va_arg(args, const char*);
+}
+
+int STDCALL
+mysqlx_collection_options_set(mysqlx_collection_options_t * options,...)
+{
+  SAFE_EXCEPTION_BEGIN(options, RESULT_ERROR)
+  va_list args;
+  mysqlx_collection_options_t tmp_options(*options);
+  int type;
+  try {
+
+    va_start(args, options);
+
+
+    while (0 != (type = va_arg(args, int)))
+    {
+      switch (type)
+      {
+#define COLLECTION_OPTIONS_OPTION_SET(X,Y)\
+      case MYSQLX_OPT_COLLECTION_##X:\
+        set_collection_opt<MYSQLX_OPT_COLLECTION_##X>(tmp_options, args); \
+      break;
+
+      COLLECTION_OPTIONS_OPTION(COLLECTION_OPTIONS_OPTION_SET)
+
+#define COLLECTION_VALIDATION_OPTION_SET(X,Y)\
+      case MYSQLX_OPT_COLLECTION_VALIDATION_##X:\
+        set_collection_validation_opt<MYSQLX_OPT_COLLECTION_VALIDATION_##X>(tmp_options, args);\
+      break;
+
+      COLLECTION_VALIDATION_OPTION(COLLECTION_VALIDATION_OPTION_SET)
+        default:
+          throw Mysqlx_exception("Unrecognized option");
+      }
+    }
+
+    va_end(args);
+
+  }
+  catch (...)
+  {
+    va_end(args);
+    throw;
+  }
+  *options = tmp_options;
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(options, RESULT_ERROR)
+}
+
+
+int STDCALL
+mysqlx_collection_create_with_options(mysqlx_schema_t *schema,
+                                      const char *collection,
+                                      mysqlx_collection_options_t *options)
+{
+  SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  PARAM_NULL_CHECK(options, schema, MYSQLX_ERROR_MISSING_COLLECTION_OPT_MSG, RESULT_ERROR)
+
+  if( options->m_usage.test(mysqlx_collection_options_t::VALIDATION) )
+  {
+    schema->create_collection(collection,
+                              options->m_reuse,
+                              options->m_validation);
+  }
+  else
+  {
+    schema->create_collection(collection,
+                              options->m_reuse,
+                              options->m_validation_level,
+                              options->m_validation_schema);
+  }
+
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(schema, RESULT_ERROR)
+}
+
+int STDCALL
+mysqlx_collection_create_with_json_options(mysqlx_schema_t *schema,
+                                           const char *collection,
+                                           const char* json_options)
+{
+  SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(json_options, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  schema->create_collection(collection,
+                            std::string(json_options));
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(schema, RESULT_ERROR)
+}
+
+int STDCALL
+mysqlx_collection_modify_with_options(mysqlx_schema_t *schema,
+                                      const char *collection,
+                                      mysqlx_collection_options_t *options)
+{
+  SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  PARAM_NULL_CHECK(options, schema, MYSQLX_ERROR_MISSING_COLLECTION_OPT_MSG, RESULT_ERROR)
+
+  if(options->m_reuse)
+    throw_error("Can't use OPT_COLLECTION_REUSE mysqlx_collection_modify_with_options");
+
+  if(options->m_validation.empty())
+  {
+    schema->modify_collection(collection,
+                              options->m_validation_level,
+                              options->m_validation_schema);
+  }
+  else
+  {
+    schema->modify_collection(collection,
+                              options->m_validation, true);
+  }
+  return RESULT_OK;
+  SAFE_EXCEPTION_END(schema, RESULT_ERROR)
+}
+
+int STDCALL
+mysqlx_collection_modify_with_json_options(mysqlx_schema_t *schema,
+                                           const char* collection,
+                                           const char* json_options)
+{
+  SAFE_EXCEPTION_BEGIN(schema, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(collection, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  PARAM_NULL_EMPTY_CHECK(json_options, schema, MYSQLX_ERROR_MISSING_COLLECTION_NAME_MSG, RESULT_ERROR)
+  schema->modify_collection(collection,
+                            std::string(json_options));
   return RESULT_OK;
   SAFE_EXCEPTION_END(schema, RESULT_ERROR)
 }
@@ -1825,6 +2043,7 @@ mysqlx_free_options(mysqlx_session_options_t *opt)
   if (opt)
     delete opt;
 }
+
 
 
 /*

@@ -403,10 +403,30 @@ auto Session_detail::Schema_src::iterator_get() -> Schema
 
 
 void
-Schema_detail::create_collection(const mysqlx::string &name, bool reuse)
+Schema_detail::create_collection(const mysqlx::string &name,
+                                 mysqlx::CollectionOptions options)
 {
   Object_ref coll(m_name, name);
-  create_object<Object_type::COLLECTION>(m_sess, coll, reuse);
+
+  create_object<Object_type::COLLECTION>(m_sess, coll, options.m_data.reuse,
+                                         options.m_data.validation.m_data.validation_level,
+                                         options.m_data.validation.m_data.validation_schema.get_json());
+}
+
+void
+Schema_detail::modify_collection(const mysqlx::string &name,
+                                 mysqlx::CollectionOptions options)
+{
+
+  Object_ref coll(m_name, name);
+
+  if(options.m_data.reuse)
+    throw_error("Can't use CollectionOptions::REUSE on collectionModify");
+
+  modify_object<Object_type::COLLECTION>(
+        m_sess, coll,
+        options.m_data.validation.m_data.validation_level,
+        std::string(options.m_data.validation.m_data.validation_schema.get_json()));
 }
 
 

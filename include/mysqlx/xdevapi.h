@@ -97,7 +97,6 @@
 #include "devapi/settings.h"
 #include "devapi/detail/session.h"
 
-
 namespace mysqlx {
 MYSQLX_ABI_BEGIN(2,0)
 
@@ -108,6 +107,413 @@ namespace internal {
 template <class Base> class Sch_object;
 
 }  // internal
+
+
+/// Collection create/modify Validation options
+
+class CollectionOptions;
+
+/**
+  The CollectionValidation class defines collection schema and level of
+  validation.
+ */
+
+class CollectionValidation
+{
+public:
+
+#define COLLECTION_VALIDATION_ENUM(x,y) x=y,
+
+
+  /**
+    Collection validation level options
+
+    \anchor CollectionValidation_Level
+   */
+
+  enum Level
+  {
+    COLLECTION_VALIDATION_LEVEL(COLLECTION_VALIDATION_ENUM)
+  };
+
+
+  /**
+    \anchor CollectionValidation_Option
+    Collection validation options
+   */
+
+  enum Option
+  {
+    COLLECTION_VALIDATION_OPTION(COLLECTION_VALIDATION_ENUM)
+    LAST
+  };
+
+private:
+
+  struct Data
+  {
+    std::string validation_level;
+    DbDoc validation_schema;
+    std::bitset<LAST> used;
+  };
+
+public:
+
+  CollectionValidation()
+  {}
+
+  CollectionValidation(const char* json_doc)
+    : CollectionValidation(DbDoc(json_doc))
+  {}
+
+  /**
+     Constructor using a document.
+
+     Document example:
+     ~~~~~~
+     {
+       "level": "Strict",
+       "schema":
+       {
+         "id": "http://json-schema.org/geo",
+         "$schema": "http://json-schema.org/draft-06/schema#",
+         "description": "A geographical coordinate",
+         "type": "object",
+         "properties":
+         {
+           "latitude":
+           {
+             "type": "number"
+           },
+           "longitude":
+           {
+             "type": "number"
+           }
+         },
+         "required": ["latitude", "longitude"]
+         }
+       }
+     }
+     ~~~~~~
+
+     Document keys:
+       - `level`: See CollectionValidation::LEVEL;
+       - `schema`: See CollectionValidation::SCHEMA;
+
+   */
+
+  CollectionValidation(DbDoc doc)
+  {
+    for(auto el : doc)
+    {
+      if(el == "level")
+      {
+        try {
+          _set(LEVEL, doc[el].get<std::string>());
+        } catch (const Error& e)
+        {
+          std::string err("Unexpected level type: ");
+          err+=e.what();
+          throw Error(err.c_str());
+        }
+      }
+      else if(el == "schema")
+      {
+        _set(SCHEMA,doc[el].get<DbDoc>());
+      }
+      else {
+        std::string err("Unexpected schema validation field ");
+        err+=el;
+        throw Error(err.c_str());
+      }
+    }
+  }
+
+  /**
+    Construct CollectionValidation from list of Option and value pairs.
+    See @ref CollectionValidation_Option "CollectionValidation::Option"
+    for possible options.
+   */
+  template<typename... Rest>
+  CollectionValidation(Option opt, Rest&&... rest)
+  {
+    set(opt, std::forward<Rest>(rest)...);
+  }
+
+  /**
+    Set list of Option and value pairs.
+    @see CollectionValidation::CollectionValidation
+   */
+  template<typename... Rest>
+  void set(Rest&&... options)
+  {
+    Data tmp_data(m_data);
+    try {
+      _set(std::forward<Rest>(options)...);
+    } catch (...) {
+      m_data = tmp_data;
+      throw;
+    }
+  }
+
+protected:
+
+  /// @cond DISABLED
+  // Note: Doxygen gets confused here and renders docs incorrectly.
+  template<typename T,typename... Rest>
+  void _set(Option opt, T&& v, Rest&&... options)
+  {
+#define SCHEMA_VALIDATION_SET(x,y) case CollectionValidation::x:\
+    do_set<CollectionValidation::x>(std::forward<T>(v)); break;
+
+    switch (opt)
+    {
+      COLLECTION_VALIDATION_OPTION(SCHEMA_VALIDATION_SET)
+      case CollectionValidation::LAST: throw_error("Invalid option."); ; break;
+    }
+
+    _set(std::forward<Rest>(options)...);
+  }
+  /// @endcond
+
+  void _set() {}
+
+  template<CollectionValidation::Option, typename T>
+  void do_set(T)
+  {
+    throw_error("Invalid option value type.");
+  }
+
+  Data m_data;
+
+  friend CollectionOptions;
+  friend Schema;
+  friend mysqlx::internal::Schema_detail;
+};
+
+
+/**
+   The CollectionOptions class defines collection create/modify options.
+ */
+
+class CollectionOptions
+{
+  public:
+
+#define COLLECTION_OPTIONS_ENUM(x,y) x=y,
+
+  /**
+    \anchor CollectionOptions_Option
+    Collection options
+   */
+
+  enum Option
+  {
+    COLLECTION_OPTIONS_OPTION(COLLECTION_OPTIONS_ENUM)
+    LAST
+  };
+
+private:
+
+  struct Data{
+    CollectionValidation validation;
+    std::bitset<LAST> used;
+    bool reuse = false;
+  };
+
+  public:
+
+
+  CollectionOptions()
+  {}
+
+  CollectionOptions(const char* options)
+    : CollectionOptions(DbDoc(options))
+  {}
+
+  CollectionOptions(const std::string& options)
+    : CollectionOptions(DbDoc(options))
+  {}
+
+  /**
+     Constructor using a document.
+
+     Document example:
+     ~~~~~~
+      {
+        "reuseExisting": true,
+        "validation":
+        {
+          "level": "Strict",
+          "schema":
+          {
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-06/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties":
+            {
+              "latitude":
+              {
+                "type": "number"
+              },
+              "longitude":
+              {
+                "type": "number"
+              }
+            },
+            "required": ["latitude", "longitude"]
+            }
+          }
+        }
+      }
+      ~~~~~~
+
+      Document keys:
+      - `reuseExisting` : Same as CollectionOptions::REUSE;
+      - `validation` : Same as CollectionOptions::VALIDATION;
+
+
+   */
+  CollectionOptions(DbDoc options)
+  {
+    for(auto el : options)
+    {
+      if(el == "reuseExisting")
+      {
+        try {
+          _set(REUSE, options["reuseExisting"].get<bool>());
+        } catch (const Error& e)
+        {
+          std::string err("Wrong value for reuseExisting option: ");
+          err+=e.what();
+          throw Error(err.c_str());
+        }
+      }
+      else if(el == "validation")
+      {
+        _set(VALIDATION, CollectionValidation(options["validation"].get<DbDoc>()));
+      }
+      else {
+        std::string err("Unexpected collection option ");
+        err+=el;
+        throw Error(err.c_str());
+      }
+    }
+  }
+
+  CollectionOptions(CollectionValidation validation)
+  {
+    set(VALIDATION, validation);
+  }
+
+  /**
+    Construct CollectionOptions from list of Option and value pairs.
+    @ref CollectionOptions_Option "CollectionOptions::Option" and
+    @ref CollectionValidation_Option "CollectionValidation::Option" can both be
+    used.
+
+    Example:
+    ~~~~
+    schema.createCollection(
+                     "collection_test",
+                     CollectionValidation::LEVEL, CollectionValidation::STRICT,
+                     CollectionOptions::REUSE, true,
+                     CollectionValidation::SCHEMA,
+                     R"(
+                     {
+                     "id": "http://json-schema.org/geo",
+                     "$schema": "http://json-schema.org/draft-06/schema#",
+                     "description": "A geographical coordinate",
+                     "type": "object",
+                     "properties":
+                     {
+                       "latitude": {
+                         "type": "number"
+                       },
+                       "longitude": {
+                         "type": "number"
+                       }
+                     },
+                     "required": ["latitude", "longitude"]
+                     })"
+                     );
+
+    ~~~~
+
+   */
+
+  template<typename... Rest>
+  CollectionOptions(Option opt, Rest&&... rest)
+  {
+   set(opt, std::forward<Rest>(rest)...);
+  }
+
+
+  template<typename... Rest>
+  CollectionOptions(CollectionValidation::Option opt, Rest&&... rest)
+  {
+   set(opt, std::forward<Rest>(rest)...);
+  }
+
+
+  /**
+    Set list of option and value pairs.
+    @see CollectionOptions::CollectionOptions
+   */
+  template<typename... Rest>
+  void set(Rest&&... rest)
+  {
+    Data tmp_data(m_data);
+    try {
+      _set(std::forward<Rest>(rest)...);
+    } catch (...) {
+      m_data = std::move(tmp_data);
+      throw;
+    }
+  }
+
+
+
+protected:
+
+  /// @cond DISABLED
+  // Note: Doxygen gets confused here and renders docs incorrectly.
+  template<typename T,typename... Rest>
+  void _set(Option opt, T&& v, Rest&&... rest)
+  {
+#define COLLECTION_OPTIONS_SET(x,y) case x:\
+    do_set<x>(std::forward<T>(v)); break;
+
+    switch (opt)
+    {
+      COLLECTION_OPTIONS_OPTION(COLLECTION_OPTIONS_SET)
+      case LAST: throw_error("Invalid option."); ; break;
+    }
+
+    _set(std::forward<Rest>(rest)...);
+  }
+  /// @endcond
+
+  template<typename T,typename... Rest>
+  void _set(CollectionValidation::Option opt, T&& v, Rest&&... rest)
+  {
+    m_data.validation._set(opt, std::forward<T>(v));
+    _set(std::forward<Rest>(rest)...);
+  }
+
+  void _set(){}
+
+  template<CollectionOptions::Option O,typename T>
+  void do_set(T)
+  {
+    throw_error("Invalid option value type.");
+  }
+
+  Data m_data;
+
+  friend mysqlx::internal::Schema_detail;
+};
 
 
 /**
@@ -217,7 +623,33 @@ public:
     to create a collection which already exists throws an error.
   */
 
-  Collection createCollection(const string &name, bool reuse = false);
+
+  Collection createCollection(const string &name);
+  Collection createCollection(const string &name, bool);
+
+  /**
+    Create a new collection in the schema, optionally specifying creation
+    options. Arguments following `name`, if any, are used to construct
+    CollectionOptions object. See CollectionOptions for possible ways of
+    specifying the options.
+
+    Returns the created collection.
+  */
+  template<typename... Rest>
+  Collection createCollection(const string &name,
+                              Rest&&... rest);
+
+  /**
+    Modify a collection in the schema specifying modify options. Arguments
+   following `name` are used to construct CollectionOptions object. See
+   CollectionOptions for possible ways of specifying the options.
+
+    @note CollectionOptions::REUSE is not allowed and, if used, will throw
+          error.
+  */
+  template<typename... Rest>
+  void modifyCollection(const string &name, Rest&&... options);
+
 
   /**
     Return an object representing a collection with the given name.
@@ -429,6 +861,11 @@ protected:
 };
 
 }  // internal
+
+
+
+
+
 
 
 /**
@@ -738,16 +1175,139 @@ public:
   ///@endcond
 };
 
+//------------------------------------------------------------------------------
+
+
+template<>
+inline
+void CollectionValidation::do_set<CollectionValidation::SCHEMA>(DbDoc schema)
+{
+  if(m_data.used.test(CollectionValidation::SCHEMA))
+    throw_error("Validation schema already set.");
+  m_data.used.set(CollectionValidation::SCHEMA);
+  m_data.validation_schema = schema;
+}
+
+template<>
+inline
+void CollectionValidation::do_set<CollectionValidation::SCHEMA>(const char* schema)
+{
+  do_set<CollectionValidation::SCHEMA>(DbDoc(schema));
+}
+
+template<>
+inline
+void CollectionValidation::do_set<CollectionValidation::SCHEMA>(std::string schema)
+{
+  do_set<CollectionValidation::SCHEMA>(DbDoc(schema));
+}
+
+
+template<>
+inline
+void CollectionValidation::do_set<CollectionValidation::LEVEL>(Level level)
+{
+  if(m_data.used.test(CollectionValidation::LEVEL))
+    throw_error("Validation level already set.");
+  m_data.used.set(CollectionValidation::LEVEL);
+
+#define SCHEMA_VALIDATION_CASE(x,y) case Level::x: m_data.validation_level = #x; break;
+
+  switch (level) {
+  COLLECTION_VALIDATION_LEVEL(SCHEMA_VALIDATION_CASE)
+  }
+}
+
+template<>
+inline
+void CollectionValidation::do_set<CollectionValidation::LEVEL>(std::string level)
+{
+  if(m_data.used.test(CollectionValidation::LEVEL))
+    throw_error("Validation level already set.");
+  m_data.used.set(CollectionValidation::LEVEL);
+
+  m_data.validation_level = level;
+
+}
+
+template<>
+inline
+void CollectionOptions::do_set<CollectionOptions::REUSE>(bool reuse)
+{
+  if(m_data.used[CollectionOptions::REUSE])
+    throw_error("Option reuse already set.");
+  m_data.used.set(CollectionOptions::REUSE);
+  m_data.reuse = reuse;
+}
+
+template<>
+inline
+void CollectionOptions::do_set<CollectionOptions::VALIDATION>(CollectionValidation validation)
+{
+  if(m_data.used.test(CollectionOptions::VALIDATION) ||
+     m_data.validation.m_data.used.test(CollectionValidation::LEVEL) ||
+     m_data.validation.m_data.used.test(CollectionValidation::SCHEMA))
+    throw_error("Validation already set.");
+
+  m_data.used.test(CollectionOptions::VALIDATION);
+  m_data.validation.m_data.used.set(CollectionValidation::LEVEL);
+  m_data.validation.m_data.used.set(CollectionValidation::SCHEMA);
+
+  m_data.validation = validation;
+}
+
+
+inline
+Collection Schema::createCollection(const string &name)
+{
+  try {
+    Schema_detail::create_collection(
+          name,
+          CollectionOptions() );
+
+    return Collection(*this, name);
+  }
+  CATCH_AND_WRAP
+}
 
 inline
 Collection Schema::createCollection(const string &name, bool reuse)
 {
   try {
-    Schema_detail::create_collection(name, reuse);
+    Schema_detail::create_collection(
+          name,
+          CollectionOptions(
+            CollectionOptions::REUSE, reuse)
+          );
+
     return Collection(*this, name);
   }
   CATCH_AND_WRAP
 }
+
+
+template<typename... Rest>
+inline
+Collection Schema::createCollection(const string &name, Rest&&... rest)
+{
+  try {
+    Schema_detail::create_collection(name, CollectionOptions(std::forward<Rest>(rest)...));
+    return Collection(*this, name);
+  }
+  CATCH_AND_WRAP
+}
+
+
+template <typename... Opt>
+inline
+void Schema::modifyCollection(const string &name, Opt&&... options)
+{
+  try {
+    Schema_detail::modify_collection(name, CollectionOptions(std::forward<Opt>(options)...));
+  }
+  CATCH_AND_WRAP
+}
+
 
 
 inline
@@ -758,6 +1318,7 @@ Collection Schema::getCollection(const string &name, bool check_exists)
     throw_error("Collection does not exist");
   return coll;
 }
+
 
 
 /*
