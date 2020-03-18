@@ -322,14 +322,23 @@ bool Result_impl::load_cache(row_count_t prefetch_size)
   m_cursor->wait();
 
   /*
-    Cleanup after reading all rows.
+    Cleanup after reading all rows: close the cursor if whole rset has
+    been consumed (or error happend, in which case server won't sent more
+    data).
   */
 
   if (!m_pending_rows || m_reply->entry_count() > 0)
   {
     m_cursor->close();
-    m_sess->deregister_result(this);
     m_pending_rows = false;
+
+    /*
+      If there are no more rsets in the reply, deregister the result so that
+      session is unlocked for the next command.
+    */
+
+    if (m_reply->end_of_reply())
+      m_sess->deregister_result(this);
   }
 
   return !m_result_cache.back().empty();
