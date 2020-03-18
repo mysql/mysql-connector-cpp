@@ -101,6 +101,50 @@ inline void PutN(Stream& stream, Ch c, size_t n) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// GenericStreamWrapper
+
+//! A Stream Wrapper
+/*! \tThis string stream is a wrapper for any stream by just forwarding any
+    \treceived message to the origin stream.
+    \note implements Stream concept
+*/
+
+#if defined(_MSC_VER) && _MSC_VER <= 1800
+RAPIDJSON_DIAG_PUSH
+RAPIDJSON_DIAG_OFF(4702)  // unreachable code
+RAPIDJSON_DIAG_OFF(4512)  // assignment operator could not be generated
+#endif
+
+template <typename InputStream, typename Encoding = UTF8<> >
+class GenericStreamWrapper {
+public:
+    typedef typename Encoding::Ch Ch;
+    GenericStreamWrapper(InputStream& is): is_(is) {}
+
+    Ch Peek() const { return is_.Peek(); }
+    Ch Take() { return is_.Take(); }
+    size_t Tell() { return is_.Tell(); }
+    Ch* PutBegin() { return is_.PutBegin(); }
+    void Put(Ch ch) { is_.Put(ch); }
+    void Flush() { is_.Flush(); }
+    size_t PutEnd(Ch* ch) { return is_.PutEnd(ch); }
+
+    // wrapper for MemoryStream
+    const Ch* Peek4() const { return is_.Peek4(); }
+
+    // wrapper for AutoUTFInputStream
+    UTFType GetType() const { return is_.GetType(); }
+    bool HasBOM() const { return is_.HasBOM(); }
+
+protected:
+    InputStream& is_;
+};
+
+#if defined(_MSC_VER) && _MSC_VER <= 1800
+RAPIDJSON_DIAG_POP
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 // StringStream
 
 //! Read-only string stream.
