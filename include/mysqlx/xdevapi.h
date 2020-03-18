@@ -1249,7 +1249,7 @@ void CollectionOptions::do_set<CollectionOptions::VALIDATION>(CollectionValidati
      m_data.validation.m_data.used.test(CollectionValidation::SCHEMA))
     throw_error("Validation already set.");
 
-  m_data.used.test(CollectionOptions::VALIDATION);
+  m_data.used.set(CollectionOptions::VALIDATION);
   m_data.validation.m_data.used.set(CollectionValidation::LEVEL);
   m_data.validation.m_data.used.set(CollectionValidation::SCHEMA);
 
