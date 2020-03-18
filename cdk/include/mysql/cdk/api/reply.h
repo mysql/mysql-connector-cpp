@@ -47,7 +47,6 @@ public:
 
   typedef typename Traits::row_count_t row_count_t;
 
-
   /*
      Method has_results() Returns true if there are result sets included in the
      reply. To access these result sets one has to create a cursor. The exact
@@ -58,6 +57,7 @@ public:
      In other words, has_results() informs about result sets that can be still �consumed� and if it returns false it means that all of them have been processed.
     Returns true if there are result sets included in the reply.
   */
+
   virtual bool has_results() = 0;
 
 
@@ -66,8 +66,17 @@ public:
      (and thus avoiding allocation of cursor resources). If reply has several
      result sets then the next one becomes available.
   */
+
   virtual void skip_result() = 0;
 
+  /*
+    This method returns true if all results in the reply have been consumed.
+    If it returns false, then there are more results pending, but they do not
+    need to contain rows (so that creating a new cursor might fail). To check
+    if there are more rows to consume with a cursor, call has_results().
+  */
+
+  virtual bool end_of_reply() = 0;
 
   /*
      Method has_out_params() informs if this reply contains values for output
