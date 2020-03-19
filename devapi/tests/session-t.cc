@@ -2234,6 +2234,31 @@ TEST_F(Sess, pool_use)
     EXPECT_EQ(1, res.fetchOne()[0].get<int>());
   }
 
+  // Corner ccase of 1 slot in the pool
+
+  {
+    settings.set(ClientOption::POOL_MAX_SIZE, 1);
+
+    mysqlx::Client cli(settings);
+    mysqlx::Session s1 = cli.getSession();
+    s1.close();
+    mysqlx::Session s2 = cli.getSession();
+  }
+
+  // Using many clients
+
+  {
+    settings.set(ClientOption::POOL_MAX_SIZE, 10);
+    std::vector<mysqlx::Session> session_list;
+    for (int i = 0; i < 5; ++i)
+    {
+      mysqlx::Client cli(settings);
+      for (int j = 0; j < 10; ++j)
+      {
+        session_list.emplace_back(cli.getSession());
+      }
+    }
+  }
 
 }
 
@@ -2369,111 +2394,64 @@ TEST_F(Sess, pool_ttl)
 
     mysqlx::Client client(settings);
 
+    /*
+      Open as many sessions as there are slots in the session pool, and then
+      close them so that they return to the pool. Returns ids of the created
+      sessions.
+    */
 
-    auto get_sessions = [&client, max_connections]()
+    auto get_sessions = [&client, max_connections]() -> std::set<unsigned>
     {
       std::list<mysqlx::Session> sessions;
+      std::set<unsigned>      sess_ids;
+
       for (int i = 0; i < max_connections; ++i)
       {
         sessions.emplace_back(client);
-        EXPECT_EQ(1, sessions.back().sql("select 1").execute().count());
+        auto row = sessions.back().sql("SELECT CONNECTION_ID()").execute().fetchOne();
+        sess_ids.insert(row[0]);
       }
+
+      return std::move(sess_ids);
     };
 
-    get_sessions();
+    auto ids = get_sessions();
+    EXPECT_EQ(max_connections, ids.size());
 
-    std::cout << "Kill connections" << std::endl;
-
-    std::vector<int> proccess_ids;
-
-    auto proccesslist = sql("show processlist");
-
-    unsigned db_idx = 0;
-
-    for(auto column : proccesslist.getColumns())
-    {
-      if (column.getColumnLabel() == "db" )
-      {
-        break;
-      }
-      ++db_idx;
-    }
-
-    EXPECT_LT(db_idx,proccesslist.getColumnCount());
-
-    for (auto row : proccesslist)
-    {
-      //UT created sessions all use pool_ttl schema, so we will look for
-      //connections having that schema to kill them
-      auto db = row.get(db_idx);
-      if (db.isNull() || db.get<string>() != "pool_ttl")
-        continue;
-      int thread_id = row.get(0).get<int>();
-      proccess_ids.push_back(thread_id);
-    }
-
-
-    for (auto id : proccess_ids)
-    {
-      std::stringstream query;
-      query << "KILL CONNECTION " << id;
-      sql(query.str());
-    }
-
-
-    std::cout << "set global mysqlx_wait_timeout=20" << std::endl;
-
-    sql("set global mysqlx_wait_timeout=20");
+    /*
+      Now we have pool full of sessions, and none of them has expired yet.
+      When we request sessions again, we should get sessions from the pool,
+      no new connections.
+    */
 
     std::cout << "Get sessions" << std::endl;
 
-    get_sessions();
+    auto ids1 = get_sessions();
+    EXPECT_EQ(max_connections, ids1.size());
 
-    std::cout << "Wait 25s to timeout sessions" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    // Check that all connection ids are from the original set
+
+    for (unsigned id : ids1)
+    {
+      EXPECT_TRUE(ids.count(id));
+    }
+
+    std::cout << "Wait 15s to timeout sessions" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(12));
+
+    /*
+      Now the idle timeout has expired, so sessions in the pool shoul
+      not be used but new sessions should be created.
+    */
 
     std::cout << "Get sessions" << std::endl;
 
-    get_sessions();
+    auto ids2 = get_sessions();
+    EXPECT_EQ(max_connections, ids2.size());
 
-    //Create a new session, since previous has timed-out!
-    create_session();
-    std::cout << "set global mysqlx_wait_timeout=28800" << std::endl;
-    sql("set global mysqlx_wait_timeout=28800");
-  }
-
-  {
-    settings.set(ClientOption::POOL_MAX_SIZE, 1);
-
-    mysqlx::Client cli(settings);
-    mysqlx::Session s1 = cli.getSession();
-    s1.close();
-    mysqlx::Session s2 = cli.getSession();
-
-  }
-
-  {
-
-    std::stringstream uri;
-    uri << "mysqlx://" << get_user();
-    if (get_password() && *get_password())
-      uri << ":" << get_password();
-    uri << "@" << "localhost:" << get_port();
-
-    mysqlx::Session s = mysqlx::getSession(uri.str());
-    s.close();
-  }
-
-  {
-    settings.set(ClientOption::POOL_MAX_SIZE, 10);
-    std::vector<mysqlx::Session> session_list;
-    for (int i=0; i < 5; ++i)
+    for (unsigned id : ids2)
     {
-      mysqlx::Client cli(settings);
-      for (int j=0; j < 10; ++j)
-      {
-        session_list.emplace_back(cli.getSession());
-      }
+      EXPECT_FALSE(ids1.count(id));
     }
   }
 
