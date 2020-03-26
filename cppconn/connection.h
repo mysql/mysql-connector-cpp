@@ -40,6 +40,95 @@
 #include "sqlstring.h"
 #include "variant.h"
 
+/*
+ Options used on ConnectOptionsMap
+*/
+
+/*
+ Connect related
+*/
+#define OPT_HOSTNAME   "hostName"
+#define OPT_USERNAME   "userName"
+#define OPT_PASSWORD   "password"
+#define OPT_PORT       "port"
+#define OPT_SOCKET     "socket"
+#define OPT_PIPE       "pipe"
+#define OPT_SCHEMA     "schema"
+#define OPT_MULTI_HOST "OPT_MULTI_HOST"
+#define OPT_DNS_SRV    "OPT_DNS_SRV"
+#define OPT_NAMED_PIPE "OPT_NAMED_PIPE"
+#define OPT_INIT_COMMAND "preInit"
+#define OPT_POST_INIT_COMMAND "postInit"
+#define OPT_LOCAL_INFILE "OPT_LOCAL_INFILE"
+
+/*
+ SSL related
+*/
+#define OPT_SSL_MODE          "OPT_SSL_MODE"
+#define OPT_SSL_KEY           "sslKey"
+#define OPT_SSL_CERT          "sslCert"
+#define OPT_SSL_CA            "sslCA"
+#define OPT_SSL_CAPATH        "sslCAPath"
+#define OPT_SSL_CIPHER        "sslCipher"
+#define OPT_SSL_CRL           "sslCRL"
+#define OPT_SSL_CRLPATH       "sslCRLPath"
+#define OPT_SERVER_PUBLIC_KEY "rsaKey"
+#define OPT_TLS_VERSION       "OPT_TLS_VERSION"
+
+/*
+ Connection related
+*/
+#define OPT_RECONNECT          "OPT_RECONNECT"
+#define OPT_RETRY_COUNT        "OPT_RETRY_COUNT"
+#define OPT_CONNECT_TIMEOUT    "OPT_CONNECT_TIMEOUT"
+#define OPT_READ_TIMEOUT       "OPT_READ_TIMEOUT"
+#define OPT_WRITE_TIMEOUT      "OPT_WRITE_TIMEOUT"
+#define OPT_MAX_ALLOWED_PACKET "OPT_MAX_ALLOWED_PACKET"
+#define OPT_NET_BUFFER_LENGTH  "OPT_NET_BUFFER_LENGTH"
+
+/*
+ Connection Attributes
+*/
+#define OPT_CONNECT_ATTR_ADD    "OPT_CONNECT_ATTR_ADD"
+#define OPT_CONNECT_ATTR_DELETE "OPT_CONNECT_ATTR_DELETE"
+#define OPT_CONNECT_ATTR_RESET  "OPT_CONNECT_ATTR_RESET"
+
+/*
+ Authentication
+*/
+#define OPT_ENABLE_CLEARTEXT_PLUGIN      "OPT_ENABLE_CLEARTEXT_PLUGIN"
+#define OPT_CAN_HANDLE_EXPIRED_PASSWORDS "OPT_CAN_HANDLE_EXPIRED_PASSWORDS"
+#define OPT_GET_SERVER_PUBLIC_KEY        "OPT_GET_SERVER_PUBLIC_KEY"
+#define OPT_LEGACY_AUTH                  "useLegacyAuth"
+#define OPT_DEFAULT_AUTH                 "defaultAuth"
+
+/*
+ Charracter set results and Metadata
+*/
+#define OPT_CHARACTER_SET_RESULTS       "characterSetResults"
+#define OPT_METADATA_INFO_SCHEMA        "metadataUseInfoSchema"
+#define OPT_OPTIONAL_RESULTSET_METADATA "OPT_OPTIONAL_RESULTSET_METADATA"
+#define OPT_REPORT_DATA_TRUNCATION      "OPT_REPORT_DATA_TRUNCATION"
+#define OPT_CHARSET_NAME                "OPT_CHARSET_NAME"
+#define OPT_DEFAULT_STMT_RESULT_TYPE    "defaultStatementResultType"
+
+/*
+  Client side options
+ */
+#define OPT_CLIENT_COMPRESS         "CLIENT_COMPRESS"
+#define OPT_CLIENT_FOUND_ROWS       "CLIENT_FOUND_ROWS"
+#define OPT_CLIENT_IGNORE_SIGPIPE   "CLIENT_IGNORE_SIGPIPE"
+#define OPT_CLIENT_IGNORE_SPACE     "CLIENT_IGNORE_SPACE"
+#define OPT_CLIENT_INTERACTIVE      "CLIENT_INTERACTIVE"
+#define OPT_CLIENT_LOCAL_FILES      "CLIENT_LOCAL_FILES"
+#define OPT_CLIENT_MULTI_STATEMENTS "CLIENT_MULTI_STATEMENTS"
+#define OPT_CLIENT_NO_SCHEMA        "CLIENT_NO_SCHEMA"
+#define OPT_SET_CHARSET_DIR         "charsetDir"
+#define OPT_PLUGIN_DIR              "pluginDir"
+#define OPT_READ_DEFAULT_GROUP      "readDefaultGroup"
+#define OPT_READ_DEFAULT_FILE       "readDefaultFile"
+
+
 namespace sql
 {
 
