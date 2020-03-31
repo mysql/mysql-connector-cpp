@@ -243,6 +243,21 @@ set(INFO_PREFIX "jdbc-")
 merge_libraries(connector-jdbc jdbc)
 target_link_libraries(connector-jdbc PUBLIC Boost::boost)
 
+#
+# Embed rpath information in the connector library.
+#
+
+set_property(TARGET connector-jdbc PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+
+# The $ORIGIN/@loader_path entry tells to look for dependent libraries in the
+# location where our connector library is stored.
+
+if(APPLE)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path")
+elseif(NOT WIN32)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+endif()
+
 
 #
 # Install specifications
