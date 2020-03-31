@@ -330,6 +330,15 @@ add_config_option(WITH_JDBC BOOL DEFAULT OFF
 
 if(WITH_JDBC)
   add_subdirectory(jdbc)
+
+  # Note: Include path must contain build location because
+  # this is where config.h header is written.
+
+  target_include_directories(connector-jdbc
+    PUBLIC "${PROJECT_BINARY_DIR}/jdbc/cppconn"
+    PUBLIC "${PROJECT_SOURCE_DIR}/include"
+  )
+
 endif()
 
 
@@ -512,10 +521,6 @@ if(WITH_JDBC)
 
   add_executable(try_jdbc EXCLUDE_FROM_ALL try_jdbc.cc)
   target_link_libraries(try_jdbc connector-jdbc)
-  target_include_directories(try_jdbc
-    PRIVATE "${PROJECT_BINARY_DIR}/include/mysql"
-    PRIVATE "${PROJECT_BINARY_DIR}/include/jdbc/cppconn"
-  )
 
 endif()
 
