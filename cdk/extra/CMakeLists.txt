@@ -36,9 +36,13 @@ endif()
 enable_pic()
 add_subdirectory(zlib)
 
+# Note: zlib writes configuration header into build location
+# and this location needs to be added to include path when
+# using zlib.
+
 target_include_directories(zlib PUBLIC
-  ${PROJECT_BINARY_DIR}/extra/zlib
-  ${PROJECT_SOURCE_DIR}/extra/zlib
+  ${CMAKE_CURRENT_BINARY_DIR}/zlib
+  zlib
 )
 
 
@@ -55,7 +59,4 @@ target_include_directories(lz4 PUBLIC lz4)
 
 add_subdirectory(zstd)
 
-target_include_directories(zstd PUBLIC
-  ${PROJECT_BINARY_DIR}/extra/zstd/lib
-  ${PROJECT_SOURCE_DIR}/extra/zstd/lib
-)
+target_include_directories(zstd PUBLIC zstd/lib)
