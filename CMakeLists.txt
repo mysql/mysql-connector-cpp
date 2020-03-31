@@ -65,8 +65,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 PROJECT(MySQL_CONCPP)
 
-include(version.cmake)
-
 # Load cmake modules
 
 include(cdk/cmake/setup.cmake)
@@ -76,6 +74,26 @@ include(platform)
 include(dependency)      # find_dependency()
 include(config_options)  # add_config_option()
 include(libutils)        # merge_libraries()
+
+#
+# Detect if we are configured as stand-alone project, or sub-project.
+#
+
+if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
+
+  SET(concpp_stand_alone 1)
+
+else()
+
+  MESSAGE("Building Connector/C++ as part of ${CMAKE_PROJECT_NAME} project")
+  SET(concpp_stand_alone 0)
+  set(WITH_TESTS OFF)
+  set(WITH_DOC OFF)
+  set(WITH_HEADER_CHECKS OFF)
+
+endif()
+
+include(version.cmake)
 
 message("Building on system: ${CMAKE_SYSTEM} (${CMAKE_SYSTEM_PROCESSOR})")
 message("Using cmake generator: ${CMAKE_GENERATOR}")
@@ -425,6 +443,13 @@ add_custom_command(TARGET libconcpp POST_BUILD
 )
 endif()
 
+#
+# Stop here if this is a sub-project of a bigger project.
+#
+
+if (NOT concpp_stand_alone)
+  return()
+endif()
 
 #
 # Install specifications
