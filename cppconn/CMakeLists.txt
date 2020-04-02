@@ -91,5 +91,5 @@ INSTALL(
 # installing them first.
 
 file(COPY ${MYSQLCPPCONN_INSTALL_HEADERS}
-  DESTINATION "${CMAKE_BINARY_DIR}/include/jdbc/cppconn"
+  DESTINATION "${PROJECT_BINARY_DIR}/include/jdbc/cppconn"
 )
