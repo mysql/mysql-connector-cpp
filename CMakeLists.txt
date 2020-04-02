@@ -349,12 +349,14 @@ add_config_option(WITH_JDBC BOOL DEFAULT OFF
 if(WITH_JDBC)
   add_subdirectory(jdbc)
 
-  # Note: Include path must contain build location because
-  # this is where config.h header is written.
+  # Note: These include paths are to be used in a build tree. In
+  # this situation the jdbc public headers are not installed yet and
+  # we use a copy of them placed inside the build tree.
 
   target_include_directories(connector-jdbc
     PUBLIC "${PROJECT_BINARY_DIR}/jdbc/cppconn"
     PUBLIC "${PROJECT_SOURCE_DIR}/include"
+    PUBLIC "${PROJECT_BINARY_DIR}/jdbc/include/jdbc"
   )
 
 endif()
