@@ -57,6 +57,39 @@ IF (WITH_TESTS)
   ADD_HEADERS_TEST()
 ENDIF (WITH_TESTS)
 
+#
+# Sub-project test
+# ----------------
+#
+# This test checks using Con/C++ build system as a sub-project in
+# a master cmake project.
+#
+
+file(REMOVE_RECURSE ${PROJECT_BINARY_DIR}/sub_project_test)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/sub_project_test)
+
+if(CMAKE_GENERATOR_PLATFORM)
+  list(APPEND cmake_options -A ${CMAKE_GENERATOR_PLATFORM})
+endif()
+
+if(CMAKE_GENERATOR_TOOLSET)
+  list(APPEND cmake_options -T ${CMAKE_GENERATOR_TOOLSET})
+endif()
+
+add_custom_target(sub_project_test
+  COMMAND ${CMAKE_COMMAND} -E remove -f ${PROJECT_BINARY_DIR}/sub_project_test/CMakeCache.txt
+  COMMAND ${CMAKE_COMMAND}
+    -G "${CMAKE_GENERATOR}"
+    ${cmake_options}
+    -D CONCPP_CACHE=${PROJECT_BINARY_DIR}
+    ${PROJECT_SOURCE_DIR}/testing/sub_project_test
+  COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIGURATION>  --clean-first
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/sub_project_test
+  VERBATIM
+)
+
+set_target_properties(sub_project_test PROPERTIES FOLDER "Tests")
+
 
 #
 # Linking test
