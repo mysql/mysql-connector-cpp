@@ -28,7 +28,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <test.h>
+#include "test.h"
 #include <iostream>
 #include <list>
 #include <algorithm>
@@ -42,7 +42,7 @@ using std::cout;
 using std::endl;
 using namespace mysqlx;
 
-class Crud : public mysqlx::test::Xplugin
+class Crud : public mysqlx::test::DevAPI
 {
 public:
 

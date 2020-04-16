@@ -31,10 +31,14 @@
 #ifndef MYSQLX_TESTING_TEST_H
 #define MYSQLX_TESTING_TEST_H
 
-
 #include <gtest/gtest.h>
-#include <mysqlx/xdevapi.h>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <list>
+
+#undef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 namespace mysqlx {
 namespace test {
@@ -48,54 +52,36 @@ class Xplugin : public ::testing::Test
 {
 public:
 
-  class Client;
-  class Session;
+  using string = std::string;
+  using result_t = std::list< std::vector<string> >;
+
+private:
+
+  virtual void sql_exec(string query) = 0;
+  virtual result_t sql_query(string query) = 0;
+
+  // Note: These are set from environment (see SetUpTestCase) and
+  // shared by all tests.
+
+  static string m_status;
+  static const char *m_host;
+  static unsigned short m_port;
+  static string m_user;
+  static string m_password;
+  static const char *m_socket;
+  static const char *m_srv;
+  static string m_ca;
+  static string m_version;
 
 protected:
+
   // Per-test-case set-up.
   // Called before the first test in this test case.
   // Can be omitted if not needed.
+
   static void SetUpTestCase()
   {
-
-  }
-
-  // Per-test-case tear-down.
-  // Called after the last test in this test case.
-  // Can be omitted if not needed.
-  static void TearDownTestCase()
-  {
-
-  }
-
-  const char *m_status;
-  mysqlx::Client *m_client;
-  mysqlx::Session *m_sess;
-  const char *m_host;
-  unsigned short m_port;
-  const char *m_user;
-  const char *m_password;
-  const char *m_socket;
-  const char *m_srv;
-
-  // You can define per-test set-up and tear-down logic as usual.
-  virtual void SetUp()
-  {
-    using namespace mysqlx;
-
-    m_status = NULL;
-    m_host = NULL;
-    m_port = 0;
-    m_socket = NULL;
-    m_srv = nullptr;
-    m_user = NULL;
-    m_password = NULL;
-    m_client = NULL;
-    m_sess = NULL;
-
-    m_host = getenv("XPLUGIN_HOST");
-    if (!m_host)
-      m_host = "localhost";
+    // Note: XPLUGIN_PORT must be defined.
 
     const char *xplugin_port = getenv("XPLUGIN_PORT");
     if (!xplugin_port)
@@ -104,89 +90,111 @@ protected:
       return;
     }
     m_port = (short)atoi(xplugin_port);
+    if (!m_port)
+      m_status = "invalid port number in XPLUGIN_PORT";
 
-    m_socket = getenv("MYSQLX_SOCKET");
+    m_socket              = getenv("MYSQLX_SOCKET");
+    m_host                = getenv("XPLUGIN_HOST");
+    const char *user      = getenv("XPLUGIN_USER");
+    const char *password  = getenv("XPLUGIN_PASSWORD");
+    m_srv                 = getenv("MYSQLX_SRV");  // FIXME: What it is?
+    const char *ca        = getenv("MYSQLX_CA");
 
-    m_srv = getenv("MYSQLX_SRV");
+    if (user)
+      m_user = user;
+    if (password)
+      m_password = password;
+    if (ca)
+      m_ca = ca;
+
+    // Default values.
+
+    if (!m_host || !strlen(m_host))
+      m_host = "localhost";
 
     // By default use "root" user without any password.
-    m_user = getenv("XPLUGIN_USER");
-    if (!m_user)
+    if (m_user.empty())
       m_user = "root";
+  }
 
-    m_password = getenv("XPLUGIN_PASSWORD");
 
-    create_session();
+  // Per-test-case tear-down.
+  // Called after the last test in this test case.
+  // Can be omitted if not needed.
+
+  static void TearDownTestCase()
+  {}
+
+  string m_save_user;
+  string m_save_pwd;
+
+  // You can define per-test set-up and tear-down logic as usual.
+  virtual void SetUp()
+  {
+    // Note: We save and restore user and password to be on the safe side,
+    // because it can be changed by Use_native_pwd (see below).
+
+    m_save_user = m_user;
+    m_save_pwd  = m_password;
+
+    if (!has_xplugin())
+      return;
 
     // Drop and re-create test schema to clear up after previous tests.
 
-    try {
-      get_sess().dropSchema("test");
-    }
-    catch (const Error&)
-    {}
+    sql_exec("DROP SCHEMA IF EXISTS test");
+    sql_exec("CREATE SCHEMA test");
 
-    get_sess().createSchema("test");
+    // Get server version if not already done.
+
+    if (m_version.empty())
+    {
+      // Note: version number is in 2-nd column.
+
+      auto version = sql_query("SHOW VARIABLES LIKE 'version'");
+      if (!version.empty())
+        m_version = version.front()[1];
+    }
+
+    // Try to get server CA location, if not set.
+
+    if (m_ca.empty())
+    {
+      auto res = sql_query(
+        "select if("
+        "@@ssl_ca REGEXP '^([^:]+:)?[/\\\\\\\\]'"
+        ", @@ssl_ca"
+        ", concat(ifnull(@@ssl_capath,@@datadir), @@ssl_ca))"
+      );
+
+      if (res.empty())
+        return;
+
+      m_ca = res.front()[0];
+    }
   }
 
   virtual void TearDown()
   {
-    delete m_sess;
-    delete m_client;
+    m_user = m_save_user;
+    m_password = m_save_pwd;
   }
 
-  Schema getSchema(const string &name)
+  void set_status(std::string val)
   {
-    return get_sess().getSchema(name);
+    m_status = std::move(val);
   }
 
-  SqlResult sql(const string &query)
+public:
+
+  bool has_xplugin() const
   {
-    return get_sess().sql(query).execute();
+    return m_status.empty();
   }
 
-  mysqlx::Client& get_client() const
+  const char* get_status() const
   {
-    // TODO: better error.
-    if (!m_client)
-      throw m_status;
-    return *m_client;
-  }
-
-  mysqlx::Session& get_sess() const
-  {
-    // TODO: better error.
-    if (!m_sess)
-      throw m_status;
-    return *m_sess;
-  }
-
-  void create_session()
-  {
-    try {
-      if(!m_client)
-      {
-        m_client = new mysqlx::Client(
-                     SessionOption::HOST, m_host,
-                     SessionOption::PORT, m_port,
-                     SessionOption::USER, m_user,
-                     SessionOption::PWD, m_password
-                     );
-      }
-      delete m_sess;
-      m_sess = nullptr;
-      m_sess = new mysqlx::Session(*m_client);
-    }
-    catch (const Error &e)
-    {
-      delete m_client;
-      delete m_sess;
-      m_client = NULL;
-      m_sess = NULL;
-      m_status = e.what();
-      FAIL() << "Could not connect to xplugin at " << m_port
-        << " (" << m_host << ")" << ": " << e;
-    }
+    return m_status.c_str();
   }
 
   const char* get_host() const
@@ -211,12 +219,17 @@ protected:
 
   const char* get_user() const
   {
-    return m_user;
+    return m_user.c_str();
   }
 
   const char* get_password() const
   {
-    return m_password;
+    return m_password.empty() ? nullptr : m_password.c_str();
+  }
+
+  const char* get_ca() const
+  {
+    return m_ca.empty() ? nullptr : m_ca.c_str();
   }
 
   std::string get_uri() const
@@ -229,19 +242,15 @@ protected:
     return uri.str();
   }
 
-  bool has_xplugin() const
-  {
-    return NULL == m_status;
-  }
-
   bool is_server_version_less(int test_upper_version,
                               int test_lower_version,
                               int test_release_version)
   {
-    SqlResult res_version = sql("SHOW VARIABLES LIKE 'version'");
+    if (m_version.empty())
+      throw std::logic_error("Unknown server version");
 
     std::stringstream version;
-    version << res_version.fetchOne()[1].get<string>();
+    version << m_version;
 
     int upper_version, minor_version, release_version;
     char sep;
@@ -263,63 +272,32 @@ protected:
     return false;
   }
 
-  void output_id_list(Result& res)
-  {
-    std::vector<std::string> ids = res.getGeneratedIds();
-    for (auto id : ids)
-    {
-      std::cout << "- added doc with id: " << id << std::endl;
-    }
-
-  }
-
   friend class Use_native_pwd;
-};
-
-
-class Xplugin::Client : public mysqlx::Client
-{
-public:
-
-  Client(const Xplugin *test)
-    : mysqlx::Client(SessionOption::PORT, test->get_port(),
-                     SessionOption::USER, test->get_user(),
-                     SessionOption::PWD, test->get_password())
-  {}
-};
-
-class Xplugin::Session : public mysqlx::Session
-{
-public:
-
-  Session(const Xplugin *test)
-    : mysqlx::Session(test->get_client())
-  {}
 };
 
 
 class Use_native_pwd
 {
   Xplugin& m_xplugin;
-  const char* m_user;
-  const char* m_password;
+  std::string m_user;
+  std::string m_password;
 
 public:
   Use_native_pwd(Xplugin &xplugin)
     : m_xplugin(xplugin)
   {
-    m_xplugin.sql("DROP USER If EXISTS unsecure_root ");
-    m_xplugin.sql("CREATE USER unsecure_root IDENTIFIED WITH 'mysql_native_password';");
-    m_xplugin.sql("grant all on *.* to unsecure_root;");
+    m_xplugin.sql_exec("DROP USER If EXISTS unsecure_root ");
+    m_xplugin.sql_exec("CREATE USER unsecure_root IDENTIFIED WITH 'mysql_native_password';");
+    m_xplugin.sql_exec("grant all on *.* to unsecure_root;");
     m_user = m_xplugin.m_user;
     m_password = m_xplugin.m_password;
     m_xplugin.m_user = "unsecure_root";
-    m_password = NULL;
+    m_xplugin.m_password.clear();
   }
 
   ~Use_native_pwd()
   {
-    m_xplugin.sql("DROP USER unsecure_root");
+    m_xplugin.sql_exec("DROP USER unsecure_root");
     m_xplugin.m_user = m_user;
     m_xplugin.m_password = m_password;
   }
@@ -329,7 +307,7 @@ public:
 
 
 #define SKIP_IF_NO_XPLUGIN  \
-  if (!has_xplugin()) { std::cerr <<"SKIPPED: " <<m_status <<std::endl; return; }
+  if (!has_xplugin()) { std::cerr <<"SKIPPED: No server: " <<get_status() <<std::endl; return; }
 
 #define SKIP_IF_NO_SOCKET  \
   if (!get_socket()) { std::cerr <<"SKIPPED: No unix socket" <<std::endl; return; }
@@ -346,8 +324,8 @@ public:
     return; \
   }
 
-// TODO: remove this when prepare is ok again
-#define SKIP_TEST(A) std::cerr << "SKIPPED: " << A << std::endl; return;
+#define SKIP_TEST(A) \
+  do { std::cerr << "SKIPPED: " << A << std::endl; return; } while (0)
 
 
 #define EXPECT_ERR(Code) \
@@ -359,7 +337,8 @@ public:
     catch (...) { FAIL() << "Bad exception"; } \
   } while(false)
 
-#endif
-
 #define USE_NATIVE_PWD  \
   mysqlx::test::Use_native_pwd __dummy_user__(*this)
+
+
+#endif

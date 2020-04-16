@@ -405,10 +405,10 @@ TEST_F(xapi, lock_contention)
   /*
     First session lock the rows, second one, tries to read/write values
   */
-  auto s_nolock = mysqlx_get_session(m_xplugin_host,
-                              m_port,
-                              m_xplugin_usr,
-                              m_xplugin_pwd,
+  auto s_nolock = mysqlx_get_session(get_host(),
+                              get_port(),
+                              get_user(),
+                              get_password(),
                               NULL,
                               NULL);
 
@@ -3261,9 +3261,9 @@ TEST_F(xapi_bugs, session_invalid_password_deadlock)
 {
   SKIP_IF_NO_XPLUGIN
 
-  auto sess = mysqlx_get_session(m_xplugin_host,
-                              m_port,
-                              m_xplugin_usr,
+  auto sess = mysqlx_get_session(get_host(),
+                              get_port(),
+                              get_user(),
                               "bal_xplugin_pwd",
                               NULL,
                               NULL);

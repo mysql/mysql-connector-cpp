@@ -250,22 +250,6 @@ else()
 endif()
 
 
-add_config_option(WITH_TESTS BOOL ADVANCED DEFAULT OFF
-  "Build project's unit tests"
-)
-
-#
-# Note: if building static connector on windows, the type of
-# runtime library used by tests must match that used by the connector
-# (which is statically linked with tests). This must also match the
-# runtime type used by gtest library (which we also link statically to).
-#
-
-if(WITH_TESTS AND BUILD_STATIC)
-  set(STATIC_TESTS_MSVCRT ${STATIC_MSVCRT})
-endif()
-
-
 add_config_option(THROW_AS_ASSERT BOOL ADVANCED DEFAULT OFF
   "Turn THROW() statements in the code into asserts for easier debugging"
 )
@@ -305,6 +289,19 @@ endif()
 
 
 #
+# Testing framework
+#
+
+add_config_option(WITH_TESTS BOOL ADVANCED DEFAULT OFF
+  "Build project's unit tests"
+)
+
+include(testing)
+setup_testing()  # Note: this must be called in top-level CMakeLists.txt
+
+add_subdirectory(testing)
+
+#
 # CDK
 #
 
@@ -313,22 +310,6 @@ add_subdirectory(cdk)
 foreach(T cdk cdk_foundation cdk_mysqlx cdk_proto_mysqlx cdk_parser)
   set_target_properties(${T} PROPERTIES FOLDER "CDK")
 endforeach()
-
-#
-# Unit tests framework
-#
-
-INCLUDE(testing)
-SETUP_TESTING()
-
-ADD_TEST_INCLUDES(${PROJECT_SOURCE_DIR}/testing)
-ADD_TEST_LIBRARIES(connector)
-
-if(MSVC)
-else()
-  set(TEST_COMPILE_FLAGS "-Wno-sign-compare")
-endif()
-
 
 #
 # Project's public headers

@@ -28,7 +28,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <test.h>
+#include "test.h"
 #include <iostream>
 #include <vector>
 
@@ -37,7 +37,7 @@ using std::endl;
 using std::vector;
 using namespace mysqlx;
 
-class Bugs : public mysqlx::test::Xplugin
+class Bugs : public mysqlx::test::DevAPI
 {
 };
 

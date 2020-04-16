@@ -28,7 +28,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <test.h>
+#include "test.h"
 #include <iostream>
 #include <list>
 
@@ -37,7 +37,7 @@ using std::endl;
 using namespace mysqlx;
 
 
-class Ddl : public mysqlx::test::Xplugin
+class Ddl : public mysqlx::test::DevAPI
 {};
 
 

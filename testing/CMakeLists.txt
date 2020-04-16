@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -27,33 +27,49 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 #
-# Note: We must clear compile flags - the ones used to build the connector
-# are not good for building client code that uses the connector.
+# Setup testing infrastructure.
 #
 
-set_property(
-  DIRECTORY .
-  PROPERTY COMPILE_DEFINITIONS ""
-)
+if(NOT WITH_TESTS)
+  return()
+endif()
 
-if(WIN32)
-  add_definitions(
-    -D_CRT_SECURE_NO_WARNINGS
+#
+# Note: if building static connector on windows, the type of
+# runtime library used by tests must match that used by the connector
+# (which is statically linked with tests). This must also match the
+# runtime type used by gtest library (which we also link statically to).
+#
+
+if(BUILD_STATIC)
+  set(STATIC_TESTS_MSVCRT ${STATIC_MSVCRT})
+endif()
+
+add_library(test_harness STATIC test_harness.cc)
+set_target_properties(test_harness PROPERTIES FOLDER "Tests")
+
+add_test_libraries(test_harness connector)
+add_test_includes(${CMAKE_CURRENT_SOURCE_DIR})
+
+
+if(MSVC)
+
+  set(TEST_COMPILE_FLAGS
     -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SCL_SECURE_NO_WARNINGS
+  )
+
+  target_compile_definitions(test_harness PUBLIC
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
+
+else()
+
+  set(TEST_COMPILE_FLAGS
+    -Wno-sign-compare
   )
 
 endif()
 
-#
-# If linking with connector statically, define macro that indicates this
-# to the public headers.
-#
 
-if(BUILD_STATIC)
-  add_definitions(-DSTATIC_CONCPP)
-endif()
-
-ADD_NG_TEST(devapi-t
-  first-t.cc crud-t.cc types-t.cc batch-t.cc ddl-t.cc session-t.cc
-  bugs-t.cc test.h
-)

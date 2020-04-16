@@ -33,7 +33,7 @@
 #include <cmath>  // for fabs()
 #include <vector>
 
-#include <test.h>
+#include "test.h"
 
 using std::cout;
 using std::wcout;
@@ -44,7 +44,7 @@ using std::vector;
 using namespace mysqlx;
 
 
-class Types : public mysqlx::test::Xplugin
+class Types : public mysqlx::test::DevAPI
 {
 };
 
