@@ -2258,6 +2258,80 @@ TEST_F(Sess, pool_ttl)
 
   get_sess().createSchema("pool_ttl", true);
 
+  std::mutex print_mtx;
+
+  auto mk_session = [&print_mtx](mysqlx::Client &cli) -> mysqlx::Session* {
+    try {
+      return new mysqlx::Session(cli);
+    }
+    catch (const Error &e)
+    {
+      std::lock_guard<std::mutex> g(print_mtx);
+      std::cout << "-- error while creating session: " << e << std::endl;
+      std::flush(std::cout);
+      return nullptr;
+    }
+    catch (...)
+    {
+      return nullptr;
+    }
+  };
+
+  std::list<std::future<mysqlx::Session*>> session_list;
+
+  // Wait for sessions in session_list and test if they work.
+  // If expect_errors is true, then expect that all sessions will be
+  // invalid.
+
+  auto test_sessions = [&session_list, max_connections, &print_mtx](bool expect_errors)
+  {
+    int errors_found = 0;
+    while (session_list.size() > 0)
+    {
+      auto el = session_list.begin();
+      for (; el != session_list.end();)
+      {
+        mysqlx::Session *s = nullptr;
+        if (el->wait_for(std::chrono::milliseconds(100)) ==
+            std::future_status::ready)
+        {
+          try {
+            s = el->get();
+
+            if (s)
+            {
+              SqlResult res = s->sql("SELECT 1").execute();
+              EXPECT_EQ(1, res.fetchOne()[0].get<int>());
+            }
+            else
+              errors_found++;
+
+          } catch (Error &e) {
+            std::lock_guard<std::mutex> g(print_mtx);
+            std::cout << "EXPECTED: " << e << std::endl;
+            errors_found++;
+          }
+          session_list.erase(el++);
+          delete s;
+        }
+        else
+        {
+          ++el;
+        }
+      }
+    }
+
+    if (expect_errors)
+    {
+      EXPECT_EQ(4 * max_connections, errors_found);
+    }
+    else
+    {
+      EXPECT_EQ(0, errors_found);
+    }
+  };
+
+
   ClientSettings settings(ClientOption::POOLING, true,
                           SessionOption::AUTH, AuthMethod::SHA256_MEMORY,
                           SessionOption::SSL_MODE, SSLMode::DISABLED,
@@ -2276,7 +2350,7 @@ TEST_F(Sess, pool_ttl)
 
   // threaded example
   {
-    std::cout << "Threaded" << std::endl;
+    std::cout << "Threaded (short max idle time)" << std::endl;
 
     //short POOL_MAX_IDLE_TIME so that sessions expire.
     settings.set(ClientOption::POOL_QUEUE_TIMEOUT, 100000,
@@ -2287,85 +2361,62 @@ TEST_F(Sess, pool_ttl)
 
     mysqlx::Client client(settings);
 
-    std::list<std::future<mysqlx::Session*>> session_list;
+    std::cout << "- creating sessions... " << std::endl;
+
     for (int i=0; i < max_connections*4; ++i)
     {
-      session_list.emplace_back(std::async(std::launch::async,
-                                           [&client] () -> mysqlx::Session*
-                                           {
-                                             return new mysqlx::Session(client.getSession());
-                                           }
-                                           ));
+      // note: compiler chokes on async(..., mk_session, client);
+      session_list.emplace_back(
+        std::async(std::launch::async, [&client, mk_session]() {
+          return mk_session(client);
+        })
+      );
     }
 
-    auto test_sessions = [&session_list,max_connections] (bool expect_errors)
-    {
-      int errors_found = 0;
-      while(session_list.size() > 0)
-      {
-        auto el = session_list.begin();
-        for (; el != session_list.end();)
-        {
-          mysqlx::Session *s = nullptr;
-          if (el->wait_for(std::chrono::milliseconds(100)) ==
-              std::future_status::ready)
-          {
-            try {
-              s = el->get();
-              SqlResult res = s->sql("SELECT 1").execute();
-
-              EXPECT_EQ(1, res.fetchOne()[0].get<int>());
-
-            } catch (Error &e) {
-              std::cout << "EXPECTED: " << e << std::endl;
-              errors_found++;
-            }
-            session_list.erase(el++);
-            delete s;
-          }
-          else
-          {
-            ++el;
-          }
-        }
-      }
-
-      if (expect_errors)
-      {
-        EXPECT_EQ(4*max_connections, errors_found);
-      }
-      else
-      {
-        EXPECT_EQ(0, errors_found);
-      }
-    };
+    std::cout << "- test sessions... " << std::endl;
 
     test_sessions(false);
 
     // Now closing pool so that waiting threads get session without timeout
+    std::cout << "- close client... " << std::endl;
+
     client.close();
+
+    std::cout << "- done." << std::endl;
+  }
+
+  {
+    std::cout << "Threaded (long max idle time)" << std::endl;
 
     ClientSettings settings1 = settings;
 
     settings1.set(ClientOption::POOL_QUEUE_TIMEOUT, std::chrono::hours(1),
                  ClientOption::POOL_MAX_IDLE_TIME, std::chrono::hours(1));
 
-    mysqlx::Client client1 = mysqlx::getClient(settings1);
+    mysqlx::Client client = mysqlx::getClient(settings1);
+
+    std::cout << "- creating sessions... " << std::endl;
+
+    session_list.clear();
 
     for (int i=0; i < max_connections*4; ++i)
     {
-      session_list.emplace_back(std::async(std::launch::async,
-                                           [&client1] () -> mysqlx::Session*
-                                           {
-                                             return new mysqlx::Session(client1.getSession());
-                                           }
-                                           ));
+      session_list.emplace_back(
+        std::async(std::launch::async, [&client,mk_session](){
+          return mk_session(client);
+        })
+      );
     }
 
-    client1.close();
+    std::cout << "- close client... " << std::endl;
+
+    client.close();
+
+    std::cout << "- test sessions... " << std::endl;
 
     test_sessions(true);
 
+    std::cout << "- done." << std::endl;
   }
 
   {
