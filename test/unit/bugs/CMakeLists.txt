@@ -44,4 +44,9 @@ ADD_EXECUTABLE(unsorted_bugs ${bugs_sources})
 SET_TARGET_PROPERTIES(unsorted_bugs PROPERTIES OUTPUT_NAME "unsorted_bugs")
 TARGET_LINK_LIBRARIES(unsorted_bugs ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_unsorted_bugs
+  COMMAND
+  unsorted_bugs  
+  )
+
 MESSAGE(STATUS "Configuring bugs test cases - unsorted")

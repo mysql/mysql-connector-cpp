@@ -46,4 +46,11 @@ SET_TARGET_PROPERTIES(perf_statement PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(perf_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+
+ADD_TEST(
+    NAME jdbc_perf_statement
+    COMMAND
+    perf_statement 
+    )
+
 MESSAGE(STATUS "Configuring performance test - statement")

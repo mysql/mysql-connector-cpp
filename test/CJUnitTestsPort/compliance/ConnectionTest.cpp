@@ -34,8 +34,8 @@
  * Most of them don't really make sense in c++
  */
 
-#include "driver/mysql_statement.h"
-#include "driver/mysql_metadata.h"
+#include <cppconn/statement.h>
+#include <cppconn/metadata.h>
 
 #include "ConnectionTest.h"
 
@@ -116,7 +116,7 @@ void ConnectionTest::testCreateStatement01()
   logMsg("Calling createStatement() method ");
 
   statemt.reset(conn->createStatement());
-  if (dynamic_cast<sql::mysql::MySQL_Statement*> (statemt.get()) != NULL)
+  if (statemt.get() != nullptr)
   {
     logMsg("createStatement method creates a Statement object");
   } else
@@ -303,7 +303,7 @@ void ConnectionTest::testGetTransactionIsolation()
   {
     TestsListener::messagesLog()
             << "getTransactionIsolation method returns Transaction Isolation mode as "
-            << transIsolateVal << std::endl;;
+            << transIsolateVal << std::endl;
   } else if (transIsolateVal == sql::TRANSACTION_SERIALIZABLE)
   {
     TestsListener::messagesLog()

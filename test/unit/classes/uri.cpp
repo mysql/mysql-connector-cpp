@@ -35,7 +35,7 @@
 #include "uri.h"
 #include <stdlib.h>
 
-#include "driver/mysql_uri.h"
+#include "../../../driver/mysql_uri.h"
 
 namespace testsuite
 {

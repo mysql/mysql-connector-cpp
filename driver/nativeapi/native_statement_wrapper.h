@@ -40,7 +40,7 @@
 #endif
 
 #include "../mysql_statement_options.h"
-#include "../cppconn/version_info.h"
+#include <cppconn/version_info.h>
 
 #if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
 struct MYSQL_BIND;

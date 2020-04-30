@@ -90,7 +90,7 @@
 #include <boost/scoped_ptr.hpp>
 
 /* Public interface of the MySQL Connector/C++ */
-#include <driver/mysql_public_iface.h>
+#include <jdbc.h>
 /* Connection parameter and sample data */
 #include "examples.h"
 
@@ -98,10 +98,45 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-  const string host(argc >= 2 ? argv[1] : EXAMPLE_HOST);
-  const string user(argc >= 3 ? argv[2] : EXAMPLE_USER);
-  const string pass(argc >= 4 ? argv[3] : EXAMPLE_PASS);
-  const string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
+  const char* mysql_host = getenv("MYSQL_HOST");
+  const char* mysql_port = getenv("MYSQL_PORT");
+  const char* mysql_user = getenv("MYSQL_USER");
+  const char* mysql_password = getenv("MYSQL_PASSWORD");
+
+  string url(EXAMPLE_HOST);
+  string user(EXAMPLE_USER);
+  string pass(EXAMPLE_PASS);
+  string database(argc >= 5 ? argv[4] : EXAMPLE_DB);
+
+  if(argc >= 2)
+  {
+    url = argv[1];
+  }
+  else if(mysql_host || mysql_port)
+  {
+    url = "mysql://";
+    url+= mysql_host ? mysql_host : "localhost";
+    url+= ":";
+    url+= mysql_port ? mysql_port : "3306";
+  }
+
+  if(argc >= 3)
+  {
+    user = argv[2];
+  }
+  else if(mysql_user)
+  {
+    user = mysql_user;
+  }
+
+  if(argc >= 4)
+  {
+    pass = argv[3];
+  }
+  else if(mysql_password)
+  {
+    pass = mysql_password;
+  }
 
   sql::Driver *driver;
   int i;
@@ -114,7 +149,7 @@ int main(int argc, const char **argv)
   try {
     /* Using the Driver to create a connection */
     driver = sql::mysql::get_driver_instance();
-    boost::scoped_ptr< sql::Connection > con(driver->connect(host, user, pass));
+    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
     /*
      Activate debug trace of the MySQL Client Library (C-API)

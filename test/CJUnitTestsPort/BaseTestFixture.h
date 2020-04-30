@@ -38,7 +38,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "resources.h"
-#include <driver/mysql_public_iface.h>
+#include <jdbc.h>
 
 #include "../framework/framework.h"
 
