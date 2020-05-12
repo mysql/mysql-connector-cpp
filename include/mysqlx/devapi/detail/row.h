@@ -58,7 +58,7 @@ class PUBLIC_API Row_detail
 {
 protected:
 
-  class INTERNAL Impl;
+  class INTERNAL_API Impl;
   DLL_WARNINGS_PUSH
   std::shared_ptr<Impl>  m_impl;
   DLL_WARNINGS_POP

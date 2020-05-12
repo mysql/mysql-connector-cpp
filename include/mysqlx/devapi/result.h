@@ -431,7 +431,7 @@ protected:
 public:
 
   friend RowResult;
-  struct INTERNAL Access;
+  struct INTERNAL_API Access;
   friend Access;
 };
 

@@ -238,7 +238,7 @@ public:
   friend Result_detail;
   friend RowResult;
 
-  struct INTERNAL Access;
+  struct INTERNAL_API Access;
   friend Access;
 };
 

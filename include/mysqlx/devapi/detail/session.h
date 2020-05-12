@@ -291,7 +291,7 @@ protected:
   common::Shared_session_pool& get_session_pool();
 
 
-  struct INTERNAL Impl;
+  struct INTERNAL_API Impl;
 
   DLL_WARNINGS_PUSH
   Shared_client_impl  m_impl = NULL;
@@ -351,7 +351,7 @@ protected:
   }
 
 
-  struct INTERNAL Impl;
+  struct INTERNAL_API Impl;
 
   /*
     Note: Session implementation is shared with result objects because it
@@ -394,7 +394,7 @@ protected:
     return *m_impl;
   }
 
-  INTERNAL cdk::Session& get_cdk_session();
+  INTERNAL_API cdk::Session& get_cdk_session();
 
   void close();
 
