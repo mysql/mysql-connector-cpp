@@ -303,6 +303,7 @@ static const String2IntMap stringOptions[]=
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
     {OPT_TLS_VERSION,          MYSQL_OPT_TLS_VERSION, false},
 #endif
+    {OPT_ALLOW_LOAD_DATA_LOCAL_PATH, MYSQL_OPT_LOAD_DATA_LOCAL_DIR, false}
   };
 
 
