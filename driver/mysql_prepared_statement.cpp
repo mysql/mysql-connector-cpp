@@ -1132,7 +1132,8 @@ MySQL_Prepared_Statement::getMoreResults()
     int next_result = proxy->stmt_next_result();
 
     if (next_result == 0) {
-      return proxy->field_count() != 0;
+      bool ret = proxy->field_count() > 0;
+      return  ret;
     } else if (next_result == -1) {
       throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
     } else {

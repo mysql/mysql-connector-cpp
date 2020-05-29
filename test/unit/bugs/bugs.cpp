@@ -1106,6 +1106,58 @@ void bugs::bug28204677()
   ASSERT_EQUALS(res->getString(2),"utf8mb4");
 }
 
+void bugs::bug31399362()
+{
+  logMsg("bugs::bug31399362");
+
+  sql::ConnectOptionsMap opt;
+  opt["CLIENT_MULTI_STATEMENTS"] = true;
+
+  Connection con2(getConnection(&opt));
+
+  con2->setSchema(db);
+
+  stmt.reset(con2->createStatement());
+
+
+
+  // getMoreResults() returned false for INSERT/UPDATE/DELETE getting then out of sync error
+
+  stmt->execute("DROP TABLE IF EXISTS t");
+  stmt->execute("CREATE TABLE t(id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT, val BIGINT)");
+  stmt->execute("INSERT INTO t SELECT 1,1;"
+                "SELECT * FROM t;"
+                "UPDATE t SET val=2;"
+                "INSERT INTO t SELECT 3,3;");
+
+  int n = 0;
+  do
+  {
+    TestsListener::messagesLog() << n++ << std::endl;
+    res.reset(stmt->getResultSet());
+
+    if (!res.get())
+      continue;
+
+    while (res->next())
+    {
+      TestsListener::messagesLog() << "\t... MySQL replies: "
+                                   << res->getString(1) << std::endl;
+    }
+
+   }while(stmt->getMoreResults() == true || stmt->getUpdateCount() != UL64(~0));
+
+  res.reset(stmt->executeQuery("SELECT * FROM t"));
+  while (res->next()) {
+    TestsListener::messagesLog() << "\t... MySQL replies: "
+                                 << res->getString(1) << std::endl;
+  }
+
+  stmt.reset();
+
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
+
 

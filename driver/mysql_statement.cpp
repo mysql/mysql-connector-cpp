@@ -448,7 +448,9 @@ MySQL_Statement::getMoreResults()
       CPP_ERR_FMT("Error during getMoreResults : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
       sql::mysql::util::throwSQLException(*proxy_p.get());
     } else if (next_result == 0) {
-      return proxy_p->field_count() != 0;
+      bool ret = proxy_p->field_count() > 0;
+      last_update_count = ret ? UL64(~0) : proxy_p->affected_rows();
+      return  ret;
     } else if (next_result == -1) {
       throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
     }
