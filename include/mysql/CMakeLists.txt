@@ -36,5 +36,11 @@ SET(headers jdbc.h)
 
 INSTALL(FILES ${headers} DESTINATION ${INSTALL_INCLUDE_DIR}/mysql COMPONENT JDBCDev)
 
+# Note: Copy to build location so that test code can use headers without
+# installing them first.
+
+file(COPY jdbc.h
+  DESTINATION "${CMAKE_BINARY_DIR}/include/"
+)
 
 
