@@ -48,6 +48,8 @@
 %global dist            .sl15
 %endif
 
+%global source_date_epoch_from_changelog 0
+
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
 Version:        @CONCPP_VERSION@
@@ -222,6 +224,9 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %endif
 
 %changelog
+* Thu Jun 04 2020 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.21-1
+- Updated the macro to use the system date
+
 * Fri Feb 15 2019 Bjorn Munch <bjorm.munch@oracle.com> - 8.0.16-1
 - CMake 3 should not be used on Fedora, only on Oracle Linux or Red Hat
 - Removed use of cmake_path as it is no longer needed
