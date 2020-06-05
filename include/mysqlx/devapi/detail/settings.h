@@ -101,6 +101,11 @@ protected:
     go through string conversion.
   */
 
+  static Value opt_val(int opt, std::nullptr_t)
+  {
+    return opt_val(opt, Value());
+  }
+
   template <
     typename V,
     typename std::enable_if<std::is_convertible<V, string>::value>::type*

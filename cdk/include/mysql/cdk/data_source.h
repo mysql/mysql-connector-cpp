@@ -197,8 +197,18 @@ class Protocol_options
     REQUIRED
   };
 
+  enum compression_algorithm_t {
+    NONE,
+    DEFLATE_STREAM,
+    LZ4_MESSAGE,
+    ZSTD_STREAM
+  };
+
   virtual auth_method_t auth_method() const = 0;
   virtual compression_mode_t compression() const = 0;
+
+  using Compression_algorithms = std::vector<compression_algorithm_t>;
+  virtual const Compression_algorithms& compression_algorithms() const = 0;
 
 };
 
@@ -207,10 +217,16 @@ class Options
   : public ds::Options<Protocol_options>,
     public foundation::connection::Socket_base::Options
 {
+public:
+
+  typedef std::vector<compression_algorithm_t> Compression_algorithms;
+
 protected:
 
   auth_method_t m_auth_method = DEFAULT;
-  compression_mode_t m_compression = DISABLED;
+  compression_mode_t m_compression = PREFERRED;
+  bool m_has_compression_alg = false;
+  Compression_algorithms m_compression_algorithms;
 
 public:
 
@@ -239,6 +255,23 @@ public:
   compression_mode_t compression() const
   {
     return m_compression;
+  }
+
+  void add_compression_alg(compression_algorithm_t val)
+  {
+    m_has_compression_alg = true;
+    m_compression_algorithms.push_back(val);
+  }
+
+  const Compression_algorithms& compression_algorithms() const
+  {
+    if (m_has_compression_alg)
+      return m_compression_algorithms;
+
+    static Compression_algorithms default_compression_algorithms =
+    { ZSTD_STREAM, LZ4_MESSAGE, DEFLATE_STREAM };
+
+    return default_compression_algorithms ;
   }
 
 };

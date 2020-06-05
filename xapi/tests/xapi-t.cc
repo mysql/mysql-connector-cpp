@@ -64,7 +64,7 @@ void check_compress(mysqlx_session_t *sess)
 
   char *buf = new char[65536];
   size_t buf_len;
-  
+
   buf_len = 65536;
   memset(buf, 0, buf_len);
   EXPECT_NE(nullptr, row = mysqlx_row_fetch_one(res));
@@ -2943,4 +2943,412 @@ TEST_F(xapi, tls_ver_ciphers)
     ));
 
   }
+}
+
+TEST_F(xapi, compression_algorithms)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  mysqlx_error_t *error;
+  mysqlx_session_options_t *opt;
+
+  auto check_compress_alg = [&error](mysqlx_session_t* s,string expected, int line)
+  {
+    if(!s)
+    {
+      FAIL() << line  << ": " << mysqlx_error_message(error);
+    }
+
+    std::string qry = "SHOW STATUS LIKE 'Mysqlx_compression_algorithm'";
+    auto *res = mysqlx_sql(s, qry.c_str(), qry.length() );
+    auto *row = mysqlx_row_fetch_one(res);
+    char result[20];
+    size_t size = 20;
+
+    mysqlx_get_bytes(row, 1, 0, result, &size);
+
+    mysqlx_result_free(res);
+
+    if (expected != result)
+    {
+      std::cout << line << ": " << std::endl;
+      std::cout << "\tExpected: " << expected << std::endl;
+      std::cout << "\tResult: " << result << std::endl;
+    }
+    EXPECT_EQ(expected, result);
+
+    if (result[0])
+    {
+      check_compress(s);
+    }
+
+    mysqlx_session_close(s);
+
+  };
+
+  std::string uri(get_uri());
+
+  struct test_data
+  {
+    string expected;
+    string alias;
+    string name;
+    string second;
+    string third;
+  };
+
+  std::vector<test_data> algs = {
+    {"DEFLATE_STREAM", "deFlate","DeFlaTe_StreAM", "ZsTd", "Lz4"},
+    {"LZ4_MESSAGE", "lZ4","Lz4_MeSSaGe","DeFlAte","zstd"},
+    {"ZSTD_STREAM", "ZsTd","zStD_sTReaM","lz4","DEFLATE"},
+  };
+
+
+  //By Default, it should use ZTSD compression
+
+
+  check_compress_alg(mysqlx_get_session_from_url(uri.c_str(),&error),"ZSTD_STREAM", __LINE__);
+
+  opt = mysqlx_session_options_new();
+  mysqlx_session_option_set(opt,
+                            OPT_HOST(get_host()),
+                            OPT_PORT(get_port()),
+                            OPT_USER(get_user()),
+                            OPT_PWD(get_password()),
+                            PARAM_END);
+  check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                     ,"ZSTD_STREAM", __LINE__);
+  mysqlx_free(opt);
+
+  //Add parameters
+  uri += "/?";
+
+  std::string tmp;
+
+  for(const test_data& d : algs)
+  {
+    // Used algorithm should be d.expected on all of this cases
+    //First round, pool clean
+    std::chrono::time_point<std::chrono::system_clock> start_time
+        = std::chrono::system_clock::now();
+
+    tmp = std::string(uri) + "compression-algorithms=" + d.name;
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=" + d.alias;
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[" + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[" + d.name + "," + d.second + ","+ d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[" + d.name + "," + d.second + ","+ d.third + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error), d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[" + d.alias + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[" + d.alias + "," + d.second + "," + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    tmp = std::string(uri) + "compression-algorithms=[MyALGORITHM," + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          d.expected, __LINE__);
+
+    //Even if a valid algorithm is selected, if compression is disabled,
+    //no compression should be used
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=" + d.name;
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=" + d.alias;
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.name + "," + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "," + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    tmp = std::string(uri) + "Compression=Disabled&Compression-Algorithms=[MyALGORITHM," + d.name + "]";
+    check_compress_alg(
+          mysqlx_get_session_from_url(
+            tmp.c_str(),
+            &error),
+          std::string(), __LINE__);
+
+    // In this cases, no algorithm should be used, since algorithm value
+    // is empty or not valid
+    tmp = std::string(uri) + "compression-algorithms=";
+    check_compress_alg(mysqlx_get_session_from_url(tmp.c_str(), &error), "", __LINE__);
+    tmp = std::string(uri) + "compression-algorithms=[]";
+    check_compress_alg(mysqlx_get_session_from_url(tmp.c_str(), &error), "", __LINE__);
+    tmp = std::string(uri) + "compression-algorithms=BAD_Algorithm";
+    check_compress_alg(mysqlx_get_session_from_url(tmp.c_str(), &error), "", __LINE__);
+    tmp = std::string(uri) + "compression-algorithms=[BAD_Algorithm]";
+    check_compress_alg(mysqlx_get_session_from_url(tmp.c_str(), &error), "", __LINE__);
+    tmp = std::string(uri) + "compression-algorithms=[BAD_Algorithm,BAD_Algorithm]";
+    check_compress_alg(mysqlx_get_session_from_url(tmp.c_str(), &error), "", __LINE__);
+
+    //If compression=REQUIRED and no valid algorithm selected, no session should be created
+    tmp = std::string(uri) + "compression=required&compression-algorithms=";
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    tmp = std::string(uri) + "compression=required&compression-algorithms=[]";
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    tmp = std::string(uri) + "compression=required&compression-algorithms=BAD_Algorithm";
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    tmp = std::string(uri) + "compression=required&compression-algorithms=[BAD_Algorithm]";
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    tmp = std::string(uri) + "compression=required&compression-algorithms=[BAD_Algorithm,BAD_Algorithm]";
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+
+
+    //Using text only, used algorithm should be LZ4_MESSAGE
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION_ALGORITHMS(d.name.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,d.expected, __LINE__);
+    mysqlx_free(opt);
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION_ALGORITHMS(d.alias.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,d.expected, __LINE__);
+    mysqlx_free(opt);
+
+    tmp = std::string(d.name) + "," + d.second + "," + d.third;
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION_ALGORITHMS(tmp.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,d.expected, __LINE__);
+    mysqlx_free(opt);
+
+    tmp = std::string(d.alias) + "," + d.second + "," + d.third + "," + d.name;
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION_ALGORITHMS(tmp.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,d.expected, __LINE__);
+    mysqlx_free(opt);
+
+    //Even if valid algorithms, since compression is disabled
+    //it will not be used
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION(MYSQLX_COMPRESSION_DISABLED),
+                OPT_COMPRESSION_ALGORITHMS(d.name.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION(MYSQLX_COMPRESSION_DISABLED),
+                OPT_COMPRESSION_ALGORITHMS(d.alias.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+
+    tmp = std::string(d.name) + "," + d.name;
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION(MYSQLX_COMPRESSION_DISABLED),
+                OPT_COMPRESSION_ALGORITHMS(tmp.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+    tmp = std::string(d.alias) + "," + d.name;
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK,
+              mysqlx_session_option_set(
+                opt,
+                OPT_HOST(get_host()),
+                OPT_PORT(get_port()),
+                OPT_USER(get_user()),
+                OPT_PWD(get_password()),
+                OPT_COMPRESSION(MYSQLX_COMPRESSION_DISABLED),
+                OPT_COMPRESSION_ALGORITHMS(tmp.c_str()),
+                PARAM_END)
+              );
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+
+
+    //No algorithm will be used on these cases
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_COMPRESSION_ALGORITHMS(nullptr),
+                                                   PARAM_END));
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_COMPRESSION_ALGORITHMS(""),
+                                                   PARAM_END));
+    check_compress_alg(mysqlx_get_session_from_options(opt, &error)
+                                       ,std::string(), __LINE__);
+    mysqlx_free(opt);
+
+
+
+
+    //In these cases, since algorithms are not valid and compression is
+    //REQUIRED, no session should be created
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_COMPRESSION(MYSQLX_COMPRESSION_REQUIRED),
+                                                   OPT_COMPRESSION_ALGORITHMS("BAD_Algorithm"),
+                                                   PARAM_END));
+    EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
+    mysqlx_free(opt);
+
+
+    std::cout << d.expected << ": " <<
+                 std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now() - start_time).count() << "ms" <<std::endl;
+
+  }
+
 }

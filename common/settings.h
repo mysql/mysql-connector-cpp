@@ -313,6 +313,11 @@ private:
       m_data.m_tls_vers = true;
       break;
 
+    case Session_option_impl::COMPRESSION_ALGORITHMS:
+      m_multi = !m_data.m_compression_algorithms;
+      m_data.m_compression_algorithms = true;
+      break;
+
     default:
       {
         std::stringstream err_msg;
@@ -1076,6 +1081,23 @@ Settings_impl::Setter::set_option<
     add_option((int)Settings_impl::Session_option_impl::TLS_VERSIONS, val);
 }
 
+template<>
+inline void
+Settings_impl::Setter::set_option<
+  Settings_impl::Session_option_impl::COMPRESSION_ALGORITHMS
+>(const std::string &val)
+{
+  m_data.m_compression_algorithms = true;  // record that the option was set
+
+  // If in multi mode, the value is a single list element, otherwise
+  // the value can be a comma separated list
+
+  if (!m_multi)
+    set_comma_separated((int)Settings_impl::Session_option_impl::COMPRESSION_ALGORITHMS, val);
+  else
+    add_option((int)Settings_impl::Session_option_impl::COMPRESSION_ALGORITHMS, val);
+}
+
 
 // Generic add_option() method.
 
@@ -1098,6 +1120,7 @@ void Settings_impl::Setter::add_option(int opt, const T &val)
 
   case Session_option_impl::TLS_CIPHERSUITES:
   case Session_option_impl::TLS_VERSIONS:
+  case Session_option_impl::COMPRESSION_ALGORITHMS:
     if (m_multi)
     {
       options.emplace_back(opt, val);
@@ -1237,6 +1260,9 @@ void Settings_impl::Setter::null()
   case Session_option_impl::USER:
     throw_error("Option ... can not be unset");
     break;
+  case Session_option_impl::COMPRESSION_ALGORITHMS:
+    //It has compression algorithms, so don't use default
+    m_data.m_compression_algorithms = true;
   case Session_option_impl::LAST:
     break;
   default:
@@ -1373,7 +1399,7 @@ void Settings_impl::Setter::key_val(const std::string &key, const std::string &v
         }
         break;
       default:
-        key_val(get_uri_option(key))->scalar()->str(val);
+        key_val(option)->scalar()->str(val);
     }
   }
   catch (const std::out_of_range&)
@@ -1427,6 +1453,7 @@ void Settings_impl::Setter::key_val(const std::string &key,
 
       case Settings_impl::Session_option_impl::TLS_CIPHERSUITES:
       case Settings_impl::Session_option_impl::TLS_VERSIONS:
+      case Settings_impl::Session_option_impl::COMPRESSION_ALGORITHMS:
         {
           auto *prc = key_val(option)->arr();
           if (!prc)

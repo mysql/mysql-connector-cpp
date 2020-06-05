@@ -241,6 +241,29 @@ TCPIP_options::compression_mode_t get_compression(unsigned m)
   return CDK_type(0); // quiet compiler warnings
 }
 
+TCPIP_options::compression_algorithm_t get_compression_algorithm(std::string alg)
+{
+  std::string algorithm_name = to_upper(alg);
+
+  using CDK_type = TCPIP_options::compression_algorithm_t;
+
+  static std::map<std::string,CDK_type> alg_map= {
+    {"DEFLATE_STREAM",CDK_type::DEFLATE_STREAM},
+    {"DEFLATE",CDK_type::DEFLATE_STREAM}, //ALIAS
+    {"LZ4_MESSAGE",CDK_type::LZ4_MESSAGE},
+    {"LZ4",CDK_type::LZ4_MESSAGE}, //ALIAS
+    {"ZSTD_STREAM",CDK_type::ZSTD_STREAM},
+    {"ZSTD",CDK_type::ZSTD_STREAM}, //ALIAS
+  };
+
+  auto it = alg_map.find(algorithm_name);
+
+  if(it == alg_map.end())
+    return CDK_type::NONE;
+
+  return it->second;
+}
+
 TLS_options::SSL_MODE get_ssl_mode(unsigned m)
 {
   using DevAPI_type = Settings_impl::SSL_mode;
@@ -393,6 +416,28 @@ void prepare_options(
   {
     opts.set_compression(get_compression(
       (unsigned)settings.get(Option::COMPRESSION).get_uint()));
+  }
+
+  if (settings.has_option(Option::COMPRESSION_ALGORITHMS))
+  {
+    bool has_algs = false;
+    for (const auto &opt_val : settings)
+    {
+      switch(opt_val.first)
+      {
+      case Option::COMPRESSION_ALGORITHMS:
+        has_algs = true;
+        opts.add_compression_alg(
+              get_compression_algorithm(
+                opt_val.second.get_string())
+              );
+      }
+    }
+    if(!has_algs)
+    {
+      //Inform that option was used but nothing was set
+      opts.add_compression_alg(TCPIP_options::NONE);
+    }
   }
 
   // DNS+SRV

@@ -43,7 +43,8 @@ POP_SYS_WARNINGS_CDK
 namespace cdk {
 namespace mysqlx {
 
-Compression_type::value Session::negotiate_compression()
+Compression_type::value Session::negotiate_compression(
+      const std::vector<cdk::mysqlx::Session::compression_algorithm_t>& algorithms)
 {
   Compression_type::value compression = Compression_type::NONE;
 
@@ -84,27 +85,66 @@ Compression_type::value Session::negotiate_compression()
   } cap_prc;
 
   /*
-    The compression types must be attempted with increaing
+    The compression types must be attempted with increasing
     priority. The last successful type will be applied.
   */
-  compress_caps.m_algorithm = "deflate_stream";
-  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
-  compress_caps.m_algorithm = "lz4_message";
-  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
-  compress_caps.m_algorithm = "zstd_stream";
-  m_protocol.snd_CapabilitiesSet(compress_caps).wait();
 
-  m_protocol.rcv_Reply(cap_prc).wait();
-  if (cap_prc.m_compression_ok)
-    compression = Compression_type::DEFLATE;
+  for(auto alg = algorithms.rbegin(); alg != algorithms.rend(); ++alg)
+  {
+    switch (*alg) {
+    case cdk::mysqlx::Session::compression_algorithm_t::DEFLATE_STREAM:
+      compress_caps.m_algorithm = "deflate_stream";
+      m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+      break;
+    case cdk::mysqlx::Session::compression_algorithm_t::LZ4_MESSAGE:
+      compress_caps.m_algorithm = "lz4_message";
+      m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+      break;
+    case cdk::mysqlx::Session::compression_algorithm_t::ZSTD_STREAM:
+      compress_caps.m_algorithm = "zstd_stream";
+      m_protocol.snd_CapabilitiesSet(compress_caps).wait();
+      break;
+   case cdk::mysqlx::Session::compression_algorithm_t::NONE:
+      break;
+    default:
+      //Add algorithm name here
+      assert(false);
+    }
+  }
 
-  m_protocol.rcv_Reply(cap_prc).wait();
-  if (cap_prc.m_compression_ok)
-    compression = Compression_type::LZ4;
 
-  m_protocol.rcv_Reply(cap_prc).wait();
-  if (cap_prc.m_compression_ok)
-    compression = Compression_type::ZSTD;
+  for(auto alg = algorithms.rbegin(); alg != algorithms.rend(); ++alg)
+  {
+    switch (*alg) {
+    case cdk::mysqlx::Session::compression_algorithm_t::DEFLATE_STREAM:
+      m_protocol.rcv_Reply(cap_prc).wait();
+      if (cap_prc.m_compression_ok)
+        compression = Compression_type::DEFLATE;
+      break;
+    case cdk::mysqlx::Session::compression_algorithm_t::LZ4_MESSAGE:
+      m_protocol.rcv_Reply(cap_prc).wait();
+      if (cap_prc.m_compression_ok)
+        compression = Compression_type::LZ4;
+      break;
+    case cdk::mysqlx::Session::compression_algorithm_t::ZSTD_STREAM:
+      m_protocol.rcv_Reply(cap_prc).wait();
+      if (cap_prc.m_compression_ok)
+        compression = Compression_type::ZSTD;
+      break;
+    case cdk::mysqlx::Session::compression_algorithm_t::NONE:
+       break;
+    default:
+      //New algorithm adder....
+      assert(false);
+    }
+  }
+
+
+
+
+
+
+
 
   return compression;
 }

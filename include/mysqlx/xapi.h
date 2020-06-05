@@ -425,6 +425,7 @@ mysqlx_opt_type_t;
 #define OPT_TLS_VERSIONS(A) MYSQLX_OPT_TLS_VERSIONS, (A)
 #define OPT_TLS_CIPHERSUITES(A) MYSQLX_OPT_TLS_CIPHERSUITES, (A)
 #define OPT_COMPRESSION(A) MYSQLX_OPT_COMPRESSION, (unsigned int)(A)
+#define OPT_COMPRESSION_ALGORITHMS(A) MYSQLX_OPT_COMPRESSION_ALGORITHMS, (const char*)(A)
 
 
 /**
@@ -809,6 +810,8 @@ mysqlx_get_session(const char *host, int port, const char *user,
       the same as setting to `true`\n
   - `tls-versions=[...]` : see `#MYSQLX_OPT_TLS_VERSIONS`
   - `tls-ciphersuites=[...]` : see `#MYSQLX_OPT_TLS_CIPHERSUITES`
+  - `compression=...` : see `#MYSQLX_OPT_COMPRESSION`
+  - `compression-algorithms=[...]` : see `#MYSQLX_OPT_COMPRESSION_ALGORITHMS`
 
 
   @note The session returned by the function must be properly closed using
