@@ -28,7 +28,7 @@
 
 #Use Options to configure default test server params
 
-SET(TEST_DEFAULT_HOST   "mysql://localhost:3306"  CACHE STRING "Defines Unit Tests default server" )
+SET(TEST_DEFAULT_HOST   "tcp://localhost:3306"  CACHE STRING "Defines Unit Tests default server" )
 SET(TEST_DEFAULT_DB     "test"                    CACHE STRING "Defines Unit Tests default Database" )
 SET(TEST_DEFAULT_LOGIN  "root"                    CACHE STRING "Defines Unit Tests default login user" )
 SET(TEST_DEFAULT_PASSWD "root"                    CACHE STRING "Defines Unit Tests default login user password" )

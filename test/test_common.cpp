@@ -91,20 +91,6 @@ static int silent = 1;
 #pragma warning(disable:4800)
 #endif
 
-//#include "mysql_version.h"
-//#if LIBMYSQL_VERSION_ID < 80000
-//#ifdef _WIN32
-//#include "my_global.h"
-//#endif
-//#endif
-
-//extern "C"
-//{
-//#include "mysql.h"
-//}
-///* mysql.h introduces bool */
-//#undef bool
-
 #if defined(_WIN32) || defined(_WIN64)
 #pragma warning(disable:4251)
 #endif
