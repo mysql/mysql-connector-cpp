@@ -3101,98 +3101,98 @@ TEST_F(Sess, compression_algorithms)
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=" + d.name
+            uri + "compression-algorithms=" + d.name
             ), d.expected, __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=" + d.alias
+            uri + "compression-algorithms=" + d.alias
             ), d.expected, __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[" + d.name + "]"
+            uri + "compression-algorithms=[" + d.name + "]"
             ), d.expected, __LINE__);
 
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[" + d.name + "," + d.second + "," + d.name + "]"
+            uri + "compression-algorithms=[" + d.name + "," + d.second + "," + d.name + "]"
                          ), d.expected, __LINE__);
 
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[" + d.name + "," + d.second + "," + d.third + "]"
+            uri + "compression-algorithms=[" + d.name + "," + d.second + "," + d.third + "]"
           ), d.expected, __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[" + d.alias + "]"
+            uri + "compression-algorithms=[" + d.alias + "]"
             ), d.expected, __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[" + d.alias + "," + d.second + "," + d.name + "]"
+            uri + "compression-algorithms=[" + d.alias + "," + d.second + "," + d.name + "]"
             ), d.expected, __LINE__);
 
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "compression-algorithms=[MyALGORITHM," + d.name + "]"
+            uri + "compression-algorithms=[MyALGORITHM," + d.name + "]"
             ), d.expected, __LINE__);
 
     //Even if a valid algorithm is selected, if compression is disabled,
     //no compression should be used
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=" + d.name
+            uri + "Compression=Disabled&Compression-Algorithms=" + d.name
           ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=" + d.alias
+            uri + "Compression=Disabled&Compression-Algorithms=" + d.alias
             ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.name + "]"
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.name + "]"
             ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.name + "," + d.name + "]"
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.name + "," + d.name + "]"
             ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "]"
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "]"
             ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "," + d.name + "]"
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "," + d.name + "]"
             ), std::string(), __LINE__);
 
     check_compress_alg(
           mysqlx::Session(
-            std::string(uri) + "Compression=Disabled&Compression-Algorithms=[MyALGORITHM," + d.name + "]"
+            uri + "Compression=Disabled&Compression-Algorithms=[MyALGORITHM," + d.name + "]"
           ), std::string(), __LINE__);
 
     // In this cases, no algorithm should be used, since algorithm value
     // is empty or not valid
-    check_compress_alg(mysqlx::Session(std::string(uri) + "compression-algorithms="), "", __LINE__);
-    check_compress_alg(mysqlx::Session(std::string(uri) + "compression-algorithms=[]"), "", __LINE__);
-    check_compress_alg(mysqlx::Session(std::string(uri) + "compression-algorithms=BAD_Algorithm"), "", __LINE__);
-    check_compress_alg(mysqlx::Session(std::string(uri) + "compression-algorithms=[BAD_Algorithm]"), "", __LINE__);
-    check_compress_alg(mysqlx::Session(std::string(uri) + "compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms="), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[]"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=BAD_Algorithm"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[BAD_Algorithm]"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), "", __LINE__);
 
     //If compression=REQUIRED and no valid algorithm selected, an error should be thrown
-    EXPECT_THROW(mysqlx::Session(std::string(uri) + "compression=required&compression-algorithms="), Error);
-    EXPECT_THROW(mysqlx::Session(std::string(uri) + "compression=required&compression-algorithms=[]"), Error);
-    EXPECT_THROW(mysqlx::Session(std::string(uri) + "compression=required&compression-algorithms=BAD_Algorithm"), Error);
-    EXPECT_THROW(mysqlx::Session(std::string(uri) + "compression=required&compression-algorithms=[BAD_Algorithm]"), Error);
-    EXPECT_THROW(mysqlx::Session(std::string(uri) + "compression=required&compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms="), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[]"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=BAD_Algorithm"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[BAD_Algorithm]"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), Error);
 
 
     //Using text only, used algorithm should be LZ4_MESSAGE
