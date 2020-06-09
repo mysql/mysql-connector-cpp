@@ -139,13 +139,6 @@ Compression_type::value Session::negotiate_compression(
     }
   }
 
-
-
-
-
-
-
-
   return compression;
 }
 
