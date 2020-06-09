@@ -47,14 +47,6 @@ SET_TARGET_PROPERTIES(example PROPERTIES
 TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 
-#These contains tests to test the framework, and some are defined to fail
-#Will not be added to CTEST framework
-#ADD_TEST(
-#    NAME jdbc_example
-#    COMMAND
-#    example
-#    )
-
 #
 # End of the instructions for building binary example from example.cpp|h
 #
