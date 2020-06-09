@@ -46,7 +46,6 @@ SET_TARGET_PROPERTIES(example PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-
 #
 # End of the instructions for building binary example from example.cpp|h
 #
