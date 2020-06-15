@@ -123,8 +123,8 @@ void BlobTest::tearDown()
 
     if ( asString )
     {
-      std::string str;
-      testBlobFile->readFile(str);
+      sql::SQLString str;
+      testBlobFile->readFile( const_cast<std::string&>(str.asStdString()) );
 
       pstmt->setString( 1, str );
       pstmt->execute();
