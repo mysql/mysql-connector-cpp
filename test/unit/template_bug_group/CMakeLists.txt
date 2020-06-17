@@ -51,7 +51,7 @@ TARGET_LINK_LIBRARIES(bug123 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIE
 ADD_TEST(
     NAME jdbc_bug123
     COMMAND
-    bug123  
+    bug123
     )
 
 #
@@ -85,7 +85,7 @@ TARGET_LINK_LIBRARIES(bug456 ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIE
 ADD_TEST(
     NAME jdbc_bug456
     COMMAND
-    $<TARGET_FILE:bug456>  --dbUrl=tcp://$ENV{MYSQL_HOST}:$ENV{MYSQL_PORT} --dbUser=$ENV{MYSQL_USER} --dbPasswd=$ENV{MYSQL_PASSWORD}
+    bug456
     )
 
 MESSAGE(STATUS "Configuring unit tests - group template_bug")
