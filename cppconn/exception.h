@@ -69,7 +69,7 @@ namespace sql
 #pragma warning(push)
 #pragma warning(disable: 4275)
 #endif
-class SQLException : public std::runtime_error
+class CPPCONN_PUBLIC_FUNC SQLException : public std::runtime_error
 {
 #ifdef _WIN32
 #pragma warning(pop)
@@ -115,32 +115,32 @@ protected:
   MEMORY_ALLOC_OPERATORS(SQLException)
 };
 
-struct MethodNotImplementedException : public SQLException
+struct CPPCONN_PUBLIC_FUNC MethodNotImplementedException : public SQLException
 {
   MethodNotImplementedException(const MethodNotImplementedException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
   MethodNotImplementedException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
-struct InvalidArgumentException : public SQLException
+struct CPPCONN_PUBLIC_FUNC InvalidArgumentException : public SQLException
 {
   InvalidArgumentException(const InvalidArgumentException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
   InvalidArgumentException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
-struct InvalidInstanceException : public SQLException
+struct CPPCONN_PUBLIC_FUNC InvalidInstanceException : public SQLException
 {
   InvalidInstanceException(const InvalidInstanceException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
   InvalidInstanceException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
 
-struct NonScrollableException : public SQLException
+struct CPPCONN_PUBLIC_FUNC NonScrollableException : public SQLException
 {
   NonScrollableException(const NonScrollableException& e) : SQLException(e.what(), e.sql_state, e.errNo) { }
   NonScrollableException(const std::string& reason) : SQLException(reason, "", 0) {}
 };
 
-struct SQLUnsupportedOptionException : public SQLException
+struct CPPCONN_PUBLIC_FUNC SQLUnsupportedOptionException : public SQLException
 {
   SQLUnsupportedOptionException(const SQLUnsupportedOptionException& e, const std::string conn_option) :
     SQLException(e.what(), e.sql_state, e.errNo),
