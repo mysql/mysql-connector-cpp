@@ -104,7 +104,7 @@ POP_SYS_WARNINGS_CDK
   differently from pre-TLSv1.3 suites that have OpenSSL specific names.
 */
 
-#define TLS_CIPHERS_APPROVED1(X) \
+#define TLS_CIPHERS_APPROVED(X) \
   X("TLS_AES_128_GCM_SHA256", "") \
   X("TLS_AES_256_GCM_SHA384", "") \
   X("TLS_CHACHA20_POLY1305_SHA256", "") \
@@ -123,7 +123,10 @@ POP_SYS_WARNINGS_CDK
   X("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", "ECDHE-RSA-CHACHA20-POLY1305") \
 
 
-#define TLS_CIPHERS_APPROVED2(X) \
+// Note: these deprecated ciphers are temporarily allowed to make it possible
+// to connect to old servers based on YaSSL.
+
+#define TLS_CIPHERS_COMPAT(X) \
   X("TLS_DH_DSS_WITH_AES_128_GCM_SHA256", "DH-DSS-AES128-GCM-SHA256") \
   X("TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256","ECDH-ECDSA-AES128-GCM-SHA256") \
   X("TLS_DH_DSS_WITH_AES_256_GCM_SHA384","DH-DSS-AES256-GCM-SHA384") \
@@ -132,12 +135,6 @@ POP_SYS_WARNINGS_CDK
   X("TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256","ECDH-RSA-AES128-GCM-SHA256") \
   X("TLS_DH_RSA_WITH_AES_256_GCM_SHA384","DH-RSA-AES256-GCM-SHA384") \
   X("TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384","ECDH-RSA-AES256-GCM-SHA384") \
-
-
-// Note: these deprecated ciphers are temporarily allowed to make it possible
-// to connect to old servers based on YaSSL.
-
-#define TLS_CIPHERS_COMPAT(X) \
   X("TLS_DHE_RSA_WITH_AES_256_CBC_SHA", "DHE-RSA-AES256-SHA") \
   X("TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "DHE-RSA-AES128-SHA") \
   X("TLS_RSA_WITH_AES_256_CBC_SHA", "AES256-SHA")
@@ -145,8 +142,7 @@ POP_SYS_WARNINGS_CDK
 
 #define TLS_CIPHERS_DEFAULT(X) \
   TLS_CIPHERS_MANDATORY(X) \
-  TLS_CIPHERS_APPROVED1(X) \
-  TLS_CIPHERS_APPROVED2(X) \
+  TLS_CIPHERS_APPROVED(X) \
   TLS_CIPHERS_COMPAT(X) \
 
 
@@ -504,12 +500,10 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
 #define TLS_CIPHER_MAP0(A,B)  {A,{B,0}},
 #define TLS_CIPHER_MAP1(A,B)  {A,{B,1}},
 #define TLS_CIPHER_MAP2(A,B)  {A,{B,2}},
-#define TLS_CIPHER_MAP3(A,B)  {A,{B,3}},
 
     TLS_CIPHERS_MANDATORY(TLS_CIPHER_MAP0)
-    TLS_CIPHERS_APPROVED1(TLS_CIPHER_MAP1)
-    TLS_CIPHERS_APPROVED2(TLS_CIPHER_MAP2)
-    TLS_CIPHERS_COMPAT(TLS_CIPHER_MAP3)
+    TLS_CIPHERS_APPROVED(TLS_CIPHER_MAP1)
+    TLS_CIPHERS_COMPAT(TLS_CIPHER_MAP2)
   };
 
   /*
@@ -547,8 +541,7 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
 
   m_cipher_list = cipher_list[0]
     + ":" + cipher_list[1]
-    + ":" + cipher_list[2]
-    + ":" + cipher_list[3];
+    + ":" + cipher_list[2];
 
 }
 
