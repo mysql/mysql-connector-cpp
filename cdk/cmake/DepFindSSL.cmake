@@ -313,7 +313,7 @@ function(bundle_ssl_libs)
     message("-- bundling OpenSSL library: ${lib}")
 
     install(FILES ${lib}
-      DESTINATION ${INSTALL_LIB_DIR}
+      DESTINATION "${INSTALL_LIB_DIR}/private"
       COMPONENT OpenSSLDll
     )
 
@@ -332,7 +332,7 @@ function(bundle_ssl_libs)
       message("-- bundling OpenSSL library: ${lib}")
 
       install(FILES ${lib}
-        DESTINATION ${INSTALL_LIB_DIR_STATIC}
+        DESTINATION "${INSTALL_LIB_DIR_STATIC}"
         COMPONENT OpenSSLDev
       )
 
