@@ -303,7 +303,7 @@ static const String2IntMap stringOptions[]=
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
     {OPT_TLS_VERSION,          MYSQL_OPT_TLS_VERSION, false},
 #endif
-    {OPT_ALLOW_LOAD_DATA_LOCAL_PATH, MYSQL_OPT_LOAD_DATA_LOCAL_DIR, false}
+    {OPT_LOAD_DATA_LOCAL_DIR, MYSQL_OPT_LOAD_DATA_LOCAL_DIR, false}
   };
 
 
@@ -1717,6 +1717,9 @@ MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void 
 #else
     throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
 #endif
+  } else if (!optionName.compare(OPT_LOAD_DATA_LOCAL_DIR))
+  {
+    proxy->options(MYSQL_OPT_LOAD_DATA_LOCAL_DIR, optionValue);
   }
   return this;
 }

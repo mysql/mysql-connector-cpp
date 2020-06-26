@@ -280,7 +280,7 @@ SET(test_uri_sources
 IF(WIN32)
   SET(test_uri_sources
         ${test_uri_sources}
-    "${CMAKE_SOURCE_DIR}/driver/mysql_uri.h"
+    "${CMAKE_SOURCE_DIR}/jdbc/driver/mysql_uri.h"
     uri.h)
 ENDIF(WIN32)
 
