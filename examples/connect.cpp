@@ -282,10 +282,6 @@ int main(int argc, const char **argv)
           opts[OPT_PLUGIN_DIR] = plugin_dir;
         }
 
-        try {
-          con.reset(driver->connect(opts));
-        }
-        catch(...){}
         con.reset(driver->connect(opts));
 
         auto *stmt = con->createStatement();
