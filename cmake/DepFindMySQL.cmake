@@ -44,6 +44,7 @@
 #  MYSQL_VERSION, MYSQL_VERSION_ID
 #  MYSQL_INCLUDE_DIR
 #  MYSQL_LIB_DIR
+#  MYSQL_PLUGIN_DIR
 #  MYSQL_EXTERNAL_DEPENDENCIES
 #
 ##########################################################################
@@ -59,6 +60,7 @@ add_config_option(WITH_MYSQL PATH
 
 add_config_option(MYSQL_INCLUDE_DIR PATH ADVANCED "Path to MYSQL headers.")
 add_config_option(MYSQL_LIB_DIR PATH ADVANCED "Path to MYSQL libraries.")
+add_config_option(MYSQL_PLUGIN_DIR PATH ADVANCED "Path to MYSQL plugin libraries.")
 
 
 function(main)
@@ -117,6 +119,10 @@ function(main)
 
       if(NOT DEFINED MYSQL_LIB_DIR AND MYSQL_DIR)
         set(MYSQL_LIB_DIR "${MYSQL_DIR}/lib")
+      endif()
+
+      if(NOT DEFINED MYSQL_PLUGIN_DIR AND MYSQL_LIB_DIR)
+        set(MYSQL_PLUGIN_DIR "${MYSQL_LIB_DIR}/plugin")
       endif()
 
     endif()
@@ -316,6 +322,10 @@ function(main)
   # Stores result in MYSQL_EXTERNAL_DEPENDENCIES.
   #
 
+  if(BUNDLE_DEPENDENCIES)
+    bundle_dependencies()
+  endif()
+
   get_dependencies()
 
   message("  version: ${MYSQL_VERSION}")
@@ -449,6 +459,48 @@ endfunction(get_dependencies)
 ##################################################################
 
 
+function(bundle_dependencies)
+# Get client side plugins and its dependencies
+
+  message("MYSQL_PLUGIN_DIR: ${MYSQL_PLUGIN_DIR}")
+
+  find_file(SASL_CLIENT
+  NAMES authentication_ldap_sasl_client.so authentication_ldap_sasl_client.dll authentication_ldap_sasl_client.dylib
+  HINTS ${MYSQL_PLUGIN_DIR}
+  NO_DEFAULT_PATH
+  )
+
+  message("SASL_CLIENT: ${SASL_CLIENT}")
+
+  if(SASL_CLIENT)
+
+    install(FILES ${SASL_CLIENT}
+      DESTINATION "${INSTALL_LIB_DIR}/plugin"
+      COMPONENT SASLDll
+    )
+
+    INCLUDE(GetPrerequisites)
+    GET_PREREQUISITES(${SASL_CLIENT} SASL_DEPENDENCIES 1 0 "" "")
+
+    if(SASL_DEPENDENCIES)
+      message("SASL_DEPENDENCIES: ${SASL_DEPENDENCIES}")
+      foreach (_file ${SASL_DEPENDENCIES})
+          get_filename_component(_resolvedFile "${_file}" REALPATH)
+          install(FILES ${_file} ${_resolvedFile}
+            DESTINATION "${INSTALL_LIB_DIR}/private"
+            COMPONENT SASLDll
+            )
+      endforeach()
+
+    endif()
+
+  endif()
+
+endfunction(bundle_dependencies)
+
+##################################################################
+
+
 function(use_mysql_config)
 
   if(NOT EXISTS "${MYSQL_CONFIG_EXECUTABLE}")
@@ -460,12 +512,15 @@ function(use_mysql_config)
 
   _mysql_conf(MYSQL_INCLUDE_DIR --variable=pkgincludedir)
   _mysql_conf(MYSQL_LIB_DIR     --variable=pkglibdir)
+  _mysql_conf(MYSQL_PLUGIN_DIR     --variable=plugindir)
 
   file(TO_CMAKE_PATH "${MYSQL_INCLUDE_DIR}" MYSQL_INCLUDE_DIR)
   file(TO_CMAKE_PATH "${MYSQL_LIB_DIR}" MYSQL_LIB_DIR)
+  file(TO_CMAKE_PATH "${MYSQL_PLUGIN_DIR}" MYSQL_PLUGIN_DIR)
 
   set(MYSQL_INCLUDE_DIR "${MYSQL_INCLUDE_DIR}" PARENT_SCOPE)
   set(MYSQL_LIB_DIR "${MYSQL_LIB_DIR}" PARENT_SCOPE)
+  set(MYSQL_PLUGIN_DIR "${MYSQL_PLUGIN_DIR}" PARENT_SCOPE)
 
   # client library version (note: it will be cleaned up in get_version())
 

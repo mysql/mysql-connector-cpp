@@ -265,6 +265,37 @@ set_target_properties(connector-jdbc
   VERSION   "${MYSQLCPPCONN_SOVERSION}.${CONNECTOR_NUMERIC_VERSION}"
 )
 
+#
+# Embed rpath information in the connector library.
+#
+
+set_property(TARGET connector-jdbc PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+
+# The $ORIGIN/@loader_path entry tells to look for dependent libraries in the
+# location where our connector library is stored.
+
+if(APPLE)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/../private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/../plugin")
+  else()
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/plugin")
+  endif()
+elseif(NOT WIN32)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/../private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/../plugin")
+  else()
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/plugin")
+  endif()
+
+endif()
+
+
 
 install(TARGETS connector-jdbc
   CONFIGURATIONS Release RelWithDebInfo
