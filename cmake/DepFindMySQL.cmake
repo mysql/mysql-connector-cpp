@@ -460,39 +460,46 @@ endfunction(get_dependencies)
 
 
 function(bundle_dependencies)
-# Get client side plugins and its dependencies
+  # Get client side plugins and its dependencies
 
   message("MYSQL_PLUGIN_DIR: ${MYSQL_PLUGIN_DIR}")
 
-  find_file(SASL_CLIENT
-  NAMES authentication_ldap_sasl_client.so authentication_ldap_sasl_client.dll authentication_ldap_sasl_client.dylib
-  HINTS ${MYSQL_PLUGIN_DIR}
-  NO_DEFAULT_PATH
-  )
-
-  message("SASL_CLIENT: ${SASL_CLIENT}")
-
-  if(SASL_CLIENT)
-
-    install(FILES ${SASL_CLIENT}
-      DESTINATION "${INSTALL_LIB_DIR}/plugin"
-      COMPONENT SASLDll
+  file(GLOB CLIENT_PLUGINS
+    "${MYSQL_PLUGIN_DIR}/*_client.*"
     )
 
-    INCLUDE(GetPrerequisites)
-    GET_PREREQUISITES(${SASL_CLIENT} SASL_DEPENDENCIES 1 0 "" "")
+  message("CLIENT_PLUGINS: ${CLIENT_PLUGINS}")
 
-    if(SASL_DEPENDENCIES)
-      message("SASL_DEPENDENCIES: ${SASL_DEPENDENCIES}")
-      foreach (_file ${SASL_DEPENDENCIES})
-          get_filename_component(_resolvedFile "${_file}" REALPATH)
-          install(FILES ${_file} ${_resolvedFile}
-            DESTINATION "${INSTALL_LIB_DIR}/private"
-            COMPONENT SASLDll
-            )
-      endforeach()
+  if(CLIENT_PLUGINS)
 
-    endif()
+    install(FILES ${CLIENT_PLUGINS}
+      DESTINATION "${INSTALL_LIB_DIR}/plugin"
+      COMPONENT ClientDlls
+      )
+
+    # List of libraries needed to bundle with plugins
+    SET(dep_list "com_err" "gssapi_krb5" "k5crypto" "krb5" "krb5support" "sasl")
+
+    message("PLUGINS_DEPENDENCIES: ${dep_list}")
+    foreach(lib_name ${dep_list})
+      message("DEPENDENCY: ${_lib}")
+      file(GLOB_RECURSE depepdency_path
+        "${MYSQL_PLUGIN_DIR}/*${lib_name}*"
+        "${MYSQL_LIB_DIR}/*${lib_name}*"
+        "${MYSQL_LIB_DIR}/private/*${lib_name}*"
+        )
+
+      if(depepdency_path)
+        message("DEPENDENCY_PATH: ${depepdency_path}")
+        install(FILES ${depepdency_path}
+          DESTINATION "${INSTALL_LIB_DIR}/private"
+          COMPONENT ClientDlls
+          )
+
+      endif()
+      unset(depepdency_path CACHE)
+
+    endforeach()
 
   endif()
 

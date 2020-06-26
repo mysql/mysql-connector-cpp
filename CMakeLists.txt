@@ -392,7 +392,7 @@ if(MYSQL_EXTERNAL_DEPENDENCIES)
       message("found bundled libs: ${_bundled1} ${_bundled2}")
 
       install(FILES ${_bundled1} ${_bundled2}
-        DESTINATION "${INSTALL_LIB_DIR}"
+        DESTINATION "${INSTALL_LIB_DIR}/private"
         COMPONENT JDBCDll
       )
 
@@ -417,7 +417,7 @@ else()
       message("found bundled libs: ${lib}")
 
       install(FILES "${lib}"
-        DESTINATION "${INSTALL_LIB_DIR}"
+        DESTINATION "${INSTALL_LIB_DIR}/private"
         COMPONENT JDBCDll
       )
 
