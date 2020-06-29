@@ -394,8 +394,19 @@ set_property(TARGET connector PROPERTY BUILD_WITH_INSTALL_RPATH ON)
 
 if(APPLE)
   set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "@loader_path/../private")
+  else()
+    set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "@loader_path/private")
+  endif()
 elseif(NOT WIN32)
   set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "$ORIGIN/../private")
+  else()
+    set_property(TARGET connector APPEND PROPERTY INSTALL_RPATH "$ORIGIN/private")
+  endif()
+
 endif()
 
 
@@ -410,7 +421,7 @@ elseif(NOT WIN32)
   set(list_rpath_cmd objdump -x $<TARGET_FILE:libconcpp> "|" grep RPATH -A2)
 endif()
 
-add_custom_command(TARGET libconcpp POST_BUILD
+add_custom_command(TARGET connector POST_BUILD
   COMMAND ${list_rpath_cmd}
   COMMENT "RPATH setting for: $<TARGET_FILE_NAME:mysqlcppconn>"
 )
