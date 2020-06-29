@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <cppconn/connection.h>
-#include <driver/mysql_connection.h>
+#include <mysql_connection.h>
 #include <cppconn/exception.h>
 #include <cppconn/version_info.h>
 

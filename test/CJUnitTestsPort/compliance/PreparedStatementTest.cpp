@@ -31,7 +31,7 @@
 
 
 
-#include "../driver/nativeapi/mysql_private_iface.h"
+#include <jdbc.h>
 
 #include "PreparedStatementTest.h"
 
@@ -1876,7 +1876,7 @@ void PreparedStatementTest::testSetNull01()
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
   // Second parameter to setNull is ignored
-  pstmt->setNull(1, MYSQL_TYPE_LONG);
+  pstmt->setNull(1, sql::DataType::INTEGER);
   pstmt->executeUpdate();
 
   String Null_Val_Query=sqlProps[ "Integer_Query_Null" ];
@@ -1939,7 +1939,7 @@ void PreparedStatementTest::testSetNull02()
   logMsg(String("Prepared Statement String :") + sPrepStmt);
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setNull(1, MYSQL_TYPE_FLOAT);
+  pstmt->setNull(1, sql::DataType::REAL);
 
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Float_Query_Null" ];
@@ -2001,7 +2001,7 @@ void PreparedStatementTest::testSetNull03()
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
 
-  pstmt->setNull(1, MYSQL_TYPE_SHORT);
+  pstmt->setNull(1, sql::DataType::SMALLINT);
   pstmt->executeUpdate();
 
   String Null_Val_Query=sqlProps[ "Smallint_Query_Null" ];
@@ -2061,7 +2061,7 @@ void PreparedStatementTest::testSetNull04()
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
 
-  pstmt->setNull(1, MYSQL_TYPE_STRING);
+  pstmt->setNull(1, sql::DataType::CHAR);
   pstmt->executeUpdate();
   const String & Null_Val_Query=sqlProps[ "Char_Query_Null" ];
   logMsg(Null_Val_Query);
@@ -2397,7 +2397,7 @@ void PreparedStatementTest::testSetNull10()
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setNull(1, MYSQL_TYPE_DOUBLE);
+  pstmt->setNull(1, sql::DataType::DOUBLE);
   pstmt->executeUpdate();
 
   String Null_Val_Query=sqlProps[ "Double_Query_Null" ];
@@ -2454,7 +2454,7 @@ void PreparedStatementTest::testSetNull11()
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setNull(1, MYSQL_TYPE_LONG);
+  pstmt->setNull(1, sql::DataType::INTEGER);
   pstmt->executeUpdate();
 
   String Null_Val_Query=sqlProps[ "Bigint_Query_Null" ];
@@ -3031,7 +3031,7 @@ void PreparedStatementTest::testSetNull12()
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setNull(1, MYSQL_TYPE_VARCHAR);
+  pstmt->setNull(1, sql::DataType::VARCHAR);
   pstmt->executeUpdate();
 
   const String & Null_Val_Query=sqlProps[ "Varchar_Query_Null" ];
@@ -3094,7 +3094,7 @@ void PreparedStatementTest::testSetNull13()
   logMsg(String("Prepared Statement String: ") + sPrepStmt);
 
   pstmt.reset(conn->prepareStatement(sPrepStmt));
-  pstmt->setNull(1, MYSQL_TYPE_MEDIUM_BLOB);
+  pstmt->setNull(1, sql::DataType::LONGVARBINARY);
   pstmt->executeUpdate();
 
   const String & Null_Val_Query=sqlProps[ "Longvarchar_Query_Null" ];

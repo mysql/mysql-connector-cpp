@@ -279,7 +279,7 @@ void TestsListener::summary()
 
 bool TestsListener::allTestsPassed()
 {
-  return theInstance().exceptions && !(theInstance().failed() == 0);
+  return (theInstance().exceptions == 0) && (theInstance().failed() == 0);
 }
 
 void TestsListener::bailSuite(const String & reason)

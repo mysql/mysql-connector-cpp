@@ -54,6 +54,8 @@ SET_TARGET_PROPERTIES(test_connection PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_connection COMMAND test_connection)
+
 MESSAGE(STATUS "Configuring unit tests - connection")
 
 SET(test_databasemetadata_sources
@@ -74,6 +76,11 @@ SET_TARGET_PROPERTIES(test_databasemetadata PROPERTIES
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+ADD_TEST(NAME jdbc_test_databasemetadata
+  COMMAND
+  test_databasemetadata
+  )
 
 MESSAGE(STATUS "Configuring unit tests - databasemetadata")
 
@@ -97,6 +104,11 @@ SET_TARGET_PROPERTIES(test_resultsetmetadata PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_resultsetmetadata
+  COMMAND
+  test_resultsetmetadata
+  )
+
 MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
 
 SET(test_resultset_sources
@@ -117,6 +129,11 @@ SET_TARGET_PROPERTIES(test_resultset PROPERTIES
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+ADD_TEST(NAME jdbc_test_resultset
+  COMMAND
+  test_resultset
+  )
 
 MESSAGE(STATUS "Configuring unit tests - resultset")
 
@@ -139,6 +156,11 @@ SET_TARGET_PROPERTIES(test_savepoint PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_savepoint ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_savepoint
+  COMMAND
+  test_savepoint
+  )
+
 MESSAGE(STATUS "Configuring unit tests - savepoint")
 
 SET(test_preparedstatement_sources
@@ -160,6 +182,11 @@ SET_TARGET_PROPERTIES(test_preparedstatement PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_preparedstatement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_preparedstatement
+  COMMAND
+  test_preparedstatement
+  )
+
 MESSAGE(STATUS "Configuring unit tests - preparedstatement")
 
 SET(test_parametermetadata_sources
@@ -180,6 +207,11 @@ SET_TARGET_PROPERTIES(test_parametermetadata PROPERTIES
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_parametermetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+ADD_TEST(NAME jdbc_test_parametermetadata
+  COMMAND
+  test_parametermetadata
+  )
 
 MESSAGE(STATUS "Configuring unit tests - parametermetadata")
 
@@ -204,6 +236,10 @@ SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_art_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_art_resultset
+  COMMAND
+  test_art_resultset
+  )
 
 MESSAGE(STATUS "Configuring unit tests - art_resultset")
 
@@ -226,18 +262,25 @@ SET_TARGET_PROPERTIES(test_statement PROPERTIES
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+ADD_TEST(NAME jdbc_test_statement
+  COMMAND
+  test_statement
+  )
+
 MESSAGE(STATUS "Configuring unit tests - statement")
+
+
 
 SET(test_uri_sources
   ${test_common_sources}
-  "${CMAKE_SOURCE_DIR}/driver/mysql_uri.cpp"
-  "${CMAKE_SOURCE_DIR}/driver/mysql_util.cpp"
+  "${CMAKE_SOURCE_DIR}/jdbc/driver/mysql_uri.cpp"
+  "${CMAKE_SOURCE_DIR}/jdbc/driver/mysql_util.cpp"
   uri.cpp)
 
 IF(WIN32)
   SET(test_uri_sources
         ${test_uri_sources}
-    "${CMAKE_SOURCE_DIR}/driver/mysql_uri.h"
+    "${CMAKE_SOURCE_DIR}/jdbc/driver/mysql_uri.h"
     uri.h)
 ENDIF(WIN32)
 
@@ -246,7 +289,12 @@ SET_TARGET_PROPERTIES(test_uri PROPERTIES
           OUTPUT_NAME "uri"
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_uri ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+TARGET_LINK_LIBRARIES(test_uri ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES} MySQL::client )
+
+ADD_TEST(NAME jdbc_test_uri
+  COMMAND
+  test_uri
+  )
 
 MESSAGE(STATUS "Configuring unit tests - uri")
 
@@ -269,5 +317,10 @@ SET_TARGET_PROPERTIES(test_variant PROPERTIES
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 TARGET_LINK_LIBRARIES(test_variant ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+ADD_TEST(NAME jdbc_test_variant
+  COMMAND
+  test_variant
+  )
 
 MESSAGE(STATUS "Configuring unit tests - variant")

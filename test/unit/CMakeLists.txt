@@ -29,8 +29,8 @@
 IF(WIN32)
   LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
   LINK_DIRECTORIES(../framework/$(ConfigurationName))
-  SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn test_framework)
-  SET(MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB mysqlcppconn-static test_framework)
+  SET(MY_TARGET_LINK_LIBRARIES connector-jdbc test_framework)
+  SET(MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB connector-jdbc-static test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
   ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
   ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
@@ -62,7 +62,7 @@ IF(WIN32)
   )
 
 ELSEIF(NOT WIN32)
-  SET(MY_TARGET_LINK_LIBRARIES mysqlcppconn test_framework)
+  SET(MY_TARGET_LINK_LIBRARIES connector-jdbc test_framework)
   FIND_LIBRARY(MYSQLCPPCONN_DYNLOAD_MYSQL_LIB
     NAMES
     libmysqlclient_r.so

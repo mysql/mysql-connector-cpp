@@ -33,7 +33,7 @@
 #include <locale>
 #include <sstream>
 #include <limits>
-#include "driver/mysql_error.h"
+
 
 //Prevent windows min() macro because of std::numeric_limits<int>::min()
 #undef min

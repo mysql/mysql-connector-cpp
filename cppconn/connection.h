@@ -156,7 +156,7 @@ enum ssl_mode
   SSL_MODE_VERIFY_CA, SSL_MODE_VERIFY_IDENTITY
 };
 
-class Savepoint
+class CPPCONN_PUBLIC_FUNC Savepoint
 {
   /* Prevent use of these */
   Savepoint(const Savepoint &);

@@ -42,7 +42,7 @@ namespace sql
 namespace mysql
 {
 
-class MySQL_Savepoint : public sql::Savepoint
+class CPPCONN_PUBLIC_FUNC MySQL_Savepoint : public sql::Savepoint
 {
   sql::SQLString name;
 

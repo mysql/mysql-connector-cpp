@@ -33,7 +33,7 @@
 #ifndef _UNIT_FIXTURE_
 #define _UNIT_FIXTURE_
 
-#include <driver/mysql_public_iface.h>
+#include <jdbc.h>
 #include "../framework/framework.h"
 #include <vector>
 #include <stdlib.h>

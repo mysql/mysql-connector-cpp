@@ -39,6 +39,34 @@
 
 int main(int argc, char** argv)
 {
+  const char* mysql_host = getenv("MYSQL_HOST");
+  const char* mysql_port = getenv("MYSQL_PORT");
+  const char* mysql_user = getenv("MYSQL_USER");
+  const char* mysql_password = getenv("MYSQL_PASSWORD");
+
+  std::string url(TEST_DEFAULT_HOST);
+  std::string user(TEST_DEFAULT_LOGIN);
+  std::string pass(TEST_DEFAULT_PASSWD);
+  std::string database(TEST_DEFAULT_DB);
+
+  if(mysql_host || mysql_port)
+  {
+    url = "mysql://";
+    url+= mysql_host ? mysql_host : "localhost";
+    url+= ":";
+    url+= mysql_port ? mysql_port : "3306";
+  }
+
+  if(mysql_user)
+  {
+    user = mysql_user;
+  }
+
+  if(mysql_password)
+  {
+    pass = mysql_password;
+  }
+
   const String::value_type * unnamedStartParams[]= { "dbUrl"
     , "dbUser"
     , "dbPasswd"
@@ -47,11 +75,12 @@ int main(int argc, char** argv)
 
   Properties defaultStringValues;
 
-  defaultStringValues.insert( Properties::value_type( "dbUrl"   , TEST_DEFAULT_HOST  ) );
-  defaultStringValues.insert( Properties::value_type( "dbUser"  , TEST_DEFAULT_LOGIN ) );
-  defaultStringValues.insert( Properties::value_type( "dbPasswd", TEST_DEFAULT_PASSWD) );
-  defaultStringValues.insert( Properties::value_type( "dbSchema", TEST_DEFAULT_DB    ) );
-  defaultStringValues.insert( Properties::value_type( "filter"  , "" ) );
+  defaultStringValues.insert( Properties::value_type( "dbUrl"   , url));
+  defaultStringValues.insert( Properties::value_type( "dbUser"  , user));
+  defaultStringValues.insert( Properties::value_type( "dbPasswd", pass));
+  defaultStringValues.insert( Properties::value_type( "dbSchema", database));
+  defaultStringValues.insert( Properties::value_type( "filter"  , ""));
+
 
   std::map<String, bool> defaultBoolValues;
 

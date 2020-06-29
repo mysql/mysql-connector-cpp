@@ -397,10 +397,19 @@ endif()
 
 endif(BUNDLE_DEPENDENCIES)
 
-add_config_option(WITH_JDBC_TESTS BOOL DEFAULT OFF
-  "Build JDBC Unit tests"
-)
+if(WITH_TESTS)
 
+  if(NOT BUILD_SHARED_LIBS)
+    set_property(
+      DIRECTORY .
+      APPEND PROPERTY COMPILE_DEFINITIONS
+      CPPCONN_LIB_BUILD
+      )
+  endif()
+
+  add_subdirectory(test)
+  add_subdirectory(examples)
+endif()
 
 if(jdbc_stand_alone)
   show_config_options()

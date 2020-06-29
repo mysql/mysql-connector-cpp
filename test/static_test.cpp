@@ -31,7 +31,7 @@
 
 
 
-#include "driver/mysql_public_iface.h"
+#include <jdbc.h>
 #include <string>
 
 int loops = 2;
