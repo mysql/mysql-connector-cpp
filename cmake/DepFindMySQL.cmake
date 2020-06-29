@@ -486,15 +486,21 @@ function(bundle_dependencies)
       file(GLOB_RECURSE depepdency_path
         "${MYSQL_PLUGIN_DIR}/*${lib_name}*"
         "${MYSQL_LIB_DIR}/*${lib_name}*"
-        "${MYSQL_LIB_DIR}/private/*${lib_name}*"
         )
 
       if(depepdency_path)
         message("DEPENDENCY_PATH: ${depepdency_path}")
-        install(FILES ${depepdency_path}
-          DESTINATION "${INSTALL_LIB_DIR}/private"
-          COMPONENT ClientDlls
-          )
+        if(WIN32)
+          install(FILES ${depepdency_path}
+            DESTINATION "${INSTALL_LIB_DIR}/plugin"
+            COMPONENT ClientDlls
+            )
+        else()
+          install(FILES ${depepdency_path}
+            DESTINATION "${INSTALL_LIB_DIR}/private"
+            COMPONENT ClientDlls
+            )
+        endif()
 
       endif()
       unset(depepdency_path CACHE)
