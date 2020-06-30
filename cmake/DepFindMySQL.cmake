@@ -474,7 +474,7 @@ function(bundle_dependencies)
 
     install(FILES ${CLIENT_PLUGINS}
       DESTINATION "${INSTALL_LIB_DIR}/plugin"
-      COMPONENT ClientDlls
+      COMPONENT ClientDll
       )
 
     # List of libraries needed to bundle with plugins
@@ -482,25 +482,36 @@ function(bundle_dependencies)
 
     message("PLUGINS_DEPENDENCIES: ${dep_list}")
     foreach(lib_name ${dep_list})
-      message("DEPENDENCY: ${_lib}")
-      file(GLOB_RECURSE depepdency_path
+
+      message("DEPENDENCY: ${lib_name}")
+
+      file(GLOB_RECURSE depepdencies_path
         "${MYSQL_PLUGIN_DIR}/*${lib_name}*"
         "${MYSQL_LIB_DIR}/*${lib_name}*"
         )
 
-      if(depepdency_path)
-        message("DEPENDENCY_PATH: ${depepdency_path}")
-        if(WIN32)
-          install(FILES ${depepdency_path}
-            DESTINATION "${INSTALL_LIB_DIR}/plugin"
-            COMPONENT ClientDlls
-            )
-        else()
-          install(FILES ${depepdency_path}
-            DESTINATION "${INSTALL_LIB_DIR}/private"
-            COMPONENT ClientDlls
-            )
-        endif()
+      if(depepdencies_path)
+        message("DEPENDENCIES PATHS: ${depepdencies_path}")
+        foreach(lib_path ${depepdencies_path})
+          message("DEPENDENCY PATH: ${lib_path}")
+          #auth plugins are also found using sasl keyword
+          #skip them
+          if(lib_path MATCHES ".*authentication.*")
+            message("SKIP")
+            continue()
+          endif()
+          if(WIN32)
+            install(FILES ${lib_path}
+              DESTINATION "${INSTALL_LIB_DIR}/plugin"
+              COMPONENT ClientDll
+              )
+          else()
+            install(FILES ${lib_path}
+              DESTINATION "${INSTALL_LIB_DIR}/private"
+              COMPONENT ClientDll
+              )
+          endif()
+        endforeach()
 
       endif()
       unset(depepdency_path CACHE)
