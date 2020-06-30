@@ -396,7 +396,7 @@ if(MYSQL_EXTERNAL_DEPENDENCIES)
         COMPONENT JDBCDll
       )
 
-    foreach(lib_path _bundled1 _bundled2)
+    foreach(lib_path _bundled1 _bundled2 )
       #For OSX, ssl and crypto libraries links need to be on plugin fulder
       if(APPLE AND IS_SYMLINK lib_path AND MATCHES ".*((ssl)|(crypto).*"))
         install(FILES ${lib}
