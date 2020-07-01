@@ -322,10 +322,6 @@ function(main)
   # Stores result in MYSQL_EXTERNAL_DEPENDENCIES.
   #
 
-  if(BUNDLE_DEPENDENCIES)
-    bundle_dependencies()
-  endif()
-
   get_dependencies()
 
   message("  version: ${MYSQL_VERSION}")
@@ -455,72 +451,6 @@ function(get_dependencies)
 
 endfunction(get_dependencies)
 
-
-##################################################################
-
-
-function(bundle_dependencies)
-  # Get client side plugins and its dependencies
-
-  message("MYSQL_PLUGIN_DIR: ${MYSQL_PLUGIN_DIR}")
-
-  file(GLOB CLIENT_PLUGINS
-    "${MYSQL_PLUGIN_DIR}/*_client.*"
-    )
-
-  message("CLIENT_PLUGINS: ${CLIENT_PLUGINS}")
-
-  if(CLIENT_PLUGINS)
-
-    install(FILES ${CLIENT_PLUGINS}
-      DESTINATION "${INSTALL_LIB_DIR}/plugin"
-      COMPONENT ClientDll
-      )
-
-    # List of libraries needed to bundle with plugins
-    SET(dep_list "com_err" "gssapi_krb5" "k5crypto" "krb5" "krb5support" "sasl")
-
-    message("PLUGINS_DEPENDENCIES: ${dep_list}")
-    foreach(lib_name ${dep_list})
-
-      message("DEPENDENCY: ${lib_name}")
-
-      file(GLOB_RECURSE depepdencies_path
-        "${MYSQL_PLUGIN_DIR}/*${lib_name}*"
-        "${MYSQL_LIB_DIR}/*${lib_name}*"
-        )
-
-      if(depepdencies_path)
-        message("DEPENDENCIES PATHS: ${depepdencies_path}")
-        foreach(lib_path ${depepdencies_path})
-          message("DEPENDENCY PATH: ${lib_path}")
-          #auth plugins are also found using sasl keyword
-          #skip them
-          if(lib_path MATCHES ".*authentication.*")
-            message("SKIP")
-            continue()
-          endif()
-          if(WIN32)
-            install(FILES ${lib_path}
-              DESTINATION "${INSTALL_LIB_DIR}/plugin"
-              COMPONENT ClientDll
-              )
-          else()
-            install(FILES ${lib_path}
-              DESTINATION "${INSTALL_LIB_DIR}/private"
-              COMPONENT ClientDll
-              )
-          endif()
-        endforeach()
-
-      endif()
-      unset(depepdency_path CACHE)
-
-    endforeach()
-
-  endif()
-
-endfunction(bundle_dependencies)
 
 ##################################################################
 
