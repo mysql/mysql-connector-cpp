@@ -66,6 +66,7 @@ int main(int argc, const char **argv)
   const char* mysql_user = getenv("MYSQL_USER");
   const char* mysql_password = getenv("MYSQL_PASSWORD");
   const char* ldap_user = getenv("LDAP_USER");
+  const char* ldap_user_dn = getenv("LDAP_USER_DN");
   const char* ldap_simple_pwd = getenv("LDAP_SIMPLE_PWD");
   const char* ldap_scram_pwd = getenv("LDAP_SCRAM_PWD");
   const char* plugin_dir = getenv("PLUGIN_DIR");
@@ -225,6 +226,37 @@ int main(int argc, const char **argv)
     cout << "#" << endl;
     cout << "#\t Demo of connection URL syntax" << endl;
 
+    //Lets first create ldap and sasl users
+    if(ldap_user || ldap_user_dn)
+    {
+      if(ldap_user_dn)
+      {
+        stringstream user_create;
+        stmt.reset(con->createStatement());
+        user_create << "CREATE USER ldap_simple IDENTIFIED WITH "
+                       "authentication_ldap_simple AS \""
+                    << ldap_user_dn
+                    << "\"";
+        try{
+        stmt->execute(user_create.str());
+        }catch(...)
+        {}
+      }
+
+      if(ldap_user)
+      {
+        stringstream user_create;
+        stmt.reset(con->createStatement());
+        user_create << "CREATE USER "
+                    << ldap_user
+                    << "@'%' IDENTIFIED WITH authentication_ldap_sasl";
+        try{
+        stmt->execute(user_create.str());
+        }catch(...)
+        {}
+      }
+    }
+
     if(ldap_simple_pwd)
     {
       //AUTH USING SASL client side plugin
@@ -234,9 +266,10 @@ int main(int argc, const char **argv)
          plugin
         */
 
+
+
         sql::ConnectOptionsMap opts;
         opts[OPT_HOSTNAME] = url;
-        // We expect ldap_simple is the mysql user
         opts[OPT_USERNAME] = "ldap_simple";
         opts[OPT_PASSWORD] = ldap_simple_pwd;
 
@@ -294,7 +327,7 @@ int main(int argc, const char **argv)
         con->close();
 
       } catch (sql::SQLException &e) {
-        cout << "#\t\t " << url << " caused expected exception when connecting using "<< user << endl;
+        cout << "#\t\t " << url << " caused expected exception when connecting using "<< ldap_user << endl;
         cout << "#\t\t " << e.what() << " (MySQL error code: " << e.getErrorCode();
         cout << ", SQLState: " << e.getSQLState() << " )" << endl;
         throw;
