@@ -152,6 +152,11 @@ function(main)
     FORCE
   )
 
+  set(MYSQL_PLUGIN_DIR "${MYSQL_PLUGIN_DIR}"
+    CACHE PATH "Path to MYSQL plugin libraries (computed)."
+    FORCE
+  )
+
 
   #
   # Searching for library.

@@ -410,7 +410,7 @@ if(BUNDLE_DEPENDENCIES)
 
   endforeach()
 
-  file(GLOB _bundled "${MYSQL_LIB_DIR}/plugin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+  file(GLOB _bundled "${MYSQL_PLUGIN_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
   foreach(lib ${_bundled})
 
