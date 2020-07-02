@@ -106,7 +106,6 @@ int main(int argc, const char **argv)
     pass = mysql_password;
   }
 
-
   /* sql::ResultSet.rowsCount() returns size_t */
   size_t row;
   stringstream sql;
@@ -124,8 +123,6 @@ int main(int argc, const char **argv)
 
   try {
     sql::Driver * driver = sql::mysql::get_driver_instance();
-
-
 
     /* Using the Driver to create a connection */
     boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
@@ -249,7 +246,7 @@ int main(int argc, const char **argv)
         stmt.reset(con->createStatement());
         user_create << "CREATE USER "
                     << ldap_user
-                    << "@'%' IDENTIFIED WITH authentication_ldap_sasl";
+                    << " IDENTIFIED WITH authentication_ldap_sasl";
         try{
         stmt->execute(user_create.str());
         }catch(...)
@@ -266,13 +263,10 @@ int main(int argc, const char **argv)
          plugin
         */
 
-
-
         sql::ConnectOptionsMap opts;
         opts[OPT_HOSTNAME] = url;
         opts[OPT_USERNAME] = "ldap_simple";
         opts[OPT_PASSWORD] = ldap_simple_pwd;
-
 
         opts[OPT_ENABLE_CLEARTEXT_PLUGIN] = true;
 
