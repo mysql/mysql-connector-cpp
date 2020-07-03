@@ -397,7 +397,8 @@ if(BUNDLE_DEPENDENCIES)
 
     get_filename_component(lib_name ${lib} NAME_WE)
 
-    if(NOT lib_name MATCHES "mysql|protobuf|lber|ldap_r")
+    # ssl|crypto are bundled on cdk/cmake/DepFindSSL.cmake
+    if(NOT lib_name MATCHES "mysql|protobuf|lber|ldap_r|ssl|crypto")
 
     message("found bundled libs: ${lib}")
 
