@@ -3003,6 +3003,14 @@ TEST_F(xapi, compression_algorithms)
     {"ZSTD_STREAM", "ZsTd","zStD_sTReaM","lz4","DEFLATE"},
   };
 
+   //Reading the value of mysqlx_compression_algorithms at the beginning
+   mysqlx_result_t *res = exec_sql("SHOW GLOBAL VARIABLES LIKE 'mysqlx_compression_algorithms';");
+   mysqlx_row_t *row=mysqlx_row_fetch_one(res);
+   char buffer[50];
+   size_t buflen = sizeof(buffer);
+   mysqlx_get_bytes(row, 1, 0, buffer, &buflen);
+   std::string var_value=buffer;
+   mysqlx_result_free(res);
 
   //By Default, it should use ZTSD compression
 
@@ -3344,6 +3352,31 @@ TEST_F(xapi, compression_algorithms)
     EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
     mysqlx_free(opt);
 
+    //In these cases, algorithm set on the server side is different from the algorithms in connection
+    //and compression is REQUIRED, no session should be created
+
+    std::string qry = "Set global mysqlx_compression_algorithms=" + d.expected + ";";
+    exec_sql(qry.c_str());
+    tmp = std::string(d.second) + "," + d.third;
+
+    opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_COMPRESSION(MYSQLX_COMPRESSION_REQUIRED),
+                                                   OPT_COMPRESSION_ALGORITHMS(tmp.c_str()),
+                                                   PARAM_END));
+     EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, & error));
+     mysqlx_free(opt);
+
+     tmp = uri + "compression=required&compression-algorithms=[" + d.second + "," + d.third + "]";
+     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), & error));
+
+     //Restoring to the original value of mysqlx_compression_algorithms
+     qry ="Set global mysqlx_compression_algorithms='"+var_value+"';";
+     exec_sql(qry.c_str());
 
     std::cout << d.expected << ": " <<
                  std::chrono::duration_cast<std::chrono::milliseconds>(

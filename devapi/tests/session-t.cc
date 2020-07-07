@@ -3078,6 +3078,10 @@ TEST_F(Sess, compression_algorithms)
     {"ZSTD_STREAM", "ZsTd","zStD_sTReaM","lz4","DEFLATE"},
   };
 
+  //Reading the value of mysqlx_compression_algorithms at the beginning
+  SqlResult res = sql("SHOW GLOBAL VARIABLES LIKE 'mysqlx_compression_algorithms';");
+  Row row = res.fetchOne();
+  std::string Val = row[1].get<std::string>();
 
   //By Default, it should use ZTSD compression
 
@@ -3382,6 +3386,29 @@ TEST_F(Sess, compression_algorithms)
                             SessionOption::COMPRESSION_ALGORITHMS, algorithms),
             Error);
     }
+
+    //In these cases, algorithm set on the server side is different from the algorithms in connection
+    //and compression is REQUIRED, an error should be thrown
+
+    {
+      std::string query ="Set global mysqlx_compression_algorithms="+d.expected+";";
+      sql(query);
+      std::list<string> algorithms = {d.second,d.third};
+      EXPECT_THROW(
+            mysqlx::Session(SessionOption::HOST, get_host(),
+                            SessionOption::PORT, get_port(),
+                            SessionOption::USER, get_user(),
+                            SessionOption::PWD, get_password(),
+                            SessionOption::COMPRESSION, CompressionMode::REQUIRED,
+                            SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+            Error);
+    }
+
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=["+ d.second + "," + d.third +"]"), Error);
+
+    //Restoring to the original value of mysqlx_compression_algorithms 
+    std::string query ="Set global mysqlx_compression_algorithms='"+Val+"';";
+    sql(query);
 
     std::cout << d.expected << ": " <<
                  std::chrono::duration_cast<std::chrono::milliseconds>(
