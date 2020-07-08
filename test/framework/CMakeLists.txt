@@ -85,4 +85,6 @@ SET_TARGET_PROPERTIES(test_framework PROPERTIES
           LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV}"
           COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
 
+target_link_libraries(test_framework PUBLIC Boost::boost)
+
 MESSAGE(STATUS "Configuring tests framework lib")

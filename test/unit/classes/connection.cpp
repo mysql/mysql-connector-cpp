@@ -2848,8 +2848,8 @@ void connection::localInfile()
       cmd << "rm -rf " << m_path;
 #endif
       std::cout << "CLEANING-UP..." << std::endl
-        << "EXECUTING SYSTEM COMMAND: " << cmd.str() << std::endl;
-      std::system(cmd.str().c_str());
+        << "EXECUTING SYSTEM COMMAND: " << cmd.str() << " [result:"
+        << std::system(cmd.str().c_str()) << "]" << std::endl;
     }
 
     dataDir(std::string path, bool is_hidden = false) : dataObject(path)

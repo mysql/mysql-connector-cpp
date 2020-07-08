@@ -40,7 +40,7 @@
 
 namespace sql
 {
-  class CPPCONN_PUBLIC_FUNC SQLString
+  class SQLString
   {
 #ifdef _WIN32
 #pragma warning(push)

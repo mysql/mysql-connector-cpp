@@ -230,7 +230,7 @@ IF(MYSQLCPPCONN_BUILD_EXAMPLES)
             ${MYSQLCPPCONN_BOOST_SYSTEM_LIBS}
             ${MYSQLCPPCONN_BOOST_THREAD_LIBS} ${MYSQLCPPCONN_ICU_LIBRARY})
 
-    ADD_TEST(NAME sjdbc_statement COMMAND statement)
+    ADD_TEST(NAME jdbc_statement COMMAND statement)
 
 
     ADD_EXECUTABLE(dynamic_load dynamic_load.cpp)

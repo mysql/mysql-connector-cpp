@@ -398,6 +398,15 @@ endif()
 endif(BUNDLE_DEPENDENCIES)
 
 if(WITH_TESTS)
+
+  if(NOT BUILD_SHARED_LIBS)
+    set_property(
+      DIRECTORY .
+      APPEND PROPERTY COMPILE_DEFINITIONS
+      CPPCONN_LIB_BUILD
+      )
+  endif()
+
   add_subdirectory(test)
   add_subdirectory(examples)
 endif()
