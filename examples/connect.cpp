@@ -65,6 +65,11 @@ int main(int argc, const char **argv)
   const char* mysql_port = getenv("MYSQL_PORT");
   const char* mysql_user = getenv("MYSQL_USER");
   const char* mysql_password = getenv("MYSQL_PASSWORD");
+  const char* ldap_user = getenv("LDAP_USER");
+  const char* ldap_user_dn = getenv("LDAP_USER_DN");
+  const char* ldap_simple_pwd = getenv("LDAP_SIMPLE_PWD");
+  const char* ldap_scram_pwd = getenv("LDAP_SCRAM_PWD");
+  const char* plugin_dir = getenv("PLUGIN_DIR");
 
   string url(EXAMPLE_HOST);
   string user(EXAMPLE_USER);
@@ -101,7 +106,6 @@ int main(int argc, const char **argv)
     pass = mysql_password;
   }
 
-
   /* sql::ResultSet.rowsCount() returns size_t */
   size_t row;
   stringstream sql;
@@ -119,8 +123,6 @@ int main(int argc, const char **argv)
 
   try {
     sql::Driver * driver = sql::mysql::get_driver_instance();
-
-
 
     /* Using the Driver to create a connection */
     boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
@@ -220,6 +222,113 @@ int main(int argc, const char **argv)
 
     cout << "#" << endl;
     cout << "#\t Demo of connection URL syntax" << endl;
+
+    //Lets first create ldap and sasl users
+    if(ldap_user || ldap_user_dn)
+    {
+      if(ldap_user_dn)
+      {
+        stringstream user_create;
+        stmt.reset(con->createStatement());
+        user_create << "CREATE USER ldap_simple IDENTIFIED WITH "
+                       "authentication_ldap_simple AS \""
+                    << ldap_user_dn
+                    << "\"";
+        try{
+        stmt->execute(user_create.str());
+        }catch(...)
+        {}
+      }
+
+      if(ldap_user)
+      {
+        stringstream user_create;
+        stmt.reset(con->createStatement());
+        user_create << "CREATE USER "
+                    << ldap_user
+                    << " IDENTIFIED WITH authentication_ldap_sasl";
+        try{
+        stmt->execute(user_create.str());
+        }catch(...)
+        {}
+      }
+    }
+
+    if(ldap_simple_pwd)
+    {
+      //AUTH USING SASL client side plugin
+      try {
+        /*
+         When using ldap simple authentication, we need to enable cleartext
+         plugin
+        */
+
+        sql::ConnectOptionsMap opts;
+        opts[OPT_HOSTNAME] = url;
+        opts[OPT_USERNAME] = "ldap_simple";
+        opts[OPT_PASSWORD] = ldap_simple_pwd;
+
+        opts[OPT_ENABLE_CLEARTEXT_PLUGIN] = true;
+
+        con.reset(driver->connect(opts));
+
+        auto *stmt = con->createStatement();
+        auto  *res = stmt->executeQuery("select 'Hello Simple LDAP'");
+
+        res->next();
+
+        std::cout << res->getString(1) << std::endl;
+
+        con->close();
+
+      } catch (sql::SQLException &e) {
+        cout << "#\t\t " << url << " caused expected exception when connecting using ldap_simple" << endl;
+        cout << "#\t\t " << e.what() << " (MySQL error code: " << e.getErrorCode();
+        cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+        throw;
+      }
+    }
+
+    if(ldap_user && ldap_scram_pwd)
+    {
+      //AUTH USING SASL client side plugin
+      try {
+        /*
+         When using client side plugins (this case for SCRAM-SHA1 SASL
+         authentication, plugin_dir might have to be set (if not using default
+         location)
+        */
+
+        sql::ConnectOptionsMap opts;
+        opts[OPT_HOSTNAME] = url;
+        opts[OPT_USERNAME] = ldap_user;
+        opts[OPT_PASSWORD] = ldap_scram_pwd;
+
+        if(plugin_dir)
+        {
+          opts[OPT_PLUGIN_DIR] = plugin_dir;
+        }
+
+        con.reset(driver->connect(opts));
+
+        auto *stmt = con->createStatement();
+        auto  *res = stmt->executeQuery("select 'Hello SASL'");
+
+        res->next();
+
+        std::cout << res->getString(1) << std::endl;
+
+        con->close();
+
+      } catch (sql::SQLException &e) {
+        cout << "#\t\t " << url << " caused expected exception when connecting using "<< ldap_user << endl;
+        cout << "#\t\t " << e.what() << " (MySQL error code: " << e.getErrorCode();
+        cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+        throw;
+      }
+    }
+
+
     try {
       /*s This will implicitly assume that the host is 'localhost' */
       url = "unix://path_to_mysql_socket.sock";

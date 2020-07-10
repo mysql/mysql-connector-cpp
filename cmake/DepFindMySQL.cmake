@@ -44,6 +44,7 @@
 #  MYSQL_VERSION, MYSQL_VERSION_ID
 #  MYSQL_INCLUDE_DIR
 #  MYSQL_LIB_DIR
+#  MYSQL_PLUGIN_DIR
 #  MYSQL_EXTERNAL_DEPENDENCIES
 #
 ##########################################################################
@@ -59,6 +60,7 @@ add_config_option(WITH_MYSQL PATH
 
 add_config_option(MYSQL_INCLUDE_DIR PATH ADVANCED "Path to MYSQL headers.")
 add_config_option(MYSQL_LIB_DIR PATH ADVANCED "Path to MYSQL libraries.")
+add_config_option(MYSQL_PLUGIN_DIR PATH ADVANCED "Path to MYSQL plugin libraries.")
 
 
 function(main)
@@ -119,6 +121,10 @@ function(main)
         set(MYSQL_LIB_DIR "${MYSQL_DIR}/lib")
       endif()
 
+      if(NOT DEFINED MYSQL_PLUGIN_DIR AND MYSQL_LIB_DIR)
+        set(MYSQL_PLUGIN_DIR "${MYSQL_LIB_DIR}/plugin")
+      endif()
+
     endif()
 
   endif(MYSQL_CONFIG_EXECUTABLE)
@@ -143,6 +149,11 @@ function(main)
 
   set(MYSQL_LIB_DIR "${MYSQL_LIB_DIR}"
     CACHE PATH "Path to MYSQL libraries (computed)."
+    FORCE
+  )
+
+  set(MYSQL_PLUGIN_DIR "${MYSQL_PLUGIN_DIR}"
+    CACHE PATH "Path to MYSQL plugin libraries (computed)."
     FORCE
   )
 
@@ -460,12 +471,15 @@ function(use_mysql_config)
 
   _mysql_conf(MYSQL_INCLUDE_DIR --variable=pkgincludedir)
   _mysql_conf(MYSQL_LIB_DIR     --variable=pkglibdir)
+  _mysql_conf(MYSQL_PLUGIN_DIR     --variable=plugindir)
 
   file(TO_CMAKE_PATH "${MYSQL_INCLUDE_DIR}" MYSQL_INCLUDE_DIR)
   file(TO_CMAKE_PATH "${MYSQL_LIB_DIR}" MYSQL_LIB_DIR)
+  file(TO_CMAKE_PATH "${MYSQL_PLUGIN_DIR}" MYSQL_PLUGIN_DIR)
 
   set(MYSQL_INCLUDE_DIR "${MYSQL_INCLUDE_DIR}" PARENT_SCOPE)
   set(MYSQL_LIB_DIR "${MYSQL_LIB_DIR}" PARENT_SCOPE)
+  set(MYSQL_PLUGIN_DIR "${MYSQL_PLUGIN_DIR}" PARENT_SCOPE)
 
   # client library version (note: it will be cleaned up in get_version())
 

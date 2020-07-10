@@ -265,6 +265,37 @@ set_target_properties(connector-jdbc
   VERSION   "${MYSQLCPPCONN_SOVERSION}.${CONNECTOR_NUMERIC_VERSION}"
 )
 
+#
+# Embed rpath information in the connector library.
+#
+
+set_property(TARGET connector-jdbc PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+
+# The $ORIGIN/@loader_path entry tells to look for dependent libraries in the
+# location where our connector library is stored.
+
+if(APPLE)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/../private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/../plugin")
+  else()
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "@loader_path/plugin")
+  endif()
+elseif(NOT WIN32)
+  set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/../private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/../plugin")
+  else()
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/private")
+    set_property(TARGET connector-jdbc APPEND PROPERTY INSTALL_RPATH "$ORIGIN/plugin")
+  endif()
+
+endif()
+
+
 
 install(TARGETS connector-jdbc
   CONFIGURATIONS Release RelWithDebInfo
@@ -346,56 +377,63 @@ endif()
 
 if(BUNDLE_DEPENDENCIES)
 
-message("looking for bundled client lib deps: ${MYSQL_EXTERNAL_DEPENDENCIES}")
+  message("looking for bundled client lib deps: ${MYSQL_EXTERNAL_DEPENDENCIES}")
 
-if(MYSQL_EXTERNAL_DEPENDENCIES)
+  #
+  # Note: Currently we simply copy all libraries bundled in the server installation
+  # filtering-out these that we know are not needed on the client side.
+  #
+  # More precise approach would be to get information about external dependencies
+  # from mysql_config and other sources and bundle only these libraries that we
+  # know are needed. But this is not implemented yet. Note also that dependencies
+  # reported by mysql_config in MYSQL_EXTERNAL_DEPENDENCIES do not include things
+  # like client-side plugins and their dependencies.
+  #
 
-  foreach(lib ${MYSQL_EXTERNAL_DEPENDENCIES})
+  file(GLOB _bundled1 "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+  file(GLOB _bundled2 "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
-    #message("-- looking for: ${MYSQL_LIB_DIR}/*${lib}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    file(GLOB _bundled1 "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    file(GLOB _bundled2 "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+  foreach(lib IN LISTS _bundled1 _bundled2)
 
-    if(_bundled1 OR _bundled2)
+    get_filename_component(lib_name ${lib} NAME_WE)
 
-      message("found bundled libs: ${_bundled1} ${_bundled2}")
+    # ssl|crypto are bundled on cdk/cmake/DepFindSSL.cmake
+    if(NOT lib_name MATCHES "mysql|protobuf|lber|ldap_r|ssl|crypto")
 
-      install(FILES ${_bundled1} ${_bundled2}
-        DESTINATION "${INSTALL_LIB_DIR}"
-        COMPONENT JDBCDll
-      )
+    message("found bundled libs: ${lib}")
+
+    install(FILES "${lib}"
+      DESTINATION "${INSTALL_LIB_DIR}/private"
+      COMPONENT JDBCDll
+    )
 
     endif()
 
   endforeach()
 
-else()
-
-  #
-  # If detection of external MySQL library dependencies did not work for
-  # some reason, copy known dependencies if they are bundled with
-  # MySQL. This list would need to be updated if new required dependencies
-  # appear.
-  #
-
-  file(GLOB _bundled "${MYSQL_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+  file(GLOB _bundled "${MYSQL_PLUGIN_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
   foreach(lib ${_bundled})
-    if(lib MATCHES "eay|ssl|crypto")
 
-      message("found bundled libs: ${lib}")
+    get_filename_component(lib_name ${lib} NAME_WE)
 
-      install(FILES "${lib}"
-        DESTINATION "${INSTALL_LIB_DIR}"
-        COMPONENT JDBCDll
-      )
+    if(
+      lib_name MATCHES "_client"
+      AND NOT lib_name MATCHES "qa_auth_client"
+    )
+
+    message("found client plugin: ${lib}")
+
+    install(FILES "${lib}"
+      DESTINATION "${INSTALL_LIB_DIR}/plugin"
+      COMPONENT JDBCDll
+    )
 
     endif()
   endforeach()
 
-endif()
-
 endif(BUNDLE_DEPENDENCIES)
+
 
 if(WITH_TESTS)
 
