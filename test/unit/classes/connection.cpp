@@ -3200,6 +3200,35 @@ void connection::cached_sha2_auth()
   stmt->execute("DROP USER 'doomuser'@'%';");
 }
 
+void connection::socket()
+{
+  logMsg("connection::socket - connection using unix socket");
+
+  const char* socket = getenv("MYSQL_SOCKET");
+  if(socket)
+  {
+    sql::ConnectOptionsMap connection_properties;
+
+    connection_properties[OPT_SOCKET]=socket;
+    connection_properties[OPT_USERNAME]=user;
+    connection_properties[OPT_PASSWORD]=passwd;
+
+    con.reset(driver->connect(connection_properties));
+    if(!con)
+      FAIL("Couldn connect using socket on connection properties");
+
+    std::stringstream uri;
+
+    uri << "unix://" << socket;
+
+    con.reset(driver->connect(uri.str(), user, passwd));
+    if(!con)
+      FAIL("Couldn connect using socket on connection properties");
+
+    con.reset(getConnection());
+  }
+
+}
 
 } /* namespace connection */
 } /* namespace testsuite */

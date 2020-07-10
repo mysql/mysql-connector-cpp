@@ -576,6 +576,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   intern->is_valid = true;
 
   MySQL_Uri uri;
+  MySQL_Uri::Host_data host;
+
 
   sql::SQLString userName;
   sql::SQLString password;
@@ -654,7 +656,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException("Wrong type passed for port expected int");
       }
       if (p_i) {
-        uri.setPort(static_cast<unsigned int>(*p_i));
+        for(auto &h : uri)
+        {
+          h.setPort(*p_i);
+        }
       } else {
         throw sql::InvalidArgumentException("No long long value passed for port");
       }
@@ -665,7 +670,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException("Wrong type passed for socket expected sql::SQLString");
       }
       if (p_s) {
-        uri.setSocket(*p_s);
+        host.setSocket(*p_s);
+        uri.setHost(host);
       } else {
         throw sql::InvalidArgumentException("No string value passed for socket");
       }
@@ -676,7 +682,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException("Wrong type passed for pipe expected sql::SQLString");
       }
       if (p_s) {
-        uri.setPipe(*p_s);
+        host.setPipe(*p_s);
+        uri.setHost(host);
       } else {
         throw sql::InvalidArgumentException("No string value passed for pipe");
       }
@@ -868,7 +875,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       defaultCharset = *p_s;
     } else if (!it->first.compare(OPT_NAMED_PIPE)) {
       /* Not sure it is really needed */
-      uri.setProtocol(NativeAPI::PROTOCOL_PIPE);
+      host.setProtocol(NativeAPI::PROTOCOL_PIPE);
+      uri.setHost(host);
     } else if (!it->first.compare(OPT_CAN_HANDLE_EXPIRED_PASSWORDS)) {
       try {
         p_b = (it->second).get<bool>();
@@ -987,18 +995,21 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
 #undef PROCESS_CONNSTR_OPTION
 
-// Throwing in case of wrong protocol
+  for(auto h : uri)
+  {
+
+    // Throwing in case of wrong protocol
 #ifdef _WIN32
-  if (uri.Protocol() == NativeAPI::PROTOCOL_SOCKET) {
-    throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_SOCKET)");
-  }
+    if (h.Protocol() == NativeAPI::PROTOCOL_SOCKET) {
+      throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_SOCKET)");
+    }
 #else
-  if (uri.Protocol() == NativeAPI::PROTOCOL_PIPE) {
-    throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_PIPE)");
-  }
+    if (h.Protocol() == NativeAPI::PROTOCOL_PIPE) {
+      throw sql::InvalidArgumentException("Invalid for this platform protocol requested(MYSQL_PROTOCOL_PIPE)");
+    }
 #endif
 
-
+  }
 
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
   try {
@@ -1100,26 +1111,36 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   if(opt_dns_srv)
   {
-    if(uri.Protocol() != NativeAPI::PROTOCOL_TCP)
+    if(uri.size() > 1)
+    {
+      throw sql::InvalidArgumentException("Using more than one host with DNS SRV lookup is not allowed.");
+    }
+
+    if(uri.size() ==0)
+    {
+      throw sql::InvalidArgumentException("No hostname specified for DNS SRV lookup.");
+    }
+
+    host = *uri.begin();
+
+    if(host.Protocol() != NativeAPI::PROTOCOL_TCP)
     {
       throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
     }
 
-    if(uri.hasPort())
+    if(host.hasPort())
     {
       throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
     }
 
-    host_list = srv_list(uri.Host(),total_weight);
+    host_list = srv_list(host.Host(),total_weight);
 
     if(host_list.empty())
     {
       std::stringstream err;
-      err << "Unable to locate any hosts for " << uri.Host();
+      err << "Unable to locate any hosts for " << host.Host();
       throw sql::InvalidArgumentException(err.str());
     }
-
-
 
   }
   else
@@ -1127,6 +1148,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     for(auto host : uri)
     {
       host_list.insert(std::make_pair(Prio({0, 0}), host));
+    }
+    if(host_list.empty())
+    {
+      //Adding default host
+      host_list.insert(std::make_pair(Prio({0, 0}), Host_data()));
     }
   }
 
@@ -1140,7 +1166,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       auto same_range = host_list.equal_range(host_list.begin()->first);
       std::vector<Host_data*> same_prio;
       std::vector<uint16_t> weights;
-
 
 
       for(auto it = same_range.first; it != same_range.second; ++it)
@@ -1167,14 +1192,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           std::advance(weight_el, pos);
         }
 
-        proxy->use_protocol(uri.Protocol());
+        proxy->use_protocol((*el)->Protocol());
 
         try {
-          connect((*el)->name, userName,
+          connect((*el)->Host(), userName,
                   password,
                   uri.Schema() /* schema */,
-                  (*el)->port,
-                  uri.SocketOrPipe());
+                  (*el)->Port(),
+                  (*el)->SocketOrPipe());
           connected = true;
           break;
         }
@@ -1213,12 +1238,21 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     {
       std::stringstream err;
       if(opt_dns_srv)
-        err << "Unable to connect to any of the hosts of " << uri.Host() << " SRV";
+        err << "Unable to connect to any of the hosts of " << host.Host() << " SRV";
       else if (uri.size() >1) {
         err << "Unable to connect to any of the hosts";
       }
       else {
-        err << "Unable to connect to " << uri.Host() << ":" << uri.Port();
+        switch(host.Protocol())
+        {
+        case NativeAPI::PROTOCOL_SOCKET:
+        case NativeAPI::PROTOCOL_PIPE:
+          err << "Unable to connect to " << host.SocketOrPipe() ;
+          break;
+        default:
+          err << "Unable to connect to " << host.Host() << ":" << host.Port();
+          break;
+        }
       }
       proxy.reset();
       throw sql::InvalidArgumentException(err.str());

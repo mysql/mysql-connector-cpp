@@ -61,30 +61,38 @@ void uri::tcp()
   conn_string= "tcp://192.168.1.102:3306/t1";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT(tcpProtocol(*_uri));
+  for(auto host : *_uri)
+  {
+    ASSERT(tcpProtocol(host));
 
-  ASSERT_EQUALS("192.168.1.102", _uri->Host());
-  ASSERT_EQUALS(3306, _uri->Port());
+    ASSERT_EQUALS("192.168.1.102", host.Host());
+    ASSERT_EQUALS(3306, host.Port());
+  }
   ASSERT_EQUALS("t1", _uri->Schema());
 
   conn_string= "tcp://192.168.1.101:3307";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT(tcpProtocol(*_uri));
+  for(auto host : *_uri)
+  {
+    ASSERT(tcpProtocol(host));
 
-  ASSERT_EQUALS("192.168.1.101", _uri->Host());
-  ASSERT_EQUALS(3307, _uri->Port());
+    ASSERT_EQUALS("192.168.1.101", host.Host());
+    ASSERT_EQUALS(3307, host.Port());
+  }
   ASSERT_EQUALS("", _uri->Schema());
 
   conn_string= "192.168.1.102/t2";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT(tcpProtocol(*_uri));
+  for(auto host : *_uri)
+  {
+    ASSERT(tcpProtocol(host));
 
-  ASSERT_EQUALS("192.168.1.102", _uri->Host());
-  ASSERT_EQUALS(3306, _uri->Port());
+    ASSERT_EQUALS("192.168.1.102", host.Host());
+    ASSERT_EQUALS(3306, host.Port());
+  }
   ASSERT_EQUALS("t2", _uri->Schema());
-
 
 }
 
@@ -94,20 +102,28 @@ void uri::tcpIpV6()
   conn_string= "[2001:db8:0:f101::1]";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
+  int i=0;
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, host.Protocol());
 
-  ASSERT_EQUALS("2001:db8:0:f101::1", _uri->Host());
-  ASSERT_EQUALS(3306, _uri->Port());
+    ASSERT_EQUALS("2001:db8:0:f101::1", host.Host());
+    ASSERT_EQUALS(3306, host.Port());
+    ++i;
+  }
+  ASSERT_EQUALS(i, 1);
   ASSERT_EQUALS("", _uri->Schema());
 
   conn_string= "tcp://[2001:db8:0:f101::2]:3307/test";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, host.Protocol());
 
-  ASSERT_EQUALS("2001:db8:0:f101::2", _uri->Host());
-  ASSERT_EQUALS(3307, _uri->Port());
-
+    ASSERT_EQUALS("2001:db8:0:f101::2", host.Host());
+    ASSERT_EQUALS(3307, host.Port());
+  }
   ASSERT_EQUALS("test", _uri->Schema());
 }
 
@@ -117,12 +133,18 @@ void uri::socket()
   conn_string= "unix:///tmp/mysql.socket";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_SOCKET, _uri->Protocol());
+  int i=0;
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_SOCKET, host.Protocol());
 
-  ASSERT_EQUALS("localhost", _uri->Host());
-  ASSERT_EQUALS("/tmp/mysql.socket", _uri->SocketOrPipe());
-  // We do not care about port in this case
-  //ASSERT_EQUALS(0, _uri->Port());
+    ASSERT_EQUALS("localhost", host.Host());
+    ASSERT_EQUALS("/tmp/mysql.socket", host.SocketOrPipe());
+    // We do not care about port in this case
+    //ASSERT_EQUALS(0, _uri->Port());
+    ++i;
+  }
+  ASSERT_EQUALS(i, 1);
 }
 
 
@@ -131,55 +153,84 @@ void uri::pipe()
   conn_string= "pipe://MySQL";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_PIPE, _uri->Protocol());
+  int i=0;
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_PIPE, host.Protocol());
 
-  ASSERT_EQUALS(".", _uri->Host());
-  ASSERT_EQUALS("MySQL", _uri->SocketOrPipe());
-  // We do not care about port in this case
-  //ASSERT_EQUALS(0, _uri->Port());
+    ASSERT_EQUALS(".", host.Host());
+    ASSERT_EQUALS("MySQL", host.SocketOrPipe());
+    // We do not care about port in this case
+    //ASSERT_EQUALS(0, _uri->Port());
+    ++i;
+  }
+  ASSERT_EQUALS(i, 1);
 }
 
 void uri::failover()
 {
-  conn_string= "[2001:db8:0:f101::1],localhost:3306,[::1]:13000";
+  conn_string= "[2001:db8:0:f101::1],localhost:3307,[::1]:13000";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
-
-  //First host of the list
-  ASSERT_EQUALS("2001:db8:0:f101::1", _uri->Host());
-  ASSERT_EQUALS(3306, _uri->Port());
+  int i=0;
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, host.Protocol());
+    switch(i)
+    {
+    case 0:
+      //First host of the list
+      ASSERT_EQUALS("2001:db8:0:f101::1", host.Host());
+      ASSERT_EQUALS(3306, host.Port());
+      break;
+    case 1:
+      //Second host of the list
+      ASSERT_EQUALS("localhost", host.Host());
+      ASSERT_EQUALS(3307, host.Port());
+      break;
+    case 2:
+      //Third host of the list
+      ASSERT_EQUALS("::1", host.Host());
+      ASSERT_EQUALS(13000, host.Port());
+      break;
+    }
+    ++i;
+  }
+  ASSERT_EQUALS(i,3);
   ASSERT_EQUALS("", _uri->Schema());
 
   conn_string= "tcp://[2001:db8:0:f101::2]:3307/test";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, _uri->Protocol());
+  for(auto host : *_uri)
+  {
+    ASSERT_EQUALS(::sql::mysql::NativeAPI::PROTOCOL_TCP, host.Protocol());
 
-  ASSERT_EQUALS("2001:db8:0:f101::2", _uri->Host());
-  ASSERT_EQUALS(3307, _uri->Port());
+    ASSERT_EQUALS("2001:db8:0:f101::2", host.Host());
+    ASSERT_EQUALS(3307, host.Port());
 
-  ASSERT_EQUALS("test", _uri->Schema());
+    ASSERT_EQUALS("test", _uri->Schema());
+  }
 
   conn_string= "[2001:db8:0:f101::2]:3307,localhost2:1,localhost3";
   ::sql::mysql::parseUri(conn_string, *_uri);
 
-  int i = 0;
+  i = 0;
   for(auto host : *_uri)
   {
     switch (i)
     {
       case 0:
-        ASSERT_EQUALS("2001:db8:0:f101::2", host.name);
-        ASSERT_EQUALS(3307, host.port);
+        ASSERT_EQUALS("2001:db8:0:f101::2", host.Host());
+        ASSERT_EQUALS(3307, host.Port());
         break;
       case 1:
-        ASSERT_EQUALS("localhost2", host.name);
-        ASSERT_EQUALS(1, host.port);
+        ASSERT_EQUALS("localhost2", host.Host());
+        ASSERT_EQUALS(1, host.Port());
         break;
       case 2:
-        ASSERT_EQUALS("localhost3", host.name);
-        ASSERT_EQUALS(3306, host.port);
+        ASSERT_EQUALS("localhost3", host.Host());
+        ASSERT_EQUALS(3306, host.Port());
         break;
       default:
         ASSERT(false);

@@ -49,17 +49,62 @@ public:
     Host_data(sql::SQLString name_, unsigned int port_ = 0)
       : name(name_)
       , port(port_)
+      , protocol(NativeAPI::PROTOCOL_TCP)
     {}
 
-    sql::SQLString  name;
-    uint16_t        port;
+    Host_data();
+
+
+    const SQLString & Host();
+    unsigned int                      Port();
+    const SQLString & SocketOrPipe();
+    inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+    bool hasPort() { return has_port; }
+
+    void setProtocol(NativeAPI::Protocol_Type p) { protocol= p; }
+    void setHost	(const sql::SQLString &h, uint16_t p)
+    {
+      setProtocol(NativeAPI::PROTOCOL_TCP);
+      name = h;
+      port = p;
+      has_port = true;
+    }
+    void setHost  (const sql::SQLString &host)
+    {
+      setProtocol(NativeAPI::PROTOCOL_TCP);
+      name = host;
+    }
+
+    void setSocket	(const sql::SQLString &s)
+    {
+      setProtocol(NativeAPI::PROTOCOL_SOCKET);
+      name = s;
+    }
+
+    void setPipe	(const sql::SQLString &p)
+    {
+     setProtocol(NativeAPI::PROTOCOL_PIPE);
+     name = p;
+    }
+
+    void setPort	(uint16_t p)
+    {
+      setProtocol(NativeAPI::PROTOCOL_TCP);
+      port = p;
+      has_port = true;
+    }
+
+
+  private:
+    sql::SQLString           name;
+    uint16_t                 port;
+    NativeAPI::Protocol_Type protocol;
+    bool                     has_port = false;
   };
 
   using Host_List=std::vector<Host_data>;
 
 private:
-  NativeAPI::Protocol_Type protocol;
-  uint16_t                 port;
 
   Host_List                host_list;
 
@@ -82,29 +127,27 @@ public:
   void clear() { host_list.clear(); }
 
   /*
-    return only first element for Host/Port
+    Add hosts to list
   */
-  const sql::SQLString &            Host();
-  unsigned int                      Port();
-  const sql::SQLString &            SocketOrPipe();
-  inline	const sql::SQLString &		Schema()	{return schema;}
-  inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+  void addHost(Host_data d)
+  {
+    host_list.push_back(d);
+  }
 
-  void addHost	(const sql::SQLString &host, unsigned int port);
-  void setHost  (const sql::SQLString &host);
-  void setSocket	(const sql::SQLString &s);
-  void setPipe	(const sql::SQLString &p);
-  void setPort	(uint16_t p);
+  void setHost(Host_data d)
+  {
+    host_list.clear();
+    host_list.push_back(d);
+  }
+
+  inline	sql::SQLString 		Schema()	{return schema;}
+
   void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
-
-  void setProtocol(NativeAPI::Protocol_Type p){protocol= p;}
-
-  bool hasPort() { return has_port; }
 
 };
 
 
-bool tcpProtocol(MySQL_Uri& uri);
+bool tcpProtocol(MySQL_Uri::Host_data &uri);
 
 
 bool parseUri(const sql::SQLString & str, MySQL_Uri& uri);

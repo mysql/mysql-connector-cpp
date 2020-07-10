@@ -85,6 +85,7 @@ public:
   TEST_CASE(ssl_mode);
   TEST_CASE(tls_version);
   TEST_CASE(cached_sha2_auth);
+  TEST_CASE(socket);
   }
 
   /**
@@ -260,6 +261,11 @@ public:
    */
   void cached_sha2_auth();
 
+  /*
+   * Test of MySQL_Connection::socket()
+   *
+   */
+  void socket();
 
 };
 

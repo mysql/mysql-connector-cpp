@@ -51,15 +51,19 @@ static const int DEFAULT_TCP_PORT=		3306;
 
 /* {{{ MySQL_Uri::MySQL_Uri() -I- */
 MySQL_Uri::MySQL_Uri()
-  : protocol(NativeAPI::PROTOCOL_TCP),
-    host_list({Host_data(util::LOCALHOST,DEFAULT_TCP_PORT)}),
-    schema	("")
+  : schema	("")
 {}
 /* }}} */
 
 
+MySQL_Uri::Host_data::Host_data()
+  : name(util::LOCALHOST)
+  , port(DEFAULT_TCP_PORT)
+  , protocol(NativeAPI::PROTOCOL_SOCKET)
+{}
+
 /* {{{ MySQL_Uri::Host() -I- */
-const sql::SQLString & MySQL_Uri::Host()
+const sql::SQLString & MySQL_Uri::Host_data::Host()
 {
   static const sql::SQLString hostValue4Pipe(".");
   static const sql::SQLString hostValue4sock(util::LOCALHOST);
@@ -67,7 +71,7 @@ const sql::SQLString & MySQL_Uri::Host()
   switch (Protocol())
   {
   case NativeAPI::PROTOCOL_TCP:
-    return host_list[0].name;
+    return name;
   case NativeAPI::PROTOCOL_PIPE:
     return hostValue4Pipe;
   case NativeAPI::PROTOCOL_SOCKET:
@@ -83,7 +87,7 @@ const sql::SQLString & MySQL_Uri::Host()
 
 
 /* {{{ MySQL_Uri::SocketOrPipe() -I- */
-const sql::SQLString & MySQL_Uri::SocketOrPipe()
+const sql::SQLString & MySQL_Uri::Host_data::SocketOrPipe()
 {
   if (tcpProtocol(*this))
   {
@@ -91,81 +95,20 @@ const sql::SQLString & MySQL_Uri::SocketOrPipe()
     return emptystr;
   }
 
-  return host_list[0].name;
+  return name;
 }
 
 /* {{{ MySQL_Uri::Port() -I- */
-unsigned int MySQL_Uri::Port()
+unsigned int MySQL_Uri::Host_data::Port()
 {
-  return host_list[0].port;
+  return port;
 }
 /* }}} */
 
-
-/* {{{ MySQL_Uri::setHost() -I- */
-void MySQL_Uri::setHost(const sql::SQLString &h)
-{
-  setProtocol(NativeAPI::PROTOCOL_TCP);
-  if(1 != host_list.size())
-  {
-    host_list.clear();
-    host_list.push_back(Host_data(h, DEFAULT_TCP_PORT));
-  }
-  else
-  {
-    host_list[0].name= h;
-  }
-}
-
-/* {{{ MySQL_Uri::addHost() -I- */
-void MySQL_Uri::addHost(const sql::SQLString &h, unsigned int port)
-{
-  setProtocol(NativeAPI::PROTOCOL_TCP);
-  host_list.push_back({h, port});
-}
-/* }}} */
-
-
-/* {{{ MySQL_Uri::setSocket() -I- */
-void MySQL_Uri::setSocket(const sql::SQLString &s)
-{
-  setProtocol(NativeAPI::PROTOCOL_SOCKET);
-  host_list.clear();
-  host_list.push_back(s);
-}
-/* }}} */
-
-
-/* {{{ MySQL_Uri::setPipe() -I- */
-void MySQL_Uri::setPipe(const sql::SQLString &p)
-{
-  setProtocol(NativeAPI::PROTOCOL_PIPE);
-  host_list.clear();
-  host_list.push_back(p);
-}
-/* }}} */
-
-
-/* {{{ MySQL_Uri::setPort() -I- */
-void MySQL_Uri::setPort(uint16_t p)
-{
-  setProtocol(NativeAPI::PROTOCOL_TCP);
-  has_port = true;
-  port= p;
-  if(1 != host_list.size())
-  {
-    host_list.clear();
-    host_list.push_back(Host_data(util::LOCALHOST, p));
-  }
-  else
-  {
-    host_list[0].port = p;
-  }
-}
 
 
 /* {{{ tcpProtocol() -I- */
-bool tcpProtocol(MySQL_Uri& uri)
+bool tcpProtocol(MySQL_Uri::Host_data& uri)
 {
   return uri.Protocol() == NativeAPI::PROTOCOL_TCP;
 }
@@ -179,43 +122,44 @@ bool tcpProtocol(MySQL_Uri& uri)
  */
 bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
 {
+  MySQL_Uri::Host_data host;
   if (!str.compare(0, sizeof(MYURI_SOCKET_PREFIX) - 1, MYURI_SOCKET_PREFIX))
   {
-    uri.setSocket(str.substr(sizeof(MYURI_SOCKET_PREFIX) - 1, sql::SQLString::npos));
-
+    host.setSocket(str.substr(sizeof(MYURI_SOCKET_PREFIX) - 1, sql::SQLString::npos));
+    uri.setHost(host);
     return true;
   }
 
   if (!str.compare(0, sizeof(MYURI_PIPE_PREFIX) - 1 , MYURI_PIPE_PREFIX))
   {
-    uri.setPipe(str.substr(sizeof(MYURI_PIPE_PREFIX) - 1, sql::SQLString::npos));
-
+    host.setPipe(str.substr(sizeof(MYURI_PIPE_PREFIX) - 1, sql::SQLString::npos));
+    uri.setHost(host);
     return true;
   }
 
-  std::string host;
+  std::string hostname;
 
   size_t end_sep;
 
   /* i wonder how did it work with "- 1"*/
   if (!str.compare(0, sizeof(MYURI_TCP_PREFIX) - 1, MYURI_TCP_PREFIX))
   {
-    host= str.substr(sizeof(MYURI_TCP_PREFIX) - 1, sql::SQLString::npos);
+    hostname= str.substr(sizeof(MYURI_TCP_PREFIX) - 1, sql::SQLString::npos);
   }
   else if ( !str.compare(0, sizeof(MYURI_MYSQL_PREFIX) - 1, MYURI_MYSQL_PREFIX))
   {
-    host= str.substr(sizeof(MYURI_MYSQL_PREFIX) - 1, sql::SQLString::npos);
+    hostname= str.substr(sizeof(MYURI_MYSQL_PREFIX) - 1, sql::SQLString::npos);
   }
   else
   {
     /* allowing to have port and schema specified even w/out protocol
        specifier("tcp://") */
-    host= str.c_str();
+    hostname= str.c_str();
   }
 
   uri.clear();
 
-  auto parse_host = [&uri] (std::string host) -> bool
+  auto parse_host = [&uri, &host] (std::string hostname) -> bool
   {
     // host countains [::1]:123 or hostname:123
     size_t sep = 0;
@@ -223,37 +167,37 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     std::string name;
     unsigned int port = DEFAULT_TCP_PORT;
 
-    if (host[0] == MYURI_HOST_BEGIN)
+    if (hostname[0] == MYURI_HOST_BEGIN)
     {
-      sep= host.find(MYURI_HOST_END);
+      sep= hostname.find(MYURI_HOST_END);
       /* No closing ] after [*/
       if (sep == std::string::npos)
       {
         return false;
       }
 
-      name = host.substr(1, sep-1);
+      name = hostname.substr(1, sep-1);
       //sep points to next char after ]
       sep++;
     }
     else
     {
-      sep = host.find(':',0);
+      sep = hostname.find(':',0);
       if (sep == std::string::npos)
       {
-        name = host;
+        name = hostname;
       }
       else
       {
-        name = host.substr(0, sep);
+        name = hostname.substr(0, sep);
       }
     }
 
-    if(sep < host.size() && host[sep] == ':')
+    if(sep < hostname.size() && hostname[sep] == ':')
     {
       //port
-      host = host.substr(sep+1);
-      long int val = std::atol(host.c_str());
+      hostname = hostname.substr(sep+1);
+      long int val = std::atol(hostname.c_str());
 
       /*
         Note: strtol() returns 0 either if the number is 0
@@ -261,7 +205,7 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
         by cheking if end pointer was updated.
       */
 
-      if (val == 0 && host.length()==0)
+      if (val == 0 && hostname.length()==0)
         return false;
 
       if (val > 65535 || val < 0)
@@ -269,31 +213,32 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
 
       port = static_cast<unsigned int>(val);
     }
-    uri.addHost(name, port);
+    host.setHost(name, port);
+    uri.addHost(host);
     return true;
   };
 
   do
   {
-    end_sep = host.find_first_of(",/");
+    end_sep = hostname.find_first_of(",/");
 
-    if (!parse_host(host.substr(0, end_sep)))
+    if (!parse_host(hostname.substr(0, end_sep)))
     {
       return false;
     }
     if(end_sep != std::string::npos)
     {
-      host = host.substr(host[end_sep] == '/' ? end_sep : end_sep+1);
+      hostname = hostname.substr(hostname[end_sep] == '/' ? end_sep : end_sep+1);
     }
-  }while(end_sep != std::string::npos && host[0] != '/');
+  }while(end_sep != std::string::npos && hostname[0] != '/');
 
 
   /* Looking where schema part begins */
-  if (host[0] == '/')
+  if (hostname[0] == '/')
   {
-    if (host.length() > 1/*Slash*/)
+    if (hostname.length() > 1/*Slash*/)
     {
-      uri.setSchema(host.substr(1));
+      uri.setSchema(hostname.substr(1));
     }
   }
   else
