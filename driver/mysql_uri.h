@@ -56,38 +56,40 @@ public:
 
 
     const SQLString & Host();
-    unsigned int                      Port();
+    unsigned int      Port();
     const SQLString & SocketOrPipe();
-    inline	NativeAPI::Protocol_Type	Protocol()	{return protocol;}
+    inline
+    NativeAPI::Protocol_Type Protocol() {return protocol;}
     bool hasPort() { return has_port; }
 
     void setProtocol(NativeAPI::Protocol_Type p) { protocol= p; }
-    void setHost	(const sql::SQLString &h, uint16_t p)
+
+    void setHost(const sql::SQLString &h, uint16_t p)
     {
       setProtocol(NativeAPI::PROTOCOL_TCP);
       name = h;
       port = p;
       has_port = true;
     }
-    void setHost  (const sql::SQLString &host)
+    void setHost(const sql::SQLString &host)
     {
       setProtocol(NativeAPI::PROTOCOL_TCP);
       name = host;
     }
 
-    void setSocket	(const sql::SQLString &s)
+    void setSocket(const sql::SQLString &s)
     {
       setProtocol(NativeAPI::PROTOCOL_SOCKET);
       name = s;
     }
 
-    void setPipe	(const sql::SQLString &p)
+    void setPipe(const sql::SQLString &p)
     {
      setProtocol(NativeAPI::PROTOCOL_PIPE);
      name = p;
     }
 
-    void setPort	(uint16_t p)
+    void setPort(uint16_t p)
     {
       setProtocol(NativeAPI::PROTOCOL_TCP);
       port = p;
@@ -109,7 +111,7 @@ private:
   Host_List                host_list;
 
   sql::SQLString           schema;
-  bool                     has_port = false;
+  uint16_t default_port;
 
 public:
   MySQL_Uri();
@@ -140,9 +142,13 @@ public:
     host_list.push_back(d);
   }
 
-  inline	sql::SQLString 		Schema()	{return schema;}
+  void setDefaultPort(uint16_t port) { default_port = port;}
+  uint16_t DefaultPort() { return default_port; }
 
-  void setSchema	(const sql::SQLString &s)	{schema= s.c_str();}
+  inline
+  sql::SQLString Schema() { return schema; }
+
+  void setSchema(const sql::SQLString &s) { schema= s.c_str(); }
 
 };
 

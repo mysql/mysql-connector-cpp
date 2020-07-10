@@ -3648,7 +3648,7 @@ void connection::socket()
 
     con.reset(driver->connect(connection_properties));
     if(!con)
-      FAIL("Couldn connect using socket on connection properties");
+      FAIL("Could not connect using socket on connection properties");
 
     std::stringstream uri;
 
@@ -3656,9 +3656,13 @@ void connection::socket()
 
     con.reset(driver->connect(uri.str(), user, passwd));
     if(!con)
-      FAIL("Couldn connect using socket on connection properties");
+      FAIL("Could not connect using socket on connection properties");
 
     con.reset(getConnection());
+  }
+  else
+  {
+    logMsg("test skipped...");
   }
 
 }

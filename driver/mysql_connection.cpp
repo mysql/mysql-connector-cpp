@@ -659,7 +659,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       if (p_i) {
         for(auto &h : uri)
         {
-          h.setPort(*p_i);
+          uri.setDefaultPort(*p_i);
         }
       } else {
         throw sql::InvalidArgumentException("No long long value passed for port");
@@ -1124,9 +1124,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
     host = *uri.begin();
 
-    if(host.Protocol() != NativeAPI::PROTOCOL_TCP)
+    if(host.Protocol() == NativeAPI::PROTOCOL_SOCKET)
     {
       throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
+    }
+
+    if(host.Protocol() != NativeAPI::PROTOCOL_PIPE)
+    {
+      throw sql::InvalidArgumentException("Using pipe with DNS SRV lookup is not allowed.");
     }
 
     if(host.hasPort())
@@ -1199,7 +1204,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           connect((*el)->Host(), userName,
                   password,
                   uri.Schema() /* schema */,
-                  (*el)->Port(),
+                  (*el)->hasPort() ?  (*el)->Port() : uri.DefaultPort(),
                   (*el)->SocketOrPipe());
           connected = true;
           break;

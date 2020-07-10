@@ -52,6 +52,7 @@ static const int DEFAULT_TCP_PORT=		3306;
 /* {{{ MySQL_Uri::MySQL_Uri() -I- */
 MySQL_Uri::MySQL_Uri()
   : schema	("")
+  , default_port(DEFAULT_TCP_PORT)
 {}
 /* }}} */
 
