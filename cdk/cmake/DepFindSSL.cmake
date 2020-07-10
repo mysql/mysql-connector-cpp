@@ -312,10 +312,18 @@ function(bundle_ssl_libs)
 
     message("-- bundling OpenSSL library: ${lib}")
 
-    install(FILES ${lib}
-      DESTINATION ${INSTALL_LIB_DIR}
-      COMPONENT OpenSSLDll
-    )
+    if(WIN32 OR APPLE)
+      install(FILES ${lib}
+        DESTINATION "${INSTALL_LIB_DIR}"
+        COMPONENT OpenSSLDll
+        )
+    else()
+      install(FILES ${lib}
+        DESTINATION "${INSTALL_LIB_DIR}/private"
+        COMPONENT OpenSSLDll
+        )
+    endif()
+
 
   endforeach()
 
@@ -332,7 +340,7 @@ function(bundle_ssl_libs)
       message("-- bundling OpenSSL library: ${lib}")
 
       install(FILES ${lib}
-        DESTINATION ${INSTALL_LIB_DIR_STATIC}
+        DESTINATION "${INSTALL_LIB_DIR_STATIC}"
         COMPONENT OpenSSLDev
       )
 
