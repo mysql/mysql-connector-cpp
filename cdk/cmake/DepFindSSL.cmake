@@ -317,7 +317,7 @@ function(bundle_ssl_libs)
         DESTINATION "${INSTALL_LIB_DIR}"
         COMPONENT OpenSSLDll
         )
-    elseif()
+    else()
       install(FILES ${lib}
         DESTINATION "${INSTALL_LIB_DIR}/private"
         COMPONENT OpenSSLDll
