@@ -60,6 +60,7 @@
 #define OPT_INIT_COMMAND "preInit"
 #define OPT_POST_INIT_COMMAND "postInit"
 #define OPT_LOCAL_INFILE "OPT_LOCAL_INFILE"
+#define OPT_LOAD_DATA_LOCAL_DIR "OPT_LOAD_DATA_LOCAL_DIR"
 
 /*
  SSL related

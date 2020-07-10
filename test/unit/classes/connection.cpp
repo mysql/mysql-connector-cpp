@@ -34,6 +34,7 @@
 
 #include "connection.h"
 #include <stdlib.h>
+#include <cstdio>
 #include <fstream>
 #include <cppconn/connection.h>
 #include <mysql_connection.h>
@@ -42,6 +43,14 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <list>
+
+#ifdef _WIN32
+#pragma warning (disable : 4996)
+// warning C4996: 'mkdir': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _mkdir.
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 namespace testsuite
 {
@@ -1823,7 +1832,7 @@ void connection::connectUsingMap()
     }
     connection_properties.erase("defaultStatementResultType");
 
-#ifdef CPPWIN_WIN32
+#ifdef CPPWIN_WIN2
     /* 21) OPT_NAMED_PIPE - handled but ignored! */
     connection_properties.erase("OPT_NAMED_PIPE");
     {
@@ -2818,53 +2827,477 @@ void connection::localInfile()
 {
   logMsg("connection::setDefaultAuth - MYSQL_OPT_LOCAL_INFILE");
 
-#ifdef _UNIX_
+  struct dataObject
+  {
+    std::string m_path;
+
+    dataObject(std::string path) : m_path(path)
+    {}
+
+    const char *path() { return m_path.c_str(); }
+  };
+
+  struct dataDir : public dataObject
+  {
+    void cleanup()
+    {
+      std::stringstream cmd;
+#if defined(_WIN32)
+      cmd << "rd /s /q \"" << m_path << "\"";
+#else
+      cmd << "rm -rf " << m_path;
+#endif
+      std::cout << "CLEANING-UP..." << std::endl
+        << "EXECUTING SYSTEM COMMAND: " << cmd.str() << " [result:"
+        << std::system(cmd.str().c_str()) << "]" << std::endl;
+    }
+
+    dataDir(std::string path, bool is_hidden = false) : dataObject(path)
+    {
+      cleanup();
+      std::cout << "CREATING A DIRECTORY: " << path << std::endl;
+      try
+      {
+#if defined(_WIN32)
+        if(mkdir(m_path.c_str()))
+#else
+        if(mkdir(m_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+#endif
+        {
+          throw "Destination directory could not be created";
+        }
+
+#if defined(_WIN32)
+        if (is_hidden && !SetFileAttributes(m_path.c_str(), FILE_ATTRIBUTE_HIDDEN))
+        {
+          throw "Could not set the hidden attribute";
+        }
+#endif
+      }
+      catch(...)
+      {
+        cleanup();
+        throw;
+      }
+    }
+
+    ~dataDir()
+    {
+      cleanup();
+    }
+
+  };
+
+  /*
+    Create a data file to be used for LOAD DATA LOCAL INFILE
+    It does not need to do a clean-up because the directory destructor will
+    take care of it.
+  */
+  struct dataFile : public dataObject
+  {
+    dataFile(std::string dir, std::string file_name, bool write_only = false) :
+      dataObject(dir + file_name)
+    {
+      std::ofstream infile;
+      infile.open(m_path, std::ios::out|std::ios::binary);
+      infile << "1,\"val1\"\n";
+      infile << "2,\"val2\"\n";
+      infile.close();
+
+#ifndef _WIN32
+      /*
+        In windows all files are always readable; it is not possible to
+        give write-only permission. For this reason the write-only test
+        is not done in Windows
+      */
+      if (write_only)
+      {
+        std::stringstream sstr;
+        sstr << "chmod -r " << m_path;
+        if(system(sstr.str().c_str()))
+        {
+          throw "File permissions could not be set";
+        }
+      }
+#endif
+    }
+  };
+
+#ifndef _WIN32
+  /*
+    Windows can create symlinks, but the admin access is required.
+    Or the machine must be in Developer Mode.
+  */
+  struct dataSymlink : public dataObject
+  {
+    dataSymlink(std::string fpath, std::string spath, bool directory = false)
+      : dataObject(spath)
+    {
+      std::cout << "CREATING SYMLINK: " << spath << " -> " << fpath << std::endl;
+      if (symlink(fpath.c_str(), spath.c_str()))
+        throw "Error creating symbolic link";
+    }
+  };
+#endif
+  struct testLocal
+  {
+    sql::ConnectOptionsMap m_opts;
+    testsuite::Connection m_main_conn;
+    testsuite::Statement m_main_stmt;
+
+#ifdef _WIN32
+    enum class slash_type { MAKE_FORWARD, MAKE_BACKWARD, MAKE_DOUBLE_BACKWARD };
+
+    static std::string slash_fix(std::string s, slash_type st)
+    {
+      std::string s_find = "\\";
+      std::string s_repl = "/";
+
+      switch(st)
+      {
+        case slash_type::MAKE_FORWARD:
+          s_find = "\\";
+          s_repl = "/";
+        break;
+        case slash_type::MAKE_BACKWARD:
+          s_find = "/";
+          s_repl = "\\";
+        break;
+        case slash_type::MAKE_DOUBLE_BACKWARD:
+          s_find = "/";
+          s_repl = "\\\\";
+        break;
+      }
+
+      size_t pos = s.find(s_find);
+      while (pos != std::string::npos)
+      {
+        s.replace(pos, 1, s_repl);
+        pos = s.find(s_find);
+      }
+      return s;
+    }
+#endif
+
+    testLocal(sql::ConnectOptionsMap opts) : m_opts(opts)
+    {
+      m_main_conn.reset(driver->connect(opts));
+      m_main_stmt.reset(m_main_conn->createStatement());
+      m_main_stmt->execute("DROP TABLE IF EXISTS test_local_infile");
+      m_main_stmt->execute("CREATE TABLE test_local_infile(id INT, value VARCHAR(20))");
+
+    }
+
+    ~testLocal()
+    {
+      m_main_stmt->execute("DROP TABLE IF EXISTS test_local_infile");
+      set_server_infile(false);
+    }
+
+    void set_server_infile(bool enabled)
+    {
+      std::string q = "SET GLOBAL local_infile=";
+      m_main_stmt->execute(q.append(enabled ? "1" : "0"));
+    }
+
+    /*
+      Checks how setting nullptr for OPT_LOAD_DATA_LOCAL_DIR is working.
+
+      1. Set OPT_LOAD_DATA_LOCAL_DIR using load_data_path parameter and
+         check the parameter value using getClientOption(). It is expected
+         that the value set by setClientOption() is returned by
+         getClientOption().
+
+      2. Use setClientOption() to set OPT_LOAD_DATA_LOCAL_DIR to nullptr.
+         This can only be done after the connection is made.
+
+      3. Use getClientOption() to check that the current value of
+         OPT_LOAD_DATA_LOCAL_DIR is nullptr.
+
+      The function returns true if all results are as expected.
+
+      In windows the path must use the backslashes before the first check
+      because it is always returned with the backslash through
+      getClientOption()
+    */
+    bool do_null_test(std::string load_data_path)
+    {
+      sql::ConnectOptionsMap opts(m_opts);
+      opts[OPT_LOCAL_INFILE] = 1;
+
+#ifdef _WIN32
+      // Need to convert to backslashes
+      load_data_path = slash_fix(load_data_path, slash_type::MAKE_BACKWARD);
+#endif
+
+      opts[OPT_LOAD_DATA_LOCAL_DIR] = load_data_path;
+
+      testsuite::Connection conn;
+      conn.reset(driver->connect(opts));
+
+      sql::SQLString orig_dir_path = load_data_path;
+      sql::SQLString dir_path = conn->getClientOption(OPT_LOAD_DATA_LOCAL_DIR);
+      ASSERT_EQUALS(orig_dir_path, dir_path);
+
+      conn->setClientOption(OPT_LOAD_DATA_LOCAL_DIR, nullptr);
+
+      char *out_dir_path = (char*)"a";
+      conn->getClientOption(OPT_LOAD_DATA_LOCAL_DIR, &out_dir_path);
+
+      if (nullptr != out_dir_path)
+        return false;
+
+      return true;
+    }
+
+    /*
+      Performs the following test:
+
+      1. Opens new connection with LOCAL_INFILE and LOAD_DATA_LOCAL_DIR
+         parameters set to client_local_infile and load_data_path, respectively.
+
+      2. If set_after_connect is true, the LOAD_DATA_LOCAL_DIR parameter
+         is set after making connection.
+
+      3. Server's local_infile global variable is set to the
+         value of server_local_infile.
+
+      4. A LOAD DATA LOCAL INFILE command is executed for the
+         file specified by file_path.
+
+      5. For Windows the function can use forward and backward slashes in the
+         directory and file paths depending on use_back_slash parameter
+
+      6. If above succeeds, the data loaded from the file is examined.
+
+      Returns true if test was successful, false otherwise.
+      If parameter res is false, then it is expected that LOAD DATA LOCAL
+      command in step 4 should fail with error.
+    */
+
+    bool do_test(bool server_local_infile, bool client_local_infile,
+                 const char *load_data_path, /* Uses forward slash if not null */
+                 std::string file_path,
+                 bool set_after_connect = false,
+                 bool res = true, bool use_back_slash = false)
+    {
+      bool error_expected = !res;
+      std::string t = load_data_path ? load_data_path : "nullptr";
+      std::string file_path_query = file_path;
+
+#ifdef _WIN32
+      if (use_back_slash)
+      {
+        t = slash_fix(t, slash_type::MAKE_BACKWARD);
+        file_path = slash_fix(file_path, slash_type::MAKE_BACKWARD);
+
+        if (load_data_path && *load_data_path)
+          load_data_path = t.c_str(); // use the back-slashed path
+        /*
+          The file path must be properly escaped for LOAD DATA LOCAL INFILE
+          query. Therefore, it must use the double backslashes if needed.
+        */
+        file_path_query = slash_fix(file_path_query,
+                                    slash_type::MAKE_DOUBLE_BACKWARD);
+      }
+#endif
+
+      std::cout << " OPT_LOCAL_INFILE=" << (int)client_local_infile << std::endl <<
+        " OPT_LOAD_DATA_LOCAL_DIR=" << t << std::endl <<
+        " FILE_IN=" << file_path << std::endl;
+
+      sql::ConnectOptionsMap opts(m_opts);
+      opts["OPT_LOCAL_INFILE"] = (int)client_local_infile;
+
+      if (load_data_path && !set_after_connect)
+        opts[OPT_LOAD_DATA_LOCAL_DIR] = load_data_path;
+
+      set_server_infile(server_local_infile);
+
+      try
+      {
+        testsuite::Connection conn;
+        conn.reset(driver->connect(opts));
+
+        if (set_after_connect)
+          conn->setClientOption(OPT_LOAD_DATA_LOCAL_DIR, load_data_path);
+
+        testsuite::Statement stmt;
+        stmt.reset(conn->createStatement());
+
+        std::stringstream sstr;
+        sstr << "LOAD DATA LOCAL INFILE '" << file_path_query <<
+            "' INTO TABLE test_local_infile FIELDS TERMINATED BY ',' "
+            "OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n'";
+
+        std::cout << " Result: ";
+        stmt->execute(sstr.str());
+
+        testsuite::ResultSet res;
+        res.reset(stmt->executeQuery("SELECT * FROM test_local_infile ORDER BY id ASC;"));
+        ASSERT(res->next());
+        ASSERT_EQUALS("1", res->getInt(1));
+        std::string val1 = res->getString(2);
+        ASSERT_EQUALS("val1", val1);
+
+        ASSERT(res->next());
+        ASSERT_EQUALS("2", res->getInt(1));
+        ASSERT_EQUALS("val2", res->getString(2));
+        ASSERT(!res->next());
+      }
+      catch(...)
+      {
+        std::cout << "Error (nothing is loaded)" << std::endl;
+
+        if (error_expected)
+          return true;
+
+        return false;
+      }
+
+      std::cout << "Data is Loaded" << std::endl;
+      if (error_expected)
+        return false;
+
+      return true;
+    }
+  };
+
   try
   {
     testsuite::Connection conn1;
     sql::ConnectOptionsMap opts;
     sql::SQLString in_plugin_dir;
     sql::SQLString schema("test");
-    std::ofstream infile;
-
-    infile.open("test_infile.txt");
-    infile << "1,\"val1\"\n";
-    infile << "2,\"val2\"\n";
-
-    infile.close();
 
     opts["hostName"]=url;
     opts["userName"]=user;
     opts["password"]=passwd;
     opts["schema"]=schema;
     opts["OPT_LOCAL_INFILE"]=1;
+
     created_objects.clear();
-    conn1.reset(driver->connect(opts));
 
-    stmt.reset(conn1->createStatement());
-    stmt->execute("DROP TABLE IF EXISTS test_local_infile");
-    stmt->execute("CREATE TABLE test_local_infile(id INT, value VARCHAR(20))");
-    stmt->execute("LOAD DATA LOCAL INFILE 'test_infile.txt' "
-          "INTO TABLE test_local_infile FIELDS TERMINATED BY ',' OPTIONALLY "
-          "ENCLOSED BY '\"' LINES TERMINATED BY '\n'");
+    {
+      std::string temp_dir;
+      std::string dir;
+      std::string file_path;
 
-    res.reset(stmt->executeQuery("SELECT * FROM test_local_infile ORDER BY id ASC;"));
-    ASSERT(res->next());
-    ASSERT_EQUALS("1", res->getInt(1));
-    ASSERT_EQUALS("val1", res->getString(2));
+#ifdef _WIN32
+      temp_dir = getenv("TEMP");
 
-    ASSERT(res->next());
-    ASSERT_EQUALS("2", res->getInt(1));
-    ASSERT_EQUALS("val2", res->getString(2));
-    ASSERT(!res->next());
-}
+      // easier to deal with forward slash
+      temp_dir = testLocal::slash_fix(temp_dir,
+                                      testLocal::slash_type::MAKE_FORWARD);
+      temp_dir.append("/");
+
+      dataDir hidden_dir(temp_dir + "HiddenTest/", true);
+      dataFile file_in_hidden_dir(temp_dir + "HiddenTest/", "infile.txt");
+
+#else
+      temp_dir = "/tmp/";
+#endif
+
+      dir = temp_dir + "test/";
+      file_path = dir + "infile.txt";
+
+      dataDir dir_test(dir);
+      dataDir dir_link(temp_dir + "test_link/");
+      dataDir dir_subdir_link(temp_dir + "test_subdir_link/");
+
+      dataFile infile(dir, "infile.txt");
+
+#ifndef _WIN32
+      dataFile infile_wo("/tmp/test/", "infile_wo.txt", true);
+      dataSymlink sl(file_path, temp_dir + "test_link/link_infile.txt");
+      dataSymlink sld(dir, temp_dir + "test_subdir_link/subdir");
+      std::string sld_file = sld.path();
+      sld_file.append("/infile.txt");
+#endif
+
+      testLocal null_test(opts);
+      ASSERT(null_test.do_null_test(dir));
+
+      struct paramtest
+      {
+        int opt_local_infile;
+        const char *opt_load_data_local_dir;
+        const char *file_in;
+        bool expected_result;
+      } params[] = {
+        {0,"",                     infile.path(),                   false},
+        {0,nullptr,                infile.path(),                   false},
+        {0,dir_test.path(),        infile.path(),                   true},
+        {1,dir_test.path(),        infile.path(),                   true},
+        {0,"invalid_test/",        "invalid_test/infile.txt",       false},
+#ifdef _WIN32
+        {0,hidden_dir.path(),      file_in_hidden_dir.path(),       true}
+#else
+        {1,dir_test.path(),        sl.path(),                       true},
+        {1,dir_test.path(),        sld_file.c_str(),                true},
+        {0,dir_test.path(),        sld_file.c_str(),                true},
+        {0,dir_test.path(),        sl.path(),                       true},
+        {0,dir_link.path(),        sl.path(),                       false},
+        {0,dir_subdir_link.path(), sld_file.c_str(),                false},
+        {0,dir_test.path(),        infile_wo.path(),                false},
+        {1,nullptr,                infile_wo.path(),                false}
+#endif
+      };
+
+      for (int k = 0; k < 3; ++k)
+      {
+        bool server_local_infile = true;
+        bool set_after_connect = false;
+        std::cout << "---- TESTS SERIES: ";
+        switch(k)
+        {
+          case 0:
+            std::cout << "Normal scenario" << std::endl;
+            break;
+
+          case 1:
+            std::cout << "Set OPT_LOAD_DATA_LOCAL_DIR after connect" << std::endl;
+            set_after_connect = true;
+            break;
+
+          case 2:
+            std::cout << "Disable OPT_LOCAL_INFILE on the server" << std::endl;
+            server_local_infile = false;
+            break;
+        }
+
+        int test_num = 0;
+        for (auto elem : params)
+        {
+          std::cout << "-- TEST" << (++test_num) << std::endl;
+
+          for(bool use_backslash : {false, true})
+          {
+            testLocal test(opts);
+            ASSERT(test.do_test(server_local_infile,
+                                (bool)elem.opt_local_infile,
+                                elem.opt_load_data_local_dir,
+                                elem.file_in,
+                                set_after_connect,
+                                server_local_infile ? elem.expected_result : false,
+                                use_backslash));
+#ifndef _WIN32
+            break;
+#endif
+          }
+        }
+
+      }
+
+    }
+
+  }
   catch (sql::SQLException &e)
   {
     logErr(e.what());
     logErr("SQLState: " + std::string(e.getSQLState()));
     fail(e.what(), __FILE__, __LINE__);
   }
-#endif //_UNIX_
 }
 
 
