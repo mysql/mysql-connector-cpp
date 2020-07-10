@@ -190,10 +190,11 @@ TEST_F(Sess, compression)
   SKIP_IF_NO_XPLUGIN
 
     SessionSettings mysqldefault_set(
-      SessionOption::USER, "root",
-      SessionOption::HOST, get_host(),
-      SessionOption::PORT, get_port(),
-      SessionOption::COMPRESSION, CompressionMode::PREFERRED
+        SessionOption::USER, get_user(),
+        SessionOption::PWD, get_password(),
+        SessionOption::HOST, get_host(),
+        SessionOption::PORT, get_port(),
+        SessionOption::COMPRESSION, CompressionMode::PREFERRED
     );
 
     std::stringstream uri;
@@ -1120,7 +1121,6 @@ TEST_F(Sess, ssl_session)
   //Using URI
 
   std::stringstream uri;
-  
   uri << get_uri();
 
   //URI using ssl-mode=disabled
@@ -1342,7 +1342,7 @@ TEST_F(Sess, ssl_session)
       EXPECT_EQ(string("Option SSL_CA defined twice"),string(e.what()));
     }
 
-    try {       
+    try {
       mysqlx::Session(uri + "?ssl-mode=Whatever");
       FAIL() << "No error thrown";
     }
@@ -3035,5 +3035,384 @@ TEST_F(Sess, dns_srv)
   {
     std::cout << e << std::endl;
     FAIL() << e.what();
+  }
+}
+
+TEST_F(Sess, compression_algorithms)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto check_compress_alg = [](mysqlx::Session s,string expected, int line)
+  {
+    std::string result = Sess::get_var(s, "Mysqlx_compression_algorithm");
+    if (expected != result)
+    {
+      std::cout << line << ": " << std::endl;
+      std::cout << "\tExpected: " << expected << std::endl;
+      std::cout << "\tResult: " << result << std::endl;
+    }
+    EXPECT_EQ(expected, result);
+
+    if (!result.empty())
+    {
+      check_compress(s);
+    }
+
+  };
+
+
+  std::string uri(get_uri());
+
+  struct test_data
+  {
+    std::string expected;
+    std::string alias;
+    std::string name;
+    std::string second;
+    std::string third;
+  };
+
+  std::vector<test_data> algs = {
+    {"DEFLATE_STREAM", "deFlate","DeFlaTe_StreAM", "ZsTd", "Lz4"},
+    {"LZ4_MESSAGE", "lZ4","Lz4_MeSSaGe","DeFlAte","zstd"},
+    {"ZSTD_STREAM", "ZsTd","zStD_sTReaM","lz4","DEFLATE"},
+  };
+
+  //Reading the value of mysqlx_compression_algorithms at the beginning
+  SqlResult res = sql("SHOW GLOBAL VARIABLES LIKE 'mysqlx_compression_algorithms';");
+  Row row = res.fetchOne();
+  std::string Val = row[1].get<std::string>();
+
+  //By Default, it should use ZTSD compression
+
+  check_compress_alg(mysqlx::Session(uri),"ZSTD_STREAM", __LINE__);
+
+  check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                     SessionOption::PORT, get_port(),
+                                     SessionOption::USER, get_user(),
+                                     SessionOption::PWD, get_password())
+                                     ,"ZSTD_STREAM", __LINE__);
+
+  //Add parameters
+  uri += "/?";
+
+  for(const test_data& d : algs)
+  {
+    // Used algorithm should be d.expected on all of this cases
+    //First round, pool clean
+    std::chrono::time_point<std::chrono::system_clock> start_time
+        = std::chrono::system_clock::now();
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=" + d.name
+            ), d.expected, __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=" + d.alias
+            ), d.expected, __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[" + d.name + "]"
+            ), d.expected, __LINE__);
+
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[" + d.name + "," + d.second + "," + d.name + "]"
+                         ), d.expected, __LINE__);
+
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[" + d.name + "," + d.second + "," + d.third + "]"
+          ), d.expected, __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[" + d.alias + "]"
+            ), d.expected, __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[" + d.alias + "," + d.second + "," + d.name + "]"
+            ), d.expected, __LINE__);
+
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "compression-algorithms=[MyALGORITHM," + d.name + "]"
+            ), d.expected, __LINE__);
+
+    //Even if a valid algorithm is selected, if compression is disabled,
+    //no compression should be used
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=" + d.name
+          ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=" + d.alias
+            ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.name + "]"
+            ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.name + "," + d.name + "]"
+            ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "]"
+            ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=[" + d.alias + "," + d.name + "]"
+            ), std::string(), __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            uri + "Compression=Disabled&Compression-Algorithms=[MyALGORITHM," + d.name + "]"
+          ), std::string(), __LINE__);
+
+    // In this cases, no algorithm should be used, since algorithm value
+    // is empty or not valid
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms="), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[]"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=BAD_Algorithm"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[BAD_Algorithm]"), "", __LINE__);
+    check_compress_alg(mysqlx::Session(uri + "compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), "", __LINE__);
+
+    //If compression=REQUIRED and no valid algorithm selected, an error should be thrown
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms="), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[]"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=BAD_Algorithm"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[BAD_Algorithm]"), Error);
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=[BAD_Algorithm,BAD_Algorithm]"), Error);
+
+
+    //Using text only, used algorithm should be LZ4_MESSAGE
+    check_compress_alg(
+          mysqlx::Session(
+            SessionOption::HOST, get_host(),
+            SessionOption::PORT, get_port(),
+            SessionOption::USER, get_user(),
+            SessionOption::PWD, get_password(),
+            SessionOption::COMPRESSION_ALGORITHMS, d.name),d.expected, __LINE__);
+
+    check_compress_alg(
+          mysqlx::Session(
+            SessionOption::HOST, get_host(),
+            SessionOption::PORT, get_port(),
+            SessionOption::USER, get_user(),
+            SessionOption::PWD, get_password(),
+            SessionOption::COMPRESSION_ALGORITHMS, d.alias),d.expected, __LINE__);
+
+
+    check_compress_alg(
+          mysqlx::Session(
+            SessionOption::HOST, get_host(),
+            SessionOption::PORT, get_port(),
+            SessionOption::USER, get_user(),
+            SessionOption::PWD, get_password(),
+            SessionOption::COMPRESSION_ALGORITHMS,
+            std::string(d.name)+"," + d.second + "," + d.third
+            ),d.expected, __LINE__);
+
+
+    check_compress_alg(mysqlx::Session(
+                         SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION_ALGORITHMS,
+                                       std::string(d.alias) + "," + d.second + "," + d.third + "," + d.name
+                                       ),d.expected, __LINE__);
+
+    //Even if valid algorithms, since compression is disabled
+    //it will not be used
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION, CompressionMode::DISABLED,
+                                       SessionOption::COMPRESSION_ALGORITHMS, d.name),
+                       std::string(), __LINE__);
+
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION, CompressionMode::DISABLED,
+                                       SessionOption::COMPRESSION_ALGORITHMS, d.alias),
+                       std::string(), __LINE__);
+
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION, CompressionMode::DISABLED,
+                                       SessionOption::COMPRESSION_ALGORITHMS, std::string(d.name) + "," + d.name),
+                       std::string(), __LINE__);
+
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION, CompressionMode::DISABLED,
+                                       SessionOption::COMPRESSION_ALGORITHMS, std::string(d.alias) + "," + d.name),
+                       std::string(), __LINE__);
+
+    {
+      //Using container
+      std::vector<string> algorithms = {d.alias,d.second, d.third, d.name};
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         d.expected, __LINE__);
+    }
+
+    {
+      //Other container
+      std::list<string> algorithms = {"MyALGORITHM",d.name, d.second, d.third, d.alias};
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         d.expected, __LINE__);
+    }
+
+    {
+      //Other container
+      std::list<string> algorithms = {"MyALGORITHM",d.name, d.alias, d.third, d.second};
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         d.expected, __LINE__);
+    }
+
+
+    {
+      //Same as above, if compressions disabled, no compression will be used
+      std::list<string> algorithms = {"MyALGORITHM",d.name, d.alias, d.third, d.second};
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION, CompressionMode::DISABLED,
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         std::string(), __LINE__);
+    }
+
+
+
+    //No algorithm will be used on these cases
+
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, nullptr),
+                         std::string(), __LINE__);
+
+
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION_ALGORITHMS, ""),
+                       std::string(), __LINE__);
+
+    {
+      std::vector<string> algorithms;
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         std::string(), __LINE__);
+    }
+
+    check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                       SessionOption::PORT, get_port(),
+                                       SessionOption::USER, get_user(),
+                                       SessionOption::PWD, get_password(),
+                                       SessionOption::COMPRESSION_ALGORITHMS, "BAD_Algorithm"),
+                       std::string(), __LINE__);
+
+    {
+      std::list<string> algorithms = {"Unknown","BAD_Algorithm"};
+      check_compress_alg(mysqlx::Session(SessionOption::HOST, get_host(),
+                                         SessionOption::PORT, get_port(),
+                                         SessionOption::USER, get_user(),
+                                         SessionOption::PWD, get_password(),
+                                         SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+                         std::string(), __LINE__);
+    }
+
+
+    //In these cases, since algorithms are not valid and compression is
+    //REQUIRED, an error should be thrown
+    EXPECT_THROW(
+          mysqlx::Session(SessionOption::HOST, get_host(),
+                          SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password(),
+                          SessionOption::COMPRESSION, CompressionMode::REQUIRED,
+                          SessionOption::COMPRESSION_ALGORITHMS, "BAD_Algorithm"),
+          Error);
+
+    {
+      std::list<string> algorithms = {"Unknown","BAD_Algorithm"};
+      EXPECT_THROW(
+            mysqlx::Session(SessionOption::HOST, get_host(),
+                            SessionOption::PORT, get_port(),
+                            SessionOption::USER, get_user(),
+                            SessionOption::PWD, get_password(),
+                            SessionOption::COMPRESSION, CompressionMode::REQUIRED,
+                            SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+            Error);
+    }
+
+    //In these cases, algorithm set on the server side is different from the algorithms in connection
+    //and compression is REQUIRED, an error should be thrown
+
+    {
+      std::string query ="Set global mysqlx_compression_algorithms="+d.expected+";";
+      sql(query);
+      std::list<string> algorithms = {d.second,d.third};
+      EXPECT_THROW(
+            mysqlx::Session(SessionOption::HOST, get_host(),
+                            SessionOption::PORT, get_port(),
+                            SessionOption::USER, get_user(),
+                            SessionOption::PWD, get_password(),
+                            SessionOption::COMPRESSION, CompressionMode::REQUIRED,
+                            SessionOption::COMPRESSION_ALGORITHMS, algorithms),
+            Error);
+    }
+
+    EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=["+ d.second + "," + d.third +"]"), Error);
+
+    //Restoring to the original value of mysqlx_compression_algorithms 
+    std::string query ="Set global mysqlx_compression_algorithms='"+Val+"';";
+    sql(query);
+
+    std::cout << d.expected << ": " <<
+                 std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now() - start_time).count() << "ms" <<std::endl;
+
   }
 }

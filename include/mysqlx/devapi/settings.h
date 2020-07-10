@@ -516,6 +516,8 @@ public:
         the same as setting to `true`\n
     - `tls-versions=[...]` : see `SessionOption::TLS_VERSIONS`
     - `tls-ciphersuites=[...]` : see `SessionOption::TLS_CIPHERSUITES`
+    - `compression=...` : see `SessionOption::COMPRESSION`
+    - `compression-algorithms=[...]` : see `SessionOption::COMPRESSION_ALGORITHMS`
   */
 
   SessionSettings(const string &uri)

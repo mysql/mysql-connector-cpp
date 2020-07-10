@@ -253,6 +253,8 @@ public:
 
   typedef ds::Options<ds::mysqlx::Protocol_options> Options;
   using compression_mode_t = ds::mysqlx::Protocol_options::compression_mode_t;
+  using compression_algorithm_t =
+    ds::mysqlx::Protocol_options::compression_algorithm_t;
 
   template <class C>
   Session(C &conn, const Options &options)
@@ -267,7 +269,7 @@ public:
 
     if (options.compression() != compression_mode_t::DISABLED)
     {
-      compression = negotiate_compression();
+      compression = negotiate_compression(options.compression_algorithms());
 
       if (compression == Compression_type::NONE &&
           options.compression() == compression_mode_t::REQUIRED)
@@ -286,16 +288,13 @@ public:
 
   /*
     Get the most suitable compression type supported by the server.
-    Function prioritizes compression types as follows:
-      LZ4
-      DEFLATE
 
-    If the higher priority type is not available the function will
-    check a lower priority type.
+    Vector order is used for priorization, so first element has the higher
+    priority.
 
     NONE is returned if the server does not support compression
   */
-  Compression_type::value negotiate_compression();
+  Compression_type::value negotiate_compression(const std::vector<compression_algorithm_t>& algorithms);
 
   virtual ~Session();
 

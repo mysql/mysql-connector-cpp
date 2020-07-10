@@ -2060,6 +2060,15 @@ void check_option(const char *val)
 
 
 /*
+ On MYSQLX_OPT_COMPRESSION_ALGORITHMS it is allowed to have empty strings
+*/
+template<>
+void check_option<MYSQLX_OPT_COMPRESSION_ALGORITHMS>(const char *)
+{
+}
+
+
+/*
   In case of HOST and SOCKET settings, which accumulate, it is not possible
   to remove them by passing NULL.
 
