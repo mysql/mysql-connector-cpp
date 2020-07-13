@@ -35,7 +35,7 @@
 #include "tokenizer.h"
 
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 
  /*
  4061 = enum constant not explicitly handled by switch() case.
