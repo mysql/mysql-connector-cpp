@@ -38,7 +38,7 @@
 %{?commercial:   %global product_suffix -commercial}
 %{!?commercial:  %global product_suffix %{nil}}
 
-%{?el6:%global __strip /opt/rh/devtoolset-7/root/usr/bin/strip}
+%{?el6:%global __strip /opt/rh/devtoolset-8/root/usr/bin/strip}
 
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
@@ -67,8 +67,8 @@ BuildRequires:  cmake
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 %else
-BuildRequires:  devtoolset-7-gcc
-BuildRequires:  devtoolset-7-gcc-c++
+BuildRequires:  devtoolset-8-gcc
+BuildRequires:  devtoolset-8-gcc-c++
 %endif
 %{!?mysql_dir:BuildRequires: mysql-devel}
 BuildRequires:  openssl-devel
@@ -121,8 +121,8 @@ test suite for MySQL Connector/C++
 
 %build
 %if 0%{?rhel} < 8
-%{?rhel:export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc}
-%{?rhel:export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++}
+%{?rhel:export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc}
+%{?rhel:export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++}
 %endif
 
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
