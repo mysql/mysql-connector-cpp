@@ -64,18 +64,18 @@ execution in multiple threads.
 The `sql::Connection` is used to set the schema and create a statement:
 
 @skip con->setSchema(database);
-@until boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+@until std::unique_ptr< sql::Statement > stmt(con->createStatement());
 
 To run simple queries, you can use the `sql::Statement::execute()`,
 `sql::Statement::executeQuery()`, and `sql::Statement::executeUpdate()` methods.
 Use the method `sql::Statement::execute()` if your query does not return
 a result set or if your query returns more than one result set:
 
-@skip boost::scoped_ptr< sql::ResultSet >
+@skip std::unique_ptr< sql::ResultSet >
 @until res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
 
 @note The Statement and ResultSet objects are temporary, but they are
-dynamically allocated. Therefore we use boost::scoped_ptr<> to free memory
+dynamically allocated. Therefore we use std::unique_ptr<> to free memory
 when they are not needed anymore.
 
 The API for fetching result sets is identical for (simple) statements and
