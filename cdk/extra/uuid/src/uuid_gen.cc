@@ -41,6 +41,7 @@
 
 #ifdef _WIN32
 
+#ifndef __WINPTHREADS_VERSION
 typedef CRITICAL_SECTION pthread_mutex_t;
 typedef DWORD		 pthread_t;
 typedef struct thread_attr {
@@ -55,6 +56,7 @@ typedef struct thread_attr {
 #define pthread_mutex_trylock(A) win_pthread_mutex_trylock((A))
 #define pthread_mutex_unlock(A)  (LeaveCriticalSection(A), 0)
 #define pthread_mutex_destroy(A) (DeleteCriticalSection(A), 0)
+#endif
 
 #else
 
