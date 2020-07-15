@@ -62,9 +62,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/scoped_ptr.hpp>
-
-
 /*
   Include directly the different
   headers from cppconn/ and mysql_driver.h + mysql_util.h
@@ -102,11 +99,11 @@ int main(int argc, const char **argv)
   try {
     sql::Driver * driver = sql::mysql::get_driver_instance();
     /* Using the Driver to create a connection */
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
     con->setSchema(database);
 
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
-    boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
     cout << "\t... running 'SELECT 'Welcome to Connector/C++' AS _message'" << endl;
     while (res->next()) {
       cout << "\t... MySQL replies: " << res->getString("_message") << endl;

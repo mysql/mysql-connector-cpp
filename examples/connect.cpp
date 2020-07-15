@@ -42,8 +42,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/scoped_ptr.hpp>
-
 /*
   Public interface of the MySQL Connector/C++.
   You might not use it but directly include directly the different
@@ -125,10 +123,10 @@ int main(int argc, const char **argv)
     sql::Driver * driver = sql::mysql::get_driver_instance();
 
     /* Using the Driver to create a connection */
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
     /* Creating a "simple" statement - "simple" = not a prepared statement */
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
 
     /* Create a test table demonstrating the use of sql::Statement.execute() */
     stmt->execute("USE " + database);
@@ -154,7 +152,7 @@ int main(int argc, const char **argv)
       Run a query which returns exactly one result set like SELECT
       Stored procedures (CALL) may return more than one result set
       */
-      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
+      std::unique_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
       cout << "#\t Running 'SELECT id, label FROM test ORDER BY id ASC'" << endl;
 
       /* Number of rows in the result set */
@@ -180,7 +178,7 @@ int main(int argc, const char **argv)
 
     {
       /* Fetching again but using type convertion methods */
-      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
+      std::unique_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id FROM test ORDER BY id DESC"));
       cout << "#\t Fetching 'SELECT id FROM test ORDER BY id DESC' using type conversion" << endl;
       row = 0;
       while (res->next()) {
@@ -203,7 +201,7 @@ int main(int argc, const char **argv)
     }
 
     {
-      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test WHERE id = 100"));
+      std::unique_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test WHERE id = 100"));
 
       res->next();
       if ((res->getInt("id") != 100) || (res->getString("label") != "y")) {

@@ -145,8 +145,7 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
                                    const sql::SQLString& userName,
                                    const sql::SQLString& password)
                                    :  driver (_driver),
-                                      proxy  (&_proxy),
-                                      intern (NULL)
+                                      proxy  (&_proxy)
 {
   sql::ConnectOptionsMap connection_properties;
   connection_properties["hostName"] = hostName;
@@ -166,7 +165,7 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
 MySQL_Connection::MySQL_Connection(Driver * _driver,
                    ::sql::mysql::NativeAPI::NativeConnectionWrapper& _proxy,
                    sql::ConnectOptionsMap & properties)
-  : driver(_driver), proxy(&_proxy), intern(NULL)
+  : driver(_driver), proxy(&_proxy)
 {
   boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
   intern.reset(new MySQL_ConnectionData(tmp_logger));
@@ -334,7 +333,7 @@ template<class T>
 bool process_connection_option(ConnectOptionsMap::const_iterator &option,
                 const String2IntMap options_map[],
                 size_t map_size,
-                boost::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
+                std::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
 {
   const T * value;
 
@@ -377,7 +376,7 @@ bool get_connection_option(const sql::SQLString optionName,
                 void *optionValue,
                 const String2IntMap options_map[],
                 size_t map_size,
-                boost::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
+                std::shared_ptr< NativeAPI::NativeConnectionWrapper > &proxy)
 {
   for (size_t i = 0; i < map_size; ++i) {
     if (!optionName.compare(options_map[i].key)) {

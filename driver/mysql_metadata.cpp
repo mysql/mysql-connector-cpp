@@ -1218,7 +1218,7 @@ static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
-MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const service, boost::shared_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
+MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const service, std::shared_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
                           boost::shared_ptr< MySQL_DebugLogger > & l)
   : stmt(service),
     connection(dynamic_cast< MySQL_Connection * >(service->getConnection())),

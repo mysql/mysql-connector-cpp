@@ -61,7 +61,7 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
-MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::weak_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
+MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, std::weak_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
             MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
         )
     : row(NULL), result(res), proxy(_proxy), row_position(0), was_null(false),
@@ -903,7 +903,7 @@ MySQL_ResultSet::next()
 
             if (row == NULL)
             {
-              boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+              std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
               if (!proxy_p) {
                   throw sql::InvalidInstanceException("Connection has been closed");
               }
@@ -925,7 +925,7 @@ MySQL_ResultSet::next()
         row = result->fetch_row();
         if (row == NULL)
         {
-          boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+          std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
           if (!proxy_p) {
               throw sql::InvalidInstanceException("Connection has been closed");
           }

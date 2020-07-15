@@ -40,13 +40,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
-/*
-  Note: Boost must be in the include path to build code which uses the
-  JDBC API.
-*/
-
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include <mysql/jdbc.h>
 
@@ -81,12 +75,12 @@ int main(int argc, const char **argv)
     cout << "Creating session on " << url << " ..."
          << endl << endl;
 
-    boost::scoped_ptr< sql::Connection >
+    std::unique_ptr< sql::Connection >
       con(driver->connect(url, user, pass));
     con->setSchema(database);
 
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
-    boost::scoped_ptr< sql::ResultSet >
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::ResultSet >
       res(stmt->executeQuery("SELECT 'Welcome to Connector/C++' AS _message"));
     cout << "\t... running 'SELECT 'Welcome to Connector/C++' AS _message'"
          << endl;

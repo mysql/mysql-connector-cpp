@@ -60,7 +60,7 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, boost::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
+MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, std::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
                   sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
   : warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHaveBeenLoaded(true),
   last_update_count(UL64(~0)), logger(l), resultset_type(rset_type), warningsCount(0)
@@ -92,7 +92,7 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
 
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");
   }
@@ -119,7 +119,7 @@ MySQL_Statement::get_resultset()
 
   NativeAPI::NativeResultsetWrapper * result;
 
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");
   }
@@ -166,7 +166,7 @@ MySQL_Statement::execute(const sql::SQLString& sql)
   CPP_INFO_FMT("query=%s", sql.c_str());
   checkClosed();
   do_query(sql);
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");
   }
@@ -203,7 +203,7 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 
 /*{{{ sql::mysql::dirty_drop_resultset -I- */
 void
-dirty_drop_rs(boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
+dirty_drop_rs(std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
 {
   boost::scoped_ptr<NativeAPI::NativeResultsetWrapper> result(proxy->store_result());
   // Destructor will do the job on result freeing
@@ -222,7 +222,7 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
 
   bool got_rs= false;
 
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");
   }
@@ -300,7 +300,7 @@ MySQL_Statement::getResultSet()
 
   boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
 
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");
@@ -434,7 +434,7 @@ MySQL_Statement::getMoreResults()
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
   last_update_count = UL64(~0);
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
   if (!proxy_p) {
     throw sql::InvalidInstanceException("Connection has been closed");

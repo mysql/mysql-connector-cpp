@@ -61,14 +61,14 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
   unsigned long server_version;
   boost::shared_ptr< MySQL_DebugLogger > logger;
 
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
   sql::SQLString lower_case_table_names;
 
   bool use_info_schema;
 
 public:
-  MySQL_ConnectionMetaData(sql::Statement * const service, boost::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
+  MySQL_ConnectionMetaData(sql::Statement * const service, std::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
               boost::shared_ptr< MySQL_DebugLogger > & l);
 
   virtual ~MySQL_ConnectionMetaData();

@@ -41,8 +41,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/scoped_ptr.hpp>
-
 /* Public interface of the MySQL Connector/C++ */
 #include <jdbc.h>
 /* Connection parameter and sample data */
@@ -111,11 +109,11 @@ int main(int argc, const char **argv)
   try {
     /* Using the Driver to create a connection */
     driver = sql::mysql::get_driver_instance();
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
     con->setSchema(database);
 
     /* Creating a "simple" statement - "simple" = not a prepared statement */
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
 
     /* Create a test table demonstrating the use of sql::Statement.execute() */
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -148,7 +146,7 @@ int main(int argc, const char **argv)
       NOTE: If stmt.getMoreResults() would be implemented already one
       would use a do { ... } while (stmt.getMoreResults()) loop
       */
-      boost::scoped_ptr< sql::ResultSet > res(stmt->getResultSet());
+      std::unique_ptr< sql::ResultSet > res(stmt->getResultSet());
       row = 0;
       while (res->next()) {
         cout << "#\t\t Row " << row << " - id = " << res->getInt("id");

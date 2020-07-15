@@ -83,14 +83,14 @@ CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance_by_name(const
   ::sql::SQLString dummy(clientlib);
 
   /* Mapping by client name is probably not enough here */
-  static std::map< sql::SQLString, boost::shared_ptr<MySQL_Driver> > driver;
+  static std::map< sql::SQLString, std::shared_ptr<MySQL_Driver> > driver;
 
-  std::map< sql::SQLString, boost::shared_ptr< MySQL_Driver > >::const_iterator cit;
+  std::map< sql::SQLString, std::shared_ptr< MySQL_Driver > >::const_iterator cit;
 
   if ((cit = driver.find(dummy)) != driver.end()) {
     return cit->second.get();
   } else {
-    boost::shared_ptr< MySQL_Driver > newDriver;
+    std::shared_ptr< MySQL_Driver > newDriver;
 
     newDriver.reset(new MySQL_Driver(dummy));
     driver[dummy] = newDriver;

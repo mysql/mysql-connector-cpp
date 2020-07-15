@@ -34,8 +34,7 @@
 #define _MYSQL_CONNECTION_H_
 
 #include "cppconn/connection.h"
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 namespace sql
 {
@@ -183,7 +182,7 @@ private:
 #pragma warning(push)
 #pragma warning(disable: 4251)
 #endif
-  boost::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -194,9 +193,9 @@ private:
 #pragma warning(push)
 #pragma warning(disable: 4251)
 #endif
-  boost::scoped_ptr< ::sql::mysql::MySQL_Statement > service;
+  std::unique_ptr< ::sql::mysql::MySQL_Statement > service;
 
-  boost::scoped_ptr< ::sql::mysql::MySQL_ConnectionData > intern; /* pimpl */
+  std::unique_ptr< ::sql::mysql::MySQL_ConnectionData > intern; /* pimpl */
 #ifdef _WIN32
 #pragma warning(pop)
 #endif

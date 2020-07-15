@@ -36,7 +36,7 @@
 
 #include "cppconn/driver.h"
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 
 extern "C"
@@ -61,7 +61,7 @@ class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 #pragma warning(push)
 #pragma warning(disable: 4251)
 #endif
-  boost::scoped_ptr< ::sql::mysql::NativeAPI::NativeDriverWrapper > proxy;
+  std::unique_ptr< ::sql::mysql::NativeAPI::NativeDriverWrapper > proxy;
 #ifdef _WIN32
 #pragma warning(pop)
 #endif

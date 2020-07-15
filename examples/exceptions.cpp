@@ -41,8 +41,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/scoped_ptr.hpp>
-
 /*
   Public interface of the MySQL Connector/C++.
   You might not use it but directly include directly the different
@@ -108,11 +106,11 @@ int main(int argc, const char **argv)
   try {
     /* Using the Driver to create a connection */
     driver = sql::mysql::get_driver_instance();
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
     /* Run in autocommit mode */
     con->setAutoCommit(1);
-    boost::scoped_ptr< sql::Savepoint > savepoint(NULL);
+    std::unique_ptr< sql::Savepoint > savepoint;
     try {
       // It makes no sense to set a savepoint in autocommit mode
       savepoint.reset(con->setSavepoint(string("before_insert")));
@@ -125,7 +123,7 @@ int main(int argc, const char **argv)
 
     con->setSchema(database);
 
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label CHAR(1))");
     cout << "#\t Test table created" << endl;
@@ -149,7 +147,7 @@ int main(int argc, const char **argv)
     savepoint.reset(con->setSavepoint(string("before_insert")));
 
     {
-      boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("INSERT INTO test(id, label) VALUES (?, ?)"));
+      std::unique_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("INSERT INTO test(id, label) VALUES (?, ?)"));
       for (i = 0; i < EXAMPLE_NUM_TEST_ROWS; i++) {
         prep_stmt->setInt(1, test_data[i].id);
         prep_stmt->setString(2, test_data[i].label);
@@ -158,7 +156,7 @@ int main(int argc, const char **argv)
     }
 
     try {
-      boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("INSERT INTO test(id, label) VALUES (?, ?)"));
+      std::unique_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("INSERT INTO test(id, label) VALUES (?, ?)"));
       prep_stmt->setInt(1, test_data[0].id);
       /* This will cause a duplicate index error */
       prep_stmt->executeUpdate();

@@ -108,7 +108,7 @@ string database;
 int main(int argc, const char **argv)
 {
   sql::Driver *driver;
-  boost::scoped_ptr< sql::Connection > con;
+  std::unique_ptr< sql::Connection > con;
 
   url = (argc >= 2) ? argv[1] : EXAMPLE_HOST;
   user = (argc >= 3) ? argv[2] : EXAMPLE_USER;
@@ -197,8 +197,8 @@ int main(int argc, const char **argv)
 
 void* thread_one_action(void *arg) {
   int status;
-  boost::scoped_ptr< sql::Statement > stmt;
-  boost::scoped_ptr< sql::ResultSet > res;
+  std::unique_ptr< sql::Statement > stmt;
+  std::unique_ptr< sql::ResultSet > res;
 
   struct st_worker_thread_param *handles = (struct st_worker_thread_param*) arg;
 

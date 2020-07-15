@@ -44,8 +44,6 @@
 #include <stdexcept>
 #include <list>
 
-#include <boost/scoped_ptr.hpp>
-
 /* Public interface of the MySQL Connector/C++ */
 #include <jdbc.h>
 /* Connection parameter and sample data */
@@ -119,7 +117,7 @@ int main(int argc, const char **argv)
     cout << driver->getMajorVersion() << "." << driver->getMinorVersion();
                 cout << "." << driver->getPatchVersion() << endl;
 
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
     sql::DatabaseMetaData * con_meta = con->getMetaData();
 
     cout << "# CDBC (API) major version = " << con_meta->getCDBCMajorVersion() << endl;
@@ -134,7 +132,7 @@ int main(int argc, const char **argv)
       NOTE Connector C++ defines catalog = n/a, schema = MySQL database
       */
       cout << "# List of available schemata/databases: ";
-      boost::scoped_ptr< sql::ResultSet > res(con_meta->getSchemas());
+      std::unique_ptr< sql::ResultSet > res(con_meta->getSchemas());
 
       /* just for fun... of course you can scroll and fetch in whatever order you want */
       res->afterLast();
@@ -152,7 +150,7 @@ int main(int argc, const char **argv)
     {
       /* What object types does getSchemaObjects support? */
       cout << "# Supported Object types: ";
-      boost::scoped_ptr< sql::ResultSet > res(con_meta->getSchemaObjectTypes());
+      std::unique_ptr< sql::ResultSet > res(con_meta->getSchemaObjectTypes());
       while (res->next()) {
         cout << res->getString(1);
         if (!res->isLast()) {
@@ -165,7 +163,7 @@ int main(int argc, const char **argv)
     }
 
 
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
     stmt->execute("USE " + database);
     stmt->execute("DROP TABLE IF EXISTS test1");
     stmt->execute("CREATE TABLE test1(id INT, label CHAR(1))");
@@ -173,7 +171,7 @@ int main(int argc, const char **argv)
     stmt->execute("CREATE TABLE test2(id INT, label CHAR(1))");
 
     /* "" = empty string requests all types of objects */
-    boost::scoped_ptr< sql::ResultSet > res(con_meta->getSchemaObjects(con->getCatalog(), con->getSchema(), ""));
+    std::unique_ptr< sql::ResultSet > res(con_meta->getSchemaObjects(con->getCatalog(), con->getSchema(), ""));
     row = 1;
     sql::ResultSetMetaData * res_meta = res->getMetaData();
     while (res->next()) {
@@ -261,7 +259,7 @@ int main(int argc, const char **argv)
     cout << "#\t\t isSigned() = " << res_meta->isSigned(5) << endl;
     cout << "#\t\t isWritable() = " << res_meta->isWritable(5) << endl;
 
-    boost::scoped_ptr< sql::ResultSet > res_tables(con_meta->getTables(con->getCatalog(), database, "t%", table_types));
+    std::unique_ptr< sql::ResultSet > res_tables(con_meta->getTables(con->getCatalog(), database, "t%", table_types));
     sql::ResultSetMetaData * res_meta_tables = res_tables->getMetaData();
 
     cout << "#" << endl;
@@ -279,7 +277,7 @@ int main(int argc, const char **argv)
     cout << "#" << endl;
 
       res_tables->first();
-    boost::scoped_ptr< sql::ResultSet > res_columns(con_meta->getColumns(con->getCatalog(), database, "test1", "%"));
+    std::unique_ptr< sql::ResultSet > res_columns(con_meta->getColumns(con->getCatalog(), database, "test1", "%"));
 
     cout << "#" << "Columns in the table 'test1'..." << endl;
     cout << "#\t rowsCount() = " << res_columns->rowsCount() << endl;

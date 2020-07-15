@@ -41,14 +41,12 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/scoped_ptr.hpp>
-
 /* Public interface of the MySQL Connector/C++ */
 #include <jdbc.h>
 /* Connection parameter and sample data */
 #include "examples.h"
 
-static void validateResultSet(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max);
+static void validateResultSet(std::unique_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max);
 
 using namespace std;
 
@@ -109,12 +107,12 @@ int main(int argc, const char **argv)
   try {
     /* Using the Driver to create a connection */
     driver = sql::mysql::get_driver_instance();
-    boost::scoped_ptr< sql::Connection > con(driver->connect(url, user, pass));
+    std::unique_ptr< sql::Connection > con(driver->connect(url, user, pass));
 
     con->setSchema(database);
 
     /* Creating a "simple" statement - "simple" = not a prepared statement */
-    boost::scoped_ptr< sql::Statement > stmt(con->createStatement());
+    std::unique_ptr< sql::Statement > stmt(con->createStatement());
     stmt->execute("DROP TABLE IF EXISTS test");
     stmt->execute("CREATE TABLE test(id INT, label CHAR(1))");
     cout << "#\t Test table created" << endl;
@@ -150,7 +148,7 @@ int main(int argc, const char **argv)
     */
     cout << "#\t Testing sql::Statement based resultset" << endl;
     {
-      boost::scoped_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
+      std::unique_ptr< sql::ResultSet > res(stmt->executeQuery("SELECT id, label FROM test ORDER BY id ASC"));
       validateResultSet(res, &min, &max);
     }
 
@@ -158,8 +156,8 @@ int main(int argc, const char **argv)
     cout << "#\t Testing sql::PreparedStatment based resultset" << endl;
 
     {
-      boost::scoped_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
-      boost::scoped_ptr< sql::ResultSet > res(prep_stmt->executeQuery());
+      std::unique_ptr< sql::PreparedStatement > prep_stmt(con->prepareStatement("SELECT id, label FROM test ORDER BY id ASC"));
+      std::unique_ptr< sql::ResultSet > res(prep_stmt->executeQuery());
       validateResultSet(res, &min, &max);
     }
 
@@ -198,7 +196,7 @@ int main(int argc, const char **argv)
   return EXIT_SUCCESS;
 }
 
-static void validateRow(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *exp)
+static void validateRow(std::unique_ptr< sql::ResultSet > & res, struct _test_data *exp)
 {
   stringstream msg;
 
@@ -213,7 +211,7 @@ static void validateRow(boost::scoped_ptr< sql::ResultSet > & res, struct _test_
   }
 }
 
-static void validateResultSet(boost::scoped_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max) {
+static void validateResultSet(std::unique_ptr< sql::ResultSet > & res, struct _test_data *min, struct _test_data *max) {
 
   size_t row;
 

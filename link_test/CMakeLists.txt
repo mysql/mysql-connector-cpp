@@ -156,31 +156,6 @@ endif()
 # ========================================================================
 # Dependencies
 
-#
-# Look for Boost which is used by connector public headers.
-#
-
-if(NOT DEFINED BOOST_ROOT AND DEFINED WITH_BOOST)
-
-  set(BOOST_ROOT "${WITH_BOOST}")
-  #set(Boost_NO_SYSTEM_PATHS ON)
-
-endif()
-
-set(Boost_NO_BOOST_CMAKE ON)
-
-find_package(Boost)
-
-if (NOT Boost_FOUND)
-
-  message(FATAL_ERROR
-    "Can not build JDBC API application because Boost is missing"
-    " (use WITH_BOOST)."
-  )
-
-endif()
-
-include_directories(${Boost_INCLUDE_DIRS})
 
 if(NOT OPENSSL_FOUND)
   if(NOT WITH_SSL MATCHES "^(system|yes)$")

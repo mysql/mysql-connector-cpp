@@ -112,7 +112,7 @@ if(jdbc_stand_alone)
   set(CONCPP_VERSION_MINOR 0)
   set(CONCPP_VERSION_MICRO 0)
   set(CONCPP_VERSION_LEVEL "")
-  set(JDBC_ABI_VERSION_MAJOR 7)
+  set(JDBC_ABI_VERSION_MAJOR 8)
 
 endif(jdbc_stand_alone)
 
