@@ -185,4 +185,3 @@ const std::u16string& Value::get_ustring() const
     throw Error("Value cannot be converted to string");
   }
 }
-

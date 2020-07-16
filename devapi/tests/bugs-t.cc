@@ -42,6 +42,55 @@ class Bugs : public mysqlx::test::Xplugin
 };
 
 
+TEST_F(Bugs,bug30989042_cdk_reply_error)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  // Create procedure that returns 2 row sets
+
+  sql("DROP PROCEDURE IF EXISTS test.p");
+  sql(
+    "CREATE PROCEDURE test.p(error INT)"
+    "BEGIN"
+    "  SELECT 1;"
+    "  IF error = 0 THEN"
+    "    SELECT 2;"
+    "  ELSE"
+    "    SELECT 1/point(1,0);"    // trigger error
+    "  END IF;"
+    "END"
+  );
+
+  auto res = sql("CALL test.p(0)");
+
+  // res.count() will consume the first row set, but another
+  // one is pending.
+
+  EXPECT_EQ(1,res.count());
+
+  // As we execute new statement, all remaining rows from the previous
+  // reply should be cached. It was not the case before bug was fixed,
+  // and the next statement was throwing error, because previous reply
+  // was not fully consumed.
+
+  EXPECT_NO_THROW(sql("select 1"));
+
+  // Check that remaining rows from the reply to CALL are cached
+  // and still available.
+
+  EXPECT_TRUE(res.nextResult());
+  EXPECT_EQ(1,res.count());
+
+  // Check that in case of error, it is reported only when moving to
+  // the next result in the reply (should not be reported while accessing
+  // the first result).
+
+  res = sql("CALL test.p(1)");
+  EXPECT_EQ(1, res.count());
+  EXPECT_THROW(res.nextResult(), Error);
+}
+
+
 TEST_F(Bugs, failover_error)
 {
 

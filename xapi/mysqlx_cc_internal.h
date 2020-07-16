@@ -33,7 +33,6 @@
 
 #include <mysql/cdk.h>
 
-#include "../global.h"
 #include "../common/session.h"
 #include "../common/settings.h"
 #include "../common/db_object.h"
@@ -346,13 +345,68 @@ public:
     return m_session.new_stmt<OP_LIST_COLLECTIONS>(*this, pattern)->exec();
   }
 
-
-  void create_collection(const char *name, bool reuse)
+  void create_collection(const char *name,
+                         bool reuse)
   {
     assert(name && *name);
     Db_obj_ref coll(this->name(), name);
     create_object<Object_type::COLLECTION>(
-      m_session.m_impl, coll, reuse
+      m_session.m_impl, coll, reuse, std::string()
+    );
+  }
+
+  void create_collection(const char *name,
+                         bool reuse,
+                         const std::string &level,
+                         const std::string &schema)
+  {
+    assert(name && *name);
+    Db_obj_ref coll(this->name(), name);
+    create_object<Object_type::COLLECTION>(
+      m_session.m_impl, coll, reuse, level, schema
+    );
+  }
+
+  void create_collection(const char *name,
+                         bool reuse,
+                         const std::string &validation_json)
+  {
+    assert(name && *name);
+    Db_obj_ref coll(this->name(), name);
+    create_object<Object_type::COLLECTION>(
+      m_session.m_impl, coll, reuse, validation_json
+      );
+  }
+
+  void create_collection(const char *name,
+                         const std::string &json)
+  {
+    assert(name && *name);
+    Db_obj_ref coll(this->name(), name);
+    create_object<Object_type::COLLECTION>(
+      m_session.m_impl, coll, json
+      );
+  }
+
+  void modify_collection(const char *name,
+                         std::string level,
+                         std::string schema)
+  {
+    assert(name && *name);
+    Db_obj_ref coll(this->name(), name);
+    modify_object<Object_type::COLLECTION>(
+      m_session.m_impl, coll, level, schema
+    );
+  }
+
+  void modify_collection(const char *name,
+                         std::string json,
+                         bool validation_json = false)
+  {
+    assert(name && *name);
+    Db_obj_ref coll(this->name(), name);
+    modify_object<Object_type::COLLECTION>(
+      m_session.m_impl, coll, json, validation_json
     );
   }
 
@@ -371,6 +425,25 @@ public:
 
 };
 
+
+struct mysqlx_collection_options_struct
+    : public Mysqlx_diag
+{
+  bool m_reuse = false;
+  std::string m_validation;
+  std::string m_validation_level;
+  std::string m_validation_schema;
+
+  enum Usage{
+    REUSE,
+    VALIDATION,
+    VALIDATION_LEVEL,
+    VALIDATION_SCHEMA,
+    LAST
+  };
+
+  std::bitset<LAST> m_usage;
+};
 
 struct mysqlx_collection_struct
   : public Mysqlx_diag

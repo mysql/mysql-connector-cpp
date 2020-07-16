@@ -3096,6 +3096,166 @@ TEST_F(xapi, expr_in_expr)
 
 }
 
+TEST_F(xapi, schema_validation)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  mysqlx_schema_t *schema;
+  mysqlx_collection_options_t *opts;
+  mysqlx_collection_t *coll;
+  mysqlx_stmt_t *stmt;
+  mysqlx_result_t *res;
+
+  AUTHENTICATE();
+
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 20);
+
+  EXPECT_TRUE((schema = mysqlx_get_schema(get_session() , "test", 1)) != nullptr);
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_collection_drop(schema, "places"));
+
+  EXPECT_TRUE((opts = mysqlx_collection_options_new()) != nullptr);
+
+  const char *validation_schema =
+  R"(
+  {
+    "id": "http://json-schema.org/geo",
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "description": "A geographical coordinate",
+    "type": "object",
+    "properties": {
+      "latitude": {
+        "type": "number"
+      },
+      "longitude": {
+        "type": "number"
+    }
+  },
+  "required": ["latitude", "longitude"]
+  })";
+
+  EXPECT_EQ(RESULT_ERROR,
+  mysqlx_collection_options_set(opts,
+                                OPT_COLLECTION_REUSE(false),
+                                OPT_COLLECTION_VALIDATION_LEVEL(VALIDATION_STRICT),
+                                OPT_COLLECTION_VALIDATION_SCHEMA(validation_schema),
+                                100,3,
+                                PARAM_END));
+
+  std::cout << "EXPECTED: " << mysqlx_error_message(opts) << std::endl;
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_collection_options_set(opts,
+                                OPT_COLLECTION_REUSE(false),
+                                OPT_COLLECTION_VALIDATION_LEVEL(VALIDATION_STRICT),
+                                OPT_COLLECTION_VALIDATION_SCHEMA(validation_schema),
+                                PARAM_END));
+
+  EXPECT_EQ(RESULT_ERROR,
+  mysqlx_collection_options_set(opts,
+                                OPT_COLLECTION_VALIDATION_LEVEL(VALIDATION_STRICT),
+                                OPT_COLLECTION_VALIDATION_SCHEMA(validation_schema),
+                                PARAM_END));
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_create_with_options(schema, "places", opts));
+
+  EXPECT_EQ(RESULT_ERROR,
+            mysqlx_collection_create_with_options(schema, "places", opts));
+
+  //With reuseExisting=true will work
+  mysqlx_collection_create_with_json_options(schema, "places",
+                                             R"({
+                                             "reuseExisting": true,
+                                             "validation": {
+                                             "level": "Strict",
+                                             "schema":
+                                             {
+                                             "id": "http://json-schema.org/geo",
+                                             "$schema": "http://json-schema.org/draft-06/schema#",
+                                             "description": "A geographical coordinate",
+                                             "type": "object",
+                                             "properties": {
+                                             "latitude": {
+                                             "type": "number"
+                                             },
+                                             "longitude": {
+                                             "type": "number"
+                                             }
+                                             },
+                                             "required": ["latitude", "longitude"]
+                                             }
+                                             }
+                                             })");
+
+  std::cout << "EXPECTED: " << mysqlx_error_message(schema) << std::endl;
+
+  EXPECT_TRUE(
+  (coll = mysqlx_get_collection(schema, "places",1)) != nullptr);
+
+  EXPECT_TRUE(
+  (stmt = mysqlx_collection_add_new(coll)) != nullptr);
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_set_add_document(stmt, R"({"location":"Lisbon", "latitude":38.722321, "longitude": -9.139336})"));
+
+  CRUD_CHECK((res = mysqlx_execute(stmt)), stmt);
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_set_add_document(stmt, R"({"location":"Lisbon"})"));
+
+  //Expected error
+  EXPECT_TRUE(
+   (res = mysqlx_execute(stmt)) == nullptr);
+
+  std::cout << "EXPECTED: " << mysqlx_error_message(stmt) << std::endl;
+
+  mysqlx_free(opts);
+
+  opts = mysqlx_collection_options_new();
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_collection_options_set(opts,
+                                OPT_COLLECTION_VALIDATION(
+                                  "{"
+                                    "\"level\": \"Off\","
+                                    "\"schema\":"
+                                    "{"
+                                      "\"id\": \"http://json-schema.org/geo\","
+                                      "\"$schema\": \"http://json-schema.org/draft-06/schema#\","
+                                      "\"description\": \"A geographical coordinate\","
+                                      "\"type\": \"object\","
+                                      "\"properties\": {"
+                                        "\"latitude\": {"
+                                          "\"type\": \"number\""
+                                        "},"
+                                        "\"longitude\": {"
+                                           "\"type\": \"number\""
+                                         "}"
+                                       "},"
+                                       "\"required\": [\"latitude\", \"longitude\"]"
+                                    "}"
+                                  "}"
+                                  ),
+                                PARAM_END));
+
+  EXPECT_EQ(RESULT_OK,
+            mysqlx_collection_modify_with_options(schema, "places", opts));
+
+  EXPECT_TRUE(
+  (stmt = mysqlx_collection_add_new(coll)) != nullptr);
+
+  EXPECT_EQ(RESULT_OK,
+  mysqlx_set_add_document(stmt, R"({"location":"Lisbon"})"));
+
+  CRUD_CHECK((res = mysqlx_execute(stmt)), stmt);
+
+  mysqlx_free(opts);
+
+}
+
+
 
 TEST_F(xapi_bugs, session_invalid_password_deadlock)
 {

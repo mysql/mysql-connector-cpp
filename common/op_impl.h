@@ -1522,27 +1522,91 @@ struct Op_create<Object_type::SCHEMA>
   {}
 };
 
-
-template<>
-struct Op_create<Object_type::COLLECTION>
-  : public Op_admin
+struct Op_create_modify_base
+    : public Op_admin
 {
-  Op_create(
-    Shared_session_impl sess,
-    const cdk::api::Object_ref &coll,
-    bool reuse = true
-  )
-    : Op_admin(sess, "create_collection")
+  //TODO:
+  //Allow validation schema and m_options to be a document, not only a JSON string.
+  //Currently not possible because common layer does not have a document class
+  //like DbDoc.
+  std::string m_options;
+  std::string m_validation_level;
+  std::string m_validation_schema;
+  //If true, means m_options refers to validation json, not the full options
+  bool m_validation_options = false;
+
+  Op_create_modify_base(Shared_session_impl sess, const char *cmd,
+                        const cdk::api::Object_ref &coll,
+                        std::string level,
+                        std::string validation_schema)
+    : Op_admin(sess, cmd)
+    , m_validation_level(std::move(level))
+    , m_validation_schema(std::move(validation_schema))
   {
     if (coll.schema())
       add_param("schema", Value::Access::mk_str(coll.schema()->name()));
     else
       common::throw_error("No schema specified for create collection operation");
     add_param("name", Value::Access::mk_str(coll.name()));
+  }
+
+  Op_create_modify_base(Shared_session_impl sess, const char *cmd,
+                        const cdk::api::Object_ref &coll,
+                        std::string json,
+                        bool validation_json = false)
+    : Op_create_modify_base(sess, cmd, coll, std::string(),std::string() )
+  {
+    m_options = std::move(json);
+    m_validation_options = validation_json;
+  }
+  // cdk::Param_source
+
+  void process(cdk::Any::Document::Processor &prc) const override;
+
+};
+
+template<>
+struct Op_create<Object_type::COLLECTION>
+  : public Op_create_modify_base
+{
+  Op_create(
+        Shared_session_impl sess,
+        const cdk::api::Object_ref &coll,
+        bool reuse,
+        std::string validation_level,
+        std::string validation_schema
+  )
+    : Op_create_modify_base(sess, "create_collection", coll,
+                            std::move(validation_level), std::move(validation_schema))
+  {
     // 1050 = table already exists
     if (reuse)
       skip_error(cdk::server_error(1050));
   }
+
+  Op_create(
+        Shared_session_impl sess,
+        const cdk::api::Object_ref &coll,
+        bool reuse,
+        std::string validation_json
+  )
+    : Op_create_modify_base(sess, "create_collection", coll,
+                            std::move(validation_json), true)
+  {
+    // 1050 = table already exists
+    if (reuse)
+      skip_error(cdk::server_error(1050));
+  }
+
+  Op_create(
+        Shared_session_impl sess,
+        const cdk::api::Object_ref &coll,
+        std::string json,
+        bool validation_json = false
+  )
+    : Op_create_modify_base(sess, "create_collection", coll, std::move(json), validation_json)
+  {}
+
 };
 
 
@@ -1557,9 +1621,92 @@ void create_object(
   Shared_session_impl sess, Ty&&... args
 )
 {
-  Op_create<T> create(sess, std::forward<Ty>(args)...);
-  Result_impl res(create.execute());
-  res.next_result();
+  try{
+    Op_create<T> create(sess, std::forward<Ty>(args)...);
+    Result_impl res(create.execute());
+    res.next_result();
+  }
+  catch(const cdk::Error &err)
+  {
+    if(err.code().value() == 5015)
+    { //Old server... doesn't support schema validation
+      common::throw_error(
+            "The server doesn't support the requested operation. " \
+            "Please update the MySQL Server and or Client library");
+    }
+    throw;
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+
+/*
+  Operations which modify database objects.
+
+  They are implemented as Op_modify<> template parametrized by the type of the
+  object to modify.
+*/
+
+template <Object_type T>
+struct Op_modify;
+
+
+template<>
+struct Op_modify<Object_type::COLLECTION>
+  : public Op_create_modify_base
+{
+
+  Op_modify(
+        Shared_session_impl sess,
+        const cdk::api::Object_ref &coll,
+        std::string validation_level,
+        std::string validation_schema
+  ) : Op_create_modify_base(sess, "modify_collection_options", coll,
+                            std::move(validation_level),
+                            std::move(validation_schema))
+  {}
+
+  Op_modify(
+        Shared_session_impl sess,
+        const cdk::api::Object_ref &coll,
+        std::string json,
+        bool validation_json = false
+  )
+    : Op_create_modify_base(sess, "modify_collection_options",
+                            coll,
+                            std::move(json), validation_json)
+  {}
+
+};
+
+/*
+  A helper function which constructs an operation that modifies a database object
+  and executes it.
+*/
+
+template <Object_type T, typename... Ty>
+inline
+void modify_object(
+  Shared_session_impl sess, Ty&&... args
+)
+{
+  try{
+    Op_modify<T> modify(sess, std::forward<Ty>(args)...);
+    Result_impl res(modify.execute());
+    res.next_result();
+  }
+  catch(const cdk::Error &err)
+  {
+    if(err.code().value() == 5157)
+    { //Old server... doesn't support modify collection
+      common::throw_error(
+            "The server doesn't support the requested operation. " \
+            "Please update the MySQL Server and or Client library");
+    }
+    throw;
+  }
 }
 
 

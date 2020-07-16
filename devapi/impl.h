@@ -41,7 +41,6 @@
 #include <mysql/cdk/converters.h>
 #include <expr_parser.h>
 
-#include "../global.h"
 #include "../common/result.h"
 #include "../common/op_impl.h"
 
@@ -80,7 +79,7 @@ struct Value::Access
     Value ret;
     ret.m_type = Value::DOC;
     ret.m_doc = DbDoc(json);
-    return std::move(ret);
+    return ret;
   }
 
   /*
@@ -283,9 +282,11 @@ class DbDoc::Impl
 {
   class JSONDoc;
 
+  std::string m_json;
+
   virtual void print(std::ostream &out) const
   {
-    out << "<document>";  // TODO
+    out << get_json();
   }
 
   virtual void prepare() {} // GCOV_EXCL_LINE
@@ -309,7 +310,45 @@ class DbDoc::Impl
 
   virtual const char* get_json() const
   {
-    return nullptr;
+    if(!m_json.empty())
+      return m_json.c_str();
+
+    auto *self = const_cast<DbDoc::Impl*>(this);
+
+    self->m_json.append("{");
+    bool first = true;
+    for (auto el : m_map)
+    {
+      if (!first)
+      {
+        self->m_json.append(", ");
+      }
+      else
+      {
+        first = false;
+      }
+      self->m_json.append(R"(")").append(el.first).append(R"(": )");
+
+      switch (el.second.get_type())
+      {
+      case common::Value::STRING:
+      case common::Value::USTRING:
+      case common::Value::EXPR:
+        self->m_json
+            .append(R"(")")
+            .append(el.second.get<std::string>())
+            .append(R"(")");
+        break;
+      default:
+        std::stringstream value_ss;
+        value_ss << el.second;
+        self->m_json.append(value_ss.str());
+        break;
+      }
+    }
+    self->m_json.append("}");
+
+    return m_json.c_str();
   }
 
   // Iterating over fields of the document
@@ -328,6 +367,9 @@ class DbDoc::Impl
   friend DbDoc;
   friend RowResult;
   friend Value::Access;
+
+  public:
+  virtual ~Impl(){}
 };
 
 
@@ -339,26 +381,28 @@ class DbDoc::Impl
 class DbDoc::Impl::JSONDoc
   : public DbDoc::Impl
 {
-  std::string m_json;
+
   bool m_parsed;
 
 public:
 
   JSONDoc(const std::string &json)
-    : m_json(json)
-    , m_parsed(false)
-  {}
+    : m_parsed(false)
+  {
+    m_json = json;
+  }
 
   JSONDoc(std::string &&json)
-    : m_json(std::move(json))
-    , m_parsed(false)
-  {}
+    : m_parsed(false)
+  {
+    m_json = std::move(json);
+  }
 
   void prepare();
 
   void print(std::ostream &out) const
   {
-    out << m_json;
+    out << get_json();
   }
 
   const char* get_json() const

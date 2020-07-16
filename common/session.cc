@@ -42,7 +42,6 @@ POP_SYS_WARNINGS
 #include "settings.h"
 #include "session.h"
 #include "result.h"
-#include "config.h"
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -194,10 +193,9 @@ void mysqlx::common::Settings_impl::Data::init_connection_attr()
   m_connection_attr["_platform"] = platform;
   m_connection_attr["_source_host"] =
       cdk::foundation::connection::get_local_hostname();
-  m_connection_attr["_client_name"] =  PACKAGE_NAME;
-  m_connection_attr["_client_version"] = PACKAGE_VERSION;
-  m_connection_attr["_client_license"] = PACKAGE_LICENSE;
-
+  m_connection_attr["_client_name"] = CONCPP_NAME;
+  m_connection_attr["_client_version"] = CONCPP_VERSION;
+  m_connection_attr["_client_license"] = CONCPP_LICENSE;
 }
 
 void mysqlx::common::Settings_impl::Data::clear_connection_attr()

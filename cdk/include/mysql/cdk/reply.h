@@ -67,7 +67,13 @@ public:
 
   // Reply interface
 
-  bool has_results()
+  bool end_of_reply() override
+  {
+    assert(m_impl);
+    return !m_impl->check_results();
+  }
+
+  bool has_results() override
   {
     /*
       If we are in a state after consuming one result set and there is
@@ -79,7 +85,7 @@ public:
     return m_impl->next_result() || m_impl->check_results();
   }
 
-  void skip_result()
+  void skip_result() override
   {
     m_impl->discard_result();
     m_impl->wait();
@@ -87,35 +93,43 @@ public:
     m_impl->next_result();
   }
 
-  row_count_t affected_rows() { return m_impl->affected_rows(); }
-  row_count_t last_insert_id() { return m_impl->last_insert_id(); }
+  void discard() override
+  { m_impl->discard(); }
+
+  row_count_t affected_rows() override
+  { return m_impl->affected_rows(); }
+
+  row_count_t last_insert_id()
+  { return m_impl->last_insert_id(); }
+
   const std::vector<std::string>& generated_ids() const
   { return m_impl->generated_ids(); }
-  void discard() { m_impl->discard(); }
 
   // Diagnostics interface
 
-  unsigned int entry_count(Severity::value level=Severity::ERROR)
+  unsigned int entry_count(Severity::value level=Severity::ERROR) override
   { return m_impl->entry_count(level); }
 
-  Diagnostic_iterator& get_entries(Severity::value level=Severity::ERROR)
+  Diagnostic_iterator& get_entries(Severity::value level=Severity::ERROR) override
   { return m_impl->get_entries(level); }
 
-  const Error& get_error()
+  const Error& get_error() override
   { return m_impl->get_error(); }
 
   // Async_op interface
 
-  bool is_completed() const { return m_impl->is_completed(); }
+  bool is_completed() const override
+  { return m_impl->is_completed(); }
 
 private:
 
   // Async_op
 
-  bool do_cont() { return m_impl->cont(); }
-  void do_wait() { return m_impl->wait(); }
-  void do_cancel() { return m_impl->cancel(); }
-  const cdk::api::Event_info* get_event_info() const
+  bool do_cont() override { return m_impl->cont(); }
+  void do_wait() override { return m_impl->wait(); }
+  void do_cancel() override { return m_impl->cancel(); }
+
+  const cdk::api::Event_info* get_event_info() const override
   { return m_impl->get_event_info(); }
 
 

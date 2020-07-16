@@ -35,89 +35,100 @@
 #   Includes all transitive dependencies of the libraries being merged.
 #
 
-get_filename_component(LIBUTILS_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(LIBUTILS_SCRIPT_DIR "${LIBUTILS_SCRIPT_DIR}/libutils")
+# Include this script only once.
 
-#
-# Locate required tools.
-#
-
-if(CMAKE_BUILD_TOOL MATCHES "MSBuild")
-
-  set(MSBUILD ON)
-
-  # Use lib.exe from the same location as other compiler tools
-
-  get_filename_component(path "${CMAKE_LINKER}" DIRECTORY)
-  set(LIB_TOOL "${path}/lib.exe")
-
+if(COMMAND libutils_setup)
+  return()
 endif()
 
 
-if(APPLE)
+macro(libutils_setup)
 
-  find_program(LIB_TOOL libtool)
+  get_filename_component(LIBUTILS_SCRIPT_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+  set(LIBUTILS_SCRIPT_DIR "${LIBUTILS_SCRIPT_DIR}/libutils")
+  set(LIBUTILS_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/libutils" CACHE INTERNAL "")
 
-  # We need install_name_tool to do rpath mangling (see below)
+  #
+  # Locate required tools.
+  #
 
-  find_program(INSTALL_NAME_TOOL install_name_tool)
+  if(CMAKE_BUILD_TOOL MATCHES "MSBuild")
 
-  # If available, otool is used to show runtime dependencies for libraries we
-  # build
+    set(MSBUILD ON)
 
-  find_program(OTOOL otool)
+    # Use lib.exe from the same location as other compiler tools
 
-endif()
+    get_filename_component(path "${CMAKE_LINKER}" DIRECTORY)
+    set(LIB_TOOL "${path}/lib.exe")
+
+  endif()
 
 
-#
-# Infrastructure for merging static libraries
-# ===========================================
-#
-# It is used to merge a static library with all other static libraries
-# on which it depends, so that, when using the merged library, one does
-# not have to worry about dependencies.
-#
-# The main logic for mering static libraries on different platforms is
-# in the merge_archives.cmake script. Calling merge_static_library() on
-# a library target arranges for this script to be called with all required
-# parameters every time the library is (re-)built.
-#
-# Extra effort is needed to get the list of all dependencies of the library.
-# These dependencies are computed by cmake, but there is no easy way to
-# get them out of cmake. We use the trick with custom language linker. Hovewer,
-# it does not work with MSBuild generator where we do other tricks. In either
-# case the idea is to define a phony target that depends on the static library
-# and capture link options that cmake uses to build this phony target.
-#
+  if(APPLE)
 
-#
-# Create merge script from template, setting required internal variables in it.
-#
-# TODO: This will work only if this file is included in the same folder in which
-# static libraries are linked.
-#
+    find_program(LIB_TOOL libtool)
 
-configure_file(
-  ${LIBUTILS_SCRIPT_DIR}/merge_archives.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/merge_archives.cmake
-  @ONLY
-)
+    # We need install_name_tool to do rpath mangling (see below)
 
-#
-# This small program saves in a file all command line options that
-# were passed to it. It is used to capture linker invocation options.
-#
+    find_program(INSTALL_NAME_TOOL install_name_tool)
 
-if(NOT MSBUILD AND NOT TARGET save_linker_opts)
-  add_executable(save_linker_opts ${LIBUTILS_SCRIPT_DIR}/save_linker_opts.cc)
-  set_property(TARGET save_linker_opts PROPERTY
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    # If available, otool is used to show runtime dependencies for libraries we
+    # build
+
+    find_program(OTOOL otool)
+
+  endif()
+
+
+  #
+  # Infrastructure for merging static libraries
+  # ===========================================
+  #
+  # It is used to merge a static library with all other static libraries
+  # on which it depends, so that, when using the merged library, one does
+  # not have to worry about dependencies.
+  #
+  # The main logic for mering static libraries on different platforms is
+  # in the merge_archives.cmake script. Calling merge_static_library() on
+  # a library target arranges for this script to be called with all required
+  # parameters every time the library is (re-)built.
+  #
+  # Extra effort is needed to get the list of all dependencies of the library.
+  # These dependencies are computed by cmake, but there is no easy way to
+  # get them out of cmake. We use the trick with custom language linker. Hovewer,
+  # it does not work with MSBuild generator where we do other tricks. In either
+  # case the idea is to define a phony target that depends on the static library
+  # and capture link options that cmake uses to build this phony target.
+  #
+
+  #
+  # Create merge script from template, setting required internal variables in it.
+  #
+
+  configure_file(
+    ${LIBUTILS_SCRIPT_DIR}/merge_archives.cmake.in
+    ${LIBUTILS_BIN_DIR}/merge_archives.cmake
+    @ONLY
   )
-endif()
+
+  #
+  # This small program saves in a file all command line options that
+  # were passed to it. It is used to capture linker invocation options.
+  #
+
+  if(NOT MSBUILD AND NOT TARGET save_linker_opts)
+    add_executable(save_linker_opts ${LIBUTILS_SCRIPT_DIR}/save_linker_opts.cc)
+    set_property(TARGET save_linker_opts PROPERTY
+      RUNTIME_OUTPUT_DIRECTORY ${LIBUTILS_BIN_DIR}
+    )
+  endif()
+
+endmacro(libutils_setup)
+
+libutils_setup()
 
 #
-# Merge static libraries into single static or shared library.
+# Merge static libraries into a single static or shared library.
 #
 # Given a static library target, this function sets up an infrastructure
 # for merging this static libraray with its dependencies. It creates
@@ -185,7 +196,7 @@ function(merge_libraries TARGET)
       -DMSBUILD=${MSBUILD}
       -DINFO=${INFO}
       -DINFO_PREFIX=${INFO_PREFIX}
-      -P merge_archives.cmake
+      -P ${LIBUTILS_BIN_DIR}/merge_archives.cmake
     )
 
   endif()
@@ -218,7 +229,7 @@ function(merge_libraries TARGET)
 
     add_dependencies(${TARGET}-deps save_linker_opts)
     set_target_properties(${TARGET}-deps PROPERTIES
-      RULE_LAUNCH_LINK "${CMAKE_BINARY_DIR}/save_linker_opts ${log_file}.STATIC "
+      RULE_LAUNCH_LINK "${LIBUTILS_BIN_DIR}/save_linker_opts ${log_file}.STATIC "
     )
 
     # Arrange for ${TARGET}-deps to be built before ${TARGET}
@@ -236,7 +247,7 @@ function(merge_libraries TARGET)
     #
 
     set_target_properties(${TARGET} PROPERTIES
-      RULE_LAUNCH_LINK "${CMAKE_BINARY_DIR}/save_linker_opts ${log_file}.SHARED "
+      RULE_LAUNCH_LINK "${LIBUTILS_BIN_DIR}/save_linker_opts ${log_file}.SHARED "
     )
 
   else(NOT MSBUILD)

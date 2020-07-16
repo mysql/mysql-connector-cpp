@@ -17,7 +17,7 @@
 
 #include "../rapidjson.h"
 
-#if defined(_MSC_VER) && defined(_M_AMD64)
+#if defined(_MSC_VER) && !__INTEL_COMPILER && defined(_M_AMD64)
 #include <intrin.h> // for _umul128
 #pragma intrinsic(_umul128)
 #endif
@@ -133,7 +133,7 @@ public:
         RAPIDJSON_ASSERT(count_ + offset <= kCapacity);
 
         if (interShift == 0) {
-            std::memmove(&digits_[count_ - 1 + offset], &digits_[count_ - 1], count_ * sizeof(Type));
+            std::memmove(digits_ + offset, digits_, count_ * sizeof(Type));
             count_ += offset;
         }
         else {
@@ -196,7 +196,7 @@ public:
             Type d = a->digits_[i] - borrow;
             if (i < b->count_)
                 d -= b->digits_[i];
-            borrow = (d > a->digits_[i]) ? 1U : 0U;
+            borrow = (d > a->digits_[i]) ? 1 : 0;
             out->digits_[i] = d;
             if (d != 0)
                 out->count_ = i + 1;

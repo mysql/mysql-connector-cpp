@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -28,27 +28,23 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#ifndef _UUID_GEN_H_
-#define _UUID_GEN_H_
+#ifndef MYSQLX_COMMON_VERSION_INFO
+#define MYSQLX_COMMON_VERSION_INFO
 
-#include <stdint.h>
+/*
+  Version information which is used for example for default
+  connection attributes.
 
-#define UUID_LENGTH_BIN 16
+  When build system is configured by cmake, a new file is generated
+  from this one with version and license values substituted by
+  cmake and build system is configured so that the generated
+  header takes precedence over this one. But code can be built even
+  if header with real values was not generated - in that case the
+  values specified here will be used.
+*/
 
-namespace uuid {
-
-typedef unsigned char uuid_type[UUID_LENGTH_BIN];
-
-/* The seed must be set before using the generator. */
-void set_seed(uint16_t seed);
-
-/* Convenience function, which sets the seed using the time and
-   process id */
-void set_seed_from_time_pid();
-
-/* UUID generator */
-void generate_uuid(uuid_type &uuid);
-
-} // namespace uuid
+#define CONCPP_NAME    "mysql-connector-cpp"
+#define CONCPP_VERSION "@CONCPP_VERSION@"
+#define CONCPP_LICENSE "@CONCPP_LICENSE@"
 
 #endif

@@ -67,6 +67,7 @@ typedef struct mysqlx_error_struct mysqlx_error_t;
 
 struct Mysqlx_diag_base
 {
+  virtual ~Mysqlx_diag_base() {}
   virtual mysqlx_error_t * get_error() = 0;
 };
 
@@ -151,8 +152,6 @@ typedef struct mysqlx_error_struct : public Mysqlx_diag_base
     return NULL;
   }
 
-  virtual ~mysqlx_error_struct()
-  {}
 } mysqlx_error_t;
 
 
@@ -190,7 +189,6 @@ class Mysqlx_diag : public Mysqlx_diag_base
     return NULL;
   }
 
-  virtual ~Mysqlx_diag() {}
 };
 
 #endif
