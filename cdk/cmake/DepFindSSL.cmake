@@ -283,12 +283,12 @@ function(bundle_ssl_libs)
 
     # Note: On U**ix systems the files we link to are symlinks to
     # the actual shared libs, so we read these symlinks here and
-    # bundle their targets.
+    # bundle their targets as well.
 
     foreach(lib ${OPENSSL_LIBRARY} ${CRYPTO_LIBRARY})
 
       get_filename_component(path ${lib} REALPATH)
-      list(APPEND glob1 ${path})
+      list(APPEND glob1 ${lib} ${path})
 
     endforeach()
 
