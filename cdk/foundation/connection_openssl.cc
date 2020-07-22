@@ -49,7 +49,7 @@ POP_SYS_WARNINGS_CDK
   #pragma comment directive.
 */
 
-#ifdef _WIN32
+#ifdef _MSC_VER
   #pragma comment(lib,"ws2_32")
   #if defined(WITH_SSL)
     #if OPENSSL_VERSION_NUMBER < 0x10100000L

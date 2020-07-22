@@ -141,7 +141,7 @@ string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
 # -------------------------------------------------------------------------
 # Disable compile warnings
 
-if(WIN32)
+if(MSVC)
 
   add_compile_options(
     /wd4996

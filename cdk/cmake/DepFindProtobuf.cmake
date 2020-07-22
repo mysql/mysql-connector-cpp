@@ -95,6 +95,16 @@ if(CMAKE_GENERATOR_TOOLSET)
   set(set_toolset -T ${CMAKE_GENERATOR_TOOLSET})
 endif()
 
+set(set_system_name)
+if(CMAKE_SYSTEM_NAME)
+  set(set_system_name -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
+endif()
+
+set(set_system_processor)
+if(CMAKE_SYSTEM_PROCESSOR)
+  set(set_system_processor -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR})
+endif()
+
 if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
 
   message("==== Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR} ${set_arch} ${set_toolset}")
@@ -114,6 +124,8 @@ if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
       ${set_arch}
       ${set_toolset}
       ${set_build_type}
+      ${set_system_name}
+      ${set_system_processor}
       -DSTATIC_MSVCRT=${STATIC_MSVCRT}
       -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -322,7 +334,7 @@ function(mysqlx_protobuf_generate_cpp SRCS HDRS)
     set_source_files_properties(${srcs}
       APPEND_STRING PROPERTY COMPILE_FLAGS "-w"
     )
-  ELSE(WIN32)
+  ELSEIF(MSVC)
     set_source_files_properties(${srcs}
       APPEND_STRING PROPERTY COMPILE_FLAGS
       "/W1 /wd4018 /wd4996 /wd4244 /wd4267"

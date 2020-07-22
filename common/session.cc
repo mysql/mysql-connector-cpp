@@ -118,7 +118,9 @@ std::string get_os_version_info(std::string &platform)
   else
   {
     PUSH_SYS_WARNINGS
+#ifdef _MSC_VER
       DISABLE_WARNING(4996)
+#endif
       if (GetVersionEx(&ver) == 0)
         ver_info << "<unknown>";
     POP_SYS_WARNINGS

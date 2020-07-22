@@ -73,6 +73,7 @@ namespace detail {
 
   Used for handling Winsock errors.
 */
+const error_category& winsock_error_category();
 
 class error_category_winsock : public error_category_base
 {
