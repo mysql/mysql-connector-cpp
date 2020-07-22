@@ -94,7 +94,7 @@ target_link_libraries(cdk_foundation
 )
 
 IF(WIN32)
-  target_link_libraries(cdk_foundation PRIVATE Dnsapi)
+  target_link_libraries(cdk_foundation PRIVATE dnsapi)
 ELSEIF(NOT FREEBSD)
   target_link_libraries(cdk_foundation PRIVATE resolv)
 ENDIF()

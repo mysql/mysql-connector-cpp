@@ -163,7 +163,7 @@ if(APPLE)
 
 endif()
 
-if(WIN32)
+if(MSVC)
 
   add_compile_options(
     /wd4018

@@ -33,7 +33,7 @@ ADD_DEFINITIONS(-DSIZEOF_LONG=${SIZEOF_LONG} -DSIZEOF_LONG_LONG=${SIZEOF_LONG_LO
 
 # TODO: Fix compile warnings in auth_mysql41.cc
 
-if(WIN32)
+if(MSVC)
   set_property(SOURCE auth_hash.cc
     PROPERTY COMPILE_FLAGS "/W3"
   )
