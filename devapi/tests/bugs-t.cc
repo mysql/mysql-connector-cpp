@@ -821,3 +821,19 @@ TEST_F(Bugs, bug29847865)
   EXPECT_EQ(foo.size(), bar.size());
   EXPECT_EQ(foo, bar);
 }
+
+TEST_F(Bugs, bug31656092)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  //first byte is the same as utf BOM mark, however, a valid unicode
+  string foo("\xef\xbc\x88");
+
+  string query;
+  query = string(u"select '") + foo +string("'");
+  Row r = get_sess().sql(query).execute().fetchOne();
+  string bar = r.get(0);
+
+  EXPECT_EQ(foo.size(), bar.size());
+  EXPECT_EQ(foo, bar);
+}

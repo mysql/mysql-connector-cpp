@@ -283,8 +283,7 @@ size_t str_decode(
     return 0;
 
   using Transcoder = rapidjson::Transcoder<FROM, TO>;
-  Mem_stream<char> bytes((const char*)beg, len);
-  rapidjson::EncodedInputStream<FROM, Mem_stream<char> > input(bytes);
+  Mem_stream<typename FROM::Ch> input((typename FROM::Ch*)beg, len);
   Str_stream<typename TO::Ch>   output(out);
 
   while(input.Peek() != '\0')
@@ -296,7 +295,7 @@ size_t str_decode(
     }
   }
 
-  return bytes.Tell();
+  return input.Tell();
 }
 
 
