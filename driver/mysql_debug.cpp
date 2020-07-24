@@ -91,7 +91,8 @@ MySQL_DebugLogger::MySQL_DebugLogger()
 /* {{{ MySQL_DebugLogger::~MySQL_DebugLogger() -I- */
 MySQL_DebugLogger::~MySQL_DebugLogger()
 {
-  callStack.empty();
+  while(!callStack.empty())
+    callStack.pop();
 }
 /* }}} */
 

@@ -78,7 +78,7 @@ struct _test_data {
   int id;
   const char* label;
 };
-static _test_data test_data[EXAMPLE_NUM_TEST_ROWS] = {
+_test_data test_data[EXAMPLE_NUM_TEST_ROWS] = {
   {1, ""}, {2, "a"}, {3, "b"}, {4, "c"},
 };
 

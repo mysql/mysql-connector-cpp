@@ -657,10 +657,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException("Wrong type passed for port expected int");
       }
       if (p_i) {
-        for(auto &h : uri)
-        {
-          uri.setDefaultPort(*p_i);
-        }
+        uri.setDefaultPort(*p_i);
       } else {
         throw sql::InvalidArgumentException("No long long value passed for port");
       }
