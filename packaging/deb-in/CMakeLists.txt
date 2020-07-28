@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -91,8 +91,8 @@ Description: Debugging symbols for main library
 ")
 ELSEIF(DEB_CODENAME STREQUAL "bionic")
   SET (DEB_PLATFORMRELEASE "ubuntu18.04")
-ELSEIF(DEB_CODENAME STREQUAL "eoan")
-  SET (DEB_PLATFORMRELEASE "ubuntu19.10")
+ELSEIF(DEB_CODENAME STREQUAL "groovy")
+  SET (DEB_PLATFORMRELEASE "ubuntu20.10")
 ELSEIF(DEB_CODENAME STREQUAL "focal")
   SET (DEB_PLATFORMRELEASE "ubuntu20.04")
 ELSE()

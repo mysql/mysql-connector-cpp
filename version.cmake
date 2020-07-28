@@ -32,7 +32,7 @@
 
 set(CONCPP_VERSION_MAJOR  8 CACHE INTERNAL "version info")
 set(CONCPP_VERSION_MINOR  0 CACHE INTERNAL "version info")
-set(CONCPP_VERSION_MICRO 21 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MICRO 22 CACHE INTERNAL "version info")
 # Level is "-alpha", "-beta", empty if GA
 set(CONCPP_VERSION_LEVEL  "" CACHE INTERNAL "version info")
 
