@@ -837,3 +837,28 @@ TEST_F(Bugs, bug31656092)
   EXPECT_EQ(foo.size(), bar.size());
   EXPECT_EQ(foo, bar);
 }
+
+TEST_F(Bugs, Bug31686958)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  SKIP_TEST("Skipped untill Bug#31686958 is fixed");
+
+  auto schema = get_sess().createSchema("test", true);
+
+  auto coll = schema.createCollection("ps_test", true );
+
+  coll.remove("true");
+
+  coll.add(R"({"value": "1"})").execute();
+
+  auto find = coll.find("value = :value").bind("value", "1");
+
+  //Succeeds, since its direct execute
+  EXPECT_EQ(1, find.execute().count());
+  //Should not fail do to being prepared+executed
+  EXPECT_EQ(1, find.execute().count());
+  EXPECT_EQ(1, find.execute().count());
+
+
+}
