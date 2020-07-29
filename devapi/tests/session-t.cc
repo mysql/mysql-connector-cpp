@@ -1455,8 +1455,8 @@ TEST_F(Sess, failover)
       uri << ":" << get_password();
 
     uri << "@["
-           "localhost6,"
-           "wont_work:65535,"
+           "localhost6:65535,"
+           "wont_work,"
            "[::1]:65535,";
     uri << get_host();
     if (get_port() != 0)
@@ -1464,7 +1464,11 @@ TEST_F(Sess, failover)
 
     uri << "]/test";
 
+    cout << "Connecting using URI: " << uri.str() << endl;
+
     mysqlx::Session s(uri.str());
+
+    cout << "Connected." << endl;
 
     EXPECT_EQ(string("test"),s.getDefaultSchema().getName());
   }
@@ -3042,7 +3046,12 @@ TEST_F(Sess, compression_algorithms)
 {
   SKIP_IF_NO_XPLUGIN;
 
-  auto check_compress_alg = [](mysqlx::Session s,string expected, int line)
+  /*
+    Note: this captured to use Sess::get_var(). Even though it is static
+    member, compiler (msvc) generated warning without the capture.
+  */
+
+  auto check_compress_alg = [this](mysqlx::Session s,string expected, int line)
   {
     std::string result = Sess::get_var(s, "Mysqlx_compression_algorithm");
     if (expected != result)
