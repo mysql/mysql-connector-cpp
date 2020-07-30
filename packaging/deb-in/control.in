@@ -11,7 +11,8 @@ Architecture: any
 Section: libs
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ mysql@DEB_PRODUCTNAME@-client-plugins,
 Description: MySQL database connector for C++
  A C++ interface for communicating with MySQL servers.
 

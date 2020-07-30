@@ -42,6 +42,7 @@
 %if 0%{?suse_version} == 1500
 %global dist            .sl15
 %endif
+%define debug_package %{nil}
 %global source_date_epoch_from_changelog 0
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
@@ -69,6 +70,11 @@ BuildRequires:  gcc-c++
 %{!?mysql_dir:BuildRequires: mysql-devel}
 BuildRequires:  openssl-devel
 %{?commercial:Obsoletes: mysql-connector-c++ < %{version}-%{release}}
+%if 0%{?commercial}
+Requires: mysql-commercial-client-plugins = %{version}
+%else
+Requires: mysql-community-client-plugins = %{version}
+%endif
 %description
 A C++ interface for communicating with MySQL servers.
 %package        jdbc
@@ -200,6 +206,8 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_libdir}/mysql-cppconn-8/static/CTestTestfile.cmake
 %endif
 %changelog
+* Tue Jun 30 2020 Sreedhar S <sreedhar.sreedhargadda@oracle.com> - 8.0.22-1
+- Updated the dependency list to use server's client-plugin package
 * Thu Jun 04 2020 Sreedhar S <sreedhar.sreedhargadda@oracle.com> - 8.0.22-1
 - Updated the compliers for el|678 to match server builds
 * Thu Jun 04 2020 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.21-1
