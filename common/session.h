@@ -213,8 +213,8 @@ protected:
   bool m_pool_enable = true;
   bool m_pool_closed = false;
   size_t m_max = 25;
-  duration m_timeout = duration::max();
-  duration m_time_to_live = duration::max();
+  duration m_timeout = std::chrono::minutes(10);
+  duration m_time_to_live = std::chrono::minutes(10);
 
   class Black_list
   {
