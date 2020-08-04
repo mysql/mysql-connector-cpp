@@ -56,6 +56,7 @@ protected:
   mysqlx::Session      *m_session;
   const mysqlx::string *m_database;
   api::Connection      *m_connection;
+  size_t                m_id = 0;
 
   typedef Reply::Initializer Reply_init;
 
@@ -68,7 +69,7 @@ public:
   Session(ds::TCPIP &ds,
           const ds::TCPIP::Options &options = ds::TCPIP::Options());
 
-  Session(ds::Multi_source&);
+  Session(ds::Multi_source&, ds::Multi_source::ep_filter_t = nullptr);
 
 #ifndef _WIN32
   Session(ds::Unix_socket &ds,
@@ -97,6 +98,16 @@ public:
   void close() {
     m_session->close();
     m_connection->close();
+  }
+
+  /*
+    If this session was created from a ds::Multi_source, returns id of the single
+    data source inside the multi-source that was used to create this session.
+    Otherwise returns 0.
+  */
+
+  size_t id() {
+    return m_id;
   }
 
   /*

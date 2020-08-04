@@ -36,6 +36,7 @@
 PUSH_SYS_WARNINGS_CDK
 #include <functional>
 #include <algorithm>
+#include <iterator>
 #include <set>
 #include <random>
 #include "api/expression.h"
@@ -451,8 +452,10 @@ namespace ds {
 
     struct Prio
     {
+      size_t id;
       unsigned short prio;
       uint16_t weight;
+
       operator unsigned short() const
       {
         return prio;
@@ -482,7 +485,10 @@ namespace ds {
         );
       }
 
-      m_ds_list.emplace(Prio{ m_counter++, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
+      m_ds_list.emplace(
+        Prio{ m_ds_list.size() + 1, m_counter++, weight },
+        DS_pair<DS_t, DS_opt>{ ds, opt }
+      );
     }
 
     // Add data source with priority.
@@ -500,7 +506,8 @@ namespace ds {
         );
       }
 
-      m_ds_list.emplace(Prio{ prio, weight }, DS_pair<DS_t, DS_opt>{ ds, opt });
+      m_ds_list.emplace(Prio{ m_ds_list.size() + 1, prio, weight },
+         DS_pair<DS_t, DS_opt>{ ds, opt });
     }
 
   private:
@@ -508,28 +515,37 @@ namespace ds {
     template <typename Visitor>
     struct Variant_visitor
     {
+
       Visitor *vis = nullptr;
+      size_t id = 0;
       bool stop_processing = false;
 
       template <class DS_t, class DS_opt>
-      void operator () (const DS_pair<DS_t, DS_opt> &ds_pair)
+      void operator () (
+        const DS_pair<DS_t, DS_opt> &ds_pair
+      )
       {
         assert(vis);
-        stop_processing = (bool)(*vis)(ds_pair.first, ds_pair.second);
+        stop_processing = (bool)(*vis)(id, ds_pair.first, ds_pair.second);
       }
     };
 
   public:
 
+    using ep_filter_t = std::function<bool(size_t)>;
+
     /*
-      Call visitor(ds,opts) for each data source ds with options
-      opts in the list. Do it in decreasing priority order, choosing
-      randomly among data sources with the same priority.
+      Call visitor(id, ds,opts) for each data source ds with options
+      opts in the list, where id is the data source identifier.
+      Do it in decreasing priority order, choosing
+      randomly among data sources with the same priority. If `ep_filter`
+      is given, ignore data sources for which this function returns true.
+
       If visitor(...) call returns true, stop the process.
     */
 
     template <class Visitor>
-    void visit(Visitor &visitor)
+    void visit(Visitor &visitor, ep_filter_t ep_filter = nullptr)
     {
       Variant_visitor<Visitor> variant_visitor;
       variant_visitor.vis = &visitor;
@@ -537,7 +553,7 @@ namespace ds {
       std::random_device rnd;
       bool stop_processing = false;
       std::vector<uint16_t> weights;
-      std::set<DS_variant*> same_prio;
+      std::set<std::pair<size_t,DS_variant&>> same_prio;
 
       for (auto it = m_ds_list.begin(); !stop_processing;)
       {
@@ -555,7 +571,10 @@ namespace ds {
 
           for (auto it1 = same_range.first; it1 != same_range.second; ++it1)
           {
-            same_prio.insert(&(it1->second));
+            if (ep_filter && ep_filter(it1->first.id))
+              continue;
+
+            same_prio.emplace(it1->first.id, it1->second);
             weights.push_back(it1->first.weight);
             total_weight += it1->first.weight;
           }
@@ -601,7 +620,8 @@ namespace ds {
             std::advance(el, pos);
           }
 
-          (*el)->visit(variant_visitor);
+          variant_visitor.id = el->first;
+          el->second.visit(variant_visitor);
           stop_processing = variant_visitor.stop_processing;
 
           if (stop_processing)

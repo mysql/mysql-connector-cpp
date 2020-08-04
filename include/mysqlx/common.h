@@ -34,6 +34,9 @@
 #undef min
 #undef max
 
+//disable c++17 iterator warnings
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+
 /*
   Common definitions and declarations that are needed by public headers.
 

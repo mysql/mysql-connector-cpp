@@ -869,9 +869,90 @@ void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 
 
 std::shared_ptr<cdk::Session>
+Session_pool::try_session(
+  std::shared_ptr<cdk::Session> &sess, Session_cleanup* cleanup
+)
+{
+  // sess should be in the pool
+  assert(1 == m_pool.count(sess));
+
+  try
+  {
+    sess->reset();
+    if (!sess->is_valid())
+      throw;
+    m_pool[sess].m_cleanup = cleanup;
+    return sess;
+  }
+  catch (...)
+  {
+    // On any error add end-point to black list and remove from pool
+    m_black_list.add(sess->id());
+    m_pool.erase(sess);
+  }
+
+  sess.reset(); // reset to be sure it is empty
+  return {};
+}
+
+
+std::shared_ptr<cdk::Session>
+Session_pool::get_pooled_session(
+  bool filter_black_listed, std::default_random_engine &r_e,
+  Session_cleanup* cleanup
+)
+{
+  std::vector<std::shared_ptr<cdk::Session>> avail_sessions;
+
+  // Find all available non-blacklisted sessions
+
+  for (auto &sess : m_pool)
+  {
+    long use_count = sess.first.use_count();
+    if (use_count == 1 &&
+      (!filter_black_listed ||
+        !m_black_list.is_black_listed(sess.first->id()))
+      )
+      avail_sessions.push_back(sess.first);
+  }
+
+  // Return if no sessions available
+
+  if (avail_sessions.empty())
+    return {};
+
+  // Randomly pick an available session that is good.
+
+  do
+  {
+    size_t num = avail_sessions.size();
+    if (!num)
+      return {};
+
+    std::uniform_int_distribution<size_t> uniform_dist(0, num - 1);
+    size_t rnum = uniform_dist(r_e);
+    auto it = avail_sessions.begin() + rnum;
+
+    // If unsuccessful try_session() will remove invalid item from m_pool
+    auto sess = try_session(*it, cleanup);
+    if (sess)
+      return sess;
+
+    // Update available sessions
+    avail_sessions.erase(it);
+
+  } while (true);
+
+  return {};
+}
+
+
+std::shared_ptr<cdk::Session>
 Session_pool::get_session(Session_cleanup *cleanup)
 {
   lock_guard guard(m_pool_mutex);
+
+  bool use_blacklist = true;
 
   if (!m_pool_enable)
   {
@@ -883,38 +964,68 @@ Session_pool::get_session(Session_cleanup *cleanup)
 
   time_to_live_cleanup();
 
-  for(auto it = m_pool.begin();
-      it != m_pool.end();
-      ++it)
-  {
-    // Not in use
-    if (it->first.unique())
-    {
-      try {
-        it->first->reset();
-        if(!it->first->is_valid())
-        {
-          throw "Remove this";
-        }
+  std::random_device r_d;
+  std::default_random_engine r_e(r_d());
 
-      } catch (...) {
-        m_pool.erase(it);
-        break;
-      }
-      it->second.m_cleanup = cleanup;
-      return it->first;
+
+  // Try to get non black-listed session available in the pool
+
+  auto sess = get_pooled_session(true, r_e, cleanup);
+  if (sess.get())
+    return sess;
+
+  /*
+    If this fails, and there is space in the pool, try creating a new session
+    avoiding the black-listed endpoints.
+  */
+
+  if (m_pool.size() < m_max)
+  {
+    try
+    {
+      auto black_list_filter = [this](size_t id) {
+        return m_black_list.is_black_listed(id);
+      };
+
+      auto ret = m_pool.emplace(
+        cdk::shared_ptr<cdk::Session>(
+          new cdk::Session(m_ds, black_list_filter)
+        ),
+        Sess_data{ time_point::max(), cleanup }
+      );
+      return ret.first->first;
+    }
+    catch (...)
+    {
+      // Switch to trying blacklisted endpoints
     }
   }
 
-  // Need new connection
+  /*
+    We could not get a session when applying black-list. Now try to get
+    one ignoring the black-list. First look for a session already in the
+    pool.
+  */
+
+  auto blacklisted_sess = get_pooled_session(false, r_e, cleanup);
+  if (blacklisted_sess.get())
+    return blacklisted_sess;
+
+  /*
+    If a session is still not found, and there is space in the pool,
+    try creating a new session this time ignoring the black-list.
+  */
+
   if (m_pool.size() < m_max)
   {
+    // If an exception is thrown, don't intercept it, let it propagate
     auto ret = m_pool.emplace(
       cdk::shared_ptr<cdk::Session>(new cdk::Session(m_ds)),
       Sess_data{ time_point::max(), cleanup }
     );
     return ret.first->first;
   }
+
   return nullptr;
 }
 

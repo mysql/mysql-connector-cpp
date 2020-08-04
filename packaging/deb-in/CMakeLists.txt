@@ -47,13 +47,14 @@ IF (DEB_PRODUCT STREQUAL "commercial")
   SET (DEB_PRODUCTNAME "-commercial")
   SET (DEB_LICENSENAME "Commercial")
   SET (DEB_VERSION "+commercial-1")
+  SET (DEB_SERVERPRODUCT "commercial")
 ELSE()
   SET (DEB_COPYRIGHT_UPSTREAMNAME "MySQL ${MYSQL_BASE_VERSION}")
   SET (DEB_PRODUCTNAME "")
   SET (DEB_LICENSENAME "GPL")
   SET (DEB_VERSION "-1")
+  SET (DEB_SERVERPRODUCT "community")
 ENDIF()
-
 
 
 # Platform specifics. The differences are generally only distro name used in version string

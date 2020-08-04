@@ -40,6 +40,7 @@
 #include <mysql/cdk.h>
 
 PUSH_SYS_WARNINGS
+#include <chrono>
 #include <list>
 #include <mutex>
 #include <condition_variable>
@@ -122,6 +123,7 @@ namespace common {
 
 using impl::common::duration;
 using impl::common::time_point;
+using impl::common::system_clock;
 using impl::common::Pooled_session;
 using impl::common::Session_cleanup;
 
@@ -181,18 +183,84 @@ protected:
 
   std::shared_ptr<cdk::Session> get_session(Session_cleanup* = nullptr);
 
+  /*
+    Return an available session from the pool (not currently in use) if such session
+    can be found. If `apply_black_list` is true then sessions whose endpoints are on
+    the balck-list are not considered. On success, installs given cleanup handler for
+    the returned session. Returns null pointer if good session could not be found in
+    the pool.
+  */
+
+  std::shared_ptr<cdk::Session>
+  get_pooled_session(bool apply_black_list, std::default_random_engine&, Session_cleanup*);
+
+  /*
+    Try re-using a session that is in the pool. If this fails for whatever reason,
+    the session is removed from the pool, it's connection endpoint is put on the
+    black list and a null pointer is returned. In case of success, the given cleanup
+    handler is installed for the session and the session is returned by the method.
+
+    Note: The session passed as the first argument should be taken from the pool.
+  */
+
+  std::shared_ptr<cdk::Session>
+  try_session(std::shared_ptr<cdk::Session> &sess,
+                Session_cleanup* = nullptr);
+
   void time_to_live_cleanup();
 
   cdk::ds::Multi_source m_ds;
   bool m_pool_enable = true;
   bool m_pool_closed = false;
   size_t m_max = 25;
-  duration m_timeout = duration::max();
-  duration m_time_to_live = duration::max();
+  duration m_timeout = std::chrono::minutes(10);
+  duration m_time_to_live = std::chrono::minutes(10);
+
+  class Black_list
+  {
+    std::map<size_t, time_point> m_list;
+
+    // The Black List timeout is fixed at 60s
+    const duration m_timeout = std::chrono::seconds(60);
+
+  public:
+
+    /*
+      Add an endpoint to a black list.
+      If the endpoint is already black-listed the timeout is extended.
+    */
+
+    void add(size_t id)
+    {
+      m_list[id] = system_clock::now() + m_timeout;
+    }
+
+    bool is_black_listed(size_t id)
+    {
+      if (m_list.find(id) == m_list.end())
+        return false;
+
+      time_point deadline = m_list[id];
+      if (system_clock::now() < deadline)
+        return true;
+
+      // Remove end-point from the list
+
+      m_list.erase(id);
+      return false;
+    }
+
+    ~Black_list()
+    {
+      m_list.clear();
+    }
+  };
+
+  Black_list m_black_list;
 
   struct Sess_data {
     time_point m_deadline;
-    Session_cleanup *m_cleanup; 
+    Session_cleanup *m_cleanup;
   };
 
   std::map<cdk::shared_ptr<cdk::Session>, Sess_data> m_pool;

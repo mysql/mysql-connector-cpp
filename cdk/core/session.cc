@@ -56,6 +56,7 @@ struct Session_builder
   bool m_throw_errors = false;
   scoped_ptr<Error>     m_error;
   unsigned              m_attempts = 0;
+  size_t                m_id = 0;
 
   Session_builder(bool throw_errors = false)
     : m_throw_errors(throw_errors)
@@ -76,11 +77,15 @@ struct Session_builder
     3. If a bail-out error was detected, throws that error.
   */
 
-  bool operator() (const ds::TCPIP &ds, const ds::TCPIP::Options &options);
+  bool operator() (size_t, const ds::TCPIP &ds,
+                   const ds::TCPIP::Options &options);
+
 #ifndef WIN32
-  bool operator() (const ds::Unix_socket&ds, const ds::Unix_socket::Options &options);
+  bool operator() (size_t, const ds::Unix_socket&ds,
+                   const ds::Unix_socket::Options &options);
 #endif
-  bool operator() (const ds::TCPIP_old &ds, const ds::TCPIP_old::Options &options);
+  bool operator() (size_t, const ds::TCPIP_old &ds,
+                   const ds::TCPIP_old::Options &options);
 
   /*
     Make a connection attempt using the given connection object. Returns true if
@@ -152,6 +157,7 @@ bool Session_builder::connect(Conn &connection)
 
 bool
 Session_builder::operator() (
+  size_t id,
   const ds::TCPIP &ds,
   const ds::TCPIP::Options &options
   )
@@ -213,12 +219,14 @@ Session_builder::operator() (
   }
 
   m_database = options.database();
+  m_id = id;
   return true;
 }
 
 #ifndef WIN32
 bool
 Session_builder::operator() (
+  size_t id,
   const ds::Unix_socket &ds,
   const ds::Unix_socket::Options &options
   )
@@ -235,7 +243,7 @@ Session_builder::operator() (
   m_conn.reset(connection.release());
 
   m_database = options.database();
-
+  m_id = id;
   return true;
 }
 
@@ -244,6 +252,7 @@ Session_builder::operator() (
 
 bool
 Session_builder::operator() (
+  size_t,
   const ds::TCPIP_old&,
   const ds::TCPIP_old::Options&
 )
@@ -251,7 +260,6 @@ Session_builder::operator() (
   throw Error(cdkerrc::generic_error, "Not supported");
   //return false;
 }
-
 
 #ifdef WITH_SSL
 
@@ -366,30 +374,33 @@ Session::Session(ds::TCPIP &ds, const ds::TCPIP::Options &options)
 {
   Session_builder sb(true);  // throw errors if detected
 
-  sb(ds, options);
+  sb(0, ds, options);
 
   assert(sb.m_sess);
 
   m_session = sb.m_sess;
   m_connection = sb.m_conn.release();
+  m_id = sb.m_id;
 }
 
 
 struct ds::Multi_source::Access
 {
   template <class Visitor>
-  static void visit(Multi_source &ds, Visitor &visitor)
-  { ds.visit(visitor); }
+  static void visit(Multi_source &ds, Visitor &visitor,
+                    Multi_source::ep_filter_t ep_filter)
+  { ds.visit(visitor, ep_filter); }
 };
 
 
-Session::Session(ds::Multi_source &ds)
+
+Session::Session(ds::Multi_source &ds, ds::Multi_source::ep_filter_t ep_filter)
   : m_session(NULL)
   , m_connection(NULL)
 {
   Session_builder sb;
 
-  ds::Multi_source::Access::visit(ds, sb);
+  ds::Multi_source::Access::visit(ds, sb, ep_filter);
 
   if (!sb.m_sess)
   {
@@ -406,6 +417,7 @@ Session::Session(ds::Multi_source &ds)
   m_session = sb.m_sess;
   m_database = sb.m_database;
   m_connection = sb.m_conn.release();
+  m_id = sb.m_id;
 }
 
 
@@ -416,12 +428,13 @@ Session::Session(ds::Unix_socket &ds, const ds::Unix_socket::Options &options)
 {
   Session_builder sb(true);  // throw errors if detected
 
-  sb(ds, options);
+  sb(0, ds, options);
 
   assert(sb.m_sess);
 
   m_session = sb.m_sess;
   m_connection = sb.m_conn.release();
+  m_id = sb.m_id;
 }
 #endif //#ifndef WIN32
 
