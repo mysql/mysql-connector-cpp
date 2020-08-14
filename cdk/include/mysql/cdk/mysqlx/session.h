@@ -246,7 +246,8 @@ protected:
   unsigned long m_id = 0;
   bool m_expired = false;
   string m_cur_schema;
-  uint64_t m_proto_fields = UINT64_MAX;
+  uint64_t m_checked_proto_fields = 0;
+  uint64_t m_proto_fields = 0;
 
 
 public:
@@ -278,9 +279,6 @@ public:
     send_connection_attr(options);
     authenticate(options, conn.is_secure());
     m_isvalid = true;
-    // TODO: make "lazy" checks instead, deferring to the time when given
-    // feature is used.
-    check_protocol_fields();
 
     // start using compression now with the default threshold (1000)
     m_protocol.set_compression(compression, 1000);
@@ -314,10 +312,8 @@ public:
     m_proto_fields member variable
   */
 
-  void check_protocol_fields();
-  bool has_prepared_statements();
-  void set_has_prepared_statements(bool);
-  bool has_keep_open();
+  option_t has_protocol_field(Protocol_fields::value f);
+  void set_protocol_field(Protocol_fields::value f, bool x);
 
   /*
     Clear diagnostic information that accumulated for the session.

@@ -94,7 +94,7 @@ bool Stmt_op::do_cont()
           to DONE or ERROR has been detected.
         */
 
-        if (DONE == m_state || ERROR == m_state)
+        if (is_done())
           return true;
         m_state = OK;
       }

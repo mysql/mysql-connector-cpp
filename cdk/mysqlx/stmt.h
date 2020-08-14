@@ -43,6 +43,306 @@ namespace cdk {
 namespace mysqlx {
 
 
+template<Protocol_fields::value F>
+class Expectation_processor
+  : public cdk::protocol::mysqlx::api::Expectations
+{
+protected:
+  cdk::bytes m_data;
+
+public:
+  Expectation_processor();
+
+  void process(Processor &prc) const
+  {
+    prc.list_begin();
+    prc.list_el()->set(FIELD_EXISTS, m_data);
+    prc.list_end();
+  }
+
+};
+
+
+/*
+ Adds to Base operation an expectation block which checks if given field F is
+ supported by the server. The expectation block is not added if session already
+ has information about the field. If it is found that server does not support F,
+ error is stored on diagnostics arena when operation is executed.
+*/
+
+template <class BASE,Protocol_fields::value F>
+class Expectation
+    : public BASE
+{
+
+  using Base = BASE;
+
+private:
+
+  Expectation_processor<F> m_expectation;
+
+  bool m_expectation_error = false;
+
+  Proto_op *m_exp_op = nullptr;
+
+  enum Expectation_State
+  {
+    SND_EXPECTATION,
+    SND_BASE,
+    SND_CLOSE,
+    RCV_EXPECTATION,
+    RCV_BASE,
+    RCV_CLOSE,
+    FORWARD, // Simply bypass to base operation
+    ERROR
+  } m_exp_state;
+
+public:
+
+  template<typename...T>
+  Expectation(Session& session, bool cond, T&&...t)
+    : Base(session, std::forward<T>(t)...)
+  {
+    if(!cond)
+    {
+      m_exp_state = FORWARD;
+    }
+    else
+    {
+      switch (Base::get_session().has_protocol_field(F).state())
+      {
+      case cdk::option_t::YES:
+        m_exp_state = FORWARD;
+        break;
+      case cdk::option_t::UNKNOWN:
+        m_exp_state = SND_EXPECTATION;
+        break;
+      case cdk::option_t::NO:
+        m_exp_state = ERROR;
+        break;
+      }
+    }
+
+  }
+
+  ~Expectation()
+  {
+    Base::discard();
+    Base::wait();
+  }
+
+
+  bool is_completed() const override
+  {
+    if(RCV_BASE == m_exp_state && Base::is_done())
+      return false;
+    if(RCV_CLOSE == m_exp_state)
+      return false;
+    if(ERROR == m_exp_state)
+      return true;
+    return Base::is_completed();
+  }
+
+  bool stmt_sent() override
+  {
+    if (FORWARD == m_exp_state)
+      return Base::stmt_sent();
+    return RCV_EXPECTATION <= m_exp_state;
+  }
+
+  bool do_cont() override
+  {
+    switch (m_exp_state)
+    {
+    case ERROR:
+      Base::add_diagnostics(Severity::ERROR, new Server_expectation_error(error_msg()));
+      break;
+    case SND_EXPECTATION:
+      if(!m_exp_op)
+        m_exp_op = &Base::get_protocol().snd_Expect_Open(m_expectation, false);
+      if (!m_exp_op->cont())
+        return false;
+      m_exp_op = nullptr;
+      m_exp_state = SND_BASE;
+      FALLTHROUGH;
+
+    case SND_BASE:
+      Base::do_cont();
+      if (!Base::stmt_sent())
+      {
+        Base::do_cont();
+        return false;
+      }
+      m_exp_state = SND_CLOSE;
+      FALLTHROUGH;
+
+    case SND_CLOSE:
+      if (!m_exp_op)
+        m_exp_op = &Base::get_protocol().snd_Expect_Close();
+      if (!m_exp_op->cont())
+        return false;
+      m_exp_op = nullptr;
+      m_exp_state = RCV_EXPECTATION;
+      FALLTHROUGH;
+
+    case RCV_EXPECTATION:
+    case RCV_CLOSE:
+      if (!m_exp_op)
+        m_exp_op = &Base::get_protocol().rcv_Reply(*this);
+      if (!m_exp_op->cont())
+        return false;
+      m_exp_op = nullptr;
+      m_exp_state = RCV_EXPECTATION == m_exp_state ? RCV_BASE : FORWARD;
+      return false;
+
+    case RCV_BASE:
+    case FORWARD:
+      //Could be in error state, so we need to check before continuing
+      if (!Base::is_completed())
+      {
+        Base::do_cont();
+        return false;
+      }
+      if (RCV_BASE == m_exp_state && Base::is_done())
+      {
+        m_exp_state = RCV_CLOSE;
+        return false;
+      }
+      else
+        return true;
+
+    default:
+      assert(false); // should not happen
+    }
+
+    return false;
+  }
+
+  const char* error_msg();
+
+
+  void error(
+    unsigned int code, short int severity,
+    sql_state_t sql_state, const string &msg
+  ) override
+  {
+    /*
+      If we get error sendind expectation, we will set protocol field to false,
+      which means server doesn't support. THis way, next session calls using
+      this expectation will no longer try it.
+    */
+
+    switch (m_exp_state)
+    {
+    case RCV_EXPECTATION:
+    case RCV_CLOSE:
+      if ((Severity::ERROR == severity && code == 5168) || m_expectation_error)
+      {
+        if(m_expectation_error)
+          return;
+
+        Base::get_session().set_protocol_field(F, false);
+
+        m_expectation_error = true;
+
+        Base::add_diagnostics(Severity::ERROR, new Server_expectation_error(error_msg()));
+      }
+      break;
+    default:
+        Base::error(code, severity, sql_state, msg);
+      break;
+    }
+
+  }
+
+  void add_diagnostics(short int severity, Server_error *err) override
+  {
+    Base::add_diagnostics(severity, err);
+  }
+
+  void ok(string msg) override
+  {
+    switch (m_exp_state)
+    {
+    case RCV_BASE:
+    case FORWARD:
+      Base::ok(msg);
+      break;
+    case RCV_EXPECTATION:
+      Base::get_session().set_protocol_field(F, true);
+      break;
+    default:
+      break;
+    }
+  }
+
+};
+
+template <Protocol_fields::value F>
+class Expectation<void,F>
+    : public Stmt_op
+{
+
+  enum
+  { EXP_OPEN, EXP_CLOSE } m_exp_state = EXP_OPEN;
+
+  Expectation_processor<F> m_expectation;
+public:
+  template<typename...T>
+  Expectation(Session& session)
+    : Stmt_op(session)
+  {}
+
+  Proto_op* send_cmd() override
+  {
+    get_protocol().start_Pipeline();
+    get_protocol().snd_Expect_Open(m_expectation, false).wait();
+    get_protocol().snd_Expect_Close().wait();
+    return &get_protocol().snd_Pipeline();
+  }
+
+  void ok(string) override
+  {
+    switch(m_exp_state)
+    {
+    case EXP_OPEN:
+    {
+      get_session().set_protocol_field(F, true);
+      m_exp_state = EXP_CLOSE;
+    }
+      break;
+    case EXP_CLOSE:
+    {
+      m_state = DONE;
+    }
+      break;
+    }
+  }
+
+  void error(
+    unsigned int , short int ,
+    sql_state_t , const string &
+  ) override
+  {
+    switch(m_exp_state)
+    {
+    case EXP_OPEN:
+    {
+      get_session().set_protocol_field(F, false);
+      m_exp_state = EXP_CLOSE;
+    }
+      break;
+    case EXP_CLOSE:
+    {
+      m_state = DONE;
+    }
+      break;
+    }
+  }
+
+};
+
+
 /*
   Specialization of Stmt_op which expects a full server reply with result
   sets instead of a simple OK.
@@ -98,11 +398,16 @@ protected:
   pipeline should not reset m_stmt_id.
 */
 
-template <class Base>
+
+template <class BASE>
 class Prepared
-    : public Base
+    : public Expectation<BASE, Protocol_fields::PREPARED_STATEMENTS>
 {
+
+  using Base = Expectation<BASE, Protocol_fields::PREPARED_STATEMENTS>;
+
 protected:
+
 
   /*
     Note: m_stmt_id is reset to 0 by reply processing logic. Therefore one
@@ -117,6 +422,7 @@ protected:
   Any_list_converter m_list_conv;
   Param_converter    m_map_conv;
   bool m_prepare_error = false;
+  bool m_receive_prepare = false;
 
 public:
 
@@ -126,7 +432,7 @@ public:
     const cdk::Limit *lim,
     const Param_source *param
   )
-    : Base(s)
+  : Base(s, stmt_id != 0)
     , m_stmt_id(stmt_id)
     , m_limit(lim)
   {
@@ -142,7 +448,7 @@ public:
     uint32_t stmt_id,
     const Any_list *list
   )
-    : Base(s)
+  : Base(s, stmt_id != 0)
     , m_stmt_id(stmt_id)
   {
     if (list)
@@ -153,7 +459,7 @@ public:
   }
 
   Prepared(Session &s)
-    : Base(s)
+  : Base(s)
   {}
 
 
@@ -198,7 +504,9 @@ public:
       for simplicity we just wait for it to complete before proceeding.
     */
 
+    m_receive_prepare = true;
     Base::get_protocol().rcv_Reply(*this).wait();
+    m_receive_prepare = false;
     m_stmt_id = 0; // continue processing as usual
     return false;
   }
@@ -215,14 +523,16 @@ public:
       we invoke base error handler.
     */
 
-    if (this->stmt_sent() && (0 != m_stmt_id) && (Severity::ERROR == severity))
+    if (m_receive_prepare && (Severity::ERROR == severity))
     {
       m_prepare_error = true;
-      Base::add_diagnostics(Severity::ERROR, new Server_prepare_error(code, sql_state, msg));
+      Base::add_diagnostics(
+        Severity::ERROR, new Server_prepare_error(code, sql_state, msg));
       return;
     }
     else
-      Base::error(code, severity, sql_state, msg);
+      Base::error(
+        code, severity, sql_state, msg);
   }
 
   void add_diagnostics(short int severity, Server_error *err) override
@@ -233,8 +543,11 @@ public:
     Base::add_diagnostics(severity, err);
   }
 
-  void ok(string) override
-  {}
+  void ok(string msg) override
+  {
+    if(!m_receive_prepare)
+      Base::ok(msg);
+  }
 };
 
 
@@ -1260,6 +1573,8 @@ public:
   {}
 
 };
+
+
 
 
 }} // cdk::mysqlx

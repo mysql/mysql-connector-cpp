@@ -379,7 +379,7 @@ public:
       m_max_pstmt when a error occur on prepare), it will return 0, so no PS
       possible.
     */
-    if (!m_sess->has_prepared_statements() ||
+    if (m_sess->has_prepared_statements().state() == cdk::option_t::NO ||
       m_stmt_id.size() >= m_max_pstmt)
       return  0;
 

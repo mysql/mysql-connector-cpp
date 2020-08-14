@@ -259,19 +259,30 @@ public:
     if (m_reply)
     {
       m_reply->cont();
+      bool retry = false;
       try {
         check_errors();
 
       } catch (cdk::mysqlx::Server_prepare_error&)
       {
+        retry = true;
+      }
+      catch (cdk::mysqlx::Server_expectation_error&)
+      {
+        retry = true;
+      }
+
+      if(retry)
+      {
         /*
-          If we are executing prepare + execute pipeline and prepare step
-          failed, try again, this time executing without prepare.
-          reset_state will set stmt_id= 0 which will trigger the direct execute
-        */
+         If we* are executing prepare + execute pipeline and prepare step
+         failed, try again, this time executing without prepare.
+         reset_state will set stmt_id= 0 which will trigger the direct execute
+         */
         reset_state();
         cont();
       }
+
     }
   }
 
@@ -285,10 +296,21 @@ public:
     if (m_reply)
     {
       m_reply->wait();
+
+      bool retry = false;
       try {
         check_errors();
 
       } catch (cdk::mysqlx::Server_prepare_error&)
+      {
+        retry = true;
+      }
+      catch (cdk::mysqlx::Server_expectation_error&)
+      {
+        retry = true;
+      }
+
+      if(retry)
       {
         /*
           If we are executing prepare + execute pipeline and prepare step
@@ -298,6 +320,7 @@ public:
         reset_state();
         wait();
       }
+
 
     }
   }

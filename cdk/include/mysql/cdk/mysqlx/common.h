@@ -121,6 +121,19 @@ public:
 };
 
 
+class Server_expectation_error
+    : public Error_class<Server_expectation_error, Server_error>
+{
+public:
+
+  typedef protocol::mysqlx::sql_state_t sql_state_t;
+
+  Server_expectation_error(const string& desc) throw()
+    : Error_base(NULL, 5168, sql_state_t("HY000") , desc)
+  {}
+};
+
+
 }}  // cdk::mysql
 
 #endif

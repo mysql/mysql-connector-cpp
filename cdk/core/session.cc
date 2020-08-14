@@ -445,5 +445,20 @@ Session::~Session()
   delete m_connection;
 }
 
+option_t Session::has_prepared_statements() {
+  return m_session->has_protocol_field(mysqlx::Protocol_fields::PREPARED_STATEMENTS);
+}
+
+/*
+  FIXME: The set_has_prepared_statement() method is used by upper layers to
+  temporarily disable PS when server limits are hit. With current implementation
+  it tampers with the value of PREPARED_STATEMENTS protocol field flag, which
+  should always store the result of the expectation check once it was done.
+*/
+void Session::set_has_prepared_statements(bool x) {
+  m_session->set_protocol_field(mysqlx::Protocol_fields::PREPARED_STATEMENTS, x);
+}
+
+
 
 } //cdk

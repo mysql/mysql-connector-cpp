@@ -532,6 +532,16 @@ public:
   void do_wait() override;
   bool is_completed() const override;
 
+  /*
+    Returns true when all reply is consumed. It differs from is_completed()
+    for operations that are done on two steps, since here it will only be true
+    at the end of the second step.
+   */
+  virtual bool is_done() const
+  {
+    return m_state == Stmt_op::DONE || m_state == Stmt_op::ERROR;
+  }
+
   void do_cancel() override
   {
     THROW("Stmt_op::cancel() not implemented");

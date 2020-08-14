@@ -132,7 +132,7 @@ Compression_type::value Session::negotiate_compression(
         compression = Compression_type::ZSTD;
       break;
     case cdk::mysqlx::Session::compression_algorithm_t::NONE:
-       break;
+      break;
     default:
       //New algorithm adder....
       assert(false);
@@ -147,85 +147,50 @@ Compression_type::value Session::negotiate_compression(
   specific field
 */
 
-struct Proto_field_checker
-  : public cdk::protocol::mysqlx::api::Expectations
+template<>
+Expectation_processor<Protocol_fields::ROW_LOCKING>::Expectation_processor()
+    // Find=17, locking=12
+  :  m_data("17.12")
+{}
+
+template<>
+Expectation_processor<Protocol_fields::UPSERT>::Expectation_processor()
+    // Insert=18, upsert=6
+  : m_data("18.6")
+{}
+
+template<>
+Expectation_processor<Protocol_fields::PREPARED_STATEMENTS>::Expectation_processor()
+  : m_data("40")
+{}
+
+template<>
+Expectation_processor<Protocol_fields::KEEP_OPEN>::Expectation_processor()
+  :  m_data("6.1")
+{}
+
+template<>
+Expectation_processor<Protocol_fields::COMPRESSION>::Expectation_processor()
+  :  m_data("46")
+{}
+
+template<class Base, Protocol_fields::value F>
+const char *Expectation<Base,F>::error_msg()
 {
-  cdk::bytes m_data;
-  cdk::protocol::mysqlx::Protocol &m_proto;
-
-  Proto_field_checker(cdk::protocol::mysqlx::Protocol &proto) :
-    m_proto(proto)
-  {}
-
-  struct Check_reply_prc : cdk::protocol::mysqlx::Reply_processor
+  switch (F)
   {
-    unsigned int m_code = 0;
-
-    void error(unsigned int code, short int,
-               cdk::protocol::mysqlx::sql_state_t, const string &)
-    {
-      m_code = code;
-    }
-
-    void ok(string)
-    {
-      m_code = 0;
-    }
-  };
-
-  void process(Processor &prc) const
-  {
-    prc.list_begin();
-    prc.list_el()->set(FIELD_EXISTS, m_data);
-    prc.list_end();
+  case Protocol_fields::ROW_LOCKING:
+    return "Row locking is not supported by this version of the server";
+  case Protocol_fields::UPSERT:
+    return "Upsert is not supported by this version of the server";
+  case Protocol_fields::PREPARED_STATEMENTS:
+    return "Prepared Statments are not supported by this version of the server";
+  case Protocol_fields::KEEP_OPEN:
+    return "Keep Open is not supported by this version of the server";
+  case Protocol_fields::COMPRESSION:
+    return "Compression is not supported by this version of the server";
   }
-
-  /*
-  This method sets the expectation and returns
-  the field flag if it is supported, otherwise 0 is returned.
-  */
-  uint64_t is_supported(Protocol_fields::value v)
-  {
-    switch (v)
-    {
-    case Protocol_fields::ROW_LOCKING:
-      // Find=17, locking=12
-      m_data = bytes("17.12");
-      break;
-    case Protocol_fields::UPSERT:
-      // Insert=18, upsert=6
-      m_data = bytes("18.6");
-      break;
-    case Protocol_fields::PREPARED_STATEMENTS:
-      m_data = bytes("40");
-      break;
-    case Protocol_fields::KEEP_OPEN:
-      m_data = bytes("6.1");
-      break;
-    case Protocol_fields::COMPRESSION:
-      m_data = bytes("46");
-      break;
-    default:
-      return 0;
-    }
-    m_proto.snd_Expect_Open(*this, false).wait();
-
-    Check_reply_prc prc;
-    m_proto.rcv_Reply(prc).wait();
-    uint64_t ret = prc.m_code == 0 ? (uint64_t)v : 0;
-
-    if (prc.m_code == 0 || prc.m_code == 5168)
-    {
-      /*
-      The expectation block needs to be closed if no error
-      or expectation failed error (5168)
-      */
-      m_proto.snd_Expect_Close().wait();
-      m_proto.rcv_Reply(prc).wait();
-    }
-    return ret;
-  }
-};
+}
 
 
 class error_category_server : public foundation::error_category_base
@@ -715,43 +680,21 @@ option_t Session::is_valid()
 }
 
 
-void Session::check_protocol_fields()
+option_t Session::has_protocol_field(Protocol_fields::value f)
 {
-  wait();
-  if (0 < entry_count())
-    get_error().rethrow();
-  if (m_proto_fields == UINT64_MAX)
-  {
-    Proto_field_checker field_checker(m_protocol);
-    m_proto_fields = 0;
-    /* More fields checks will be added here */
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::ROW_LOCKING);
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::UPSERT);
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::PREPARED_STATEMENTS);
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::KEEP_OPEN);
-    m_proto_fields |= field_checker.is_supported(Protocol_fields::COMPRESSION);
-  }
+  if(m_checked_proto_fields & f)
+    return (m_proto_fields & f) != 0;
+  //not checked... return unknown state
+  return option_t();
 }
 
-
-bool Session::has_prepared_statements()
+void Session::set_protocol_field(Protocol_fields::value f, bool x)
 {
-  check_protocol_fields();
-  return (m_proto_fields & Protocol_fields::PREPARED_STATEMENTS) != 0;
-}
-
-void Session::set_has_prepared_statements(bool x)
-{
-  if (x)
-    m_proto_fields |= Protocol_fields::PREPARED_STATEMENTS;
+  m_checked_proto_fields |= f;
+  if(x)
+    m_proto_fields |= f;
   else
-    m_proto_fields &= ~Protocol_fields::PREPARED_STATEMENTS;
-}
-
-bool Session::has_keep_open()
-{
-  check_protocol_fields();
-  return (m_proto_fields & Protocol_fields::KEEP_OPEN) != 0;
+    m_proto_fields &= ~f;
 }
 
 
@@ -762,6 +705,25 @@ option_t Session::check_valid()
   return  is_valid() ? true : false;
 }
 
+class Reset_op : public Stmt_op
+{
+
+  bool m_keep_open;
+
+public:
+
+  Reset_op(Session& session, bool keep_open)
+    : Stmt_op(session)
+    , m_keep_open(keep_open)
+  {}
+
+  Proto_op* send_cmd()
+  {
+    return &get_protocol().snd_SessionReset(m_keep_open);
+  }
+
+};
+
 void Session::reset()
 {
   clean_up();
@@ -771,10 +733,20 @@ void Session::reset()
     // TODO: Do it in asnyc fashion using the fact that session is an
     // async operation
 
-    m_protocol.snd_SessionReset(has_keep_open()).wait();
-    m_protocol.rcv_Reply(*this).wait();
+    option_t keep_open = has_protocol_field(Protocol_fields::KEEP_OPEN);
 
-    if (!has_keep_open())
+    if (keep_open.state() == cdk::option_t::UNKNOWN)
+    {
+      Expectation<void,Protocol_fields::KEEP_OPEN> reset(*this);
+      reset.wait();
+
+      keep_open = has_protocol_field(Protocol_fields::KEEP_OPEN);
+    }
+
+    Reset_op reset(*this, keep_open);
+    reset.wait();
+
+    if (!keep_open)
     {
       // Re-authenticate for servers not supporting keep-open
       m_isvalid = false;
@@ -959,14 +931,16 @@ Reply_init Session::prepared_execute(
   uint32_t stmt_id, const Limit *lim, const Param_source *param
 )
 {
-  return new Prepared<Query_stmt>(*this, stmt_id, lim, param);
+  return new
+      Prepared<Query_stmt>(*this, stmt_id, lim, param);
 }
 
 Reply_init Session::prepared_execute(
   uint32_t stmt_id, const cdk::Any_list *list
 )
 {
-  return new Prepared<Query_stmt>(*this, stmt_id, list);
+  return new
+      Prepared<Query_stmt>(*this, stmt_id, list);
 }
 
 
@@ -1000,7 +974,8 @@ Reply_init Session::coll_add(
   bool upsert
 )
 {
-  return new Cmd_InsertDocs(*this, 0U, coll, docs, param, upsert);
+  return new Expectation<Cmd_InsertDocs, Protocol_fields::UPSERT>(
+          *this, upsert, 0U, coll, docs, param, upsert);
 }
 
 
@@ -1034,15 +1009,14 @@ Reply_init Session::coll_find(
   const Lock_contention_value lock_contention
 )
 {
-  if (lock_mode != Lock_mode_value::NONE &&
-      !(m_proto_fields & Protocol_fields::ROW_LOCKING))
-    throw_error("Row locking is not supported by this version of the server");
-
- auto *find
-    =  new Cmd_Find<protocol::mysqlx::DOCUMENT>(
-        *this, stmt_id, coll, expr, proj,
-        order_by,group_by, having, lim, param, lock_mode, lock_contention
-       );
+  Cmd_Find<protocol::mysqlx::DOCUMENT> *find = new
+      Expectation<
+        Cmd_Find<protocol::mysqlx::DOCUMENT>,Protocol_fields::ROW_LOCKING
+      >(
+          *this, (lock_mode != Lock_mode_value::NONE),
+          stmt_id, coll, expr, proj,
+          order_by,group_by, having, lim, param, lock_mode, lock_contention
+          );
 
   if (view)
     return new Cmd_ViewCrud<protocol::mysqlx::DOCUMENT>(*this, *view, find);
@@ -1110,13 +1084,9 @@ Reply_init Session::table_select(
   const Lock_contention_value lock_contention
 )
 {
-  if (lock_mode != Lock_mode_value::NONE &&
-      !(m_proto_fields & Protocol_fields::ROW_LOCKING))
-    throw_error("Row locking is not supported by this version of the server");
-
-  auto* select_cmd =
-      new Cmd_Find<protocol::mysqlx::TABLE>(
-        *this, stmt_id, coll, expr, proj, order_by,
+  Cmd_Find<protocol::mysqlx::TABLE> *select_cmd = new
+      Expectation<Cmd_Find<protocol::mysqlx::TABLE>,Protocol_fields::ROW_LOCKING>(
+        *this, lock_mode != Lock_mode_value::NONE,  stmt_id, coll, expr, proj, order_by,
         group_by, having, lim, param, lock_mode, lock_contention
         );
 

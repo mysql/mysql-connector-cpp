@@ -83,13 +83,8 @@ public:
   option_t is_valid() { return m_session->is_valid(); }
   option_t check_valid() { return m_session->check_valid(); }
 
-  option_t has_prepared_statements() {
-    return m_session->has_prepared_statements();
-  }
-
-  void set_has_prepared_statements(bool x) {
-    return m_session->set_has_prepared_statements(x);
-  }
+  option_t has_prepared_statements();
+  void set_has_prepared_statements(bool x);
 
   void reset() {
     m_session->reset();
