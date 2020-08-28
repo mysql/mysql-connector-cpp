@@ -600,6 +600,23 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   bool secure_auth= true;
 #endif
 
+  /* Port from options must be set as default for all hosts where port
+     is not specified */
+  {
+    sql::ConnectOptionsMap::const_iterator it = properties.find("port");
+    if (it != properties.end())	{
+      try {
+        p_i = (it->second).get< int >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for port expected int");
+      }
+      if (p_i) {
+        uri.setDefaultPort(*p_i);
+      } else {
+        throw sql::InvalidArgumentException("No long long value passed for port");
+      }
+    }
+  }
 
   /* Values set in properties individually should have priority over those
      we restore from Uri */

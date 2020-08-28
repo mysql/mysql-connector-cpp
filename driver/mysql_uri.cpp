@@ -166,7 +166,7 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     size_t sep = 0;
 
     std::string name;
-    unsigned int port = DEFAULT_TCP_PORT;
+    unsigned int port = uri.DefaultPort();
 
     if (hostname[0] == MYURI_HOST_BEGIN)
     {
