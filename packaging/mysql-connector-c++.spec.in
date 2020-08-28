@@ -42,7 +42,6 @@
 %if 0%{?suse_version} == 1500
 %global dist            .sl15
 %endif
-%define debug_package %{nil}
 %global source_date_epoch_from_changelog 0
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
