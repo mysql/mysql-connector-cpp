@@ -42,7 +42,6 @@
 %if 0%{?suse_version} == 1500
 %global dist            .sl15
 %endif
-%define debug_package %{nil}
 %global source_date_epoch_from_changelog 0
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
@@ -77,6 +76,7 @@ Requires: mysql-community-client-plugins = %{version}
 %endif
 %description
 A C++ interface for communicating with MySQL servers.
+
 %package        jdbc
 Summary:        MySQL Driver for C++ which mimics the JDBC 4.0 API
 %{?commercial:Obsoletes: mysql-connector-c++-jdbc < %{version}-%{release}}
@@ -86,6 +86,7 @@ Provides:       libmysqlcppconn7 = %{version}-%{release}
 Provides:       libmysqlcppconn-devel = %{version}-%{release}
 %description    jdbc
 This MySQL Driver for C++ mimics the JDBC 4.0 API.
+
 %package        devel
 Summary:        Development header files and libraries for MySQL C++ client applications
 %if 0%{?commercial}
@@ -100,6 +101,7 @@ Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
 This package contains the development header files and libraries necessary
 to develop MySQL client applications in C++.
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
+
 %package        test
 Summary:        Regression tests for MySQL Connector/C++
 %if 0%{?commercial}
@@ -115,14 +117,22 @@ This package contains the test files necessary to run regression
 test suite for MySQL Connector/C++
 %endif
 %prep
+
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
 %build
+
+%{?el6:. /opt/rh/devtoolset-8/enable}
 %{?el6:export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc}
 %{?el6:export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++}
+
+%{?el7:. /opt/rh/devtoolset-9/enable}
 %{?el7:export CC=/opt/rh/devtoolset-9/root/usr/bin/gcc}
 %{?el7:export CXX=/opt/rh/devtoolset-9/root/usr/bin/g++}
+
+%{?el8:. /opt/rh/gcc-toolset-9/enable}
 %{?el8:export CC=/opt/rh/gcc-toolset-9/root/usr/bin/gcc}
 %{?el8:export CXX=/opt/rh/gcc-toolset-9/root/usr/bin/g++}
+
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
 %global __cmake_test_opts -DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}
 %else
@@ -144,7 +154,12 @@ mkdir build-static && pushd build-static
 %__cmake_cmd -DBUILD_STATIC=ON
 make %{?_smp_mflags} VERBOSE=1
 popd
+
 %install
+%{?el6:. /opt/rh/devtoolset-8/enable}
+%{?el7:. /opt/rh/devtoolset-9/enable}
+%{?el8:. /opt/rh/gcc-toolset-9/enable}
+
 pushd build-dynamic
 make DESTDIR=%{buildroot} install
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
@@ -174,16 +189,23 @@ popd
 # Add compat dir and remove unwanted file
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
 rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
+
 %post -p /sbin/ldconfig
+
 %postun -p /sbin/ldconfig
+
 %post jdbc -p /sbin/ldconfig
+
 %postun jdbc -p /sbin/ldconfig
+
 %files
 %doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn8.so.@ABI_VERSION_MAJOR@*
+
 %files jdbc
 %doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so.@JDBC_ABI_VERSION_MAJOR@*
+
 %files devel
 %doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so
@@ -196,6 +218,7 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_includedir}/mysql-cppconn-8/mysql
 %{_includedir}/mysql-cppconn-8/jdbc
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
+
 %files test
 %dir %{_libdir}/mysql-cppconn-8
 %dir %{_libdir}/mysql-cppconn-8/dynamic
@@ -205,6 +228,7 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_libdir}/mysql-cppconn-8/static/run_unit_tests
 %{_libdir}/mysql-cppconn-8/static/CTestTestfile.cmake
 %endif
+
 %changelog
 * Tue Jun 30 2020 Sreedhar S <sreedhar.sreedhargadda@oracle.com> - 8.0.22-1
 - Updated the dependency list to use server's client-plugin package
