@@ -42,6 +42,7 @@
 %if 0%{?suse_version} == 1500
 %global dist            .sl15
 %endif
+
 %global source_date_epoch_from_changelog 0
 Summary:        MySQL database connector for C++
 Name:           mysql-connector-c++%{?product_suffix}
@@ -116,9 +117,10 @@ Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
 This package contains the test files necessary to run regression
 test suite for MySQL Connector/C++
 %endif
-%prep
 
+%prep
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
+
 %build
 
 %{?el6:. /opt/rh/devtoolset-8/enable}
@@ -126,6 +128,7 @@ test suite for MySQL Connector/C++
 %{?el6:export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++}
 
 %{?el7:. /opt/rh/devtoolset-9/enable}
+%{?el7:export LD_LIBRARY_PATH=/opt/rh/devtoolset-9/root/usr/lib64:$LD_LIBRARY_PATH}
 %{?el7:export CC=/opt/rh/devtoolset-9/root/usr/bin/gcc}
 %{?el7:export CXX=/opt/rh/devtoolset-9/root/usr/bin/g++}
 
