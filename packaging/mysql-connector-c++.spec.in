@@ -160,6 +160,7 @@ popd
 
 %install
 %{?el6:. /opt/rh/devtoolset-8/enable}
+%{?el7:export LD_LIBRARY_PATH=/opt/rh/devtoolset-9/root/usr/lib64:$LD_LIBRARY_PATH}
 %{?el7:. /opt/rh/devtoolset-9/enable}
 %{?el8:. /opt/rh/gcc-toolset-9/enable}
 
