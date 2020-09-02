@@ -399,7 +399,7 @@ if(BUNDLE_DEPENDENCIES)
     get_filename_component(lib_name ${lib} NAME_WE)
 
     # ssl|crypto are bundled on cdk/cmake/DepFindSSL.cmake
-    if(NOT lib_name MATCHES "mysql|protobuf|lber|ldap_r|ssl|crypto")
+    if(NOT lib_name MATCHES "mysql|libprotobuf|liblber|libldap_r|libssl|libcrypto")
 
     message("found bundled libs: ${lib}")
 
@@ -407,6 +407,17 @@ if(BUNDLE_DEPENDENCIES)
       DESTINATION "${INSTALL_LIB_DIR}/private"
       COMPONENT JDBCDll
     )
+
+    endif()
+
+    # Also bundle modules required by the SASL library if it is bundled
+
+    if(lib_name MATCHES "libsasl")
+
+      install(DIRECTORY "${MYSQL_LIB_DIR}/private/sasl2"
+        DESTINATION "${INSTALL_LIB_DIR}/private"
+        COMPONENT JDBCDll
+      )
 
     endif()
 
