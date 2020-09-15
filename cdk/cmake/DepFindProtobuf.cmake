@@ -98,6 +98,9 @@ endif()
 set(set_system_name)
 if(CMAKE_SYSTEM_NAME)
   set(set_system_name -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
+  if(CMAKE_SYSTEM_VERSION)
+    list(APPEND set_system_name -DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION})
+  endif()
 endif()
 
 set(set_system_processor)
@@ -107,7 +110,7 @@ endif()
 
 if(NOT EXISTS "${PB_BINARY_DIR}/exports.cmake")
 
-  message("==== Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR} ${set_arch} ${set_toolset}")
+  message("==== Configuring Protobuf build using cmake generator: ${CMAKE_GENERATOR} ${set_arch} ${set_toolset} ${set_system_name}")
 
   file(REMOVE "${PB_BINARY_DIR}/CMakeCache.txt")
   file(MAKE_DIRECTORY "${PB_BINARY_DIR}")
