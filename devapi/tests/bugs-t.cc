@@ -842,8 +842,6 @@ TEST_F(Bugs, Bug31686958)
 {
   SKIP_IF_NO_XPLUGIN
 
-  SKIP_TEST("Skipped untill Bug#31686958 is fixed");
-
   auto schema = get_sess().createSchema("test", true);
 
   auto coll = schema.createCollection("ps_test", true );
