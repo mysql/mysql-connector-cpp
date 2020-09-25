@@ -981,20 +981,20 @@ TEST_F(Crud, table)
 
   // Testing insert data without specifying columns
 
-  tbl.insert().values("ID#98","MasterZ","10").execute();
+  tbl.insert().values("ID#98","SourceZ","10").execute();
 
   //Check if values inserted are ok
 
   {
     auto op_select = tbl.select();
     RowResult result =  op_select.where("name like :name")
-    .bind("name", "Ma%")
+    .bind("name", "So%")
     .execute();
 
     //FIXME: Fix when Row::Setter is fixed
     const Row r = result.fetchOne();
 
-    EXPECT_EQ(string("MasterZ"),(string)r[1]);
+    EXPECT_EQ(string("SourceZ"),(string)r[1]);
     EXPECT_EQ(10,(int)r[2]);
     EXPECT_EQ(true, result.fetchOne().isNull());
   }

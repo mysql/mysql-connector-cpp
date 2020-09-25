@@ -9,7 +9,7 @@ project.
 To use CDK in another project, first step is to put CDK sources in a location
 within project's main folder. One way to do it is by creating a git
 sub-module within the git repository of the main project. CDK's main
-git repository is at *myrepo:cdkbase* ("master" branch).
+git repository is at *myrepo:cdkbase* ("trunk" branch).
 
 Let asume that CDK sources are located in ``cdk/`` sub-folder of
 project's root folder. CDK should be included from project's main

@@ -2495,14 +2495,14 @@ TEST_F(Sess, pool_ttl)
 }
 
 /*
-  Check the black-list logic of the pool.
+  Check the block-list logic of the pool.
   For this test to run the following env variables have to be set:
     EP_HOST=<IP address of the host with multiple MySQL instances>
     EP_PORT_1,2,3=<Port number>
 
   All MySQL instances must run on the same host.
 */
-TEST_F(Sess, pool_black_list)
+TEST_F(Sess, pool_block_list)
 {
   SKIP_IF_NO_XPLUGIN;
 
@@ -2706,7 +2706,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #2
-      Black-list connection endpoint
+      Block-list connection endpoint
     */
 
     cout << endl << "Test #2" << endl;
@@ -2714,7 +2714,7 @@ TEST_F(Sess, pool_black_list)
     /*
       Kill one connection to EP1, which is in the pool, so
       when it is requested the pool would get an error and
-      add the end-point to a black list.
+      add the end-point to a block list.
     */
     int kill_index = 0;
     test_helper::close_and_kill(m_sessions,
@@ -2724,7 +2724,7 @@ TEST_F(Sess, pool_black_list)
     /*
       The pool only has one connection to be re-used, but it is made
       invalid. So, when it is requested the pool should
-      add the end-point to a black list.
+      add the end-point to a block list.
     */
     cout << "Try session: ";
     m_sessions.emplace_back(client);
@@ -2735,7 +2735,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #3
-      Black-list and session re-use
+      Block-list and session re-use
     */
     cout << endl << "Test #3" << endl;
 
@@ -2769,7 +2769,7 @@ TEST_F(Sess, pool_black_list)
         test_helper::count_sessions(m_sessions3, ep_port[2]) };
 
       /*
-        Since EP corresponding to kill_index is on the black-list (see Test#2),
+        Since EP corresponding to kill_index is on the block-list (see Test#2),
         none of the opened sessions should connect to that endpoint.
       */
       EXPECT_EQ(0, ep_count3[kill_index]);
@@ -2779,7 +2779,7 @@ TEST_F(Sess, pool_black_list)
     }
 
     /*
-      Check that all new sessions are not from the black list and that
+      Check that all new sessions are not from the block list and that
       they are re-used (IDs are from the lists of previously used sessions).
       We opened as many sessions (N2_N3_count) as were currently available
       in the pool, so no new connection should be made.
@@ -2795,7 +2795,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #4
-      Black list and new sessions
+      Block list and new sessions
     */
     cout << endl << "Test #4" << endl;
 
@@ -2811,7 +2811,7 @@ TEST_F(Sess, pool_black_list)
         test_helper::count_sessions(m_sessions4, ep_port[2]) };
 
       /*
-        Endpoint EP1 is still on the black - list, so none of
+        Endpoint EP1 is still on the block - list, so none of
         the new sessions should connect to it.
       */
       EXPECT_EQ(0, ep_count4[0]);
@@ -2836,14 +2836,14 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #5
-      Black list expiration (re-use)
+      Block list expiration (re-use)
     */
     cout << endl << "Test #5" << endl;
     cout << endl << "Wait 60 sec ..." << endl;
     std::this_thread::sleep_for(std::chrono::seconds(61));
 
     SessionList m_sessions5;
-    // At this point the black-listed pooled sessions should become available
+    // At this point the block-listed pooled sessions should become available
     test_helper::create_sessions(client, m_sessions5, ep_count[kill_index]);
     {
       int ep_count5[3] = { // Number of connections to each end-point
@@ -2876,7 +2876,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #6
-      Black list expiration (new sessions)
+      Block list expiration (new sessions)
     */
     cout << endl << "Test #6" << endl;
     EXPECT_EQ(0, m_sessions.size());
@@ -2890,7 +2890,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Check the random distribution of the end-points after
-      black-list timeout has expired.
+      block-list timeout has expired.
       The number of connections to each end-point should be 2 or more
     */
     EXPECT_TRUE(ep_count6[0] >= 2);
@@ -2900,7 +2900,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #7
-      Black list with 2 endpoints
+      Block list with 2 endpoints
     */
     cout << endl << "Test #7" << endl;
     deadline = system_clock::now() + seconds(static_cast<int64_t>(50));
@@ -2912,7 +2912,7 @@ TEST_F(Sess, pool_black_list)
     /*
       The pool only has one connection to be re-used, but it is made
       invalid. So, when it is requested the pool should
-      add the end-point to a black list.
+      add the end-point to a block list.
     */
     cout << "Try session: ";
     m_sessions.emplace_back(client);
@@ -2931,7 +2931,7 @@ TEST_F(Sess, pool_black_list)
     if (deadline < system_clock::now())
       FAIL() << time_error_message;
 
-    // The deadline has to be set again because now EP2 gets into black list
+    // The deadline has to be set again because now EP2 gets into block list
     deadline = system_clock::now() + seconds(static_cast<int64_t>(50));
 
     cout << "Try session: ";
@@ -2940,7 +2940,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       A new connection must be made to EP3 only because now
-      both EP1 and EP2 are on the black-list
+      both EP1 and EP2 are on the block-list
     */
     EXPECT_TRUE(m_sessions.back().m_port == ep_port[2]);
 
@@ -2962,7 +2962,7 @@ TEST_F(Sess, pool_black_list)
     std::this_thread::sleep_for(std::chrono::seconds(30));
 
     /*
-      Since we waited for 30s two times, the blacklist timeout for EP1
+      Since we waited for 30s two times, the blocklist timeout for EP1
       expired and sessions connected to EP1 can be used again.
       The pool has num(EP1) + num(EP3) available sessions now - we get
       all of them.
@@ -2974,7 +2974,7 @@ TEST_F(Sess, pool_black_list)
       FAIL() << time_error_message;
 
     /*
-      EP2 is still on the black-list and no sessions given by the pool should
+      EP2 is still on the block-list and no sessions given by the pool should
       connect to it.
     */
     EXPECT_EQ(ep_count[0], test_helper::count_sessions(m_sessions, ep_port[0]));
@@ -2992,8 +2992,8 @@ TEST_F(Sess, pool_black_list)
       }));
 
     /*
-      Wait another 30s so that blacklist timeout expires also for EP2.
-      After that the black-list is empty and new session requests should
+      Wait another 30s so that blocklist timeout expires also for EP2.
+      After that the block-list is empty and new session requests should
       be handled as usual.
     */
     cout << endl << "Wait 30 sec ..." << endl;
@@ -3038,7 +3038,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #8
-      try black-listed endpoint on session request
+      try block-listed endpoint on session request
     */
 
     cout << endl << "Test #8" << endl;
@@ -3046,7 +3046,7 @@ TEST_F(Sess, pool_black_list)
     /*
       Open 3 sessions to fill up session pool. Then close and kill one
       session and request a new session so that the end-point will be
-      put on the black-list.
+      put on the block-list.
     */
     test_helper::create_sessions(client, m_sessions, con_number);
     int killed_id = test_helper::close_and_kill(m_sessions, ep_port[0],
@@ -3067,7 +3067,7 @@ TEST_F(Sess, pool_black_list)
     /*
       Since there is no room in the pool for new connections, the
       pool logic should try to re-use existing sessions even though EP1
-      is on the black-list.
+      is on the block-list.
     */
     test_helper::create_sessions(client, m_sessions, con_number);
 
@@ -3108,7 +3108,7 @@ TEST_F(Sess, pool_black_list)
 
     /*
       Test #9
-      No timeouts because of black listed endpoints
+      No timeouts because of block listed endpoints
     */
 
     cout << endl << "Test #9" << endl;
@@ -3116,14 +3116,14 @@ TEST_F(Sess, pool_black_list)
     /*
       Open 3 sessions to fill up session pool. Then close and kill one
       session and request a new session so that the end-point will be
-      put on the black-list.
+      put on the block-list.
     */
     test_helper::create_sessions(client, m_sessions, con_number);
     int killed_id = test_helper::close_and_kill(m_sessions, ep_port[0],
       ctrl_session[0]);
 
     /*
-      EP1 will be put into the black list.
+      EP1 will be put into the block list.
       A new session is created.
     */
     cout << "Try session: ";
@@ -3134,7 +3134,7 @@ TEST_F(Sess, pool_black_list)
     EXPECT_TRUE(m_sessions.back().m_id != killed_id);
 
     /*
-      At this point EP1 should be on black-list and session pool should
+      At this point EP1 should be on block-list and session pool should
       contain 3 session (its max capacity), all in use.
 
       Return 2 sessions to the pool and kill all of them.
@@ -4112,7 +4112,7 @@ TEST_F(Sess, compression_algorithms)
 
     EXPECT_THROW(mysqlx::Session(uri + "compression=required&compression-algorithms=["+ d.second + "," + d.third +"]"), Error);
 
-    //Restoring to the original value of mysqlx_compression_algorithms 
+    //Restoring to the original value of mysqlx_compression_algorithms
     std::string query ="Set global mysqlx_compression_algorithms='"+Val+"';";
     sql(query);
 

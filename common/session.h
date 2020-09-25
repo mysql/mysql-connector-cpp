@@ -185,19 +185,19 @@ protected:
 
   /*
     Return an available session from the pool (not currently in use) if such session
-    can be found. If `apply_black_list` is true then sessions whose endpoints are on
+    can be found. If `apply_block_list` is true then sessions whose endpoints are on
     the balck-list are not considered. On success, installs given cleanup handler for
     the returned session. Returns null pointer if good session could not be found in
     the pool.
   */
 
   std::shared_ptr<cdk::Session>
-  get_pooled_session(bool apply_black_list, std::default_random_engine&, Session_cleanup*);
+  get_pooled_session(bool apply_block_list, std::default_random_engine&, Session_cleanup*);
 
   /*
     Try re-using a session that is in the pool. If this fails for whatever reason,
     the session is removed from the pool, it's connection endpoint is put on the
-    black list and a null pointer is returned. In case of success, the given cleanup
+    block list and a null pointer is returned. In case of success, the given cleanup
     handler is installed for the session and the session is returned by the method.
 
     Note: The session passed as the first argument should be taken from the pool.
@@ -216,18 +216,18 @@ protected:
   duration m_timeout = std::chrono::minutes(10);
   duration m_time_to_live = std::chrono::minutes(10);
 
-  class Black_list
+  class Block_list
   {
     std::map<size_t, time_point> m_list;
 
-    // The Black List timeout is fixed at 60s
+    // The Block List timeout is fixed at 60s
     const duration m_timeout = std::chrono::seconds(60);
 
   public:
 
     /*
-      Add an endpoint to a black list.
-      If the endpoint is already black-listed the timeout is extended.
+      Add an endpoint to a block list.
+      If the endpoint is already block-listed the timeout is extended.
     */
 
     void add(size_t id)
@@ -235,7 +235,7 @@ protected:
       m_list[id] = system_clock::now() + m_timeout;
     }
 
-    bool is_black_listed(size_t id)
+    bool is_block_listed(size_t id)
     {
       if (m_list.find(id) == m_list.end())
         return false;
@@ -250,13 +250,13 @@ protected:
       return false;
     }
 
-    ~Black_list()
+    ~Block_list()
     {
       m_list.clear();
     }
   };
 
-  Black_list m_black_list;
+  Block_list m_block_list;
 
   struct Sess_data {
     time_point m_deadline;

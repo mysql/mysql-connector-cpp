@@ -62,7 +62,7 @@ ENDIF (WITH_TESTS)
 # ----------------
 #
 # This test checks using Con/C++ build system as a sub-project in
-# a master cmake project.
+# the main cmake project.
 #
 
 file(REMOVE_RECURSE ${PROJECT_BINARY_DIR}/sub_project_test)

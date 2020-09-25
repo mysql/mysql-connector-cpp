@@ -886,8 +886,8 @@ Session_pool::try_session(
   }
   catch (...)
   {
-    // On any error add end-point to black list and remove from pool
-    m_black_list.add(sess->id());
+    // On any error add end-point to block list and remove from pool
+    m_block_list.add(sess->id());
     m_pool.erase(sess);
   }
 
@@ -898,20 +898,20 @@ Session_pool::try_session(
 
 std::shared_ptr<cdk::Session>
 Session_pool::get_pooled_session(
-  bool filter_black_listed, std::default_random_engine &r_e,
+  bool filter_block_listed, std::default_random_engine &r_e,
   Session_cleanup* cleanup
 )
 {
   std::vector<std::shared_ptr<cdk::Session>> avail_sessions;
 
-  // Find all available non-blacklisted sessions
+  // Find all available non-blocklisted sessions
 
   for (auto &sess : m_pool)
   {
     long use_count = sess.first.use_count();
     if (use_count == 1 &&
-      (!filter_black_listed ||
-        !m_black_list.is_black_listed(sess.first->id()))
+      (!filter_block_listed ||
+        !m_block_list.is_block_listed(sess.first->id()))
       )
       avail_sessions.push_back(sess.first);
   }
@@ -952,7 +952,7 @@ Session_pool::get_session(Session_cleanup *cleanup)
 {
   lock_guard guard(m_pool_mutex);
 
-  bool use_blacklist = true;
+  bool use_blocklist = true;
 
   if (!m_pool_enable)
   {
@@ -968,7 +968,7 @@ Session_pool::get_session(Session_cleanup *cleanup)
   std::default_random_engine r_e(r_d());
 
 
-  // Try to get non black-listed session available in the pool
+  // Try to get non block-listed session available in the pool
 
   auto sess = get_pooled_session(true, r_e, cleanup);
   if (sess.get())
@@ -976,20 +976,20 @@ Session_pool::get_session(Session_cleanup *cleanup)
 
   /*
     If this fails, and there is space in the pool, try creating a new session
-    avoiding the black-listed endpoints.
+    avoiding the block-listed endpoints.
   */
 
   if (m_pool.size() < m_max)
   {
     try
     {
-      auto black_list_filter = [this](size_t id) {
-        return m_black_list.is_black_listed(id);
+      auto block_list_filter = [this](size_t id) {
+        return m_block_list.is_block_listed(id);
       };
 
       auto ret = m_pool.emplace(
         cdk::shared_ptr<cdk::Session>(
-          new cdk::Session(m_ds, black_list_filter)
+          new cdk::Session(m_ds, block_list_filter)
         ),
         Sess_data{ time_point::max(), cleanup }
       );
@@ -997,23 +997,23 @@ Session_pool::get_session(Session_cleanup *cleanup)
     }
     catch (...)
     {
-      // Switch to trying blacklisted endpoints
+      // Switch to trying blocklisted endpoints
     }
   }
 
   /*
-    We could not get a session when applying black-list. Now try to get
-    one ignoring the black-list. First look for a session already in the
+    We could not get a session when applying block-list. Now try to get
+    one ignoring the block-list. First look for a session already in the
     pool.
   */
 
-  auto blacklisted_sess = get_pooled_session(false, r_e, cleanup);
-  if (blacklisted_sess.get())
-    return blacklisted_sess;
+  auto blocklisted_sess = get_pooled_session(false, r_e, cleanup);
+  if (blocklisted_sess.get())
+    return blocklisted_sess;
 
   /*
     If a session is still not found, and there is space in the pool,
-    try creating a new session this time ignoring the black-list.
+    try creating a new session this time ignoring the block-list.
   */
 
   if (m_pool.size() < m_max)
