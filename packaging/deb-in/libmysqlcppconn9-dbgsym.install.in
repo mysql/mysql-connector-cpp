@@ -21,5 +21,5 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 # Legal
-usr/LICENSE.txt /usr/share/doc/libmysqlcppconn7-dbgsym
-usr/README.txt /usr/share/doc/libmysqlcppconn7-dbgsym
+usr/LICENSE.txt /usr/share/doc/libmysqlcppconn9-dbgsym
+usr/README.txt /usr/share/doc/libmysqlcppconn9-dbgsym

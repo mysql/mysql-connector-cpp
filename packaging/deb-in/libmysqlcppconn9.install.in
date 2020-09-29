@@ -20,8 +20,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-# Additional license file is needed so overriding this warning
-libmysqlcppconn7: extra-license-file
+usr/lib/*/libmysqlcppconn.so.9*
 
-# Due to static linking this cannot be avoided and hence being overridden
-libmysqlcppconn7: embedded-library
+# Build info
+/usr/INFO_SRC /usr/share/doc/libmysqlcppconn9
+/usr/INFO_BIN /usr/share/doc/libmysqlcppconn9
+
+# Legal
+usr/LICENSE.txt /usr/share/doc/libmysqlcppconn9
+usr/README.txt /usr/share/doc/libmysqlcppconn9

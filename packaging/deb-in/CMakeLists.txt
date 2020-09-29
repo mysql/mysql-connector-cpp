@@ -73,15 +73,15 @@ ELSEIF(DEB_CODENAME STREQUAL "xenial")
   SET (DEB_RULES_STRIP
 "
 override_dh_strip:
-	dh_strip -plibmysqlcppconn7 --dbg-package=libmysqlcppconn7-dbgsym
+	dh_strip -plibmysqlcppconn9 --dbg-package=libmysqlcppconn9-dbgsym
 	dh_strip -plibmysqlcppconn8-2 --dbg-package=libmysqlcppconn8-2-dbgsym
 ")
   SET (DEB_CONTROL_DBGSYM
 "
-Package: libmysqlcppconn7-dbgsym
+Package: libmysqlcppconn9-dbgsym
 Architecture: any
 Section: debug
-Depends: libmysqlcppconn7 (=\${binary:Version}), \${misc:Depends}
+Depends: libmysqlcppconn9 (=\${binary:Version}), \${misc:Depends}
 Description: Debugging symbols for compat library
 
 Package: libmysqlcppconn8-2-dbgsym

@@ -22,8 +22,8 @@ Section: libs
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Breaks: libmysqlcppconn7v5
-ReplaceS: libmysqlcppconn7v5
+Breaks: libmysqlcppconn9v5
+ReplaceS: libmysqlcppconn9v5
 Description: MySQL Driver for C++ which mimics the JDBC 4.0 API
  This MySQL Driver for C++ mimics the JDBC 4.0 API.
 
