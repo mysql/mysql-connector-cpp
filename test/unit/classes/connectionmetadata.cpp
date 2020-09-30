@@ -90,7 +90,6 @@ void connectionmetadata::getSchemata()
 void connectionmetadata::getSchemaObjects()
 {
   logMsg("connectionmetadata::getSchemaObject() - MySQL_ConnectionMetaData::getSchemaObjects");
-
   try
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
@@ -682,8 +681,8 @@ void connectionmetadata::getDefaultTransactionIsolation()
     DatabaseMetaData * dbmeta=con->getMetaData();
 
     server_version=(10000 * dbmeta->getDatabaseMajorVersion())
-            + (100 * dbmeta->getDriverMinorVersion())
-            + dbmeta->getDriverPatchVersion();
+            + (100 * dbmeta->getDatabaseMinorVersion())
+            + dbmeta->getDatabasePatchVersion();
 
     if (server_version < 32336)
       FAIL("Sorry guys - we do not support MySQL <5.1. This test will not handle this case.");
@@ -1578,8 +1577,8 @@ void connectionmetadata::getProcedureColumns()
 
     res.reset(dbmeta->getProcedureColumns(con->getCatalog(), con->getSchema(), "p1", "%"));
     server_version=(10000 * dbmeta->getDatabaseMajorVersion())
-            + (100 * dbmeta->getDriverMinorVersion())
-            + dbmeta->getDriverPatchVersion();
+            + (100 * dbmeta->getDatabaseMinorVersion())
+            + dbmeta->getDatabasePatchVersion();
 
     if (server_version < 50206)
       ASSERT(!res->next());
@@ -1776,8 +1775,26 @@ void connectionmetadata::getSearchStringEscape()
 void connectionmetadata::getSQLKeywords()
 {
   logMsg("connectionmetadata::getSQLKeywords - MySQL_ConnectionMetaData::getSQLKeywords()");
-  std::string keywords(
-                       "ACCESSIBLE, ADD, ALL,"\
+  int server_version = 0;
+  try
+  {
+    DatabaseMetaData * dbmeta=con->getMetaData();
+
+    server_version=(10000 * dbmeta->getDatabaseMajorVersion())
+            + (100 * dbmeta->getDatabaseMinorVersion())
+            + dbmeta->getDatabasePatchVersion();
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+
+  std::string keywords;
+
+  if (server_version < 80022)
+    keywords =  "ACCESSIBLE, ADD, ALL,"\
     "ALTER, ANALYZE, AND, AS, ASC, ASENSITIVE, BEFORE,"\
     "BETWEEN, BIGINT, BINARY, BLOB, BOTH, BY, CALL,"\
     "CASCADE, CASE, CHANGE, CHAR, CHARACTER, CHECK,"\
@@ -1817,9 +1834,55 @@ void connectionmetadata::getSQLKeywords()
     "UNSIGNED, UPDATE, USAGE, USE, USING, UTC_DATE,"\
     "UTC_TIME, UTC_TIMESTAMP, VALUES, VARBINARY, VARCHAR,"\
     "VARCHARACTER, VARYING, WHEN, WHERE, WHILE, WITH,"\
-    "WRITE, X509, XOR, YEAR_MONTH, ZEROFILL" \
-    "GENERAL, IGNORE_SERVER_IDS, SOURCE_HEARTBEAT_PERIOD," \
-    "MAXVALUE, RESIGNAL, SIGNAL, SLOW");
+    "WRITE, X509, XOR, YEAR_MONTH, ZEROFILL," \
+    "GENERAL, IGNORE_SERVER_IDS,"\
+    "\x4D\x41\x53\x54\x45\x52_HEARTBEAT_PERIOD," \
+    "MAXVALUE, RESIGNAL, SIGNAL, SLOW";
+  else
+    keywords =  "ACCESSIBLE, ADD, ALL,"\
+    "ALTER, ANALYZE, AND, AS, ASC, ASENSITIVE, BEFORE,"\
+    "BETWEEN, BIGINT, BINARY, BLOB, BOTH, BY, CALL,"\
+    "CASCADE, CASE, CHANGE, CHAR, CHARACTER, CHECK,"\
+    "COLLATE, COLUMN, CONDITION, CONNECTION, CONSTRAINT,"\
+    "CONTINUE, CONVERT, CREATE, CROSS, CURRENT_DATE,"\
+    "CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,"\
+    "DATABASE, DATABASES, DAY_HOUR, DAY_MICROSECOND,"\
+    "DAY_MINUTE, DAY_SECOND, DEC, DECIMAL, DECLARE,"\
+    "DEFAULT, DELAYED, DELETE, DESC, DESCRIBE,"\
+    "DETERMINISTIC, DISTINCT, DISTINCTROW, DIV, DOUBLE,"\
+    "DROP, DUAL, EACH, ELSE, ELSEIF, ENCLOSED,"\
+    "ESCAPED, EXISTS, EXIT, EXPLAIN, FALSE, FETCH,"\
+    "FLOAT, FLOAT4, FLOAT8, FOR, FORCE, FOREIGN, FROM,"\
+    "FULLTEXT, GRANT, GROUP, HAVING, HIGH_PRIORITY,"\
+    "HOUR_MICROSECOND, HOUR_MINUTE, HOUR_SECOND, IF,"\
+    "IGNORE, IN, INDEX, INFILE, INNER, INOUT,"\
+    "INSENSITIVE, INSERT, INT, INT1, INT2, INT3, INT4,"\
+    "INT8, INTEGER, INTERVAL, INTO, IS, ITERATE, JOIN,"\
+    "KEY, KEYS, KILL, LEADING, LEAVE, LEFT, LIKE,"\
+    "LOCALTIMESTAMP, LOCK, LONG, LONGBLOB, LONGTEXT,"\
+    "LOOP, LOW_PRIORITY, MATCH, MEDIUMBLOB, MEDIUMINT,"\
+    "MEDIUMTEXT, MIDDLEINT, MINUTE_MICROSECOND,"\
+    "MINUTE_SECOND, MOD, MODIFIES, NATURAL, NOT,"\
+    "NO_WRITE_TO_BINLOG, NULL, NUMERIC, ON, OPTIMIZE,"\
+    "OPTION, OPTIONALLY, OR, ORDER, OUT, OUTER,"\
+    "OUTFILE, PRECISION, PRIMARY, PROCEDURE, PURGE,"\
+    "RANGE, READ, READS, READ_ONLY, READ_WRITE, REAL,"\
+    "REFERENCES, REGEXP, RELEASE, RENAME, REPEAT,"\
+    "REPLACE, REQUIRE, RESTRICT, RETURN, REVOKE, RIGHT,"\
+    "RLIKE, SCHEMA, SCHEMAS, SECOND_MICROSECOND, SELECT,"\
+    "SENSITIVE, SEPARATOR, SET, SHOW, SMALLINT, SPATIAL,"\
+    "SPECIFIC, SQL, SQLEXCEPTION, SQLSTATE, SQLWARNING,"\
+    "SQL_BIG_RESULT, SQL_CALC_FOUND_ROWS, SQL_SMALL_RESULT,"\
+    "SSL, STARTING, STRAIGHT_JOIN, TABLE, TERMINATED,"\
+    "THEN, TINYBLOB, TINYINT, TINYTEXT, TO, TRAILING,"\
+    "TRIGGER, TRUE, UNDO, UNION, UNIQUE, UNLOCK,"\
+    "UNSIGNED, UPDATE, USAGE, USE, USING, UTC_DATE,"\
+    "UTC_TIME, UTC_TIMESTAMP, VALUES, VARBINARY, VARCHAR,"\
+    "VARCHARACTER, VARYING, WHEN, WHERE, WHILE, WITH,"\
+    "WRITE, X509, XOR, YEAR_MONTH, ZEROFILL," \
+    "GENERAL, IGNORE_SERVER_IDS,"\
+    "SOURCE_HEARTBEAT_PERIOD," \
+    "MAXVALUE, RESIGNAL, SIGNAL, SLOW";
 
   try
   {
