@@ -515,26 +515,27 @@ void TLS_helper::set_ciphers(const Ciphers_list &list)
 
   for (const std::string &cipher : list)
   {
-    try {
-      const auto &name_prio = cipher_name_map.at(cipher);
+    auto it = cipher_name_map.find(cipher);
 
-      /*
-        Empty name means that this is TLSv1.3+ cipher. Otherwise append the
-        openssl name to the correct priority list.
-      */
+    /*
+      We silently ignore unkown ciphers -- if no know cipher is configured,
+      error will be thrown in setup().
+    */
 
-      if (name_prio.first.empty())
-        add_cipher(m_cipher_list_13, cipher);
-      else
-        add_cipher(cipher_list[name_prio.second], name_prio.first);
-    }
-    catch (const std::out_of_range&)
-    {
-      /*
-        We silently ignore unkown ciphers -- if no know cipher is configured,
-        error will be thrown in setup().
-      */
-    }
+    if (it == cipher_name_map.end())
+      continue;
+
+    auto name_prio = it->second;
+
+    /*
+      Empty name means that this is TLSv1.3+ cipher. Otherwise append the
+      openssl name to the correct priority list.
+    */
+
+    if (name_prio.first.empty())
+      add_cipher(m_cipher_list_13, cipher);
+    else
+      add_cipher(cipher_list[name_prio.second], name_prio.first);
   }
 
   // Build final list of ciphers taking priorities into account.

@@ -604,14 +604,10 @@ public:
     if (m_mdata && pos >= m_mdata->col_count())
       throw std::out_of_range("row column");
 
-    try {
-      return m_data.at(pos).data();
-    }
-    catch (const std::out_of_range&)
-    {
-      // empty bytes indicate null value
-      return bytes();
-    }
+    auto data = m_data.find(pos);
+
+    // Note: no data at given pos means null value.
+    return data != m_data.end() ? data->second.data() : bytes{};
   }
 
   /*
@@ -624,17 +620,17 @@ public:
     if (m_mdata && pos >= m_mdata->col_count())
       throw std::out_of_range("row column");
 
-    try {
-      return m_vals.at(pos);
-    }
-    catch (const std::out_of_range&)
-    {
-      if (!m_mdata)
-        throw;
-      const Format_info &fi = m_mdata->get_format(pos);
-      convert_at(pos, fi);
-      return m_vals.at(pos);
-    }
+    auto val = m_vals.find(pos);
+
+    if (val != m_vals.end())
+      return val->second;
+
+    if (!m_mdata)
+      throw std::out_of_range("no meta-data found");
+
+    const Format_info &fi = m_mdata->get_format(pos);
+    convert_at(pos, fi);
+    return m_vals.at(pos);
   }
 
   void set(col_count_t pos, const Value &val)
@@ -650,11 +646,10 @@ private:
   {
     Buffer *raw = nullptr;
 
-    try {
-      raw = &m_data.at(pos);
-    }
-    catch (const std::out_of_range&)
-    {}
+    auto data = m_data.find(pos);
+
+    if (data != m_data.end())
+      raw = &(data->second);
 
     if (!raw || 0 == raw->size())
     {
