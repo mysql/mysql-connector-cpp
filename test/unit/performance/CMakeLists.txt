@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2020, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -50,7 +50,7 @@ TARGET_LINK_LIBRARIES(perf_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_
 ADD_TEST(
     NAME jdbc_perf_statement
     COMMAND
-    perf_statement 
+    perf_statement
     )
 
 MESSAGE(STATUS "Configuring performance test - statement")

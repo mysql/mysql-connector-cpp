@@ -1,4 +1,4 @@
-# Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2020, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -46,7 +46,7 @@ TARGET_LINK_LIBRARIES(unsorted_bugs ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_L
 
 ADD_TEST(NAME jdbc_unsorted_bugs
   COMMAND
-  unsorted_bugs  
+  unsorted_bugs
   )
 
 MESSAGE(STATUS "Configuring bugs test cases - unsorted")
