@@ -10,7 +10,7 @@ the index. The format of the index specification document is described below.
 The index can include one or more fields within indexed documents and it
 is possible to specify whether indexed fields are required to always exist.
 For indexing to work, values inside documents must be converted to SQL values.
-For that reason you must specify an SQL type to be used for each indexed field. 
+For that reason you must specify an SQL type to be used for each indexed field.
 
 Index Specification
 -------------------
@@ -109,7 +109,7 @@ are case insensitive.
 
 <!--
 
-   Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2015, 2020, Oracle and/or its affiliates.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License, version 2.0, as

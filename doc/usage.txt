@@ -44,12 +44,6 @@ This is not needed for X DevAPI for C (which is a plain C API) nor for
 the legacy JDBC API which is based on plain C++.
 
 
-@note The legacy API requires Boost headers. The location of these headers needs
-to be added to the include path to correctly compile legacy code. Only
-the headers from Boost are needed -- the Boost libraries are not used during
-linking phase.
-
-
 Using the shared library
 ------------------------
 Depending on the platform, the shared Connector/C++ library is named:
@@ -253,7 +247,7 @@ For more information on building code that uses Connector/C++ consult our
 
 
 <!--
-  Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License, version 2.0, as

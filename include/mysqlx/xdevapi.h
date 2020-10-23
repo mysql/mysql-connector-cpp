@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -546,6 +546,11 @@ protected:
   on the server and involves such a non-existent schema throws
   an error.
 
+  @note A `Schema` object should be used by at most one thread at a  time. It is
+  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
+
   @ingroup devapi
 */
 
@@ -892,6 +897,11 @@ protected:
   it actually exists in the database. An operation that is executed
   on the server and involves such a non-existent collection throws
   an error. Call `existsInDatabase()` to check the existence of the collection.
+
+  @note A `Collection` object should be used by at most one thread at a  time.
+  It is not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
 
   @ingroup devapi
 */
@@ -1354,6 +1364,11 @@ Collection Schema::getCollection(const string &name, bool check_exists)
   on the server and involves such a non-existent table throws
   an error. Call `existsInDatabase()` to check the existence of the table.
 
+  @note A `Table` object should be used by at most one thread at a  time. It is
+  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
+
   @ingroup devapi
 */
 
@@ -1645,6 +1660,11 @@ using SqlStatement = internal::SQL_statement;
   to that host and never re-connected again. If the connection gets broken,
   the session fails without making any other fail-over attempts. The fail-over
   logic is executed only when establishing a new session.
+
+  @note A `Session` object should be used by at most one thread at a  time. It is
+  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
 
   @ingroup devapi
 */

@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -98,7 +98,7 @@ function(file CMD)
   if(FIRST STREQUAL "FILES")
     list(REMOVE_AT ARGN 0)
   endif()
- 
+
   # Now process the files and append them to FILES_CCC list
 
   foreach(F ${ARGN})
@@ -141,7 +141,7 @@ endforeach()
 # Note: Original file() command was redefined above!
 
 _file(WRITE ${MANIFEST_FILE}
-  "# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.\n"
+  "# Copyright (c) 2015, 2020, Oracle and/or its affiliates.\n"
   "# This is generated file.\n\n"
   "set(COMPONENTS ${COMPONENTS})\n\n"
 )

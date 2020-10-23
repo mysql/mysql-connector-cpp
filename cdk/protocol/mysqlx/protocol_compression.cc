@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -386,7 +386,7 @@ bool
     return true;
 
   size_t orig_size = size;
-  
+
   do
   {
     size -= do_uncompress(buf + orig_size - size, size);

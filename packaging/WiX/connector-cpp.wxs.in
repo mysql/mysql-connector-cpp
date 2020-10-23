@@ -1,9 +1,9 @@
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" 
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
       xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
 <!--
-   Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
-   
+   Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License, version 2.0,
    as published by the Free Software Foundation.
@@ -25,14 +25,14 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 -->
 
-  <Product 
-    Id="*" 
+  <Product
+    Id="*"
     UpgradeCode="@UPGRADE_CODE@"
-    Name="@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@" 
-    Version="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@" 
-    Language="1033" 
+    Name="@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@"
+    Version="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
+    Language="1033"
     Manufacturer="@MANUFACTURER@">
-    
+
     <Package Id='*'
        Keywords='Installer'
        Description="@PRODUCT_DESCRIPTION@"
@@ -43,14 +43,14 @@
        SummaryCodepage='1252'
        Platform='x64'
        InstallScope="perMachine"/>
-  
+
     <Media Id='1' Cabinet='product.cab' EmbedCab='yes' />
 
     <!-- Upgrade for 8.0.12 version -->
     <?if "@PLATFORM@"="x64"?>
       <Upgrade Id="@UPGRADE_CODE_OLD@">
         <?if '@PATCH_VERSION@' != '0'?>
-          <UpgradeVersion 
+          <UpgradeVersion
             Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.0"
             IncludeMinimum="yes"
             Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.13"
@@ -65,7 +65,7 @@
     <!-- Upgrade for 8.0.13+ version -->
     <Upgrade Id="@UPGRADE_CODE@">
       <?if '@PATCH_VERSION@' != '0'?>
-        <UpgradeVersion 
+        <UpgradeVersion
           Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.13"
           IncludeMinimum="yes"
           Maximum="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
@@ -74,7 +74,7 @@
           MigrateFeatures="yes"
           />
       <?endif?>
-      <UpgradeVersion 
+      <UpgradeVersion
         Minimum="@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@"
         IncludeMinimum="no"
         OnlyDetect="yes"
@@ -89,7 +89,7 @@
 
     <?if "@STATIC_MSVCRT@"="OFF" AND "@BUNDLE_RUNTIME_LIBRARIES@"="OFF" ?>
       <?if "@PLATFORM@"="x64"?>
-        <Property Id="VS14REDISTX64"> 
+        <Property Id="VS14REDISTX64">
           <RegistrySearch Id="FindRedistVS14"
               Root="HKLM"
               Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
@@ -122,10 +122,10 @@
         </Property>
         <Condition Message="This application requires Visual Studio 2015 x86 Redistributable. Please install the Redistributable then run this installer again.">
           Installed OR VS14REDISTX86 OR VS14UPGRADE32
-        </Condition> 
+        </Condition>
        <?endif?>
-    <?endif?> 
- 
+    <?endif?>
+
     <!-- Save/restore install location -->
     <CustomAction Id="SaveTargetDir" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
     <InstallExecuteSequence>
@@ -138,7 +138,7 @@
       <!-- App search is what does FindInstallLocation, and it is dependent on FindRelatedProducts -->
       <AppSearch After="FindRelatedProducts"/>
     </InstallUISequence>
- 
+
     <!-- Find previous installation -->
     <Property Id="GETINSTALLDIR">
       <RegistrySearch Id="FindInstallLocation"
@@ -171,9 +171,9 @@
           Name="Location"
           Type="raw" />
     </Property>
-    <CustomAction Id="SetInstallDir2" Property="INSTALLDIR" Value="[INSTALLDIR2]" /> 
+    <CustomAction Id="SetInstallDir2" Property="INSTALLDIR" Value="[INSTALLDIR2]" />
     <InstallUISequence>
-    <Custom Action="SetInstallDir2" After="AppSearch">INSTALLDIR2</Custom> 
+    <Custom Action="SetInstallDir2" After="AppSearch">INSTALLDIR2</Custom>
     </InstallUISequence>
 
     <!-- UI -->
@@ -188,11 +188,11 @@
       Value="@SOURCE_DIR@/AdminBackground.jpg" />
     <Icon
       Id="icon.ico"
-      SourceFile="@SOURCE_DIR@/MySQLConnector.ico"/> 
+      SourceFile="@SOURCE_DIR@/MySQLConnector.ico"/>
     <Property
       Id="ARPPRODUCTICON"
       Value="icon.ico" />
-    
+
     <!-- License -->
     <WixVariable
       Id="WixUILicenseRtf"
@@ -213,16 +213,16 @@
      Title='New X DevAPI connector'
      Description='New X DevAPI connector'
      ConfigurableDirectory='INSTALLDIR'
-     Level='1'  > 
-    <Feature Id='XDevAPIDll' 
+     Level='1'  >
+    <Feature Id='XDevAPIDll'
        Title='Dll Libraries'
        Description='Connector C++ dll libraries and depdnencies'
        ConfigurableDirectory='INSTALLDIR'
        Level='1'>
        <ComponentGroupRef Id='componentgroup.XDevAPIDll'/>
        <ComponentGroupRef Id='componentgroup.OpenSSLDll'/>
-    </Feature> 
-    <Feature Id='XDevAPIDev' 
+    </Feature>
+    <Feature Id='XDevAPIDev'
        Title='Development Components'
        Description='Connector C++ headers, static libraries and import libraries'
        ConfigurableDirectory='INSTALLDIR'
@@ -231,21 +231,21 @@
        <ComponentGroupRef Id='componentgroup.OpenSSLDev'/>
     </Feature>
    </Feature>
-   
+
    <Feature  Id='JDBC'
      Title='Legacy JDBC API'
      Description='Legacy JDBC API connector'
      ConfigurableDirectory='INSTALLDIR'
-     Level='1'  > 
-    <Feature Id='JDBCDll' 
+     Level='1'  >
+    <Feature Id='JDBCDll'
        Title='Dll Libraries'
        Description='Installs legacy JDBC API connector dlls'
        ConfigurableDirectory='INSTALLDIR'
        Level='1'>
        <ComponentGroupRef Id='componentgroup.JDBCDll'/>
        <ComponentGroupRef Id='componentgroup.OpenSSLDll'/>
-    </Feature> 
-    <Feature Id='JDBCDev' 
+    </Feature>
+    <Feature Id='JDBCDev'
        Title='Development Components'
        Description='Installs legacy JDBC API connector dev files'
        ConfigurableDirectory='INSTALLDIR'
@@ -254,13 +254,13 @@
        <ComponentGroupRef Id='componentgroup.OpenSSLDev'/>
     </Feature>
    </Feature>
-   
+
    <Feature  Id='ALWAYSINSTALL'
      Title='ALWAYSINSTALL'
      Description='ALWAYSINSTALL'
      ConfigurableDirectory='INSTALLDIR'
-     Level='1' Display='hidden' > 
-    <Feature Id='Readme' 
+     Level='1' Display='hidden' >
+    <Feature Id='Readme'
        Title='COMPONENT_README_DISPLAY_NAME'
        Description='COMPONENT_README_DESCRIPTION'
        ConfigurableDirectory='INSTALLDIR'
@@ -268,16 +268,16 @@
        <ComponentGroupRef Id='componentgroup.Readme'/>
     </Feature>
    </Feature>
-    
+
     <!-- WIX_DIRECTORIES -->
     @WIX_DIRECTORIES@
-    
+
     <!--WIX_COMPONENTS-->
     @WIX_COMPONENTS@
-    
+
     <!--WIX_COMPONENTS_GROUPS -->
     @WIX_COMPONENT_GROUPS@
-    
+
     <!--WIX_INCLUDES -->
     @WIX_INCLUDES@
   </Product>

@@ -9,7 +9,9 @@ via the X Plugin. One can also execute plain SQL queries using this API.
 
 To get started, check out some of the main X DevAPI classes:
 
-- To access data first create a @link mysqlx::abi2::r0::Session `Session`@endlink object.
+- To access data first create a @link mysqlx::abi2::r0::Session `Session`@endlink
+object. Keep in mind that @link mysqlx::abi2::r0::Session `Session`@endlink is
+not thread safe!
 
 - To manipulate data stored in a document collection or a table, create
   a @link mysqlx::abi2::r0::Collection `Collection`@endlink or a @link mysqlx::abi2::r0::Table
@@ -213,7 +215,7 @@ Done!
 
 
 <!--
-  Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2015, 2020, Oracle and/or its affiliates.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License, version 2.0, as

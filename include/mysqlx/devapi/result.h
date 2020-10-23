@@ -170,6 +170,12 @@ protected:
   Storing another result in a `Result` instance overwrites
   the previous result.
 
+  @note A `Result` object should be used by at most one thread at a  time. It is
+  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
+
+
   @ingroup devapi_res
 */
 
@@ -665,6 +671,11 @@ public:
   result in the sequence, if present. Methods of `RowResult` are used to access
   row data of the current result (if it contains data).
 
+  @note A `SqlResult` object should be used by at most one thread at a  time.
+  It is  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
+
   @ingroup devapi_res
 */
 
@@ -744,6 +755,11 @@ private:
   the result. It is possible to get the documents one-by-one, or fetch and store
   all of them at once. One can iterate over the documents using range loop:
   `for (DbDoc d : result) ...`.
+
+  @note A `DocResult` object should be used by at most one thread at a  time.
+  It is  not safe to call its methods by several threads simultaneously. It is
+  responsibility of the user to ensure this using a synchronization mechanism
+  such as mutexes.
 
   @ingroup devapi_res
 */
