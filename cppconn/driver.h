@@ -65,12 +65,35 @@ public:
 
 } /* namespace sql */
 
+
+CPPCONN_PUBLIC_FUNC void check(const std::string &);
+CPPCONN_PUBLIC_FUNC void check(const std::map<std::string,std::string> &);
+
+/*
+  Checks if user standard lib is compatible with connector one
+*/
+inline static void check_lib()
+{
+  check(std::string{});
+  check(std::map<std::string,std::string>{});
+}
+
 extern "C"
 {
-  CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance();
+
+  CPPCONN_PUBLIC_FUNC sql::Driver * _get_driver_instance_by_name(const char * const clientlib);
 
   /* If dynamic loading is disabled in a driver then this function works just like get_driver_instance() */
-  CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib);
+  inline static sql::Driver * get_driver_instance_by_name(const char * const clientlib)
+  {
+    check_lib();
+    return _get_driver_instance_by_name(clientlib);
+  }
+
+  inline static sql::Driver * get_driver_instance()
+  {
+    return get_driver_instance_by_name("");
+  }
 }
 
 #endif /* _SQL_DRIVER_H_ */

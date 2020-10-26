@@ -40,26 +40,21 @@
 #include "nativeapi/native_driver_wrapper.h"
 
 
+CPPCONN_PUBLIC_FUNC void check(const std::string&)
+{}
+
+CPPCONN_PUBLIC_FUNC void check(const std::map<std::string,std::string>&)
+{}
+
 extern "C"
 {
-CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
-{
-  void * ret = sql::mysql::get_driver_instance();
-  return ret;
-}
-
 
 /* these are the functions without namespace - from cppconn/driver.h */
-CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance_by_name(const char * const clientlib)
+CPPCONN_PUBLIC_FUNC sql::Driver * _get_driver_instance_by_name(const char * const clientlib)
 {
-  return sql::mysql::get_driver_instance_by_name(clientlib);
+  return sql::mysql::_get_driver_instance_by_name(clientlib);
 }
 
-
-CPPCONN_PUBLIC_FUNC sql::Driver * get_driver_instance()
-{
-  return sql::mysql::get_driver_instance();
-}
 
 
 } /* extern "C" */
@@ -72,13 +67,7 @@ namespace mysql
 static const ::sql::SQLString emptyStr("");
 
 
-CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance()
-{
-  return get_driver_instance_by_name("");
-}
-
-
-CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * get_driver_instance_by_name(const char * const clientlib)
+CPPCONN_PUBLIC_FUNC sql::mysql::MySQL_Driver * _get_driver_instance_by_name(const char * const clientlib)
 {
   ::sql::SQLString dummy(clientlib);
 
@@ -174,6 +163,7 @@ void MySQL_Driver::threadEnd()
 }
 
 } /* namespace mysql */
+
 } /* namespace sql */
 
 /*

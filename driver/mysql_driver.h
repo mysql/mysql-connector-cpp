@@ -98,10 +98,23 @@ private:
     because the counterpart C function is declared in the cppconn and is always visible.
     If dynamic loading is not enabled then its result is just like of get_driver_instance()
 */
-CPPCONN_PUBLIC_FUNC MySQL_Driver * get_driver_instance_by_name(const char * const clientlib);
 
-CPPCONN_PUBLIC_FUNC MySQL_Driver * get_driver_instance();
-static inline MySQL_Driver * get_mysql_driver_instance() { return get_driver_instance(); }
+CPPCONN_PUBLIC_FUNC MySQL_Driver * _get_driver_instance_by_name(const char * const clientlib);
+
+inline static MySQL_Driver * get_driver_instance_by_name(const char * const clientlib)
+{
+  check_lib();
+  return sql::mysql::_get_driver_instance_by_name(clientlib);
+}
+
+inline static MySQL_Driver * get_driver_instance()
+{
+  return sql::mysql::get_driver_instance_by_name("");
+}
+
+static MySQL_Driver * get_mysql_driver_instance() { return get_driver_instance(); }
+
+
 
 
 } /* namespace mysql */
