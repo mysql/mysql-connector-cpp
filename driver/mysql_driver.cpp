@@ -48,6 +48,12 @@ CPPCONN_PUBLIC_FUNC void check(const std::map<std::string,std::string>&)
 
 extern "C"
 {
+CPPCONN_PUBLIC_FUNC void * sql_mysql_get_driver_instance()
+{
+  void * ret = sql::mysql::get_driver_instance();
+  return ret;
+}
+
 
 /* these are the functions without namespace - from cppconn/driver.h */
 CPPCONN_PUBLIC_FUNC sql::Driver * _get_driver_instance_by_name(const char * const clientlib)

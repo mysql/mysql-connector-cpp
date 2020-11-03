@@ -38,7 +38,6 @@
 
 #include <memory>
 
-
 extern "C"
 {
 CPPCONN_PUBLIC_FUNC void  * sql_mysql_get_driver_instance();
