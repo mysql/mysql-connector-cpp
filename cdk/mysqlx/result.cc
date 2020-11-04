@@ -63,7 +63,12 @@ bool Stmt_op::do_cont()
     clear m_op and only then async operation becomes completed.
   */
 
-  assert(ERROR != m_state);
+  if(ERROR == m_state)
+  {
+    m_op = nullptr;
+    return true;
+  }
+
   assert(DONE != m_state || m_op);
   assert(m_session);
 
@@ -167,10 +172,11 @@ bool Stmt_op::do_cont()
     if (m_op && !m_op->cont())
       return false;
 
+    m_op = nullptr;
+
     if (ERROR == m_state)
       return true;
 
-    m_op = nullptr;
 
     /*
       If we completed receiving meta-data and non-zero column count was
@@ -204,13 +210,12 @@ bool Stmt_op::is_completed() const
 
   switch (m_state)
   {
-  case ERROR:
-    return true;
   case ROWS:
   case NEXT:
     if (m_discard)
       return false;
     FALLTHROUGH;
+  case ERROR:
   case DONE:
     /*
       In one of these states we still continue until do_cont() finishes the
@@ -225,7 +230,7 @@ bool Stmt_op::is_completed() const
 
 void Stmt_op::do_wait()
 {
-  while (!cont())
+  while (!do_cont())
   {
     if (m_op)
       m_op->wait();
