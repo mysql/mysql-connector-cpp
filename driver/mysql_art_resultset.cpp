@@ -214,9 +214,8 @@ MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, boost::shared_ptr< 
 
   unsigned int idx = 0;
   for (StringList::const_iterator it = fn.begin(), e = fn.end(); it != e; ++it, ++idx) {
-    boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(it->c_str(), 0));
-    field_name_to_index_map[sql::SQLString(upstring.get())] = idx;
-    field_index_to_name_map[idx] = upstring.get();
+    field_name_to_index_map[*it] = idx;
+    field_index_to_name_map[idx] = *it;
   }
 
   meta.reset(new MySQL_ArtResultSetMetaData(this, logger));
@@ -368,9 +367,7 @@ MySQL_ArtResultSet::findColumn(const sql::SQLString& columnLabel) const
   CPP_ENTER("MySQL_ArtResultSet::columnLabel");
   checkValid();
 
-  boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
-
-  FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(upstring.get());
+  FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(columnLabel);
 
   if (iter == field_name_to_index_map.end()) {
     return 0;

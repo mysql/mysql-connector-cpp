@@ -1157,6 +1157,27 @@ void bugs::bug31399362()
 
 }
 
+void bugs::bug30126457()
+{
+  logMsg("bugs::bug31399362");
+
+  sql::ConnectOptionsMap opt;
+  opt["CLIENT_MULTI_STATEMENTS"] = true;
+
+  pstmt.reset( con->prepareStatement(" SELECT JSON_OBJECT('City03a', 'A', 'Population', 111111) AS 'Result'") );
+
+  std::unique_ptr<sql::ResultSet> mysql_result( pstmt->executeQuery() );
+
+  {
+    int column_found = mysql_result->findColumn( "result" );
+    ASSERT_EQUALS(column_found, 0);
+  }
+  {
+    int column_found = mysql_result->findColumn( "Result" );
+    ASSERT_EQUALS(column_found, 1);
+  }
+}
+
 } /* namespace regression */
 } /* namespace testsuite */
 

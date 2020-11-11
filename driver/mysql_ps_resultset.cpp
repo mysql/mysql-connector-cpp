@@ -110,8 +110,7 @@ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
 
     CPP_INFO_FMT("num_fields=%u num_rows=%u", num_fields, num_rows);
     for (unsigned int i = 0; i < num_fields; ++i) {
-        boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(result_meta->fetch_field()->name, 0));
-        field_name_to_index_map[sql::SQLString(upstring.get())] = i;
+        field_name_to_index_map[result_meta->fetch_field()->name] = i;
     }
 
     rs_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
@@ -283,8 +282,7 @@ MySQL_Prepared_ResultSet::findColumn(const sql::SQLString& columnLabel) const
 {
     CPP_ENTER("MySQL_Prepared_ResultSet::findColumn");
     checkValid();
-    boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
-    FieldNameIndexMap::const_iterator iter= field_name_to_index_map.find(upstring.get());
+    FieldNameIndexMap::const_iterator iter= field_name_to_index_map.find(columnLabel);
 
     if (iter == field_name_to_index_map.end()) {
         return 0;

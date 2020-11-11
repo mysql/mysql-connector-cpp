@@ -75,8 +75,7 @@ MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWr
 #if A0
         std::cout << "Elements=" << field_name_to_index_map.size() << "\n";
 #endif
-        boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(getFieldMeta(i + 1)->name, 0));
-        field_name_to_index_map[upstring.get()] = i;
+        field_name_to_index_map[getFieldMeta(i + 1)->name] = i;
     }
 #if A0
     std::cout << "Elements=" << field_name_to_index_map.size() << "\n";
@@ -231,7 +230,6 @@ MySQL_ResultSet::findColumn(const sql::SQLString& columnLabel) const
 {
     CPP_ENTER("MySQL_ResultSet::findColumn");
     checkValid();
-    boost::scoped_array< char > upstring(sql::mysql::util::utf8_strup(columnLabel.c_str(), 0));
 #if A0
     std::cout << "Elements=" << field_name_to_index_map.size() << "\n";
     FieldNameIndexMap::const_iterator tmp_iter = field_name_to_index_map.begin();
@@ -243,7 +241,7 @@ MySQL_ResultSet::findColumn(const sql::SQLString& columnLabel) const
     std::cout << "[" << tmp << "]\n";
 #endif
 
-    FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(sql::SQLString(upstring.get()));
+    FieldNameIndexMap::const_iterator iter = field_name_to_index_map.find(columnLabel);
     if (iter == field_name_to_index_map.end()) {
         return 0;
     }
