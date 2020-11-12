@@ -70,11 +70,6 @@ BuildRequires:  gcc-c++
 %{!?mysql_dir:BuildRequires: mysql-devel}
 BuildRequires:  openssl-devel
 %{?commercial:Obsoletes: mysql-connector-c++ < %{version}-%{release}}
-%if 0%{?commercial}
-Requires: mysql-commercial-client-plugins = %{version}
-%else
-Requires: mysql-community-client-plugins = %{version}
-%endif
 %description
 A C++ interface for communicating with MySQL servers.
 
@@ -234,26 +229,35 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %endif
 
 %changelog
+* Thu Nov 12 2020 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.23-1
+- Remove dependency on the mysql-client-plugins package for smooth upgrade
+
 * Tue Jun 30 2020 Sreedhar S <sreedhar.sreedhargadda@oracle.com> - 8.0.22-1
 - Updated the dependency list to use server's client-plugin package
-* Thu Jun 04 2020 Sreedhar S <sreedhar.sreedhargadda@oracle.com> - 8.0.22-1
 - Updated the compliers for el|678 to match server builds
+
 * Thu Jun 04 2020 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.21-1
 - Updated the macro to use the system date
+
 * Fri Feb 15 2019 Bjorn Munch <bjorm.munch@oracle.com> - 8.0.16-1
 - CMake 3 should not be used on Fedora, only on Oracle Linux or Red Hat
 - Removed use of cmake_path as it is no longer needed
+
 * Thu Feb 14 2019 Rafal Somla <rafal.somla@oracle.com>
 - Use ABI version number taken from version.cmake in %files patterns
+
 * Fri Dec 14 2018 Kent Boortz <kent.boortz@oracle.com> - 8.0.15-1
 - Use CMake 3 on Fedora and Oracle Linux
 - Added option to specify what CMake to use, "--define 'cmake_path <path>'"
+
 * Tue Nov 27 2018 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.14-1
 - Added INFO_BIN and INFO_SRC files
+
 * Fri Aug 24 2018 Kent Boortz <kent.boortz@oracle.com> - 8.0.13-1
 - Added "test" package
+
 * Wed May 16 2018 Balasubramanian Kandasamy <balasubramanian.kandasamy@oracle.com> - 8.0.11-1
 - Adapt to MySQL Connector C++ 8.0
+
 * Tue Apr 05 2016 Kent Boortz <kent.boortz@oracle.com> - 2.0.1-1
 - initial package
-Collapse
