@@ -104,6 +104,39 @@ public:
   /**
     Get raw bytes representing value of row field at position `pos`.
 
+    The raw bytes are as received from the server. In genral the value
+    is represented using x-protocol encoding that corresponds to the
+    type and other meta-data of the given column. This meta-data can
+    be accessed via `Column` object returned by `RowResult#getColumn()`
+    method.
+
+    The x-protocol represenation of different value types is documented
+    [here]
+    (https://dev.mysql.com/doc/dev/mysql-server/latest/structMysqlx_1_1Resultset_1_1ColumnMetaData.html).
+    Most types reported by `Column#getType()` method correspond to an x-protocol
+    value type of the same name.
+
+    All integer types use the x-protocol UINT or SINT encoding, which is
+    the protobuf variant encoding together with zig-zag encoding for the
+    signed case
+    (see <https://developers.google.com/protocol-buffers/docs/encoding>)
+
+    STRING values are encoded using the character set encoding as reported
+    by `Column#getCharacterSet()` method of the corresponding `Column` object
+    (usually `utf8mb4`).
+
+    JSON data is represented as a JSON string. ENUM values are represented
+    as strings with enum constant names. Values of type DATE and TIMESTAMP
+    use the same representation as DATETIME, with time part empty in case
+    of DATE values. GEOMETRY values use the internal geometry storage
+    format described
+    [here]
+    (https://dev.mysql.com/doc/refman/8.0/en/gis-data-formats.html).
+
+    Note that raw representation of BYTES and STRING values has an extra
+    0x00 byte added at the end, which is not part of the originial data.
+    It is used to distinguish null values from empty byte sequences.
+
     @returns null bytes range if given field is NULL.
     @throws out_of_range if given row was not fetched from server.
   */

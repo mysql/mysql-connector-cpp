@@ -2844,6 +2844,35 @@ mysqlx_get_auto_increment_value(mysqlx_result_t *res);
 /**
   Read bytes stored in a row into a pre-allocated buffer
 
+  The raw bytes are as received from the server. In genral the value
+  is represented using x-protocol encoding that corresponds to the
+  type and other meta-data of the given column. This information can
+  be obtained from `mysqlx_column_get_type()` and other
+  `mysqlx_column_get_*()` functions.
+
+  The x-protocol represenation of different value types is documented
+  [here]
+  (https://dev.mysql.com/doc/dev/mysql-server/latest/structMysqlx_1_1Resultset_1_1ColumnMetaData.html).
+  Most types in the #mysqlx_data_type_t enumeration correspond
+  to an x-protocol value type of the same name.
+
+  STRING values are encoded using the character set encoding as reported by
+  mysqlx_column_get_collation() function.
+
+  JSON data is represented as a JSON string. ENUM values are represented
+  as strings with enum constant names. Values of type TIMESTAMP use
+  the same representation as DATETIME. GEOMETRY values use the internal
+  geometry storage format described
+  [here]
+  (https://dev.mysql.com/doc/refman/8.0/en/gis-data-formats.html).
+
+  Types BOOL and EXPR are never reported for data received from server
+  -- they are used when sending data to the server.
+
+  Note that raw representation of BYTES and STRING values has an extra
+  0x00 byte added at the end, which is not part of the originial data.
+  It is used to distinguish null values from empty byte sequences.
+
   @param row row handle
   @param col zero-based column number
   @param offset the number of bytes to skip before reading them from source row
