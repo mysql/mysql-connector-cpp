@@ -231,6 +231,9 @@ private:
 /**
   Types that can be reported in result meta-data.
 
+  These correspond to MySQL server datatypes described [here]
+  (https://dev.mysql.com/doc/refman/8.0/en/data-types.html).
+
   @ingroup devapi_res
 */
 
@@ -241,6 +244,51 @@ enum class Type : unsigned short
 
   RESULT_TYPE_LIST(TYPE_ENUM)
 };
+
+/*
+  Note: Normally we would put these docs in the RESULT_TYPE_LIST macro
+  but it would pollute documentation of methods like typeName() below
+  that also use this macro.
+*/
+
+/// @var mysqlx::Type::BIT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/bit-type.html>
+/// @var Type::TINYINT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
+/// @var Type::SMALLINT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
+/// @var Type::MEDIUMINT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
+/// @var Type::INT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
+/// @var Type::BIGINT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
+/// @var Type::FLOAT
+///   See <https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html>
+/// @var Type::DECIMAL
+///   See <https://dev.mysql.com/doc/refman/8.0/en/fixed-point-types.html>
+/// @var Type::DOUBLE
+///   See <https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html>
+/// @var Type::JSON
+///   See <https://dev.mysql.com/doc/refman/8.0/en/json.html>
+/// @var Type::STRING
+///   See <https://dev.mysql.com/doc/refman/8.0/en/string-types.html>
+/// @var Type::BYTES
+///   See <https://dev.mysql.com/doc/refman/8.0/en/string-types.html>
+/// @var Type::TIME
+///   See <https://dev.mysql.com/doc/refman/8.0/en/date-and-time-types.html>
+/// @var Type::DATE
+///   See <https://dev.mysql.com/doc/refman/8.0/en/date-and-time-types.html>
+/// @var Type::DATETIME
+///   See <https://dev.mysql.com/doc/refman/8.0/en/date-and-time-types.html>
+/// @var Type::TIMESTAMP
+///   See <https://dev.mysql.com/doc/refman/8.0/en/date-and-time-types.html>
+/// @var Type::SET
+///   See <https://dev.mysql.com/doc/refman/8.0/en/set.html>
+/// @var Type::ENUM
+///   See <https://dev.mysql.com/doc/refman/8.0/en/enum.html>
+/// @var Type::GEOMETRY
+///   See <https://dev.mysql.com/doc/refman/8.0/en/spatial-types.html>
 
 
 /**
