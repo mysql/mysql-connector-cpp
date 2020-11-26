@@ -346,14 +346,13 @@ function(main)
   if(NOT MSVC)
     set_property(TARGET MySQL::client-static
       PROPERTY INTERFACE_LINK_LIBRARIES
-      "-L${MYSQL_DIR}/lib"
-      "-L${MYSQL_DIR}/lib/private"
-
+      "-L${MYSQL_LIB_DIR}"
+      "-L${MYSQL_LIB_DIR}/private"
     )
     set_property(TARGET MySQL::client-shared
       PROPERTY INTERFACE_LINK_LIBRARIES
-      "-L${MYSQL_DIR}/lib"
-      "-L${MYSQL_DIR}/lib/private"
+      "-L${MYSQL_LIB_DIR}"
+      "-L${MYSQL_LIB_DIR}/private"
     )
   endif()
 
