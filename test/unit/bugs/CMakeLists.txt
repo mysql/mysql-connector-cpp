@@ -41,7 +41,10 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ADD_EXECUTABLE(unsorted_bugs ${bugs_sources})
-SET_TARGET_PROPERTIES(unsorted_bugs PROPERTIES OUTPUT_NAME "unsorted_bugs")
+SET_TARGET_PROPERTIES(unsorted_bugs PROPERTIES
+  OUTPUT_NAME "unsorted_bugs"
+  FOLDER "Tests/jdbc"
+)
 TARGET_LINK_LIBRARIES(unsorted_bugs ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
 ADD_TEST(NAME jdbc_unsorted_bugs

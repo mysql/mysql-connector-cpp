@@ -82,8 +82,10 @@ ENDIF(WIN32)
 
 ADD_LIBRARY(test_framework STATIC ${testframework_sources})
 SET_TARGET_PROPERTIES(test_framework PROPERTIES
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
+  LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV}"
+  COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}"
+  FOLDER "Tests/jdbc"
+)
 
 target_link_libraries(test_framework PUBLIC Boost::boost)
 

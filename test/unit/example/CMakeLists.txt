@@ -27,27 +27,15 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(example_sources
+SET(test_example_sources
   ../unit_fixture.cpp
   ../main.cpp
   example.cpp)
 
 IF(WIN32)
-  SET(example_sources
-        ${example_sources}
+  list(APPEND test_example_sources
   ../unit_fixture.h
   example.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(example ${example_sources})
-SET_TARGET_PROPERTIES(example PROPERTIES
-          OUTPUT_NAME "example"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(example ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-#
-# End of the instructions for building binary example from example.cpp|h
-#
-
-MESSAGE(STATUS "Configuring unit tests - examples")
+add_unit_test(example example)

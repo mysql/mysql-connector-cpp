@@ -26,6 +26,7 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+
 SET(test_common_sources
   ../unit_fixture.cpp
   ../main.cpp)
@@ -47,16 +48,8 @@ IF(WIN32)
     connection.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_connection ${test_connection_sources})
-SET_TARGET_PROPERTIES(test_connection PROPERTIES
-          OUTPUT_NAME "connection"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_connection ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(connection)
 
-ADD_TEST(NAME jdbc_test_connection COMMAND test_connection)
-
-MESSAGE(STATUS "Configuring unit tests - connection")
 
 SET(test_databasemetadata_sources
   ../unit_fixture.cpp
@@ -70,19 +63,7 @@ IF(WIN32)
   connectionmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_databasemetadata ${test_databasemetadata_sources})
-SET_TARGET_PROPERTIES(test_databasemetadata PROPERTIES
-          OUTPUT_NAME "databasemetadata"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_databasemetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-ADD_TEST(NAME jdbc_test_databasemetadata
-  COMMAND
-  test_databasemetadata
-  )
-
-MESSAGE(STATUS "Configuring unit tests - databasemetadata")
+add_unit_test(databasemetadata)
 
 
 SET(test_resultsetmetadata_sources
@@ -97,19 +78,7 @@ IF(WIN32)
   resultsetmetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_resultsetmetadata ${test_resultsetmetadata_sources})
-SET_TARGET_PROPERTIES(test_resultsetmetadata PROPERTIES
-          OUTPUT_NAME "resultsetmetadata"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_resultsetmetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-ADD_TEST(NAME jdbc_test_resultsetmetadata
-  COMMAND
-  test_resultsetmetadata
-  )
-
-MESSAGE(STATUS "Configuring unit tests - resultsetmetadata")
+add_unit_test(resultsetmetadata)
 
 SET(test_resultset_sources
   ../unit_fixture.cpp
@@ -123,19 +92,8 @@ IF(WIN32)
   resultset.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_resultset ${test_resultset_sources})
-SET_TARGET_PROPERTIES(test_resultset PROPERTIES
-          OUTPUT_NAME "resultset"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(resultset)
 
-ADD_TEST(NAME jdbc_test_resultset
-  COMMAND
-  test_resultset
-  )
-
-MESSAGE(STATUS "Configuring unit tests - resultset")
 
 SET(test_savepoint_sources
   ../unit_fixture.cpp
@@ -149,19 +107,8 @@ IF(WIN32)
   savepoint.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_savepoint ${test_savepoint_sources})
-SET_TARGET_PROPERTIES(test_savepoint PROPERTIES
-          OUTPUT_NAME "savepoint"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_savepoint ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(savepoint)
 
-ADD_TEST(NAME jdbc_test_savepoint
-  COMMAND
-  test_savepoint
-  )
-
-MESSAGE(STATUS "Configuring unit tests - savepoint")
 
 SET(test_preparedstatement_sources
   ../unit_fixture.cpp
@@ -175,19 +122,8 @@ IF(WIN32)
   preparedstatement.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_preparedstatement ${test_preparedstatement_sources})
-SET_TARGET_PROPERTIES(test_preparedstatement PROPERTIES
-          OUTPUT_NAME "preparedstatement"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_preparedstatement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(preparedstatement)
 
-ADD_TEST(NAME jdbc_test_preparedstatement
-  COMMAND
-  test_preparedstatement
-  )
-
-MESSAGE(STATUS "Configuring unit tests - preparedstatement")
 
 SET(test_parametermetadata_sources
   ../unit_fixture.cpp
@@ -201,19 +137,8 @@ IF(WIN32)
   parametermetadata.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_parametermetadata ${test_parametermetadata_sources})
-SET_TARGET_PROPERTIES(test_parametermetadata PROPERTIES
-          OUTPUT_NAME "parametermetadata"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_parametermetadata ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(parametermetadata)
 
-ADD_TEST(NAME jdbc_test_parametermetadata
-  COMMAND
-  test_parametermetadata
-  )
-
-MESSAGE(STATUS "Configuring unit tests - parametermetadata")
 
 SET(test_art_resultset_sources
   ../unit_fixture.cpp
@@ -229,19 +154,8 @@ IF(WIN32)
   ADD_DEFINITIONS("-DCPPCONN_PUBLIC_FUNC=")
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_art_resultset ${test_art_resultset_sources})
-SET_TARGET_PROPERTIES(test_art_resultset PROPERTIES
-          OUTPUT_NAME "art_resultset"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_art_resultset ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+add_unit_test(art_resultset)
 
-ADD_TEST(NAME jdbc_test_art_resultset
-  COMMAND
-  test_art_resultset
-  )
-
-MESSAGE(STATUS "Configuring unit tests - art_resultset")
 
 SET(test_statement_sources
   ../unit_fixture.cpp
@@ -255,20 +169,7 @@ IF(WIN32)
   statement.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_statement ${test_statement_sources})
-SET_TARGET_PROPERTIES(test_statement PROPERTIES
-          OUTPUT_NAME "statement"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-ADD_TEST(NAME jdbc_test_statement
-  COMMAND
-  test_statement
-  )
-
-MESSAGE(STATUS "Configuring unit tests - statement")
-
+add_unit_test(statement)
 
 
 SET(test_uri_sources
@@ -284,19 +185,8 @@ IF(WIN32)
     uri.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_uri ${test_uri_sources})
-SET_TARGET_PROPERTIES(test_uri PROPERTIES
-          OUTPUT_NAME "uri"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_uri ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES} MySQL::client )
-
-ADD_TEST(NAME jdbc_test_uri
-  COMMAND
-  test_uri
-  )
-
-MESSAGE(STATUS "Configuring unit tests - uri")
+add_unit_test(uri)
+target_link_libraries(test_uri MySQL::client)
 
 
 SET(test_variant_sources
@@ -311,16 +201,4 @@ IF(WIN32)
     variant.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(test_variant ${test_variant_sources})
-SET_TARGET_PROPERTIES(test_variant PROPERTIES
-          OUTPUT_NAME "variant"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(test_variant ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-ADD_TEST(NAME jdbc_test_variant
-  COMMAND
-  test_variant
-  )
-
-MESSAGE(STATUS "Configuring unit tests - variant")
+add_unit_test(variant)

@@ -27,30 +27,15 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(perf_statement_sources
+SET(test_perf_statement_sources
   ../unit_fixture.cpp
   ../main.cpp
   perf_statement.cpp)
 
 IF(WIN32)
-  SET(perf_statement_sources
-        ${perf_statement_sources}
+  list(APPEND test_perf_statement_sources
   ../unit_fixture.h
   perf_statement.h)
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(perf_statement ${perf_statement_sources})
-SET_TARGET_PROPERTIES(perf_statement PROPERTIES
-          OUTPUT_NAME "perf_statement"
-          LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
-          COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}")
-TARGET_LINK_LIBRARIES(perf_statement ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-
-ADD_TEST(
-    NAME jdbc_perf_statement
-    COMMAND
-    perf_statement
-    )
-
-MESSAGE(STATUS "Configuring performance test - statement")
+add_unit_test(perf_statement perf_statement)

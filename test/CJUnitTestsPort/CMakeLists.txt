@@ -93,6 +93,8 @@ ENDIF(WIN32)
 ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
 TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
+set_target_properties(CJUnitTestsPort PROPERTIES FOLDER "Tests/jdbc")
+
 ADD_TEST(NAME jdbc_CJUnitTestsPort COMMAND CJUnitTestsPort)
 
 #Copy sql.properties file to build dir
