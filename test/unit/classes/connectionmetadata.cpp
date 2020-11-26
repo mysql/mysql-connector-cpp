@@ -393,7 +393,7 @@ void connectionmetadata::getColumns()
       if (con->getCatalog() != "" && res->getString(1) != "" && con->getCatalog() != res->getString("TABLE_CAT"))
       {
         got_todo_warning=true;
-        msg.str();
+        (void)msg.str();  // FIXME: is it needed for anything?
         msg << "...\t\tWARNING - expecting TABLE_CAT = '" << con->getCatalog() << "'";
         msg << " got '" << res->getString("TABLE_CAT") << "'";
         logMsg(msg.str());

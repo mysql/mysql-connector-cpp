@@ -906,14 +906,14 @@ void resultset::fetchBigint()
     res.reset(pstmt->executeQuery());
     res->next();
 
-    msg.str();
+    (void)msg.str();
     msg << "... PS: id = " << res->getDouble(1);
     logMsg(msg.str());
 
     res.reset(stmt->executeQuery("SELECT id FROM test"));
     res->next();
 
-    msg.str();
+    (void)msg.str();
     msg << "... Statement: id = " << res->getDouble(1);
     logMsg(msg.str());
 
@@ -1111,7 +1111,7 @@ void resultset::JSON_support()
     res.reset(pstmt->executeQuery());
     res->next();
 
-    msg.str();
+    (void)msg.str();
     ASSERT_EQUALS(1, res->getInt(1));
     msg << "... PS: id = " << res->getInt(1);
     ASSERT_EQUALS("[1]", res->getString(2));
@@ -1121,7 +1121,7 @@ void resultset::JSON_support()
     res.reset(stmt->executeQuery("SELECT * FROM test"));
     res->next();
 
-    msg.str();
+    (void)msg.str();
     ASSERT_EQUALS(1, res->getInt(1));
     msg << "... Statement: id = " << res->getInt(1);
     ASSERT_EQUALS("[1]", res->getString(2));
