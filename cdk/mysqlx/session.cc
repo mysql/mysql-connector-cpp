@@ -189,6 +189,9 @@ const char *Expectation<Base,F>::error_msg()
     return "Keep Open is not supported by this version of the server";
   case Protocol_fields::COMPRESSION:
     return "Compression is not supported by this version of the server";
+  default:
+    assert(false); // should not happen
+    return nullptr;
   }
 }
 
