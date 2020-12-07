@@ -101,6 +101,15 @@ void connectionmetadata::getSchemaObjects()
       resdbm2.reset(dbmeta->getSchemaObjects(con->getCatalog(), "", resdbm1->getString(1)));
       checkResultSetScrolling(resdbm2);
     }
+
+    //And now sys
+    resdbm1.reset(dbmeta->getSchemaObjects("", "sys"));
+    checkResultSetScrolling(resdbm1);
+    while (resdbm1->next())
+    {
+      resdbm2.reset(dbmeta->getSchemaObjects(con->getCatalog(), "", resdbm1->getString(1)));
+      checkResultSetScrolling(resdbm2);
+    }
   }
   catch (sql::SQLException &e)
   {

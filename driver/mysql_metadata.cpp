@@ -1400,14 +1400,14 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
       }
 
       sql::SQLString key;
-      key.append("`").append(trigger_ddl_rs->getString("schema"))
-        .append("`.`").append(trigger_ddl_rs->getString("name")).append("`");
+      key.append("`").append(trigger_ddl_rs->getString("SCHEMA"))
+        .append("`.`").append(trigger_ddl_rs->getString("NAME")).append("`");
 
       {
         trigger_ddl
           .append("CREATE\nDEFINER=").append(quoted_definer)
           .append("\nTRIGGER ").append("`")
-          .append(trigger_ddl_rs->getString("schema")).append("`.`").append(trigger_ddl_rs->getString("name")).append("`")
+          .append(trigger_ddl_rs->getString("SCHEMA")).append("`.`").append(trigger_ddl_rs->getString("NAME")).append("`")
           .append("\n").append(trigger_ddl_rs->getString(action_timing_index))
           .append(" ").append(trigger_ddl_rs->getString(event_manipulation_index))
           .append(" ON `").append(trigger_ddl_rs->getString(event_object_schema_index))
@@ -1423,7 +1423,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
         trigger_name
           .append(trigger_ddl_rs->getString(event_object_table_index))
           .append(".")
-          .append(trigger_ddl_rs->getString("name"));
+          .append(trigger_ddl_rs->getString("NAME"));
           trigger_name_map[key] = trigger_name;
       }
     }
