@@ -371,6 +371,15 @@ LibmysqlStaticProxy::real_connect(MYSQL * mysql,
 }
 /* }}} */
 
+/* {{{ LibmysqlStaticProxy::mysql_bind_param() */
+bool
+LibmysqlStaticProxy::bind_param(MYSQL *mysql, unsigned n_params,
+                                      MYSQL_BIND *binds, const char **names)
+{
+  return ::mysql_bind_param(mysql, n_params, binds, names);
+}
+/* }}} */
+
 
 /* {{{ LibmysqlStaticProxy::real_escape_string() */
 unsigned long

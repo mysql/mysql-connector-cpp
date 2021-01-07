@@ -65,6 +65,7 @@ public:
     TEST_CASE(unbufferedFetch);
     TEST_CASE(unbufferedOutOfSync);
     TEST_CASE(queryTimeout);
+    TEST_CASE(queryAttributes);
   }
 
   /**
@@ -106,6 +107,11 @@ public:
    * check setQueryTimeout() and getQueryTimeout
    */
   void queryTimeout();
+
+  /**
+   * check query attributes
+   */
+  void queryAttributes();
 
 };
 

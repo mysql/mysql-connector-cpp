@@ -97,6 +97,11 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
     throw sql::InvalidInstanceException("Connection has been closed");
   }
 
+  if(attrbind.nrAttr() != 0)
+  {
+    proxy_p->query_attr(attrbind.nrAttr(), attrbind.getNames(), attrbind.getBinds());
+  }
+
   if (proxy_p->query(q) && proxy_p->errNo()) {
     CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
     sql::mysql::util::throwSQLException(*proxy_p.get());
@@ -575,6 +580,225 @@ MySQL_Statement::setResultSetType(sql::ResultSet::enum_type type)
   checkClosed();
   resultset_type = type;
   return this;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrBigInt() -U- */
+int
+MySQL_Statement::setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrBigInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value.c_str());
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrBigInt(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrBoolean() -U- */
+int
+MySQL_Statement::setQueryAttrBoolean(const sql::SQLString &name, bool value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrBoolean");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value ? "true" : "false");
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrBoolean(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrDateTime() -U- */
+int
+MySQL_Statement::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrDateTime");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value.c_str());
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrDateTime(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrDouble() -U- */
+int
+MySQL_Statement::setQueryAttrDouble(const sql::SQLString &name, double value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrDouble");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrDouble(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrInt() -U- */
+int
+MySQL_Statement::setQueryAttrInt(const sql::SQLString &name, int32_t value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%d", name.c_str(), value);
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrInt(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrUInt() -U- */
+int
+MySQL_Statement::setQueryAttrUInt(const sql::SQLString &name, uint32_t value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrUInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%u", name.c_str(), value);
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrUInt(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrInt64() -U- */
+int
+MySQL_Statement::setQueryAttrInt64(const sql::SQLString &name, int64_t value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrInt64");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%ld", name.c_str(), value);
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrInt64(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrUInt64() -U- */
+int
+MySQL_Statement::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%ul", name.c_str(), value);
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrUInt64(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrNull() -U- */
+int
+MySQL_Statement::setQueryAttrNull(const sql::SQLString &name)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrNull");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s", name.c_str());
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrNull(name);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::setQueryAttrString() -U- */
+int
+MySQL_Statement::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Statement::setQueryAttrString");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value.c_str());
+
+  std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
+  if (!proxy_p) {
+    throw sql::InvalidInstanceException("Connection has been closed");
+  }
+
+  if(!proxy_p->has_query_attributes())
+    return 0;
+
+  return attrbind.setQueryAttrString(name, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Statement::clearAttributes() -U- */
+void
+MySQL_Statement::clearAttributes()
+{
+  attrbind.clearAttributes();
 }
 /* }}} */
 

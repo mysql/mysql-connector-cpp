@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -34,7 +34,7 @@
 #define _MYSQL_RESULTBIND_H_
 
 #include <boost/scoped_array.hpp>
-
+#include <vector>
 
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
@@ -51,6 +51,28 @@ namespace NativeAPI
 class NativeStatementWrapper;
 }
 
+struct MySQL_Bind : public MYSQL_BIND
+{
+  MySQL_Bind();
+  MySQL_Bind(MySQL_Bind&&);
+  MySQL_Bind(const MySQL_Bind&) = delete;
+  ~MySQL_Bind();
+
+
+  void setBigInt(const sql::SQLString& value);
+  void setBlob(std::istream * blob);
+  void setBoolean(bool value);
+  void setDateTime(const sql::SQLString& value);
+  void setDouble(double value);
+  void setInt(int32_t value);
+  void setUInt(uint32_t value);
+  void setInt64(int64_t value);
+  void setUInt64(uint64_t value);
+  void setNull();
+  void setString(const sql::SQLString& value);
+
+  void clear();
+};
 
 class MySQL_ResultBind
 {
@@ -72,6 +94,39 @@ public:
   ~MySQL_ResultBind();
 
   void bindResult();
+
+};
+
+
+class MySQL_AttributesBind
+{
+  std::vector<MySQL_Bind> bind;
+  std::vector<const char*> names;
+
+  int getBindPos(const SQLString &name);
+
+public:
+
+  MySQL_AttributesBind();
+
+  ~MySQL_AttributesBind();
+
+  int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value);
+  int setQueryAttrBoolean(const sql::SQLString &name, bool value);
+  int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value);
+  int setQueryAttrDouble(const sql::SQLString &name, double value);
+  int setQueryAttrInt(const sql::SQLString &name, int32_t value);
+  int setQueryAttrUInt(const sql::SQLString &name, uint32_t value);
+  int setQueryAttrInt64(const sql::SQLString &name, int64_t value);
+  int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value);
+  int setQueryAttrNull(const SQLString &name);
+  int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value);
+
+  void clearAttributes();
+
+  int nrAttr();
+  MYSQL_BIND* getBinds();
+  const char **getNames();
 
 };
 

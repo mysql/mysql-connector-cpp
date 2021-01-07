@@ -610,5 +610,80 @@ void statement::queryTimeout()
 }
 
 
+void statement::queryAttributes()
+{
+  stmt.reset(con->createStatement());
+
+  if(stmt->setQueryAttrNull("dummy") == 0)
+    SKIP("Server doesn't support query attributes");
+
+  try {
+    stmt->execute("UNINSTALL COMPONENT 'file://component_query_attributes'");
+  }  catch (...)
+  {}
+
+  stmt->execute("INSTALL COMPONENT 'file://component_query_attributes'");
+
+// Scenario 1
+
+  stmt->setQueryAttrInt("attr1", 200);
+  stmt->setQueryAttrString("attr2", "string value");
+  stmt->setQueryAttrBoolean("attr3", true);
+
+  res.reset(stmt->executeQuery("SELECT 1,"
+                               "mysql_query_attribute_string('attr1'), "
+                               "mysql_query_attribute_string('attr2'), "
+                               "mysql_query_attribute_string('attr3')"));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT_EQUALS(200, res->getInt(2));
+  ASSERT_EQUALS("string value", res->getString(3));
+  ASSERT_EQUALS(true, res->getBoolean(4));
+
+  // Scenario 2
+  stmt->setQueryAttrInt("attr1", 200);
+  res.reset(stmt->executeQuery("SELECT 1,"
+                               "mysql_query_attribute_string('attr1'), "
+                               "mysql_query_attribute_string('attr2'), "
+                               "mysql_query_attribute_string('attr3')"));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT_EQUALS(200, res->getInt(2));
+  ASSERT_EQUALS("string value", res->getString(3));
+  ASSERT_EQUALS(true, res->getBoolean(4));
+
+  // Scenario 3
+  stmt->setQueryAttrInt("attr1", 100);
+  res.reset(stmt->executeQuery("SELECT 1,"
+                               "mysql_query_attribute_string('attr1'), "
+                               "mysql_query_attribute_string('attr2'), "
+                               "mysql_query_attribute_string('attr3')"));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT_EQUALS(100, res->getInt(2));
+  ASSERT_EQUALS("string value", res->getString(3));
+  ASSERT_EQUALS(true, res->getBoolean(4));
+
+  //Scenario 4
+  stmt->clearAttributes();
+  res.reset(stmt->executeQuery("SELECT 1,"
+                               "mysql_query_attribute_string('attr1'), "
+                               "mysql_query_attribute_string('attr2'), "
+                               "mysql_query_attribute_string('attr3')"));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, res->getInt(1));
+  ASSERT(res->isNull(2));
+  ASSERT(res->isNull(3));
+  ASSERT(res->isNull(4));
+
+  stmt->execute("UNINSTALL COMPONENT 'file://component_query_attributes'");
+
+}
+
+
 } /* namespace statement */
 } /* namespace testsuite */
