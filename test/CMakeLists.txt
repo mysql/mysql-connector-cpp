@@ -29,9 +29,9 @@
 #Use Options to configure default test server params
 
 SET(TEST_DEFAULT_HOST   "tcp://localhost:3306"  CACHE STRING "Defines Unit Tests default server" )
-SET(TEST_DEFAULT_DB     "test"                    CACHE STRING "Defines Unit Tests default Database" )
-SET(TEST_DEFAULT_LOGIN  "root"                    CACHE STRING "Defines Unit Tests default login user" )
-SET(TEST_DEFAULT_PASSWD "root"                    CACHE STRING "Defines Unit Tests default login user password" )
+SET(TEST_DEFAULT_DB     "test"                  CACHE STRING "Defines Unit Tests default Database" )
+SET(TEST_DEFAULT_LOGIN  "root"                  CACHE STRING "Defines Unit Tests default login user" )
+SET(TEST_DEFAULT_PASSWD ""                      CACHE STRING "Defines Unit Tests default login user password" )
 
 
 configure_file(tests_config.h.in

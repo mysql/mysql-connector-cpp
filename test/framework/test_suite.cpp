@@ -111,8 +111,7 @@ void TestSuite::runTest()
         String( "An exception occurred while running setUp before " )
         + (*it)->get()->name() + ". Message: " + e.what() + ". Skipping all tests in the suite" );
 
-      //not really needed probably
-      //TestsListener::testHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
+      TestsListener::testHasFinished( trrThrown, "Test setup has failed, all tests in the suite will be skipped" );
 
       TestsListener::incrementCounter( static_cast<int>(testCases.size()
                                           - ( it - testCases.begin() + 1 )) );
