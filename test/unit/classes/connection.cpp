@@ -3708,5 +3708,38 @@ void connection::socket()
 
 }
 
+void connection::dns_srv()
+{
+  logMsg("connection::dns_srv - connection using dns+srv service");
+
+  const char* dns_srv = getenv("MYSQL_SRV");
+  if(dns_srv)
+  {
+    for(int i = 0; i < 100; ++i)
+    {
+      sql::ConnectOptionsMap connection_properties;
+
+      connection_properties[OPT_HOSTNAME]=dns_srv;
+      connection_properties[OPT_USERNAME]=user;
+      connection_properties[OPT_PASSWORD]=passwd;
+      connection_properties[OPT_DNS_SRV] = true;
+
+      con.reset(driver->connect(connection_properties));
+      if(!con)
+        FAIL("Could not connect using socket on connection properties");
+
+      stmt.reset(con->createStatement());
+
+      res.reset(stmt->executeQuery("show session variables like 'server_id'"));
+
+      ASSERT(res->next());
+
+      std::cout << res->getString(2) << std::endl;
+    }
+
+    con.reset(getConnection());
+  }
+}
+
 } /* namespace connection */
 } /* namespace testsuite */

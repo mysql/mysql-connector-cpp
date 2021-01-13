@@ -90,6 +90,7 @@ public:
   TEST_CASE(tls_version);
   TEST_CASE(cached_sha2_auth);
   TEST_CASE(socket);
+  TEST_CASE(dns_srv);
   }
 
   /**
@@ -275,6 +276,12 @@ public:
    *
    */
   void socket();
+
+  /*
+   * Test of MySQL_Connection::dns_srv()
+   *
+   */
+  void dns_srv();
 
 };
 

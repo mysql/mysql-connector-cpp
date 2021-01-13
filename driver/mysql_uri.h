@@ -46,10 +46,11 @@ class MySQL_Uri
 public:
   struct Host_data
   {
-    Host_data(sql::SQLString name_, unsigned int port_ = 0)
+    Host_data(sql::SQLString name_, unsigned int port_ = 0, bool has_port_ = false)
       : name(name_)
       , port(port_)
       , protocol(NativeAPI::PROTOCOL_TCP)
+      , has_port(has_port_)
     {}
 
     Host_data();
@@ -101,7 +102,7 @@ public:
     sql::SQLString           name;
     uint16_t                 port;
     NativeAPI::Protocol_Type protocol;
-    bool                     has_port = false;
+    bool                     has_port;
   };
 
   using Host_List=std::vector<Host_data>;

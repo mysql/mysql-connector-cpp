@@ -61,6 +61,7 @@ MySQL_Uri::Host_data::Host_data()
   : name(util::LOCALHOST)
   , port(DEFAULT_TCP_PORT)
   , protocol(NativeAPI::PROTOCOL_SOCKET)
+  , has_port(false)
 {}
 
 /* {{{ MySQL_Uri::Host() -I- */
@@ -194,6 +195,8 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
       }
     }
 
+    bool has_port = false;
+
     if(sep < hostname.size() && hostname[sep] == ':')
     {
       //port
@@ -213,8 +216,12 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
         return false;
 
       port = static_cast<unsigned int>(val);
+      has_port = true;
     }
-    host.setHost(name, port);
+    if(has_port)
+      host.setHost(name, port);
+    else
+      host.setHost(name);
     uri.addHost(host);
     return true;
   };
