@@ -80,6 +80,12 @@ public:
             const ::sql::SQLString & socket_or_pipe,
             unsigned long			client_flag) = 0;
 
+  virtual bool connect_dns_srv(const ::sql::SQLString & host,
+            const ::sql::SQLString & user,
+            const ::sql::SQLString & passwd,
+            const ::sql::SQLString & db,
+            unsigned long			client_flag) = 0;
+
   virtual bool commit() = 0;
 
   virtual void debug(const ::sql::SQLString &) = 0;

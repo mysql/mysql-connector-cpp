@@ -410,99 +410,6 @@ struct Prio
   }
 };
 
-
-#ifdef _WIN32
-std::multimap<Prio,Host_data> srv_list(const std::string &hostname,
-                                             uint16_t &total_weight)
-{
-  DNS_STATUS status;               //Return value of  DnsQuery_A() function.
-  PDNS_RECORD pDnsRecord =nullptr;          //Pointer to DNS_RECORD structure.
-
-  std::multimap<Prio,Host_data> srv;
-
-  status = DnsQuery(hostname.c_str(), DNS_TYPE_SRV, DNS_QUERY_STANDARD, nullptr, &pDnsRecord, nullptr);
-  if (!status)
-  {
-    PDNS_RECORD pRecord = pDnsRecord;
-    while (pRecord)
-    {
-      if (pRecord->wType == DNS_TYPE_SRV)
-      {
-        srv.insert(std::make_pair(
-                     Prio({pRecord->Data.Srv.wPriority,
-                           pRecord->Data.Srv.wWeight}),
-                     Host_data
-                     (pRecord->Data.Srv.pNameTarget,
-                      pRecord->Data.Srv.wPort)
-                     ));
-
-        total_weight+=pRecord->Data.Srv.wWeight;
-      }
-      pRecord = pRecord->pNext;
-    }
-
-    DnsRecordListFree(pDnsRecord, DnsFreeRecordListDeep);
-  }
-  return srv;
-}
-#else
-
-//QUery and interprete SRV data from DNS server
-std::multimap<Prio,Host_data> srv_list(const std::string &hostname,
-                                             uint16_t &total_weight)
-{
-  struct __res_state state {};
-  res_ninit(&state);
-
-  std::multimap<Prio,Host_data> srv;
-
-  unsigned char query_buffer[NS_PACKETSZ];
-
-
-  //let get
-  int res = res_nsearch(&state, hostname.c_str(), ns_c_in, ns_t_srv, query_buffer, sizeof (query_buffer) );
-
-  if (res >= 0)
-  {
-    ns_msg msg;
-    char name_buffer[NS_MAXDNAME];
-
-    ns_initparse(query_buffer, res, &msg);
-
-
-    auto process = [&msg, &name_buffer, &total_weight, &srv](const ns_rr &rr) -> void
-    {
-      const unsigned char* srv_data = ns_rr_rdata(rr);
-      uint16_t port, prio, weight;
-
-      //Each NS_GET16 call moves srv_data to next value
-      NS_GET16(prio, srv_data);
-      NS_GET16(weight, srv_data);
-      NS_GET16(port, srv_data);
-
-      dn_expand(ns_msg_base(msg), ns_msg_end(msg),
-                srv_data, name_buffer, sizeof(name_buffer));
-
-      srv.insert(std::make_pair(Prio({prio, weight}),
-                                Host_data(name_buffer, port)));
-
-      total_weight+=weight;
-    };
-
-    for(int x= 0; x < ns_msg_count(msg, ns_s_an); x++)
-    {
-          ns_rr rr;
-          ns_parserr(&msg, ns_s_an, x, &rr);
-          process(rr);
-    }
-  }
-  res_nclose(&state);
-
-  return srv;
-}
-#endif
-
-
 /*
   We support :
   - hostName
@@ -1067,7 +974,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
-  auto connect = [this,flags,client_exp_pwd](
+  auto connect = [this,flags,client_exp_pwd, opt_dns_srv](
                  const std::string &host,
                  const std::string &user,
                  const std::string &pwd,
@@ -1081,13 +988,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     CPP_INFO_FMT("schema=%s", schema.c_str());
     CPP_INFO_FMT("socket/pipe=%s", socketOrPipe.c_str());
 
-    if (!proxy->connect(host,
-                        user,
-                        pwd,
-                        schema,
-                        port,
-                        socketOrPipe,
-                        flags))
+    bool connect_result = !opt_dns_srv ?
+                            proxy->connect(host, user, pwd, schema, port,
+                                           socketOrPipe, flags)
+                            :
+                            proxy->connect_dns_srv(host, user, pwd,
+                                                   schema, flags);
+
+    if (!connect_result)
     {
       CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
       CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
@@ -1118,9 +1026,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
   };
 
-
-  std::multimap<Prio,Host_data> host_list;
-
   uint16_t total_weight = 0;
 
   if(opt_dns_srv)
@@ -1142,7 +1047,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
     }
 
-    if(host.Protocol() != NativeAPI::PROTOCOL_PIPE)
+    if(host.Protocol() == NativeAPI::PROTOCOL_PIPE)
     {
       throw sql::InvalidArgumentException("Using pipe with DNS SRV lookup is not allowed.");
     }
@@ -1152,104 +1057,58 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
     }
 
-    host_list = srv_list(host.Host(),total_weight);
-
-    if(host_list.empty())
-    {
-      std::stringstream err;
-      err << "Unable to locate any hosts for " << host.Host();
-      throw sql::InvalidArgumentException(err.str());
-    }
-
-  }
-  else
-  {
-    for(auto host : uri)
-    {
-      host_list.insert(std::make_pair(Prio({0, 0}), host));
-    }
-    if(host_list.empty())
-    {
-      //Adding default host
-      host_list.insert(std::make_pair(Prio({0, 0}), Host_data()));
-    }
   }
 
   //Connect loop
   {
     bool connected = false;
-    std::random_device generator;
+    std::random_device rd;
+    std::mt19937 generator(rd());
 
-    while(!host_list.empty() && !connected)
+    while(uri.size() && !connected)
     {
-      auto same_range = host_list.equal_range(host_list.begin()->first);
-      std::vector<Host_data*> same_prio;
-      std::vector<uint16_t> weights;
+      std::uniform_int_distribution<int> distribution(
+            0, uri.size() - 1); // define the range of random numbers
 
+      int pos = distribution(generator);
+      auto el = uri.begin();
 
-      for(auto it = same_range.first; it != same_range.second; ++it)
-      {
-        //if weight is not used, we should put all weights = 1 so that
-        //discrete_distribution works as expected
-        weights.push_back(total_weight!= 0 ? it->first.weight : 1);
-        same_prio.push_back(&it->second);
+      std::advance(el, pos);
+      proxy->use_protocol(el->Protocol());
+
+      try {
+        connect(el->Host(), userName,
+                password,
+                uri.Schema() /* schema */,
+                el->hasPort() ?  el->Port() : uri.DefaultPort(),
+                el->SocketOrPipe());
+        connected = true;
+        break;
       }
-
-      while (!weights.empty() && !connected)
+      catch (sql::SQLException& e)
       {
-
-        std::discrete_distribution<int> distribution(
-              weights.begin(), weights.end());
-
-        auto el = same_prio.begin();
-        auto weight_el = weights.begin();
-
-        if (same_prio.size() > 1)
+        switch (e.getErrorCode())
         {
-          int pos = distribution(generator);
-          std::advance(el, pos);
-          std::advance(weight_el, pos);
-        }
-
-        proxy->use_protocol((*el)->Protocol());
-
-        try {
-          connect((*el)->Host(), userName,
-                  password,
-                  uri.Schema() /* schema */,
-                  (*el)->hasPort() ?  (*el)->Port() : uri.DefaultPort(),
-                  (*el)->SocketOrPipe());
-          connected = true;
+        case ER_CON_COUNT_ERROR:
+        case CR_SOCKET_CREATE_ERROR:
+        case CR_CONNECTION_ERROR:
+        case CR_CONN_HOST_ERROR:
+        case CR_IPSOCK_ERROR:
+        case CR_UNKNOWN_HOST:
+          //On Network errors, continue
           break;
-        }
-        catch (sql::SQLException& e)
-        {
-          switch (e.getErrorCode())
+        default:
+          //If SQLSTATE not 08xxx, which is used for network errors
+          if(e.getSQLState().compare(0,2, "08") != 0)
           {
-          case ER_CON_COUNT_ERROR:
-          case CR_SOCKET_CREATE_ERROR:
-          case CR_CONNECTION_ERROR:
-          case CR_CONN_HOST_ERROR:
-          case CR_IPSOCK_ERROR:
-          case CR_UNKNOWN_HOST:
-            //On Network errors, continue
-            break;
-          default:
-            //If SQLSTATE not 08xxx, which is used for network errors
-            if(e.getSQLState().compare(0,2, "08") != 0)
-            {
-              //Re-throw error and do not try another host
-              throw;
-            }
+            //Re-throw error and do not try another host
+            throw;
           }
-
         }
 
-        same_prio.erase(el);
-        weights.erase(weight_el);
       }
 
-      host_list.erase(same_range.first, same_range.second);
+      uri.erase(el);
 
     };
 

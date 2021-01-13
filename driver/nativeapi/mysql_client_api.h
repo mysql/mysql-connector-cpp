@@ -109,6 +109,8 @@ typedef int (STDCALL *ptr2mysql_ping)(MYSQL *);
 
 typedef MYSQL * (STDCALL *ptr2mysql_real_connect)(MYSQL *, const char *, const char *, const char * , const char *, unsigned int, const char *, unsigned long);
 
+typedef MYSQL * (STDCALL *ptr2mysql_real_connect_dns_srv)(MYSQL *, const char *, const char *, const char * , const char *, unsigned long);
+
 typedef unsigned long (STDCALL *ptr2mysql_real_escape_string)(MYSQL * mysql, char *, const char *, unsigned long);
 
 typedef int (STDCALL *ptr2mysql_real_query)(MYSQL *, const char *, unsigned long);
@@ -249,6 +251,13 @@ public:
                 const char *  db,
                 unsigned int  port,
                 const char *  unix_socket,
+                unsigned long client_flag) = 0;
+
+  virtual MYSQL * real_connect_dns_srv(MYSQL * mysql,
+                const char *  host,
+                const char *  user,
+                const char *  passwd,
+                const char *  db,
                 unsigned long client_flag) = 0;
 
   virtual unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) = 0;

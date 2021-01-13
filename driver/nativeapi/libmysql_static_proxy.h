@@ -153,6 +153,13 @@ public:
             const char *  unix_socket,
             unsigned long client_flag);
 
+  MYSQL * real_connect_dns_srv(MYSQL * mysql,
+            const char *  host,
+            const char *  user,
+            const char *  passwd,
+            const char *  db,
+            unsigned long client_flag);
+
   unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length);
 
   int real_query(MYSQL *, const char *, unsigned long);

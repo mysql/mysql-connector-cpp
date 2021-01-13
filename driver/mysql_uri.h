@@ -129,6 +129,14 @@ public:
   void clear() { host_list.clear(); }
 
   /*
+    Remove host from the list
+  */
+  void erase(Host_List::iterator el)
+  {
+    host_list.erase(el);
+  }
+
+  /*
     Add hosts to list
   */
   void addHost(Host_data d)

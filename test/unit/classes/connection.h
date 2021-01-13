@@ -52,6 +52,10 @@ public:
 
   EXAMPLE_TEST_FIXTURE(connection)
   {
+    /*
+*   TODO: enable it when DNS+SRV works in docker
+    TEST_CASE(checkDnsSrv);
+    */
     TEST_CASE(getClientInfo);
     TEST_CASE(getClientOption);
     TEST_CASE(getSessionVariable);
@@ -133,6 +137,11 @@ public:
    * MySQL_Connection::checkClosed() method.
    */
   void checkClosed();
+
+  /*
+   * Check if DNS+SRV is working
+   */
+  void checkDnsSrv();
 
   /*
    * Use a map to establish a connection but passing wrong types

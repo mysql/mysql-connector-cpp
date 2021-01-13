@@ -184,6 +184,21 @@ MySQL_NativeConnectionWrapper::connect(const ::sql::SQLString & host,
 /* }}} */
 
 
+/* {{{ MySQL_NativeConnectionWrapper::connect_dns_srv() */
+bool
+MySQL_NativeConnectionWrapper::connect_dns_srv(const ::sql::SQLString & host,
+                  const ::sql::SQLString & user,
+                  const ::sql::SQLString & passwd,
+                  const ::sql::SQLString & db,
+                  unsigned long			client_flag)
+{
+  return (NULL != api->real_connect_dns_srv(mysql, nullIfEmpty(host), user.c_str(),
+                  nullIfEmpty(passwd),
+                  nullIfEmpty(db), client_flag));
+}
+/* }}} */
+
+
 /* {{{ MySQL_NativeConnectionWrapper::commit() */
 bool
 MySQL_NativeConnectionWrapper::commit()

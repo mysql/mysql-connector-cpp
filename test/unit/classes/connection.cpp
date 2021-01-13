@@ -349,6 +349,47 @@ void connection::getSessionVariable()
   }
 }
 
+
+void connection::checkDnsSrv()
+{
+  logMsg("connection::checkDnsSrv()");
+  try
+  {
+    sql::ConnectOptionsMap opts;
+
+    opts["hostName"]=url;
+    opts["userName"]=user;
+    opts["password"]=passwd;
+    opts["OPT_DNS_SRV"]=1;
+
+    std::string value("");
+    std::string old_value("");
+    bool diff_found = false;
+    for(int i = 0; i < 10; ++i)
+    {
+      std::unique_ptr< sql::Connection > con(driver->connect(opts));
+      boost::scoped_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(opts)));
+      old_value = value;
+      value=my_con->getSessionVariable("server_id");
+      if (!old_value.empty() && old_value.compare(value))
+        diff_found = true;
+
+      std::cout << "server_id = " << value << std::endl;
+    }
+
+    if (!diff_found)
+      fail("Connection is always made to one host only!", __FILE__, __LINE__);
+
+  }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+}
+
+
 void connection::getNoWarningsOnNewLine()
 {
   logMsg("connection::getNoWarningsOnNewLine() - MySQL_Connection::getWarnings()");

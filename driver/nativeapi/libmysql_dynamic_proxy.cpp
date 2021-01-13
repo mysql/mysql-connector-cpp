@@ -495,6 +495,23 @@ LibmysqlDynamicProxy::real_connect(MYSQL * mysql,
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::real_connect_dns_srv() */
+MYSQL *
+LibmysqlDynamicProxy::real_connect_dns_srv(MYSQL * mysql,
+                        const char * host,
+                        const char * user,
+                        const char * passwd,
+                        const char * db,
+                        unsigned long client_flag)
+{
+  ptr2mysql_real_connect_dns_srv ptr2_real_connect_dns_srv=
+    symbol_safe_cast<ptr2mysql_real_connect_dns_srv>(GetProcAddr("mysql_real_connect_dns_srv"));
+
+  return (*ptr2_real_connect_dns_srv)(mysql, host, user, passwd, db, client_flag);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::real_escape_string() */
 unsigned long
 LibmysqlDynamicProxy::real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length)

@@ -371,6 +371,20 @@ LibmysqlStaticProxy::real_connect(MYSQL * mysql,
 }
 /* }}} */
 
+/* {{{ LibmysqlStaticProxy::real_connect_dns_srv() */
+MYSQL *
+LibmysqlStaticProxy::real_connect_dns_srv(MYSQL * mysql,
+                const char * host,
+                const char * user,
+                const char * passwd,
+                const char * db,
+                unsigned long client_flag)
+{
+  return ::mysql_real_connect_dns_srv(mysql, host, user, passwd, db,
+                                      client_flag);
+}
+/* }}} */
+
 
 /* {{{ LibmysqlStaticProxy::real_escape_string() */
 unsigned long
