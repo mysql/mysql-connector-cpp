@@ -169,6 +169,9 @@ bool parseUri(const sql::SQLString & str, MySQL_Uri& uri)
     std::string name;
     unsigned int port = uri.DefaultPort();
 
+    //reset host data
+    host = MySQL_Uri::Host_data();
+
     if (hostname[0] == MYURI_HOST_BEGIN)
     {
       sep= hostname.find(MYURI_HOST_END);
