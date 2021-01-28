@@ -3460,62 +3460,33 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
       rs_data->push_back(rs_data_row);
     }
   } else if (server_version > 49999) {
-    bool got_exception = false;
-    do {
-      sql::SQLString query("SELECT 'def' AS PROCEDURE_CAT, db as PROCEDURE_SCHEM, "
-                  "name AS PROCEDURE_NAME, NULL as RESERVERD_1, NULL as RESERVERD_2, "
-                  "NULL AS RESERVERD_3, comment as REMARKS, ");
-      query.append(" CASE WHEN TYPE='FUNCTION' THEN ").append(procRetRes);
-      query.append(" WHEN TYPE='PROCEDURE' THEN ").append(procRetNoRes).append(" ELSE ").append(procRetUnknown);
-      query.append(" END AS PROCEDURE_TYPE FROM mysql.proc WHERE name LIKE ? AND db <=> ? ORDER BY name");
-
+    for(int i=0; i < 2; ++i)
+    {
+      sql::SQLString query("SHOW ");
+      query.append(i== 0 ? "PROCEDURE" : "FUNCTION" );
+      query.append(" STATUS WHERE Db LIKE ? AND Name LIKE ? ");
       boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-      pStmt->setString(1, escapedProcedureNamePattern);
-      pStmt->setString(2, escapedSchemaPattern);
 
-      boost::scoped_ptr< sql::ResultSet > rs(NULL);
-      try {
-        rs.reset(pStmt->executeQuery());
-      } catch (SQLException & /*e*/) {
-        /* We don't have direct access to the mysql.proc, use SHOW */
-        got_exception = true;
-        break;
-      }
-      while (rs->next()) {
-        MySQL_ArtResultSet::row_t rs_data_row;
+      pStmt->setString(1, escapedSchemaPattern.length() ? escapedSchemaPattern : "%");
+      pStmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
 
-        rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
-        rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
-        rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
-        rs_data_row.push_back(rs->getString(4));	// reserved1
-        rs_data_row.push_back(rs->getString(5));	// reserved2
-        rs_data_row.push_back(rs->getString(6));	// reserved3
-        rs_data_row.push_back(rs->getString(7));	// REMARKS
-        rs_data_row.push_back(rs->getString(8));	// PROCEDURE_TYPE
+      boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
 
-        rs_data->push_back(rs_data_row);
-      }
-    } while (0);
-    if (got_exception) {
-      sql::SQLString query("SHOW PROCEDURE STATUS");
-
-      boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
       while (rs->next()) {
         MySQL_ArtResultSet::row_t rs_data_row;
 
         rs_data_row.push_back("def");				// PROCEDURE_CAT
-        rs_data_row.push_back(rs->getString(1));	// PROCEDURE_SCHEM
-        rs_data_row.push_back(rs->getString(2));	// PROCEDURE_NAME
+        rs_data_row.push_back(rs->getString("Db"));	// PROCEDURE_SCHEM
+        rs_data_row.push_back(rs->getString("Name"));	// PROCEDURE_NAME
         rs_data_row.push_back("");					// reserved1
         rs_data_row.push_back("");					// reserved2
         rs_data_row.push_back("");					// reserved3
-        rs_data_row.push_back(rs->getString(8));	// REMARKS
-        rs_data_row.push_back(sql::SQLString(!rs->getString(3).compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
+        rs_data_row.push_back(rs->getString("Comment"));	// REMARKS
+        rs_data_row.push_back(sql::SQLString(!rs->getString("Type").compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
 
         rs_data->push_back(rs_data_row);
       }
     }
-
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
