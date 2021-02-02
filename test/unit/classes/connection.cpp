@@ -315,13 +315,13 @@ void connection::getSessionVariable()
 
     value=my_con->getSessionVariable("sql_warnings");
 
-    std::string on("ON");
-    std::string off("OFF");
+    std::string on("1");
+    std::string off("0");
     try
     {
-      my_con->setSessionVariable("sql_warnings", "0");
-      on="1";
-      off="0";
+      my_con->setSessionVariable("sql_warnings", 0);
+      on="ON";
+      off="OFF";
     }
     catch (sql::SQLException &)
     {
@@ -330,15 +330,15 @@ void connection::getSessionVariable()
     try
     {
       my_con->setSessionVariable("sql_warnings", on);
-      ASSERT_EQUALS(on, my_con->getSessionVariable("sql_warnings"));
+      ASSERT_EQUALS(1, atoi(my_con->getSessionVariable("sql_warnings").c_str()));
       my_con->setSessionVariable("sql_warnings", off);
-      ASSERT_EQUALS(off, my_con->getSessionVariable("sql_warnings"));
+      ASSERT_EQUALS(0, atoi(my_con->getSessionVariable("sql_warnings").c_str()));
     }
     catch (sql::SQLException &)
     {
     }
 
-    my_con->setSessionVariable("sql_warnings", value);
+    my_con->setSessionVariable("sql_warnings", atoi(value.c_str()));
     ASSERT_EQUALS(value, my_con->getSessionVariable("sql_warnings"));
   }
   catch (sql::SQLException &e)
