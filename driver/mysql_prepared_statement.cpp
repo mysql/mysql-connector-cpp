@@ -362,7 +362,7 @@ public:
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-      boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, sql::Connection * conn,
+      boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, MySQL_Connection *conn,
       sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
     )
   :connection(conn), proxy(s), isClosed(false), warningsHaveBeenLoaded(true), logger(log),
@@ -1062,10 +1062,12 @@ MySQL_Prepared_Statement::setFetchSize(size_t /* size */)
 
 /* {{{ MySQL_Prepared_Statement::setQueryTimeout() -U- */
 void
-MySQL_Prepared_Statement::setQueryTimeout(unsigned int)
+MySQL_Prepared_Statement::setQueryTimeout(unsigned int timeout)
 {
+  CPP_ENTER("MySQL_Statement::setQueryTimeout");
+  CPP_INFO_FMT("this=%p", this);
   checkClosed();
-  throw MethodNotImplementedException("MySQL_Prepared_Statement::setQueryTimeout");
+  connection->setSessionVariable("max_execution_time", timeout*1000);
 }
 /* }}} */
 
@@ -1152,8 +1154,20 @@ unsigned int
 MySQL_Prepared_Statement::getQueryTimeout()
 {
   checkClosed();
-  throw MethodNotImplementedException("MySQL_Prepared_Statement::getQueryTimeout");
-  return 0; // fool compilers
+  sql::SQLString value= connection->getSessionVariable("max_execution_time");
+  if (value.length() > 0) {
+    unsigned int timeout;
+    std::istringstream buffer(value);
+    buffer >> timeout;
+    timeout/=1000;
+    if (buffer.rdstate() & std::istringstream::failbit) {
+      return 0;
+    } else {
+      return timeout;
+    }
+  } else {
+    return 0;
+  }
 }
 /* }}} */
 

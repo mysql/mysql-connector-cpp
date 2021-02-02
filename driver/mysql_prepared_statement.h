@@ -50,6 +50,7 @@ class MySQL_ParameterMetaData;
 class MySQL_PreparedResultSetMetaData;
 class MySQL_ResultBind;
 class MySQL_Warning;
+class MySQL_Connection;
 
 namespace NativeAPI
 {
@@ -60,7 +61,7 @@ class NativeStatementWrapper;
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
-  sql::Connection * connection;
+  MySQL_Connection * connection;
   boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
   boost::scoped_ptr< MySQL_ParamBind > param_bind;
   unsigned int param_count;
@@ -93,7 +94,7 @@ protected:
 public:
 
   MySQL_Prepared_Statement(boost::shared_ptr<NativeAPI::NativeStatementWrapper> & s,
-              sql::Connection * conn, sql::ResultSet::enum_type rset_type,
+              MySQL_Connection * conn, sql::ResultSet::enum_type rset_type,
               boost::shared_ptr< MySQL_DebugLogger > & log);
   virtual ~MySQL_Prepared_Statement();
 

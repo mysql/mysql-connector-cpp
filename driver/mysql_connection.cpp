@@ -1770,17 +1770,17 @@ MySQL_Connection::getSessionVariable(const sql::SQLString & varname)
     CPP_INFO_FMT("sql_mode=%s", intern->sql_mode.c_str());
     return intern->sql_mode;
   }
-  sql::SQLString q("SHOW SESSION VARIABLES LIKE '");
-  q.append(varname).append("'");
+  sql::SQLString q("SELECT @@");
+  q.append(varname);
 
   boost::scoped_ptr< sql::ResultSet > rset(service->executeQuery(q));
 
   if (rset->next()) {
     if (intern->cache_sql_mode && intern->sql_mode_set == false && !varname.compare("sql_mode")) {
-      intern->sql_mode = rset->getString(2);
+      intern->sql_mode = rset->getString(1);
       intern->sql_mode_set = true;
     }
-    return rset->getString(2);
+    return rset->getString(1);
   }
   return "";
 }
@@ -1794,7 +1794,7 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, const sql::
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
   checkClosed();
 
-  sql::SQLString query("SET SESSION ");
+  sql::SQLString query("SET @@");
   query.append(varname).append("=");
 
   if (!value.compare("NULL")) {
@@ -1818,7 +1818,7 @@ MySQL_Connection::setSessionVariable(const sql::SQLString & varname, unsigned in
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::setSessionVariable");
   checkClosed();
 
-  sql::SQLString query("SET SESSION ");
+  sql::SQLString query("SET @@");
   query.append(varname).append("=");
 
   if (!value) {

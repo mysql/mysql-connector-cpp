@@ -370,7 +370,7 @@ MySQL_Statement::setQueryTimeout(unsigned int timeout)
   CPP_ENTER("MySQL_Statement::setQueryTimeout");
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
-  connection->setSessionVariable("max_statement_time", timeout);
+  connection->setSessionVariable("max_execution_time", timeout*1000);
 }
 /* }}} */
 
@@ -465,11 +465,12 @@ unsigned int
 MySQL_Statement::getQueryTimeout()
 {
   checkClosed();
-  sql::SQLString value= connection->getSessionVariable("max_statement_time");
+  sql::SQLString value= connection->getSessionVariable("max_execution_time");
   if (value.length() > 0) {
     unsigned int timeout;
     std::istringstream buffer(value);
     buffer >> timeout;
+    timeout/=1000;
     if (buffer.rdstate() & std::istringstream::failbit) {
       return 0;
     } else {

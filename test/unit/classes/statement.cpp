@@ -581,25 +581,37 @@ void statement::queryTimeout()
 {
   logMsg("statement::queryTimeout() - MySQL_Statement::setQueryTimeout");
 
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
-
   int serverVersion= getMySQLVersion(con);
-  int timeout= 2;
+  int timeout= 3;
   if ( serverVersion < 57004 )
   {
     SKIP("Server version >= 5.7.4 needed to run this test");
   }
 
   stmt.reset(con->createStatement());
+
   try
   {
     stmt->setQueryTimeout(timeout);
     ASSERT_EQUALS(timeout, stmt->getQueryTimeout());
     time_t t1= time(NULL);
-    stmt->execute("select sleep(5)");
+    res.reset(stmt->executeQuery("select sleep(5)"));
     time_t t2= time(NULL);
-    ASSERT((t2 -t1) < 5);
+    ASSERT((t2-t1) >= timeout);
+    ASSERT((t2-t1) < 5);
+
+    while(res->next());
+
+    timeout = 1;
+    pstmt.reset(con->prepareStatement("select sleep(5) "));
+    pstmt->setQueryTimeout(timeout);
+    t1= time(NULL);
+    res.reset(pstmt->executeQuery());
+    t2= time(NULL);
+    ASSERT((t2-t1) >= timeout);
+    ASSERT((t2-t1) < 3);
+
+    while(res->next());
   }
   catch (sql::SQLException &e)
   {

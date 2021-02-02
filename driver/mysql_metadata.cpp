@@ -1228,7 +1228,6 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const servic
 {
   CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
   server_version = proxy->get_server_version();
-  lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
 
   connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 }
@@ -4505,6 +4504,8 @@ bool
 MySQL_ConnectionMetaData::storesLowerCaseIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::storesLowerCaseIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return (lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
@@ -4515,6 +4516,8 @@ bool
 MySQL_ConnectionMetaData::storesLowerCaseQuotedIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::storesLowerCaseQuotedIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return (lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
@@ -4525,6 +4528,8 @@ bool
 MySQL_ConnectionMetaData::storesMixedCaseIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::storesMixedCaseIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return !(lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
@@ -4535,6 +4540,8 @@ bool
 MySQL_ConnectionMetaData::storesMixedCaseQuotedIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::storesMixedCaseQuotedIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return !(lower_case_table_names.compare("1")==0 || lower_case_table_names.compare("2")==0);
 }
 /* }}} */
@@ -4993,6 +5000,8 @@ bool
 MySQL_ConnectionMetaData::supportsMixedCaseIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::supportsMixedCaseIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return !((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
 }
 /* }}} */
@@ -5003,6 +5012,8 @@ bool
 MySQL_ConnectionMetaData::supportsMixedCaseQuotedIdentifiers()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::supportsMixedCaseQuotedIdentifiers");
+  if(lower_case_table_names->empty())
+    lower_case_table_names = connection->getSessionVariable("lower_case_table_names");
   return !((lower_case_table_names.compare("1") || lower_case_table_names.compare("2")));
 }
 /* }}} */
