@@ -207,10 +207,9 @@ void bugs::getResultSet_54840()
                                                 "       RETURN 55;"
                                                 "END");
 
-  ASSERT(stmt->execute("select _getActivePost()"));
-
   try
   {
+    stmt->execute("select _getActivePost()");
     res.reset(stmt->getResultSet());
   }
   catch (::sql::SQLException & /*e*/)
