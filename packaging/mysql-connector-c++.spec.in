@@ -37,11 +37,7 @@
 %{!?commercial:  %global product_suffix %{nil}}
 %{?el6:%global __strip /opt/rh/devtoolset-8/root/usr/bin/strip}
 %{?el6:%global gcc_toolset devtoolset-8}
-%ifarch %{arm} aarch64 arm64
-%{?el7:%global gcc_toolset devtoolset-9}
-%else
 %{?el7:%global gcc_toolset devtoolset-10}
-%endif
 %{?el8:%global gcc_toolset gcc-toolset-10}
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
