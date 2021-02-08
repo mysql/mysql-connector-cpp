@@ -68,8 +68,8 @@ BuildRequires:  cmake
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 %endif
-BuildRequires: %{gcc_toolset}-gcc
-BuildRequires: %{gcc_toolset}-gcc-c++
+%{?gcc_toolset:BuildRequires: %{gcc_toolset}-gcc}
+%{?gcc_toolset:BuildRequires: %{gcc_toolset}-gcc-c++}
 %{!?mysql_dir:BuildRequires: mysql-devel}
 BuildRequires:  openssl-devel
 %{?commercial:Obsoletes: mysql-connector-c++ < %{version}-%{release}}
@@ -121,7 +121,7 @@ test suite for MySQL Connector/C++
 
 %build
 
-source /opt/rh/%{gcc_toolset}/enable
+%{?gcc_toolset:source /opt/rh/%{gcc_toolset}/enable}
 
 %if 0%{?with_tests:1} && 0%{?with_gtest:1}
 %global __cmake_test_opts -DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}
@@ -146,7 +146,8 @@ make %{?_smp_mflags} VERBOSE=1
 popd
 
 %install
-source /opt/rh/%{gcc_toolset}/enable
+
+%{?gcc_toolset:source /opt/rh/%{gcc_toolset}/enable}
 
 pushd build-dynamic
 make DESTDIR=%{buildroot} install
