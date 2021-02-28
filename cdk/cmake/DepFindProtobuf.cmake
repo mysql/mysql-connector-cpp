@@ -186,7 +186,7 @@ foreach(tgt protobuf protobuf-lite protoc)
 
     #message("- CONF: ${CONF}")
 
-    get_target_property(LOC pb_${tgt} IMPORTED_LOCATION_${CONF})
+    get_target_property(LOC ${TGT_${tgt}} IMPORTED_LOCATION_${CONF})
 
     if(LOC)
 
