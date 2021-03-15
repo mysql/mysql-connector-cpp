@@ -96,6 +96,20 @@ public:
   virtual void setQueryTimeout(unsigned int seconds) = 0;
 
   virtual Statement * setResultSetType(sql::ResultSet::enum_type type) = 0;
+
+  virtual int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value) = 0;
+  virtual int setQueryAttrBoolean(const sql::SQLString &name, bool value) = 0;
+  virtual int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value) = 0;
+  virtual int setQueryAttrDouble(const sql::SQLString &name, double value) = 0;
+  virtual int setQueryAttrInt(const sql::SQLString &name, int32_t value) = 0;
+  virtual int setQueryAttrUInt(const sql::SQLString &name, uint32_t value) = 0;
+  virtual int setQueryAttrInt64(const sql::SQLString &name, int64_t value) = 0;
+  virtual int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value) = 0;
+  virtual int setQueryAttrNull(const sql::SQLString &name) = 0;
+  virtual int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value) = 0;
+
+  virtual void clearAttributes() = 0;
+
 };
 
 } /* namespace sql */

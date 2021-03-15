@@ -397,6 +397,24 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
 {
   return api->get_option(mysql, get_mysql_option(option), &option_val);
 }
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::has_query_attributes() */
+bool MySQL_NativeConnectionWrapper::has_query_attributes()
+{
+  return mysql->server_capabilities & CLIENT_QUERY_ATTRIBUTES;
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::query_attr(unsigned ,const char **, MYSQL_BIND *) */
+bool
+MySQL_NativeConnectionWrapper::query_attr(unsigned nr_attr,const char **names, MYSQL_BIND *bind)
+{
+  return api->bind_param(mysql, nr_attr, bind, names);
+}
+/* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::query() */

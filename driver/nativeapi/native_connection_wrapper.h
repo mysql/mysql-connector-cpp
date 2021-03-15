@@ -41,6 +41,13 @@
 
 #include "../mysql_connection_options.h"
 
+#if (MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 80004)
+struct MYSQL_BIND;
+#else
+struct st_mysql_bind;
+#define MYSQL_BIND st_mysql_bind
+#endif
+
 namespace sql
 {
 class SQLString;
@@ -128,6 +135,10 @@ public:
             const bool &) = 0;
   virtual int get_option(::sql::mysql::MySQL_Connection_Options,
             const int &) = 0;
+
+  virtual bool has_query_attributes() = 0;
+
+  virtual bool query_attr(unsigned nrAttr, const char** names ,::MYSQL_BIND* binds) = 0;
 
   virtual int query(const SQLString &) = 0;
 

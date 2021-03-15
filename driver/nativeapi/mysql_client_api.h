@@ -260,6 +260,9 @@ public:
                 const char *  db,
                 unsigned long client_flag) = 0;
 
+  virtual bool bind_param(MYSQL *mysql, unsigned n_params,
+                          MYSQL_BIND *binds, const char **names) = 0;
+
   virtual unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) = 0;
 
   virtual int real_query(MYSQL *, const char *, unsigned long) = 0;

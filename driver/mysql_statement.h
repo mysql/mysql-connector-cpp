@@ -37,6 +37,7 @@
 #include <boost/weak_ptr.hpp>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
+#include "mysql_resultbind.h"
 
 #include "mysql_warning.h"
 
@@ -63,6 +64,8 @@ protected:
   MySQL_Connection * connection;
   std::weak_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
+  MySQL_AttributesBind attrbind;
+
   void do_query(const ::sql::SQLString &q);
   bool isClosed;
   bool warningsHaveBeenLoaded;
@@ -84,53 +87,66 @@ public:
 
   ~MySQL_Statement();
 
-  sql::Connection * getConnection();
+  sql::Connection * getConnection() override;
 
-  void cancel();
+  void cancel() override;
 
-  void clearWarnings();
+  void clearWarnings() override;
 
-  void close();
+  void close() override;
 
-  bool execute(const sql::SQLString& sql);
+  bool execute(const sql::SQLString& sql) override;
 
-  sql::ResultSet * executeQuery(const sql::SQLString& sql);
+  sql::ResultSet * executeQuery(const sql::SQLString& sql) override;
 
-  int executeUpdate(const sql::SQLString& sql);
+  int executeUpdate(const sql::SQLString& sql) override;
 
-  size_t getFetchSize();
+  size_t getFetchSize() override;
 
-  unsigned int getMaxFieldSize();
+  unsigned int getMaxFieldSize() override;
 
-  uint64_t getMaxRows();
+  uint64_t getMaxRows() override;
 
-  bool getMoreResults();
+  bool getMoreResults() override;
 
-  unsigned int getQueryTimeout();
+  unsigned int getQueryTimeout() override;
 
-  sql::ResultSet * getResultSet();
+  sql::ResultSet * getResultSet() override;
 
-  sql::ResultSet::enum_type getResultSetType();
+  sql::ResultSet::enum_type getResultSetType() override;
 
-  uint64_t getUpdateCount();
+  uint64_t getUpdateCount() override;
 
-  const SQLWarning * getWarnings();/* should return differen type */
+  const SQLWarning * getWarnings() override;/* should return differen type */
 
   Statement * setBuffered();
 
-  void setCursorName(const sql::SQLString & name);
+  void setCursorName(const sql::SQLString & name) override;
 
-  void setEscapeProcessing(bool enable);
+  void setEscapeProcessing(bool enable) override;
 
-  void setFetchSize(size_t rows);
+  void setFetchSize(size_t rows) override;
 
-  void setMaxFieldSize(unsigned int max);
+  void setMaxFieldSize(unsigned int max) override;
 
-  void setMaxRows(unsigned int max);
+  void setMaxRows(unsigned int max) override;
 
-  void setQueryTimeout(unsigned int seconds);
+  void setQueryTimeout(unsigned int seconds) override;
 
-  sql::Statement * setResultSetType(sql::ResultSet::enum_type type);
+  sql::Statement * setResultSetType(sql::ResultSet::enum_type type) override;
+
+  int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value) override;
+  int setQueryAttrBoolean(const sql::SQLString &name, bool value) override;
+  int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value) override;
+  int setQueryAttrDouble(const sql::SQLString &name, double value) override;
+  int setQueryAttrInt(const sql::SQLString &name, int32_t value) override;
+  int setQueryAttrUInt(const sql::SQLString &name, uint32_t value) override;
+  int setQueryAttrInt64(const sql::SQLString &name, int64_t value) override;
+  int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value) override;
+  int setQueryAttrNull(const sql::SQLString &name) override;
+  int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value) override;
+
+  void clearAttributes() override;
 private:
   /* Prevent use of these */
   MySQL_Statement(const MySQL_Statement &);

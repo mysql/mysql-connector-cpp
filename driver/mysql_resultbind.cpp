@@ -121,6 +121,167 @@ static struct st_buffer_size_type
 /* }}} */
 
 
+/* {{{ MySQL_Bind::MySQL_Bind -I- */
+MySQL_Bind::MySQL_Bind()
+{
+  // Since this structure will be used as an array of MYSQL_BIND, its size
+  // should be the same. This only encapsulates to enable safe alloc/free
+  assert(sizeof(MySQL_Bind) == sizeof(MYSQL_BIND));
+  memset(this, 0, sizeof (MySQL_Bind));
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::MySQL_Bind() -I- */
+MySQL_Bind::MySQL_Bind(MySQL_Bind && other)
+{
+  memcpy(this, &other, sizeof(MySQL_Bind));
+  memset(&other, 0, sizeof (MySQL_Bind));
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::~MySQL_Bind() -I- */
+MySQL_Bind::~MySQL_Bind()
+{
+  clear();
+}
+/* }}} */
+
+
+/* {{{ void MySQL_Bind::setBigInt() -I- */
+void MySQL_Bind::setBigInt(const sql::SQLString& value)
+{
+  setString(value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setBoolean() -I- */
+void
+MySQL_Bind::setBoolean(bool value)
+{
+  setInt(value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setDateTime() -I- */
+void
+MySQL_Bind::setDateTime(const sql::SQLString& value)
+{
+  setString(value);
+}
+/* }}} */
+
+
+template <typename T>
+inline
+void valdup(MYSQL_BIND* bind, T& value)
+{
+  bind->buffer_length = sizeof (T);
+  bind->buffer = memcpy(new char[sizeof(T)], &value, bind->buffer_length);
+  bind->is_unsigned = std::is_unsigned<T>();
+}
+
+template <>
+inline
+void
+valdup(MYSQL_BIND* bind, const sql::SQLString& value)
+{
+  bind->buffer = memcpy(new char[value.length() + 1], value.c_str(), value.length() + 1);
+  bind->buffer_length = static_cast<unsigned long>(value.length()) + 1;
+}
+
+
+/* {{{ MySQL_Bind::setDouble() -I- */
+void
+MySQL_Bind::setDouble(double value)
+{
+  clear();
+  buffer_type	= MYSQL_TYPE_DOUBLE;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setInt() -I- */
+void
+MySQL_Bind::setInt(int32_t value)
+{
+  clear();
+  buffer_type = MYSQL_TYPE_LONG;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setUInt() -I- */
+void
+MySQL_Bind::setUInt(uint32_t value)
+{
+  clear();
+  buffer_type = MYSQL_TYPE_LONG;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setInt64() -I- */
+void
+MySQL_Bind::setInt64(int64_t value)
+{
+  clear();
+  buffer_type = MYSQL_TYPE_LONGLONG;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setUInt64() -I- */
+void
+MySQL_Bind::setUInt64(uint64_t value)
+{
+  clear();
+  buffer_type = MYSQL_TYPE_LONGLONG;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setNull() -I- */
+void
+MySQL_Bind::setNull()
+{
+  clear();
+  buffer_type	= MYSQL_TYPE_NULL;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::setString() -I- */
+void
+MySQL_Bind::setString(const sql::SQLString& value)
+{
+  clear();
+  buffer_type	= MYSQL_TYPE_STRING;
+  valdup(this, value);
+}
+/* }}} */
+
+
+/* {{{ MySQL_Bind::clear() -I- */
+void
+MySQL_Bind::clear()
+{
+  delete [] static_cast<char *>(buffer);
+  buffer = nullptr;
+  buffer_length = 0;
+  is_unsigned = false;
+}
+/* }}} */
+
+
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
 MySQL_ResultBind::MySQL_ResultBind(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt,
                                    boost::shared_ptr< MySQL_DebugLogger > & log)
@@ -189,6 +350,193 @@ void MySQL_ResultBind::bindResult()
     CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
     sql::mysql::util::throwSQLException(*proxy.get());
   }
+}
+/* }}} */
+
+
+/* {{{ MySQL_ResultBind::MySQL_ResultBind() */
+MySQL_AttributesBind::MySQL_AttributesBind()
+{
+}
+/* }}} */
+
+/* {{{ MySQL_AttributesBind::~MySQL_AttributesBind() */
+MySQL_AttributesBind::~MySQL_AttributesBind()
+{
+  clearAttributes();
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::getBindPos(const sql::SQLString &) */
+int
+MySQL_AttributesBind::getBindPos(const sql::SQLString &name)
+{
+  size_t pos;
+  for(pos = 0; pos < names.size(); ++pos) {
+    if(name == names[pos])
+    {
+      break;
+    }
+  }
+  if(pos == names.size())
+  {
+    size_t length = name.length()+1;
+    names.push_back( static_cast<const char*>(memcpy(new char[length] , name.c_str(), length)));
+    bind.resize(names.size());
+  }
+  return pos;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &, const sql::SQLString& ) */
+int
+MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &name, const sql::SQLString& value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setBigInt(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &, bool) */
+int
+MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &name, bool value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setBoolean(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &, const sql::SQLString& ) */
+int
+MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setDateTime(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &, double) */
+int
+MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &name, double value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setDouble(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &, int32_t) */
+int
+MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &name, int32_t value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setInt(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrUInt(const SQLString &, uint32_t) */
+int
+MySQL_AttributesBind::setQueryAttrUInt(const SQLString &name, uint32_t value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setUInt(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrInt64(const SQLString &, int64_t) */
+int
+MySQL_AttributesBind::setQueryAttrInt64(const SQLString &name, int64_t value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setInt64(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &, uint64_t) */
+int
+MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setUInt64(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &) */
+int
+MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &name)
+{
+  int pos =getBindPos(name);
+  bind[pos].setNull();
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &, const sql::SQLString&) */
+int
+MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value)
+{
+  int pos =getBindPos(name);
+  bind[pos].setString(value);
+  return pos+1;
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::clearAttributes() */
+void
+MySQL_AttributesBind::clearAttributes()
+{
+  bind.clear();
+
+  for(auto el : names)
+    delete [] el;
+
+  names.clear();
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::nrAttr() */
+int
+MySQL_AttributesBind::nrAttr()
+{
+  return names.size();
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::getBinds() */
+MYSQL_BIND*
+MySQL_AttributesBind::getBinds()
+{
+  return bind.data();
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::getNames() */
+const char**
+MySQL_AttributesBind::getNames()
+{
+  return names.data();
 }
 /* }}} */
 

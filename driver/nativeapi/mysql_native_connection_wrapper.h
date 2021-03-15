@@ -78,9 +78,9 @@ public:
   virtual ~MySQL_NativeConnectionWrapper();
 
 
-  uint64_t affected_rows();
+  uint64_t affected_rows() override;
 
-  bool autocommit(bool);
+  bool autocommit(bool) override;
 
   bool connect(const ::sql::SQLString & host,
         const ::sql::SQLString & user,
@@ -88,80 +88,84 @@ public:
         const ::sql::SQLString & db,
         unsigned int			 port,
         const ::sql::SQLString & socket_or_pipe,
-        unsigned long			client_flag);
+        unsigned long			client_flag) override;
 
   bool connect_dns_srv(const ::sql::SQLString & host,
         const ::sql::SQLString & user,
         const ::sql::SQLString & passwd,
         const ::sql::SQLString & db,
-        unsigned long			client_flag);
+        unsigned long			client_flag) override;
 
-  bool commit();
+  bool commit() override;
 
-  void debug(const ::sql::SQLString &);
+  void debug(const ::sql::SQLString &) override;
 
-  unsigned int errNo();
+  unsigned int errNo() override;
 
-  ::sql::SQLString error();
+  ::sql::SQLString error() override;
 
-  ::sql::SQLString escapeString(const ::sql::SQLString &);
+  ::sql::SQLString escapeString(const ::sql::SQLString &) override;
 
-  unsigned int field_count();
+  unsigned int field_count() override;
 
-  unsigned long get_client_version();
+  unsigned long get_client_version() override;
 
-  const ::sql::SQLString & get_server_info();
+  const ::sql::SQLString & get_server_info() override;
 
-  unsigned long get_server_version();
+  unsigned long get_server_version() override;
 
-  void get_character_set_info(void *cs);
+  void get_character_set_info(void *cs) override;
 
-  bool more_results();
+  bool more_results() override;
 
-  int next_result();
+  int next_result() override;
 
-  int options(::sql::mysql::MySQL_Connection_Options, const void * );
+  int options(::sql::mysql::MySQL_Connection_Options, const void * ) override;
   int options(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &);
-  int options(::sql::mysql::MySQL_Connection_Options, const bool &);
-  int options(::sql::mysql::MySQL_Connection_Options, const int &);
+        const ::sql::SQLString &) override;
+  int options(::sql::mysql::MySQL_Connection_Options, const bool &) override;
+  int options(::sql::mysql::MySQL_Connection_Options, const int &) override;
   int options(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &, const ::sql::SQLString &);
+        const ::sql::SQLString &, const ::sql::SQLString &) override;
 
-  int get_option(::sql::mysql::MySQL_Connection_Options, const void * );
+  int get_option(::sql::mysql::MySQL_Connection_Options, const void * ) override;
   int get_option(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &);
-  int get_option(::sql::mysql::MySQL_Connection_Options, const bool &);
-  int get_option(::sql::mysql::MySQL_Connection_Options, const int &);
+        const ::sql::SQLString &) override;
+  int get_option(::sql::mysql::MySQL_Connection_Options, const bool &) override;
+  int get_option(::sql::mysql::MySQL_Connection_Options, const int &) override;
 
-  int query(const ::sql::SQLString &);
+  bool has_query_attributes() override;
 
-  int ping();
+  bool query_attr(unsigned number, const char **names, MYSQL_BIND *) override;
+
+  int query(const ::sql::SQLString &) override;
+
+  int ping() override;
 
   /* int real_query(const ::sql::SQLString &, uint64_t);*/
 
 
-  bool rollback();
+  bool rollback() override;
 
-  ::sql::SQLString sqlstate();
+  ::sql::SQLString sqlstate() override;
 
   bool ssl_set(const ::sql::SQLString & key,
         const ::sql::SQLString & cert,
         const ::sql::SQLString & ca,
         const ::sql::SQLString & capath,
-        const ::sql::SQLString & cipher);
+        const ::sql::SQLString & cipher) override;
 
-  ::sql::SQLString info();
+  ::sql::SQLString info() override;
 
-  NativeResultsetWrapper * store_result();
+  NativeResultsetWrapper * store_result() override;
 
-  int use_protocol(Protocol_Type protocol);
+  int use_protocol(Protocol_Type protocol) override;
 
-  NativeResultsetWrapper * use_result();
+  NativeResultsetWrapper * use_result() override;
 
-  NativeStatementWrapper & stmt_init();
+  NativeStatementWrapper & stmt_init() override;
 
-  unsigned int warning_count();
+  unsigned int warning_count() override;
 };
 
 } /* namespace NativeAPI */

@@ -203,7 +203,7 @@ public:
 };
 
 
-void resetBlobBind(MYSQL_BIND & param)
+void  resetBlobBind(MYSQL_BIND & param)
 {
   delete [] static_cast<char *>(param.buffer);
 
@@ -1276,6 +1276,134 @@ MySQL_Prepared_Statement::setResultSetType(sql::ResultSet::enum_type /* type */)
   throw MethodNotImplementedException("MySQL_Prepared_Statement::setResultSetType");
 #endif
   return this;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrBigInt() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrBigInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value.c_str());
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrBoolean() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrBoolean(const sql::SQLString &name, bool value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrBoolean");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value ? "true" : "false");
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrDateTime() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrDateTime");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%s", name.c_str(), value.c_str());
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrDouble() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrDouble(const sql::SQLString &name, double value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrDouble");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrInt() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrInt(const sql::SQLString &name, int32_t value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrUInt() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrUInt(const sql::SQLString &name, uint32_t value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrUInt");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrInt64() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrInt64(const sql::SQLString &name, int64_t value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrInt64");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrUInt64() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrUInt64");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value);
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrNull() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrNull(const sql::SQLString &name)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrNull");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s", name.c_str());
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::setQueryAttrString() -U- */
+int
+MySQL_Prepared_Statement::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value)
+{
+  CPP_ENTER("MySQL_Prepared_Statement::setQueryAttrString");
+  CPP_INFO_FMT("this=%p", this);
+  CPP_INFO_FMT("name=%s value=%f", name.c_str(), value.c_str());
+  return 0;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Prepared_Statement::clearAttributes() -U- */
+void
+MySQL_Prepared_Statement::clearAttributes()
+{
 }
 /* }}} */
 

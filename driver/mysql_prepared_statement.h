@@ -98,86 +98,99 @@ public:
               boost::shared_ptr< MySQL_DebugLogger > & log);
   virtual ~MySQL_Prepared_Statement();
 
-  sql::Connection *getConnection();
+  sql::Connection *getConnection() override;
 
-  void cancel();
+  void cancel() override;
 
-  void clearParameters();
+  void clearParameters() override;
 
-  void clearWarnings();
+  void clearWarnings() override;
 
-  void close();
+  void close() override;
 
-  bool execute();
-  bool execute(const sql::SQLString& sql);
+  bool execute() override;
+  bool execute(const sql::SQLString& sql) override;
 
-  sql::ResultSet *executeQuery();
-  sql::ResultSet *executeQuery(const sql::SQLString& sql);
+  sql::ResultSet *executeQuery() override;
+  sql::ResultSet *executeQuery(const sql::SQLString& sql) override;
 
-  int executeUpdate();
-  int executeUpdate(const sql::SQLString& sql);
+  int executeUpdate() override;
+  int executeUpdate(const sql::SQLString& sql) override;
 
-  size_t getFetchSize();
+  size_t getFetchSize() override;
 
-  unsigned int getMaxFieldSize();
+  unsigned int getMaxFieldSize() override;
 
-  sql::ResultSetMetaData * getMetaData();
+  sql::ResultSetMetaData * getMetaData() override;
 
-  uint64_t getMaxRows();
+  uint64_t getMaxRows() override;
 
-  bool getMoreResults();
+  bool getMoreResults() override;
 
-  sql::ParameterMetaData * getParameterMetaData();
+  sql::ParameterMetaData * getParameterMetaData() override;
 
-  unsigned int getQueryTimeout();
+  unsigned int getQueryTimeout() override;
 
-  sql::ResultSet * getResultSet();
+  sql::ResultSet * getResultSet() override;
 
-  sql::ResultSet::enum_type getResultSetType();
+  sql::ResultSet::enum_type getResultSetType() override;
 
-  uint64_t getUpdateCount();
+  uint64_t getUpdateCount() override;
 
-  const SQLWarning * getWarnings();/* should return different type */
+  const SQLWarning * getWarnings() override;/* should return different type */
 
   Statement * setBuffered();
 
-  void setBlob(unsigned int parameterIndex, std::istream * blob);
+  void setBlob(unsigned int parameterIndex, std::istream * blob) override;
 
-  void setBoolean(unsigned int parameterIndex, bool value);
+  void setBoolean(unsigned int parameterIndex, bool value) override;
 
-  void setBigInt(unsigned int parameterIndex, const sql::SQLString& value);
+  void setBigInt(unsigned int parameterIndex, const sql::SQLString& value) override;
 
-  void setCursorName(const sql::SQLString &name);
+  void setCursorName(const sql::SQLString &name) override;
 
-  void setDateTime(unsigned int parameterIndex, const sql::SQLString& value);
+  void setDateTime(unsigned int parameterIndex, const sql::SQLString& value) override;
 
-  void setDouble(unsigned int parameterIndex, double value);
+  void setDouble(unsigned int parameterIndex, double value) override;
 
-  void setEscapeProcessing(bool enable);
+  void setEscapeProcessing(bool enable) override;
 
-  void setFetchSize(size_t rows);
+  void setFetchSize(size_t rows) override;
 
-  void setInt(unsigned int parameterIndex, int32_t value);
+  void setInt(unsigned int parameterIndex, int32_t value) override;
 
-  void setUInt(unsigned int parameterIndex, uint32_t value);
+  void setUInt(unsigned int parameterIndex, uint32_t value) override;
 
-  void setInt64(unsigned int parameterIndex, int64_t value);
+  void setInt64(unsigned int parameterIndex, int64_t value) override;
 
-  void setUInt64(unsigned int parameterIndex, uint64_t value);
+  void setUInt64(unsigned int parameterIndex, uint64_t value) override;
 
-  void setMaxFieldSize(unsigned int max);
+  void setMaxFieldSize(unsigned int max) override;
 
-  void setMaxRows(unsigned int max);
+  void setMaxRows(unsigned int max) override;
 
-  void setNull(unsigned int parameterIndex, int sqlType);
+  void setNull(unsigned int parameterIndex, int sqlType) override;
 
   void setResultSetConcurrency(int concurrencyFlag);
 
-  void setString(unsigned int parameterIndex, const sql::SQLString& value);
+  void setString(unsigned int parameterIndex, const sql::SQLString& value) override;
 
-  void setQueryTimeout(unsigned int seconds);
+  void setQueryTimeout(unsigned int seconds) override;
 
-  sql::PreparedStatement * setResultSetType(sql::ResultSet::enum_type type);
+  sql::PreparedStatement * setResultSetType(sql::ResultSet::enum_type type) override;
+
+  int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value) override;
+  int setQueryAttrBoolean(const sql::SQLString &name, bool value) override;
+  int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value) override;
+  int setQueryAttrDouble(const sql::SQLString &name, double value) override;
+  int setQueryAttrInt(const sql::SQLString &name, int32_t value) override;
+  int setQueryAttrUInt(const sql::SQLString &name, uint32_t value) override;
+  int setQueryAttrInt64(const sql::SQLString &name, int64_t value) override;
+  int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value) override;
+  int setQueryAttrNull(const sql::SQLString &name) override;
+  int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value) override;
+
+  void clearAttributes() override;
 
 private:
   /* Prevent use of these */
