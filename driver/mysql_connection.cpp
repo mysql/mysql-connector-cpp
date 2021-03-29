@@ -1064,6 +1064,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     bool connected = false;
     std::random_device rd;
     std::mt19937 generator(rd());
+    int error=0;
+    std::string sql_state;
 
     while(uri.size() && !connected)
     {
@@ -1087,7 +1089,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       }
       catch (sql::SQLException& e)
       {
-        switch (e.getErrorCode())
+        error = e.getErrorCode();
+        sql_state = e.getSQLState();
+        switch (error)
         {
         case ER_CON_COUNT_ERROR:
         case CR_SOCKET_CREATE_ERROR:
@@ -1133,7 +1137,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         }
       }
       proxy.reset();
-      throw sql::InvalidArgumentException(err.str());
+      throw sql::SQLException(err.str(), sql_state, error);
     }
   }
 

@@ -1177,6 +1177,21 @@ void bugs::bug30126457()
   }
 }
 
+void bugs::bug32695580()
+{
+  logMsg("bugs::bug32695580");
+  sql::ConnectOptionsMap opt;
+  opt[OPT_HOSTNAME] = "127.0.0.1";
+  opt[OPT_PORT] = 111;
+
+  try {
+    Connection con2(getConnection(&opt));
+  }  catch (const sql::SQLException &e) {
+    ASSERT_EQUALS(2003,e.getErrorCode());
+  }
+}
+
+
 } /* namespace regression */
 } /* namespace testsuite */
 
