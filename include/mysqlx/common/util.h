@@ -32,6 +32,7 @@
 #define MYSQLX_COMMON_UTIL_H
 
 #include "api.h"
+#include <limits>
 
 /*
   Macros used to disable warnings for fragments of code.
