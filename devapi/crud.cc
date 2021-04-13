@@ -264,7 +264,7 @@ struct Value_expr_check_id
     void str(const string &val) override
     {
       if (m_id != val)
-        throw mysqlx::Error(R"(Document "_id" and replace id are different!)");
+        throw mysqlx::Error(R"(Replacement document has an _id that is different than the matched document.)");
       m_value_prc->str(val);
     }
 
