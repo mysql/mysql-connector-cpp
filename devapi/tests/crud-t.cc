@@ -2868,6 +2868,1257 @@ TEST_F(Crud, PS)
 
 }
 
+TEST_F(Crud, PS_find)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+
+  Schema sch= getSchema("test");
+  Collection coll= sch.createCollection("c1", true);
+  coll.remove("true").execute();
+  cout <<"inserting 5 documents..." <<endl;
+
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"name\": \"abcdefghijk\", \"age\": 1 , \"misc\": 1.2}").add("{ \"name\": \"xyz\", \"age\": 6 , \"misc\": 19.59}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 4 , \"misc\": 11.9}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 5 , \"misc\": 12.9}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 6 , \"misc\": 13.9}").execute();
+    add= coll.add("{ \"F1\": \"@#$%^&\", \"age\": 6 , \"misc\": 13.9}").execute();
+  }
+  cout <<"Fetching documents..." <<endl;
+
+  CollectionFind cFind = coll.find("name like '%@#$%'").fields("name as my_name1234567890");
+  DocResult docs = cFind.execute();
+  check_ps("my_name1234567890", 0);
+
+  DbDoc doc = docs.fetchOne();
+  if(!doc)
+  {
+    FAIL() << "Test failed : record not matching empty expression";
+  }
+  else
+  {
+    cout << " field `" << "my_name" << "`: " <<(doc)["my_name1234567890"] << endl;
+  }
+
+  docs = cFind.execute();
+  check_ps("my_name1234567890", 1);
+
+  doc = docs.fetchOne();
+  if(!doc)
+  {
+    FAIL() << "Test failed : record not matching empty expression";
+  }
+  else
+  {
+    cout << " field `" << "my_name" << "`: " <<(doc)["my_name1234567890"] << endl;
+  }
+
+  cFind.limit(1).offset(1);
+  docs = cFind.execute();
+  check_ps("my_name1234567890%LIMIT ?, ?", 1);
+
+  doc = docs.fetchOne();
+  if(!doc)
+  {
+    cout << "Test failed : record not matching empty expression " << endl;
+    FAIL() << "Test failed : record not matching empty expression";
+  }
+  else
+  {
+    cout << " field `" << "my_name" << "`: " <<(doc)["my_name1234567890"] << endl;
+  }
+
+  cFind.sort("age");
+  docs = cFind.execute();
+  check_ps("my_name1234567890%ORDER", 0);
+
+  docs = cFind.execute();
+  check_ps("my_name1234567890%ORDER%LIMIT ?, ?", 1);
+
+  doc = docs.fetchOne();
+  if(!doc)
+  {
+    cout << "Test failed : record not matching empty expression " << endl;
+    FAIL() << "Test failed : record not matching empty expression";
+  }
+  else
+  {
+    cout << " field `" << "my_name" << "`: " <<(doc)["my_name1234567890"] << endl;
+  }
+
+  /* clean data */
+  {
+    Result add;
+    add= coll.add("{ \"F1\": \"%@#$%\", \"F2\": 10 , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"F2\": 20 , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"F2\": 30 , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+  }
+
+  /* two limits followed by offset */
+  cFind = coll.find("F1 like '%@#$%'").fields("F1 as my_old_name1234567890").limit(1);
+  docs = cFind.execute();
+  docs = cFind.execute();
+  check_ps("my_old_name1234567890", 1);
+
+  cFind.offset(1);
+  docs = cFind.execute();
+  check_ps("my_old_name1234567890%LIMIT ?, ?", 2);
+  docs = cFind.execute();
+  check_ps("my_old_name1234567890%LIMIT ?, ?", 3);
+
+  /* two limits in execute */
+  cFind = coll.find("F1 like '%@#$%'").fields("F1 as my_new_name1234567890");
+  docs = cFind.limit(1).execute();
+  check_ps("my_new_name1234567890", 0);
+
+  docs = cFind.limit(2).execute();
+  check_ps("my_new_name1234567890", 1);
+
+  /* two fields in execute */
+  cFind = coll.find("F1 like '%@#$%'");
+  docs = cFind.fields("F1 as my_name1234567890").execute();
+  check_ps("my_name1234567890", 0);
+
+  docs = cFind.fields("F1 as my_name1234567890").execute();
+  check_ps("my_name1234567890", 0);
+
+  docs = cFind.execute();
+  check_ps("my_name1234567890", 1);
+
+  /* no limit only offset */
+  cFind = coll.find("F1 like '%@#$%'").fields("F1 as my_name1234567890");
+  cFind.offset(1);
+  docs = cFind.execute();
+
+  docs = cFind.execute();
+  check_ps("my_name1234567890%LIMIT ?, ?", 1);
+
+  /* bind with limit offset twice */
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_name1234567890");
+  cFind.bind("F1", "%@#$%123");
+  cFind.bind("F2", 1000);
+  docs = cFind.execute();
+
+  cFind.limit(1).offset(1);
+  docs = cFind.execute();
+  check_ps("my_name1234567890%LIMIT ?, ?", 1);
+
+  docs = cFind.execute();
+  check_ps("my_name1234567890%LIMIT ?, ?", 2);
+
+  /* limit in 1st stmt */
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_new_name1234567890").limit(1);
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_new_name1234567890", 0);
+
+  docs = cFind.execute();
+  check_ps("my_new_name1234567890", 1);
+
+  docs = cFind.execute();
+  check_ps("my_new_name1234567890", 2);
+
+  /* prepare, sort and limit, followed by sort */
+
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_name_1");
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_name_1", 0);
+
+  docs = cFind.execute();
+  check_ps("my_name_1", 1);
+
+  docs = cFind.sort("F2").limit(2).execute();
+  check_ps("my_name_1%ORDER", 0);
+
+  docs = cFind.sort("F1").execute();
+  check_ps("my_name_1%ORDER", 0);
+
+  /* sort , sort followed by limit */
+
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_name2").limit(1);
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_name2", 0);
+
+  docs = cFind.limit(2).execute();
+  check_ps("my_name2", 1);
+
+  docs = cFind.limit(3).offset(2).execute();
+  check_ps("my_name2", 2);
+
+  docs = cFind.limit(3).offset(3).execute();
+  check_ps("my_name2", 3);
+
+  /* execute, limit, limit offset, limit offset */
+
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_name3");
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_name3", 0);
+
+  docs = cFind.limit(2).execute();
+  check_ps("my_name3", 1);
+
+  docs = cFind.limit(3).offset(3).execute();
+  check_ps("my_name3", 2);
+
+  docs = cFind.limit(3).offset(2).execute();
+  check_ps("my_name3", 3);
+
+  /* sort , sort followed by limit */
+
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_name1234567890");
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_name1234567890", 0);
+
+  docs = cFind.sort("F2").execute();
+  check_ps("my_name1234567890%ORDER", 0);
+
+  docs = cFind.sort("F1").execute();
+  check_ps("my_name1234567890%ORDER", 0);
+
+  docs = cFind.limit(1).execute();
+  check_ps("my_name1234567890%ORDER", 1);
+
+  /* Group by */
+
+  cFind = coll.find().fields("name as my_name_only");
+  docs = cFind.execute();
+  check_ps("my_name_only", 0);
+
+  cFind.fields("max(age) as my_age", "name as my_name_only").groupBy("misc", "name").having("max(my_age) = 5");
+  docs = cFind.execute();
+  check_ps("my_age", 0);
+  check_ps("my_name_only", 0);
+
+  cFind.having("max(my_age) = 6");
+  docs = cFind.execute();
+  check_ps("my_age", 0);
+  check_ps("my_age", 0);
+  check_ps("= 6", 0);
+
+  docs = cFind.execute();
+  check_ps("my_age", 1);
+  check_ps("my_age", 1);
+  check_ps("= 6", 1);
+
+  /* Check multi fields */
+  cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_F1");
+  cFind.bind("F1", "%@#$%");
+  cFind.bind("F2", 10);
+  docs = cFind.execute();
+  check_ps("my_F1", 0);
+
+  cFind.fields("F1 as my_F1", "F2 as my_F2");
+  docs = cFind.execute();
+  check_ps("my_F1", 0);
+  check_ps("my_F2", 0);
+
+  docs = cFind.execute();
+  check_ps("my_F1", 1);
+  check_ps("my_F2", 1);
+}
+
+TEST_F(Crud, PS_modify)
+{
+  SKIP_IF_NO_XPLUGIN
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Schema sch= getSchema("test");
+  Collection coll= sch.createCollection("c1", true);
+  coll.remove("true").execute();
+  cout <<"inserting 5 documents..." <<endl;
+  std::string record ="{\"name\": \"New\",\"age\": 4 , ";
+  std::string name1 = "Data_New";
+  int klen = 64;
+  int dlen = 100;
+
+  std::string key = "";
+  std::string data = "";
+  key.resize(klen-1, 'S');
+  data.resize(dlen-1, '$');
+
+  record.append("\"").append(key).append("\":\"").append(data).append("\"}");
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").add("{ \"name\": \"xyz\", \"age\": 6 , \"misc\": 10}").execute();
+    add= coll.add("{ \"name\": \"New\", \"age\": 4 , \"misc\": 3}").execute();
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  Result mod1 = coll.modify("$.name like '%'").set("$.name", "Data_New").execute();
+  CollectionModify cModify = coll.modify("true").set("$.name", "Data_New");
+
+  Result mod = cModify.execute();
+  check_ps("c1", 0);
+
+  mod = cModify.execute();
+  check_ps("c1", 1);
+
+  cModify.limit(1);
+  mod = cModify.execute();
+  check_ps("c1%LIMIT ?", 1);
+
+  mod = cModify.execute();
+  check_ps("c1%LIMIT ?", 2);
+
+  cModify.set("$.name", "Data_New_2");
+  mod = cModify.execute();
+  check_ps("Data_New_2", 0);
+
+  mod = cModify.execute();
+  check_ps("Data_New_2%LIMIT ?", 1);
+
+  cout <<"Fetching documents..." <<endl;
+  DocResult docs = coll.find("name = 'Data_New_2'").execute();
+  DbDoc doc = docs.fetchOne();
+  if(!doc)
+  {
+    FAIL() << "Test failed : record not modified by $.name ";
+  }
+
+  cModify = coll.modify("true").set("$.name", "Data_New1").set("$.age", "5").set("$.name", "Data_Newer1").unset("age");
+  mod = cModify.execute();
+  check_ps("Data_Newer1", 0);
+
+  mod = cModify.execute();
+  check_ps("c1", 1);
+  check_ps("age", 1);
+  check_ps("name", 1);
+  check_ps("Data_Newer1", 1);
+
+  cModify.limit(1);
+  mod = cModify.execute();
+  check_ps("c1", 1);
+  check_ps("LIMIT ?", 1);
+
+  cModify.unset("misc");
+  mod = cModify.execute();
+  check_ps("misc", 0);
+
+  mod = cModify.execute();
+  check_ps("misc", 1);
+
+  cout <<"Fetching documents..." <<endl;
+  docs = coll.find("name = 'Data_Newer1'").execute();
+  doc = docs.fetchOne();
+  if(!doc)
+  {
+    FAIL() << "Test failed : record not modified by $.name ";
+  }
+
+
+  cModify = coll.modify("name = :name").set("name", "Data_New_4").unset("name").set("name", "Data_New_5").sort("misc desc").limit(2);
+  mod = cModify.bind("name", "Data_New").execute();
+  check_ps("Data_New_5", 0);
+
+  mod = cModify.bind("name", "Data_Newer1").execute();
+  check_ps("Data_New_5", 1);
+
+  cModify.limit(1);
+  mod = cModify.bind("name", "Data_Newer1").execute();
+  check_ps("Data_New_5", 2);
+
+  docs = coll.find("name = 'Data_New_5' and misc = 10").execute();
+  for(int i=0;i < 1;i++)
+  {
+    doc = docs.fetchOne();
+    if(!doc)
+    {
+      FAIL() << "Test failed : record not modified by $.name ";
+    }
+  }
+
+
+
+  /* Check arrayappend, arrayinsert, mergepatch doesn't prepare on 1st */
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  CollectionModify cMod = coll.modify("F1 like :F1").patch("{\"ARR3\": [\"PatchedData1\", \"PatchedData2\"]}");
+  mod = cMod.bind("F1", "%@#$%").execute();
+  check_ps("PatchedData2", 0);
+
+  mod = cMod.arrayAppend("$.ARR1","Data6").bind("F1", "%@#$%").execute();
+  check_ps("PatchedData2", 0);
+  check_ps("Data6", 0);
+
+  mod = cMod.arrayInsert("$.ARR1[3]","NewData").bind("F1", "%@#$%").execute();
+  check_ps("PatchedData2", 0);
+  check_ps("Data6", 0);
+  check_ps("NewData", 0);
+
+  /* clean data */
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  mod = cMod.patch("{\"ARR4\": [\"PatchedData3\", \"PatchedData4\"]}").bind("F1", "%@#$%").execute();
+  check_ps("PatchedData2", 0);
+  check_ps("PatchedData3", 0);
+  check_ps("Data6", 0);
+  check_ps("NewData", 0);
+
+  /* clean data */
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  mod = cMod.bind("F1", "%@#$%").execute();
+  check_ps("PatchedData2", 1);
+  check_ps("PatchedData3", 1);
+  check_ps("Data6", 1);
+  check_ps("NewData", 1);
+
+  /* functions getting appended */
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add("{ \"F1\": \"%@#$%\", \"ARR1\": [\"Data1\", \"Data2\", \"Data3\"] , \"ARR2\": [\"OuterData1\", \"OuterData2\", [\"InnerData1\", \"InnerData2\"], \"OuterData3\"]}").execute();
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  cMod = coll.modify("F1 like :F1");
+
+  mod = cMod.arrayInsert("$.ARR1[3]","NewNewData").bind("F1", "%@#$%").execute();
+  check_ps("NewNewData", 0);
+
+  mod = cMod.arrayInsert("$.ARR1[4]","NewNewData2").bind("F1", "%@#$%").execute();
+  check_ps("NewNewData2", 0);
+  check_ps("NewNewData", 0);
+
+  mod = cMod.bind("F1", "%@#$%").execute();
+  check_ps("NewNewData2", 1);
+  check_ps("NewNewData2", 1);
+
+}
+
+TEST_F(Crud, PS_remove)
+{
+  SKIP_IF_NO_XPLUGIN
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Collection coll= getSchema("test").createCollection("c1", true);
+  coll.remove("true").execute();
+  cout <<"inserting 5 documents..." <<endl;
+  std::string record ="{\"name\": \"New\",\"age\": 4 , ";
+  std::string name1 = "Data_New";
+  int klen = 256;
+  std::string key = "";
+  int dlen = 100;
+  std::string data = "";
+
+  key.resize(klen-3, 'S');
+  data.resize(dlen-1, '$');
+  coll.remove("true").execute();
+
+  std::string expr = "";
+  expr.append("$.").append(key).append(std::to_string(1)).append(" like ").append("'%'");
+  CollectionRemove cRemove = coll.remove(expr);
+  cRemove.execute();
+  check_ps("c1", 0);
+
+  for(int i=0;i<100;i++)
+  {
+    Result add;
+    add= coll.add("{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").add("{ \"name\": \"xyz\", \"age\": 6 , \"misc\": 10}").execute();
+    add= coll.add("{ \"name\": \"New1\", \"age\": 4 , \"misc\": 3}").execute();
+    record ="{\"name\": \"New\",\"age\": 4 , ";
+    record.append("\"").append(key).append(std::to_string(i)).append("\":\"").append(data).append("\"}");
+
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+
+  Result mod;
+  cRemove.sort("age").limit(1);
+  mod = cRemove.execute();
+  check_ps("c1", 0);
+
+  mod = cRemove.execute();
+  check_ps("ORDER", 1);
+  check_ps("LIMIT ?", 1);
+
+  mod = cRemove.execute();
+  check_ps("c1", 2);
+  check_ps("ORDER", 2);
+  check_ps("LIMIT ?", 2);
+
+  cout <<"Fetching documents..." <<endl;
+  expr = "";
+  expr.append(key).append(std::to_string(1)).append(" = '").append(data).append("'");
+  DocResult docs = coll.find(expr).fields("count(*) as Q").execute();
+  DbDoc doc = docs.fetchOne();
+  if(doc == 0 || (int)doc["Q"] != 0)
+  {
+    FAIL() << "Test failed : record not modified by expr";
+  }
+
+  for(int i=0;i<100;i++)
+  {
+    Result add;
+    add= coll.add("{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").add("{ \"name\": \"xyz\", \"age\": 6 , \"misc\": 10}").execute();
+    add= coll.add("{ \"name\": \"New1\", \"age\": 4 , \"misc\": 3}").execute();
+    record ="{\"name\": \"New\",\"age\": 4 , ";
+    record.append("\"").append(key).append(std::to_string(i)).append("\":\"").append(data).append("\"}");
+    add= coll.add(DbDoc(record)).execute();
+  }
+
+  cRemove = coll.remove("$.name not like :name").limit(1);
+  mod = cRemove.bind("name", "abc").execute();
+  check_ps("not like", 0);
+
+  mod = cRemove.bind("name", "New").execute();
+  check_ps("not like", 1);
+
+  mod = cRemove.limit(1000).bind("name", "non_existant").execute();
+  check_ps("not like", 2);
+
+  mod = cRemove.sort("age").execute();
+  check_ps("ORDER%age", 0);
+
+  mod = cRemove.sort("misc").execute();
+  check_ps("ORDER%misc", 0);
+
+  mod = cRemove.execute();
+  check_ps("ORDER%misc", 1);
+
+  cout <<"Fetching documents..." <<endl;
+  // TODO: Add select criteria when myc-125 is fixed.
+  expr = "";
+  expr.append(key).append(std::to_string(1)).append(" = '").append(data).append("'");
+  //cout << expr << endl;
+  docs = coll.find(expr).fields("count(*) as Q").execute();
+  doc = docs.fetchOne();
+  if(doc == 0 || (int)doc["Q"] != 0)
+  {
+    FAIL() << "Test failed : record not modified by expr";
+  }
+
+}
+
+TEST_F(Crud, PS_table_insert)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Schema sch = getSchema("test");
+  get_sess().sql("use test").execute();
+  get_sess().sql("drop table if exists test.newTable").execute();
+  get_sess().sql("create table test.newTable(c1 varchar(20), c2 JSON)").execute();
+  Table tabNew = sch.getTable("newTable");
+
+
+  /* table insert for string, dbDoc, array, need to check for map */
+
+  TableInsert tInsert = tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}");
+  tInsert.execute();
+  check_ps("newTable", 0);
+
+  tInsert.execute();
+  check_ps("newTable", 0);
+
+  tInsert = tInsert.values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.345}");
+  tInsert.execute();
+  check_ps("newTable", 0);
+
+  tInsert.execute();
+  check_ps("1.345", 0);
+
+  try{
+    RowResult result = tabNew.select().where("JSON_EXTRACT(c2, \"$.age\") >= 1").execute();
+    const Row r = result.fetchOne();
+    cout << r[1] << r[0] << endl;
+    std::string data = (string)r[0];
+    if(data.compare("12345"))
+    {
+      FAIL() << "Mismatch in data ; " << data;
+    }
+
+  }
+  catch(const char *err)
+  {
+    FAIL() << "Error reported : " << err;
+  }
+
+}
+
+TEST_F(Crud, PS_table_select)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Schema sch = getSchema("test");
+  get_sess().sql("use test").execute();
+  get_sess().sql("drop table if exists test.newTable").execute();
+  get_sess().sql("create table test.newTable(c1 varchar(20), c2 JSON)").execute();
+  Table tabNew = sch.getTable("newTable");
+
+
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").execute();
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 2 , \"misc\": 1.3}").execute();
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 3 , \"misc\": 1.4}").execute();
+
+  TableSelect tSelect = tabNew.select().where("JSON_EXTRACT(c2, \"$.age\") >= 1");
+  RowResult result = tSelect.execute();
+  check_ps("newTable", 0);
+
+  result = tSelect.execute();
+  check_ps("newTable", 1);
+
+  tSelect.limit(1).offset(0);
+  result = tSelect.execute();
+  check_ps("newTable", 1);
+  check_ps("LIMIT", 1);
+
+  tSelect.where("JSON_EXTRACT(c2, \"$.age\") >= 3");
+  result = tSelect.execute();
+  check_ps(">= 3", 0);
+
+  result = tSelect.execute();
+  check_ps(">= 3", 1);
+  check_ps("LIMIT", 1);
+
+  const Row r = result.fetchOne();
+  cout << r[1] << r[0] << endl;
+  std::string data = (string)r[0];
+  if(data.compare("12345"))
+  {
+    FAIL() << "Mismatch in data : " << data;
+  }
+
+  tSelect.orderBy("c2->$.age");
+  result = tSelect.execute();
+  check_ps("ORDER", 0);
+
+  result = tSelect.execute();
+  check_ps("ORDER", 1);
+  check_ps("LIMIT ?, ?", 1);
+
+  /* Test Select with bind */
+  tSelect = tabNew.select("c2->$.name as MyName").where("JSON_EXTRACT(c2, \"$.age\") >= :C2 and c1 = :C1");
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("MyName", 0);
+
+  result = tSelect.bind("C2", 1).bind("C1", "123456").execute();
+  check_ps("MyName", 1);
+  check_ps("SELECT", 1);
+  check_ps("LIMIT ?, ?", 0);
+
+  /* Test limit */
+  tSelect.limit(1);
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("MyName", 1);
+  check_ps("SELECT", 1);
+  check_ps("LIMIT ?, ?", 1);
+
+
+  result = tSelect.bind("C2", 1).bind("C1", "123456").execute();
+  check_ps("MyName", 2);
+  check_ps("SELECT", 2);
+  check_ps("LIMIT ?, ?", 2);
+
+
+  /* Test offset */
+  tSelect.offset(1);
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("MyName", 3);
+  check_ps("SELECT", 3);
+  check_ps("LIMIT ?, ?", 3);
+
+  /* Test sort */
+  tSelect.orderBy("c2->$.age");
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("ORDER", 0);
+
+  result = tSelect.bind("C2", 1).bind("C1", "123456").execute();
+  check_ps("ORDER", 1);
+  check_ps("SELECT", 1);
+  check_ps("LIMIT ?, ?", 1);
+
+  tSelect.orderBy("c1");
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("ORDER%c1", 0);
+
+  result = tSelect.bind("C2", 1).bind("C1", "123456").execute();
+  check_ps("ORDER%c1", 1);
+
+  /* test multiple where */
+  tSelect = tabNew.select("c2->$.name as AndNow_MyName").where("JSON_EXTRACT(c2, \"$.age\") >= :C2 and c1 = :C1");
+  result = tSelect.bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("AndNow_MyName", 0);
+
+  result = tSelect.where("JSON_EXTRACT(c2, \"$.age\") >= :C2 and c1 = :C1").bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("AndNow_MyName", 0);
+
+  result = tSelect.limit(1).bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("AndNow_MyName", 1);
+
+  /* test multiple where with diff value*/
+  tSelect = tabNew.select("c2->$.name as Call").where("JSON_EXTRACT(c2, \"$.age\") >= :C2");
+  result = tSelect.bind("C2", 1).execute();
+  check_ps("Call", 0);
+
+  result = tSelect.where("JSON_EXTRACT(c2, \"$.age\") >= :C2 and c1 = :C1").limit(1).bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("Call", 0);
+
+  result = tSelect.limit(1).bind("C2", 1).bind("C1", "12345").execute();
+  check_ps("Call", 1);
+  check_ps("LIMIT ?, ?", 1);
+
+  /* test multiple where with sort value*/
+  tSelect = tabNew.select("c2->$.name as MyName").where("JSON_EXTRACT(c2, \"$.age\") >= :C2");
+  result = tSelect.bind("C2", 1).execute();
+  check_ps("MyName", 0);
+
+  result = tSelect.orderBy("c1").limit(1).bind("C2", 1).execute();
+  check_ps("MyName", 0);
+
+  result = tSelect.orderBy("c2->$.age").limit(1).bind("C2", 1).execute();
+  check_ps("MyName", 0);
+
+  result = tSelect.limit(1).execute();
+  check_ps("MyName", 1);
+  check_ps("c2", 1);
+  check_ps("ORDER", 1);
+  check_ps("LIMIT ?, ?", 1);
+
+  /* Test multiple where */
+  tSelect = tabNew.select("c2->$.name as ShouldBeIt").where("JSON_EXTRACT(c2, \"$.age\") >= 1");
+  result = tSelect.execute();
+  check_ps("ShouldBeIt", 0);
+
+  result = tSelect.execute();
+  check_ps("ShouldBeIt", 1);
+  check_ps("age", 1);
+  check_ps(">= 1", 1);
+
+  tSelect.where("JSON_EXTRACT(c2, \"$.misc\") > 1");
+  result = tSelect.execute();
+  check_ps("misc", 0);
+
+  result = tSelect.execute();
+  check_ps("misc", 1);
+
+}
+
+TEST_F(Crud, PS_table_update)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Schema sch =getSchema("test");
+  get_sess().sql("use test").execute();
+  get_sess().sql("drop table if exists test.newTable").execute();
+  get_sess().sql("create table test.newTable(c1 varchar(20), c2 JSON, c3 long, c4 double, c5 date, c6 JSON)").execute();
+  Table tabNew = sch.getTable("newTable");
+
+
+  /* table insert for string, dbDoc, array, need to check for map */
+
+  tabNew.insert("c1", "c2", "c3", "c4", "c5").values("123451", "{ \"name\": \"abc1\", \"age\": 9223372036854775800 , \"misc\": 222222222221.333333333333}", 222222222222221, 222222222221.333333333333, "2012-06-18").execute();
+  tabNew.insert("c1", "c2", "c3", "c4", "c5").values("123452", "{ \"name\": \"abc2\", \"age\": 9223372036854775801 , \"misc\": 222222222222.333333333333}", 222222222222222, 222222222222.333333333333, "2012-06-19").execute();
+  tabNew.insert("c1", "c2", "c3", "c4", "c5").values("123453", "{ \"name\": \"abc3\", \"age\": 9223372036854775802 , \"misc\": 222222222223.333333333333}", 222222222222223, 222222222223.333333333333, "2012-06-20").execute();
+  tabNew.insert("c1", "c2", "c3", "c4", "c5").values("123454", "{ \"name\": \"abc4\", \"age\": 9223372036854775803 , \"misc\": 222222222224.11}", 222222222222224, 222222222224.333333333333, "2012-06-21").execute();
+  tabNew.insert("c1", "c2", "c3", "c4", "c5", "c6").values("123456", "{ \"name\": \"abc5\", \"age\": 9223372036854775804 , \"misc\": 222222222225.333333333333}", 222222222222225, 222222222225.333333333333, "2012-06-22", "{ \"name\": [\"abc5\",\"abc6\", \"abc7\"], \"age\": 9223372036854775804 , \"misc\": 222222222225.333333333333}").execute();
+
+
+  RowResult result = tabNew.select().where("9223372036854775801 in c2->$.age").execute();
+  const Row r = result.fetchOne();
+  cout << r[1] << r[0] << endl;
+  std::string data = (string)r[0];
+  if(data.compare("123452"))
+  {
+    FAIL() << "Mismatch in data : " << data;
+  }
+
+  {
+    TableUpdate tUpdate = tabNew.update().set("c2->$.name", expr("concat(c2->$.name, '-updated')")).where("'abc4' in c2->$.name");
+    tUpdate.execute();
+    check_ps("newTable", 0);
+
+    tUpdate.execute();
+    check_ps("newTable", 1);
+    check_ps("-updated", 1);
+    check_ps("abc4", 1);
+    check_ps("name", 1);
+
+    tUpdate.limit(1);
+    tUpdate.execute();
+    check_ps("newTable", 1);
+    check_ps("LIMIT", 1);
+    check_ps("-updated", 1);
+    check_ps("abc4", 1);
+    check_ps("name", 1);
+
+    tUpdate.limit(3).execute();
+    check_ps("newTable", 2);
+    check_ps("LIMIT", 2);
+    check_ps("-updated", 2);
+    check_ps("abc4", 2);
+    check_ps("name", 2);
+
+    tUpdate.where("'abc2' in c2->$.name");
+    tUpdate.execute();
+    check_ps("abc2", 0);
+
+    tUpdate.execute();
+    check_ps("LIMIT", 1);
+    check_ps("abc2", 1);
+    check_ps("-updated", 1);
+    check_ps("name", 1);
+
+    RowResult result = tabNew.select().where("'abc2-updated' in c2->$.name").execute();
+    const Row r = result.fetchOne();
+    cout << r[1] << r[0] << endl;
+    std::string data = (string)r[0];
+    if(data.compare("123452"))
+    {
+      FAIL() << "Mismatch in data : " << data.c_str();
+    }
+
+  }
+
+
+  {
+    TableUpdate tUpdate = tabNew.update().set("c2->$.name", expr("concat(c2->$.name, '-updated')")).where("c6->$.name[0] = :name");
+    tUpdate.bind("name", "abc1").execute();
+    check_ps("c6", 0);
+
+    tUpdate.bind("name", "abc5").execute();
+    check_ps("c6", 1);
+
+    RowResult result = tabNew.select().where("'abc5-updated' = c2->$.name").execute();
+    const Row r = result.fetchOne();
+    cout << r[1] << r[0] << endl;
+    std::string data = (string)r[0];
+    if(data.compare("123456"))
+    {
+      FAIL() <<  "Mismatch in data : " << data;
+    }
+  }
+
+
+  /* remove all and insert */
+  tabNew.remove().where("true").execute();
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").execute();
+  tabNew.insert("c1", "c2").values("123456", "{ \"name\": \"abc\", \"age\": 2 , \"misc\": 1.3}").execute();
+  tabNew.insert("c1", "c2").values("1234567", "{ \"name\": \"abc\", \"age\": 3 , \"misc\": 1.4}").execute();
+
+  /* Test update with bind */
+  TableUpdate tUpdate = tabNew.update().set("c1", expr("concat(c1, '-updated')")).where("c2->$.name like :C2 and :C1 = c1");
+  tUpdate.bind("C1", "123456");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("c1", 0);
+
+  tUpdate.bind("C1", "12345");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("c1", 1);
+  check_ps("updated", 1);
+  check_ps("c2", 1);
+  check_ps("ORDER BY", 0);
+
+  /* Test with limit */
+  tUpdate.limit(1);
+  tUpdate.bind("C1", "1234567");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("newTable", 1);
+  check_ps("updated", 1);
+  check_ps("LIMIT", 1);
+  check_ps("c2", 1);
+  check_ps("ORDER BY", 0);
+
+  /* remove all and insert */
+  tabNew.remove().where("true").execute();
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").execute();
+  tabNew.insert("c1", "c2").values("123456", "{ \"name\": \"abc\", \"age\": 2 , \"misc\": 1.3}").execute();
+  tabNew.insert("c1", "c2").values("1234567", "{ \"name\": \"abc\", \"age\": 3 , \"misc\": 1.4}").execute();
+
+  tUpdate.limit(2);
+  tUpdate.bind("C1", "1234567");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("newTable", 2);
+  check_ps("updated", 2);
+  check_ps("LIMIT", 2);
+  check_ps("c2", 2);
+  check_ps("ORDER BY", 0);
+  check_ps("LIMIT ?, ?", 0);
+
+  /* Test with sort */
+  tUpdate.orderBy("c1");
+  tUpdate.bind("C1", "12345");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("ORDER BY", 0);
+
+
+  tUpdate.bind("C1", "123456");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("newTable", 1);
+  check_ps("updated", 1);
+  check_ps("LIMIT", 1);
+  check_ps("c2", 1);
+  check_ps("ORDER BY", 1);
+
+
+  /* remove all and insert */
+  tabNew.remove().where("true").execute();
+  tabNew.insert("c1", "c2").values("12345", "{ \"name\": \"abc\", \"age\": 1 , \"misc\": 1.2}").execute();
+  tabNew.insert("c1", "c2").values("123456", "{ \"name\": \"abc\", \"age\": 2 , \"misc\": 1.3}").execute();
+  tabNew.insert("c1", "c2").values("1234567", "{ \"name\": \"abc\", \"age\": 3 , \"misc\": 1.4}").execute();
+
+  tUpdate.orderBy("c2->$.age");
+  tUpdate.bind("C1", "12345");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("$.age", 0);
+
+  /* check set for update */
+  tUpdate = tabNew.update().set("c1", expr("concat(c1, '-outdated')")).where("c2->$.name like :C2 and :C1 = c1");
+  tUpdate.bind("C1", "123456");
+  tUpdate.bind("C2", "abc");
+  tUpdate.execute();
+  check_ps("-outdated", 0);
+
+  tUpdate.set("c1", expr("concat(c1, '-check')")).limit(1).execute();
+  check_ps("-check", 0);
+
+  tUpdate.execute();
+  check_ps("-check", 1);
+
+  /* check set for update */
+  tUpdate = tabNew.update().where("c2->$.name like :C2 and :C1 = c1");
+  tUpdate.bind("C1", "123456");
+  tUpdate.bind("C2", "abc");
+  tUpdate.set("c1", expr("concat(c1, '-updated')")).execute();
+  check_ps("-updated", 0);
+
+
+  tUpdate.set("c2", "{ \"name\": \"abcNew\", \"age\": 3 , \"misc\": 1.4}").limit(1).execute();
+  check_ps("abcNew", 0);
+
+  tUpdate.execute();
+  check_ps("abcNew", 1);
+
+}
+
+TEST_F(Crud, PS_table_delete)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  /* ddl */
+  std::string strValue = "";
+  get_sess().sql("use test").execute();
+  get_sess().sql("drop table if exists newtable").execute();
+  get_sess().sql("create table newtable(f0 int, f1 varchar(20))").execute();
+
+  strValue = "abcdef";
+  auto sBindSQL = get_sess().sql("insert into newtable values(?, ?)");
+  auto sSQL = get_sess().sql("insert into newtable values(33, 'abcdef')");
+  sSQL.execute();
+  check_ps("newTable", 0);
+  sBindSQL.bind(255).bind("NewValue").execute();
+  check_ps("newTable", 0);
+
+  for(int i=0;i<100;i++)
+  {
+    sSQL.execute();
+    check_ps("newtable", 0);
+    sBindSQL.bind(255+i).bind("NewValue_1").execute();
+    check_ps("newtable", 0);
+  }
+
+  sSQL = get_sess().sql("select f0, f1 from newtable where f0 <= 33");
+  RowResult res = sSQL.execute();
+  check_ps("newtable", 0);
+
+  res = sSQL.execute();
+  check_ps("newtable", 0);
+
+  Row row = res.fetchOne();
+
+  //if(row == 0 || (int)row[0]!=33 || string("abcdef").compare((string)row[0]))
+  if(row == 0 )
+  {
+    FAIL() << "Fetch fail";
+  }
+
+  string data = row[1];
+  int num = row[0];
+
+  cout << data << num << endl;
+
+}
+
+
+TEST_F(Crud, PS_max)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  Schema sch= getSchema("test");
+  Collection coll= sch.createCollection("c1", true);
+  coll.remove("true").execute();
+  cout <<"inserting 5 documents..." <<endl;
+
+  coll.remove("true").execute();
+  {
+    Result add;
+    add= coll.add("{ \"name\": \"abcdefghijk\", \"age\": 1 , \"misc\": 1.2}").add("{ \"name\": \"xyz\", \"age\": 6 , \"misc\": 19.59}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 4 , \"misc\": 11.9}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 5 , \"misc\": 12.9}").execute();
+    add= coll.add("{ \"name\": \"qwerty@#$%^&\", \"age\": 6 , \"misc\": 13.9}").execute();
+  }
+  cout <<"Fetching documents..." <<endl;
+
+  std::list <CollectionFind> cFind;
+  std::string strField;
+
+  for (int i=1; i<=1000; ++i)
+  {
+    strField = "name as my_name"+std::to_string(i);
+    cFind.push_back(coll.find("name like '%@#$%'").fields(strField));
+  }
+
+  DocResult docs;
+  DbDoc doc;
+
+  int i=0;
+  for(const auto& cFindMem : cFind)
+  {
+    CollectionFind cFindOne = cFindMem;
+    strField = "my_name"+std::to_string(i+1);
+    docs = cFindOne.execute();
+    check_ps(strField, 0);
+    docs = cFindOne.execute();
+    check_ps(strField, 1);
+    doc = docs.fetchOne();
+    if(doc == 0)
+    {
+      FAIL() << "Test failed : record not matching empty expression";
+    }
+    else
+    {
+      cout << " field `" << strField << "`: " <<(doc)[strField.c_str()] << endl;
+    }
+
+    cFindOne.fields("name as my_name_is_now_new");
+    docs = cFindOne.execute();
+    check_ps("my_name_is_now_new", 0);
+
+    docs = cFindOne.execute();
+    check_ps("my_name_is_now_new", 1);
+
+    i++;
+  }
+
+  check_ps(strField, 0);
+
+}
+
+TEST_F(Crud, PS_SQL)
+{
+  SKIP_IF_NO_XPLUGIN
+
+  auto ps_status =get_sess().sql("SELECT COUNT_EXECUTE,SQL_TEXT FROM performance_schema.prepared_statements_instances where SQL_TEXT like ?");
+
+  auto check_ps = [&ps_status] (std::string query, int count)
+  {
+    ps_status.bind(std::string("%")+query+("%"));
+    auto res = ps_status.execute();
+    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    for(auto row : res)
+    {
+      std::cout  << row[1] << std::endl;
+      EXPECT_EQ(count, row[0].get<int>());
+    }
+  };
+
+  /* ddl */
+  std::string strValue = "";
+
+  get_sess().sql("use test").execute();
+  get_sess().sql("drop table if exists newtable").execute();
+  get_sess().sql("create table newtable(f0 int, f1 varchar(20))").execute();
+
+  strValue = "abcdef";
+  auto sBindSQL = get_sess().sql("insert into newtable values(?, ?)");
+  auto sSQL = get_sess().sql("insert into newtable values(33, 'abcdef')");
+  sSQL.execute();
+  check_ps("newTable", 0);
+  sBindSQL.bind(255).bind("NewValue").execute();
+  check_ps("newTable", 0);
+
+  for(int i=0;i<100;i++)
+  {
+    sSQL.execute();
+    check_ps("newtable", 0);
+    sBindSQL.bind(255+i).bind("NewValue_1").execute();
+    check_ps("newtable", 0);
+  }
+
+  sSQL = get_sess().sql("select f0, f1 from newtable where f0 <= 33");
+  RowResult res = sSQL.execute();
+  check_ps("newtable", 0);
+
+  res = sSQL.execute();
+  check_ps("newtable", 0);
+
+  Row row = res.fetchOne();
+
+  //if(row == 0 || (int)row[0]!=33 || string("abcdef").compare((string)row[0]))
+  if(row == 0 )
+  {
+    FAIL() << "Fetch fail";
+  }
+
+  string data = row[1];
+  int num = row[0];
+
+  cout << data << num << endl;
+
+}
+
+
+
 TEST_F(Crud, overlaps)
 {
   SKIP_IF_NO_XPLUGIN;
@@ -2944,3 +4195,4 @@ TEST_F(Crud, overlaps)
   }
 
 }
+

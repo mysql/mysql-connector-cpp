@@ -371,6 +371,29 @@ TEST_F(Bugs, bug_27727505_multiple_results)
     EXPECT_EQ(string("new_f0"), res.getColumn(0).getColumnLabel());
     EXPECT_FALSE(res.nextResult());
   }
+
+
+  //This test uses undefined table, so an error should occur when getting to
+  //that result
+  sess.sql("drop procedure if exists test").execute();
+  sess.sql("CREATE PROCEDURE test() BEGIN select f0 from newtable; select f1 from newtable "
+           "where f0 > 100; select f0 as new_f0  from unknowntable where f0 <= 10;"
+           " END").execute();
+
+  {
+    SqlResult res = sess.sql("call test").execute();
+    EXPECT_EQ(100, res.count());
+    EXPECT_EQ(string("f0"), res.getColumn(0).getColumnName());
+    std::vector<Row> rowAll = res.fetchAll();
+    EXPECT_EQ(100, rowAll.size());
+    EXPECT_TRUE(res.nextResult());
+    EXPECT_EQ(static_cast<unsigned long>(0), res.count());
+    EXPECT_EQ(string("f1"), res.getColumn(0).getColumnName());
+    rowAll = res.fetchAll();
+    EXPECT_EQ(0, rowAll.size());
+    EXPECT_THROW(res.nextResult(), mysqlx::Error);
+    EXPECT_THROW(rowAll = res.fetchAll(), mysqlx::Error);
+  }
 }
 
 
@@ -859,4 +882,48 @@ TEST_F(Bugs, Bug31686958)
   EXPECT_EQ(1, find.execute().count());
 
 
+}
+
+TEST_F(Bugs, Bug29788255)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  SKIP_TEST("Untill Bug#29788255 is fixed");
+
+  auto &sess = get_sess();
+  auto sch = sess.createSchema("test", true);
+  auto coll = sch.createCollection("Bug29788255");
+
+  auto res = coll.find("1 overlaps (1,2)").execute();
+  EXPECT_EQ(1, res.count());
+
+  res = coll.find("null overlaps [1]").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("null overlaps [1, null]").execute();
+  EXPECT_EQ(1, res.count());
+
+  res = coll.find("$.food overlaps [\"\"]").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("$.food overlaps null").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("$.food OVERLAPS \"@#$%^\"").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("[\"@#$%^\"] OVERLAPS $.list").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("(1+6) OVERLAPS [2,3,5]").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("cast((1+6) AS JSON) OVERLAPS [2,3,7]").execute();
+  EXPECT_EQ(0, res.count());
+
+  res = coll.find("[(1+6)] OVERLAPS [2,3,7]").execute();
+  EXPECT_EQ(1, res.count());
+
+  res = coll.find("(1+6) in [2,3,7]").execute();
+  EXPECT_EQ(1, res.count());
 }
