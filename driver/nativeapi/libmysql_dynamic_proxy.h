@@ -65,67 +65,67 @@ public:
 
   // MySQL C-API calls wrappers
 
-  my_ulonglong affected_rows(MYSQL *);
+  my_ulonglong affected_rows(MYSQL *) override;
 
-  my_bool autocommit(MYSQL * , my_bool);
+  my_bool autocommit(MYSQL * , my_bool) override;
 
-  void close (MYSQL *mysql);
+  void close (MYSQL *mysql) override;
 
-  my_bool commit(MYSQL *mysql);
+  my_bool commit(MYSQL *mysql) override;
 
-  void data_seek(MYSQL_RES *, my_ulonglong);
+  void data_seek(MYSQL_RES *, my_ulonglong) override;
 
-  void debug(const char *);
+  void debug(const char *) override;
 
-  unsigned int mysql_errno(MYSQL *);
+  unsigned int mysql_errno(MYSQL *) override;
 
-  const char *  error(MYSQL *);
+  const char *  error(MYSQL *) override;
 
-  MYSQL_FIELD * fetch_field(MYSQL_RES *);
+  MYSQL_FIELD * fetch_field(MYSQL_RES *) override;
 
-  MYSQL_FIELD * fetch_field_direct(MYSQL_RES *, unsigned int);
+  MYSQL_FIELD * fetch_field_direct(MYSQL_RES *, unsigned int) override;
 
-  unsigned long * fetch_lengths(MYSQL_RES *);
+  unsigned long * fetch_lengths(MYSQL_RES *) override;
 
-  MYSQL_ROW fetch_row(MYSQL_RES *);
+  MYSQL_ROW fetch_row(MYSQL_RES *) override;
 
-  unsigned int field_count(MYSQL *);
+  unsigned int field_count(MYSQL *) override;
 
-  void free_result(MYSQL_RES *);
+  void free_result(MYSQL_RES *) override;
 
-  unsigned long get_client_version();
+  unsigned long get_client_version() override;
 
-  const char *  get_server_info(MYSQL *);
+  const char *  get_server_info(MYSQL *) override;
 
-  unsigned long get_server_version(MYSQL *);
+  unsigned long get_server_version(MYSQL *) override;
 
-  void get_character_set_info(MYSQL *, void *);
+  void get_character_set_info(MYSQL *, void *) override;
 
-  const char * info(MYSQL *);
+  const char * info(MYSQL *) override;
 
-  MYSQL * init(MYSQL *mysql);
+  MYSQL * init(MYSQL *mysql) override;
 
-  int library_init(int, char **, char **);
+  int library_init(int, char **, char **) override;
 
-  void library_end();
+  void library_end() override;
 
-  my_bool more_results(MYSQL *);
+  my_bool more_results(MYSQL *) override;
 
-  int next_result(MYSQL *);
+  int next_result(MYSQL *) override;
 
-  unsigned int num_fields(MYSQL_RES *);
+  unsigned int num_fields(MYSQL_RES *) override;
 
-  my_ulonglong num_rows(MYSQL_RES *);
+  my_ulonglong num_rows(MYSQL_RES *) override;
 
-  int options (MYSQL *, enum mysql_option, const void *);
+  int options (MYSQL *, enum mysql_option, const void *) override;
 
-  int options (MYSQL *, enum mysql_option, const void *, const void *);
+  int options (MYSQL *, enum mysql_option, const void *, const void *) override;
 
-  int get_option (MYSQL *, enum mysql_option, const void *);
+  int get_option (MYSQL *, enum mysql_option, const void *) override;
 
-  int ping(MYSQL *);
+  int ping(MYSQL *) override;
 
-  int query(MYSQL *, const char *);
+  int query(MYSQL *, const char *) override;
 
   MYSQL * real_connect(MYSQL * mysql, const char *  host,
               const char *  user,
@@ -133,82 +133,86 @@ public:
               const char *  db,
               unsigned int  port,
               const char *  unix_socket,
-              unsigned long client_flag);
+              unsigned long client_flag) override;
 
   MYSQL * real_connect_dns_srv(MYSQL * mysql,
               const char *  host,
               const char *  user,
               const char *  passwd,
               const char *  db,
-              unsigned long client_flag);
+              unsigned long client_flag) override;
 
-  unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length);
+  bool bind_param(MYSQL *mysql, unsigned n_params,
+                  MYSQL_BIND *binds, const char **names) override;
 
-  int real_query(MYSQL *, const char *, unsigned long);
 
-  my_bool rollback(MYSQL *);
+  unsigned long real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length) override;
 
-  const char * sqlstate(MYSQL *);
+  int real_query(MYSQL *, const char *, unsigned long) override;
+
+  my_bool rollback(MYSQL *) override;
+
+  const char * sqlstate(MYSQL *) override;
 
   my_bool ssl_set(MYSQL * mysql,
           const char * key,
           const char * cert,
           const char * ca,
           const char * capath,
-          const char * cipher);
+          const char * cipher) override;
 
-  MYSQL_RES * store_result(MYSQL *);
+  MYSQL_RES * store_result(MYSQL *) override;
 
-  MYSQL_RES * use_result(MYSQL *);
+  MYSQL_RES * use_result(MYSQL *) override;
 
-  unsigned int warning_count(MYSQL *);
+  unsigned int warning_count(MYSQL *) override;
 
   /* Prepared Statement stmt_* functions */
-  my_ulonglong  stmt_affected_rows  (MYSQL_STMT *);
+  my_ulonglong  stmt_affected_rows  (MYSQL_STMT *) override;
 
-  my_bool stmt_attr_set(MYSQL_STMT *, enum enum_stmt_attr_type, const void *);
+  my_bool stmt_attr_set(MYSQL_STMT *, enum enum_stmt_attr_type, const void *) override;
 
-  my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *);
+  my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *) override;
 
-  my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *);
+  my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *) override;
 
-  my_bool stmt_close(MYSQL_STMT *);
+  my_bool stmt_close(MYSQL_STMT *) override;
 
-  void stmt_data_seek(MYSQL_STMT *, my_ulonglong);
+  void stmt_data_seek(MYSQL_STMT *, my_ulonglong) override;
 
-  unsigned int stmt_errno(MYSQL_STMT *);
+  unsigned int stmt_errno(MYSQL_STMT *) override;
 
-  const char * stmt_error(MYSQL_STMT *);
+  const char * stmt_error(MYSQL_STMT *) override;
 
-  int stmt_execute(MYSQL_STMT *);
+  int stmt_execute(MYSQL_STMT *) override;
 
-  int stmt_fetch(MYSQL_STMT *);
+  int stmt_fetch(MYSQL_STMT *) override;
 
-  unsigned int stmt_field_count(MYSQL_STMT *);
+  unsigned int stmt_field_count(MYSQL_STMT *) override;
 
-  MYSQL_STMT * stmt_init(MYSQL *);
+  MYSQL_STMT * stmt_init(MYSQL *) override;
 
-  my_ulonglong stmt_num_rows(MYSQL_STMT *);
+  my_ulonglong stmt_num_rows(MYSQL_STMT *) override;
 
-  unsigned long stmt_param_count(MYSQL_STMT *);
+  unsigned long stmt_param_count(MYSQL_STMT *) override;
 
-  int stmt_prepare(MYSQL_STMT *, const char *, unsigned long);
+  int stmt_prepare(MYSQL_STMT *, const char *, unsigned long) override;
 
-  MYSQL_RES * stmt_result_metadata(MYSQL_STMT *);
+  MYSQL_RES * stmt_result_metadata(MYSQL_STMT *) override;
 
-  my_bool stmt_send_long_data (MYSQL_STMT * , unsigned int, const char *, unsigned long);
+  my_bool stmt_send_long_data (MYSQL_STMT * , unsigned int, const char *, unsigned long) override;
 
-  const char * stmt_sqlstate(MYSQL_STMT *);
+  const char * stmt_sqlstate(MYSQL_STMT *) override;
 
-  int stmt_store_result(MYSQL_STMT *);
+  int stmt_store_result(MYSQL_STMT *) override;
 
-  int stmt_next_result(MYSQL_STMT *);
+  int stmt_next_result(MYSQL_STMT *) override;
 
-  bool stmt_free_result(MYSQL_STMT *);
+  bool stmt_free_result(MYSQL_STMT *) override;
 
-  void thread_init();
+  void thread_init() override;
 
-  void thread_end();
+  void thread_end() override;
 };
 
 } /* namespace NativeAPI */

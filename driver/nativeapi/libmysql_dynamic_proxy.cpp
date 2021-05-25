@@ -512,6 +512,19 @@ LibmysqlDynamicProxy::real_connect_dns_srv(MYSQL * mysql,
 /* }}} */
 
 
+/* {{{ LibmysqlDynamicProxy::bind_param() */
+bool
+LibmysqlDynamicProxy::bind_param(MYSQL *mysql, unsigned n_params,
+                                 MYSQL_BIND *binds, const char **names)
+{
+  ptr2mysql_bind_param ptr2_bind_param=
+    symbol_safe_cast<ptr2mysql_bind_param>(GetProcAddr("mysql_bind_param"));
+
+  return (*ptr2_bind_param)(mysql, n_params, binds, names);
+}
+/* }}} */
+
+
 /* {{{ LibmysqlDynamicProxy::real_escape_string() */
 unsigned long
 LibmysqlDynamicProxy::real_escape_string(MYSQL * mysql, char * to, const char * from, unsigned long length)

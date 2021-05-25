@@ -111,6 +111,8 @@ typedef MYSQL * (STDCALL *ptr2mysql_real_connect)(MYSQL *, const char *, const c
 
 typedef MYSQL * (STDCALL *ptr2mysql_real_connect_dns_srv)(MYSQL *, const char *, const char *, const char * , const char *, unsigned long);
 
+typedef bool (STDCALL *ptr2mysql_bind_param)(MYSQL *mysql, unsigned n_params, MYSQL_BIND *binds, const char **names);
+
 typedef unsigned long (STDCALL *ptr2mysql_real_escape_string)(MYSQL * mysql, char *, const char *, unsigned long);
 
 typedef int (STDCALL *ptr2mysql_real_query)(MYSQL *, const char *, unsigned long);
