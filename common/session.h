@@ -235,6 +235,11 @@ protected:
       m_list[id] = system_clock::now() + m_timeout;
     }
 
+    void remove(size_t id)
+    {
+      m_list.erase(id);
+    }
+
     bool is_block_listed(size_t id)
     {
       if (m_list.find(id) == m_list.end())

@@ -979,12 +979,29 @@ Session_pool::get_session(Session_cleanup *cleanup)
     avoiding the block-listed endpoints.
   */
 
+  /*
+    Keep the original block list so that, if non blocked servers fail to get a
+    session, previously blocked ones are tried.
+  */
+  Block_list original_block(m_block_list);
+
   if (m_pool.size() < m_max)
   {
     try
     {
-      auto block_list_filter = [this](size_t id) {
-        return m_block_list.is_block_listed(id);
+      auto block_list_filter = [this](size_t id, cdk::option_t opt) -> bool {
+        switch(opt.state())
+        {
+        case cdk::option_t::UNKNOWN:
+          return m_block_list.is_block_listed(id);
+        case cdk::option_t::YES:
+          m_block_list.remove(id);
+          break;
+        case cdk::option_t::NO:
+          m_block_list.add(id);
+          break;
+        }
+        return true;
       };
 
       auto ret = m_pool.emplace(
@@ -1013,14 +1030,32 @@ Session_pool::get_session(Session_cleanup *cleanup)
 
   /*
     If a session is still not found, and there is space in the pool,
-    try creating a new session this time ignoring the block-list.
+    try creating a new session this time using the block-listed ones.
   */
 
   if (m_pool.size() < m_max)
   {
+
+
+    auto block_list_filter = [this, &original_block](size_t id, cdk::option_t opt) -> bool {
+      switch(opt.state())
+      {
+      case cdk::option_t::UNKNOWN:
+        //Filter out sessions that were not block-listed
+        return !original_block.is_block_listed(id);
+      case cdk::option_t::YES:
+        m_block_list.remove(id);
+        break;
+      case cdk::option_t::NO:
+        m_block_list.add(id);
+        break;
+      }
+      return true;
+    };
+
     // If an exception is thrown, don't intercept it, let it propagate
     auto ret = m_pool.emplace(
-      cdk::shared_ptr<cdk::Session>(new cdk::Session(m_ds)),
+      cdk::shared_ptr<cdk::Session>(new cdk::Session(m_ds, block_list_filter)),
       Sess_data{ time_point::max(), cleanup }
     );
     return ret.first->first;
