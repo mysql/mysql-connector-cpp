@@ -49,6 +49,28 @@ struct Session_builder
   using TLS   = cdk::connection::TLS;
   using TCPIP = cdk::connection::TCPIP;
   using Socket_base = foundation::connection::Socket_base;
+  using ep_filter_t = std::function<bool(size_t, option_t)>;
+
+  struct ReportStatus
+  {
+    //False if not able to connect, true if all is good.
+    option_t m_status = false;
+    Session_builder::ep_filter_t m_filter;
+    size_t m_id;
+
+    ReportStatus(Session_builder::ep_filter_t filter, size_t id)
+      : m_filter(filter)
+      , m_id(id)
+    {}
+
+
+    ~ReportStatus()
+    {
+      if(m_filter)
+        m_filter(m_id, m_status);
+    }
+
+  };
 
   unique_ptr<cdk::api::Connection> m_conn;
   mysqlx::Session      *m_sess = NULL;
@@ -57,9 +79,12 @@ struct Session_builder
   scoped_ptr<Error>     m_error;
   unsigned              m_attempts = 0;
   size_t                m_id = 0;
+  ep_filter_t           m_filter;
 
-  Session_builder(bool throw_errors = false)
+
+  Session_builder(bool throw_errors = false, ep_filter_t filter = nullptr)
     : m_throw_errors(throw_errors)
+    , m_filter(filter)
   {}
 
   /*
@@ -155,6 +180,7 @@ bool Session_builder::connect(Conn &connection)
 }
 
 
+
 bool
 Session_builder::operator() (
   size_t id,
@@ -164,6 +190,8 @@ Session_builder::operator() (
 {
   using foundation::connection::TCPIP;
   using foundation::connection::Socket_base;
+
+  ReportStatus report_status(m_filter, id);
 
   unique_ptr<TCPIP> connection(new TCPIP(ds.host(), ds.port(),
                                options));
@@ -220,6 +248,7 @@ Session_builder::operator() (
 
   m_database = options.database();
   m_id = id;
+  report_status.m_status = true;
   return true;
 }
 
@@ -234,6 +263,8 @@ Session_builder::operator() (
   using foundation::connection::Unix_socket;
   using foundation::connection::Socket_base;
 
+  ReportStatus report_status(m_filter, id);
+
   unique_ptr<Unix_socket> connection(new Unix_socket(ds.path(), options));
 
   if (!connect(*connection))
@@ -244,6 +275,7 @@ Session_builder::operator() (
 
   m_database = options.database();
   m_id = id;
+  report_status.m_status = true;
   return true;
 }
 
@@ -393,14 +425,29 @@ struct ds::Multi_source::Access
 };
 
 
+/*
+  Create session to one of the data sources in the multi-source `ds`.
+  The order in which data sources are tried is determined by `Multi_source`
+  class (see `Multi_source::visit()` method). For each data source with
+  identifier `id`, first a call to `ep_filter(id,UNKNOWN)` is made to determine
+  if that data source should be filtered. If this is not the case and session
+  could be successfully created, `ep_filter(id,YES)` is called. Otherwise
+  `ep_filter(id,NO)` is called and next data source is tried.
+*/
 
-Session::Session(ds::Multi_source &ds, ds::Multi_source::ep_filter_t ep_filter)
+Session::Session(ds::Multi_source &ds, ep_filter_t ep_filter)
   : m_session(NULL)
   , m_connection(NULL)
 {
-  Session_builder sb;
+  Session_builder sb(false, ep_filter);
 
-  ds::Multi_source::Access::visit(ds, sb, ep_filter);
+  auto filter = [&ep_filter](size_t id) -> bool {
+    if(ep_filter)
+      return ep_filter(id, option_t());
+    return false;
+  };
+
+  ds::Multi_source::Access::visit(ds, sb, filter);
 
   if (!sb.m_sess)
   {

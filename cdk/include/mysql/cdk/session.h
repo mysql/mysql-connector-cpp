@@ -64,12 +64,14 @@ public:
 
   typedef api::Session::Diagnostics Diagnostics;
 
+  using ep_filter_t = std::function<bool(size_t,option_t)>;
+
   /// Create session to a data store represented by `ds` object.
 
   Session(ds::TCPIP &ds,
           const ds::TCPIP::Options &options = ds::TCPIP::Options());
 
-  Session(ds::Multi_source&, ds::Multi_source::ep_filter_t = nullptr);
+  Session(ds::Multi_source&, ep_filter_t = nullptr);
 
 #ifndef _WIN32
   Session(ds::Unix_socket &ds,
