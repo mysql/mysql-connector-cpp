@@ -1191,6 +1191,86 @@ void bugs::bug32695580()
   }
 }
 
+void bugs::bug23235968()
+{
+  logMsg("bugs::bug23235968");
+
+  stmt->executeUpdate("drop table if exists bug23235968_1");
+  stmt->executeUpdate("create table bug23235968_1 (id int unsigned not null)");
+
+  stmt->executeUpdate("drop table if exists bug23235968_2");
+  stmt->executeUpdate("create table bug23235968_2 (id int unsigned not null)");
+
+
+
+  sql::ConnectOptionsMap opt;
+
+  opt[OPT_SCHEMA] = "test";
+
+  Connection con2(getConnection(&opt));
+
+  Statement my_stmt(con2->createStatement());
+
+  res.reset(my_stmt->executeQuery("select connection_id()"));
+
+  res->next();
+
+  uint64_t connection_id = res->getUInt64(1);
+
+  con2->setAutoCommit(false);
+
+  PreparedStatement my_pstmt(con2->prepareStatement("insert into bug23235968_1 ( id ) values( ? )"));
+  PreparedStatement my_pstmt2(con2->prepareStatement("insert into bug23235968_2 ( id ) values( ? )"));
+
+  for (int i = 1; i <= 10; ++i)
+  {
+    my_pstmt->setInt(1, i);
+    my_pstmt->execute();
+
+    my_pstmt2->setInt(1, i);
+    my_pstmt2->execute();
+  }
+
+  con2->commit();
+
+  for (int i = 11; i <= 20; ++i)
+  {
+    my_pstmt->setInt(1, i);
+    my_pstmt->execute();
+
+    my_pstmt2->setInt(1, i);
+    my_pstmt2->execute();
+  }
+
+  //Now, lets kill the connection 2
+  std::string sql ("KILL CONNECTION ");
+  sql+= std::to_string(connection_id);
+
+  stmt->execute(sql);
+
+  try {
+    con2->commit();
+    FAIL("No Exception thrown");
+  }  catch (const sql::SQLException &e) {
+    std::cout << "Expected: " << e.what() << std::endl;
+  }
+
+  res.reset(stmt->executeQuery("select count(*) from bug23235968_1"));
+  res->next();
+  ASSERT_EQUALS(10,res->getUInt(1));
+
+  res.reset(stmt->executeQuery("select count(*) from bug23235968_2"));
+  res->next();
+  ASSERT_EQUALS(10,res->getUInt(1));
+
+
+
+  stmt->executeUpdate("drop table bug23235968_1");
+  stmt->executeUpdate("drop table bug23235968_2");
+
+
+}
+
 
 } /* namespace regression */
 } /* namespace testsuite */

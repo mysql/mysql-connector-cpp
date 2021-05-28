@@ -1208,7 +1208,9 @@ MySQL_Connection::commit()
 {
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::commit");
   checkClosed();
-  proxy->commit();
+  if(proxy->commit())
+    throw SQLException (proxy->error(), proxy->sqlstate(), proxy->errNo());
+
 }
 /* }}} */
 
