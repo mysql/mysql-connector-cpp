@@ -172,11 +172,11 @@ add_library(Protobuf::pb-full STATIC IMPORTED GLOBAL)
 add_library(Protobuf::pb-lite STATIC IMPORTED GLOBAL)
 add_executable(Protobuf::protoc IMPORTED GLOBAL)
 
-set(TGT_protobuf Protobuf::pb-full)
-set(TGT_protobuf-lite Protobuf::pb-lite)
+set(TGT_libprotobuf Protobuf::pb-full)
+set(TGT_libprotobuf-lite Protobuf::pb-lite)
 set(TGT_protoc Protobuf::protoc)
 
-foreach(tgt protobuf protobuf-lite protoc)
+foreach(tgt libprotobuf libprotobuf-lite protoc)
 
   #message("processing: ${tgt}")
 
@@ -317,7 +317,6 @@ function(mysqlx_protobuf_generate_cpp SRCS HDRS)
       COMMAND Protobuf::protoc
       ARGS --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
            -I ${ABS_PATH} ${ABS_FIL}
-           --proto_path=${PROJECT_SOURCE_DIR}/protobuf/protobuf-3.6.1/src
       DEPENDS ${ABS_FIL} #${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM

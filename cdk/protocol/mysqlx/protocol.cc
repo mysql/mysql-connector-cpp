@@ -373,7 +373,7 @@ void Protocol_impl::write_msg(msg_type_t msg_type, Message &msg)
   if (m_wr_op)
     THROW("Can't write message while another one is being written");
 
-  msg_size_t net_size = static_cast<unsigned>(msg.ByteSize()) + 1;
+  msg_size_t net_size = static_cast<msg_size_t>(msg.ByteSizeLong()) + 1;
 
   if (!resize_buf(CLIENT, header_length + net_size))
     THROW("Not enough memory for output buffer");
