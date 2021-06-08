@@ -27,7 +27,7 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
 CMAKE_POLICY(VERSION 3.1)
 cmake_policy(SET CMP0022 NEW)
@@ -60,15 +60,22 @@ set(CMAKE_INSTALL_PREFIX "" CACHE PATH "Install location")
 #
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+include(cdk/cmake/setup.cmake)
+include(cmake/setup.cmake)
+include(bootstrap)
+
+# Note: Does not work well with Ninja -- not sure why
+
+if(NOT CMAKE_GENERATOR MATCHES "Ninja")
+  bootstrap()
+endif()
+
 
 ##########################################################################
 
 PROJECT(MySQL_CONCPP)
 
 # Load cmake modules
-
-include(cdk/cmake/setup.cmake)
-include(cmake/setup.cmake)
 
 include(platform)
 include(dependency)      # find_dependency()

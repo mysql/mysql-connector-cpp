@@ -10,6 +10,12 @@
 PROJECT(zstd)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.9)
 
+include(../setup.cmake)
+include(platform)
+
+enable_pic()
+
+
 SET(ZSTD_LIB_DIR
   "${PROJECT_SOURCE_DIR}/lib")
 INCLUDE_DIRECTORIES(
@@ -54,6 +60,8 @@ SET(ZSTD_SRCS
 ADD_LIBRARY(zstd STATIC ${ZSTD_SRCS})
 set_target_properties(zstd PROPERTIES FOLDER "Misc")
 
+target_include_directories(zstd PUBLIC ${PROJECT_SOURCE_DIR}/lib)
+
 #-----------------------------------------------------------------------------
 # Add extra compilation flags
 #-----------------------------------------------------------------------------
@@ -82,3 +90,5 @@ ELSE (ZSTD_LEGACY_SUPPORT)
     MESSAGE(STATUS "ZSTD_LEGACY_SUPPORT not defined!")
     ADD_DEFINITIONS(-DZSTD_LEGACY_SUPPORT=0)
 ENDIF (ZSTD_LEGACY_SUPPORT)
+
+export(TARGETS zstd NAMESPACE ext_ FILE ${PROJECT_BINARY_DIR}/exports.cmake)

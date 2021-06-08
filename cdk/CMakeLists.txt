@@ -94,7 +94,7 @@ add_config(CDK_BIG_ENDIAN ${BIG_ENDIAN})
 #
 
 find_dependency(SSL)
-find_dependency(Protobuf)
+#find_dependency(Protobuf)
 find_dependency(RapidJSON)
 find_dependency(Coverage)
 

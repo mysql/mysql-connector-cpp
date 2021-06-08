@@ -32,6 +32,8 @@ add_subdirectory(ngs_mockup)
 
 endif()
 
+return()
+
 # Compression libraries
 enable_pic()
 add_subdirectory(zlib)

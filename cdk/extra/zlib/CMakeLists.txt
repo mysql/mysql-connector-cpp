@@ -37,6 +37,11 @@ IF(POLICY CMP0075)
   CMAKE_POLICY(SET CMP0075 OLD)
 ENDIF()
 
+include(../setup.cmake)
+include(platform)
+
+enable_pic()
+
 include(CheckTypeSize)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
@@ -89,6 +94,7 @@ configure_file(
 include_directories(
   SYSTEM ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
   )
+
 
 #============================================================================
 # zlib
@@ -159,6 +165,11 @@ endif()
 ADD_LIBRARY(zlib STATIC
   ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
+target_include_directories(zlib PUBLIC
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+)
+
 set_target_properties(zlib PROPERTIES FOLDER "Misc")
 
 if(NOT CYGWIN)
@@ -185,3 +196,5 @@ endif()
 
 #ADD_EXECUTABLE(try_zlib try.cc)
 #TARGET_LINK_LIBRARIES(try_zlib zlib)
+
+export(TARGETS zlib NAMESPACE ext_ FILE ${PROJECT_BINARY_DIR}/exports.cmake)

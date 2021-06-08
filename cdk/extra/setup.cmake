@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,32 +26,11 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+get_filename_component(CDK_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake" REALPATH)
 
-cmake_minimum_required(VERSION 2.8)
-# TODO: Why it is not enough to set it in the top-level CMakeLists.txt?
-#cmake_policy(SET CMP0023 OLD)
-
-#ADD_SUBDIRECTORY(tests)
-
-
-SET(cdk_sources
-  session.cc
-  codec.cc
+#message(FATAL_ERROR "adding module path: ${CDK_PATH}")
+set(CMAKE_MODULE_PATH
+  ${CDK_PATH}
+  ${CMAKE_MODULE_PATH}
 )
-
-file(GLOB HEADERS *.h)
-
-add_library(cdk STATIC ${cdk_sources} ${HEADERS})
-
-target_link_libraries(cdk
-  PUBLIC  cdk_mysqlx cdk_parser
-  PRIVATE ext::pb-lite  # required by codecc.cc
-)
-
-add_coverage(cdk)
-
-EXPORT(TARGETS cdk
-  APPEND FILE ${PROJECT_BINARY_DIR}/exports.cmake
-)
-
 

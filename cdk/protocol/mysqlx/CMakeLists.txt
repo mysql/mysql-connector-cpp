@@ -26,6 +26,8 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+find_dependency(Protobuf)
+find_dependency(Compression)
 
 include(CheckIncludeFile)
 
@@ -128,12 +130,14 @@ target_include_directories(cdk_proto_mysqlx PRIVATE
 )
 
 if(use_full_protobuf)
-  target_link_libraries(cdk_proto_mysqlx PRIVATE Protobuf::pb-full)
+  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::pb-full)
 else()
-  target_link_libraries(cdk_proto_mysqlx PRIVATE Protobuf::pb-lite)
+  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::pb-lite)
 endif()
 
-target_link_libraries(cdk_proto_mysqlx PRIVATE cdk_foundation zlib lz4 zstd)
+target_link_libraries(cdk_proto_mysqlx
+  PRIVATE cdk_foundation ext::zlib ext::lz4 ext::zstd
+)
 
 ADD_COVERAGE(cdk_proto_mysqlx)
 

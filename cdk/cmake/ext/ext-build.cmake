@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,32 +26,41 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# This is a cmake script that drives external builds configured using
+# add_ext() command. See dependency.cmake.
+#
+# The build is done only once, protected by a stamp file.
+#
 
-cmake_minimum_required(VERSION 2.8)
-# TODO: Why it is not enough to set it in the top-level CMakeLists.txt?
-#cmake_policy(SET CMP0023 OLD)
+#message("Build location: ${BIN_DIR}")
+#message("Building config: ${CONFIG}")
+#message("Build options: ${OPTS}")
 
-#ADD_SUBDIRECTORY(tests)
+set(stamp ${BIN_DIR}/build.${CONFIG}.stamp)
 
 
-SET(cdk_sources
-  session.cc
-  codec.cc
+if(EXISTS ${stamp})
+  return()
+endif()
+
+message("== Running extrnal build at: ${BIN_DIR} (${CONFIG})")
+
+execute_process(
+  COMMAND ${CMAKE_COMMAND} --build ${BIN_DIR} --config ${CONFIG} ${OPTS}
+  RESULT_VARIABLE res
 )
 
-file(GLOB HEADERS *.h)
+if(res)
+  message(FATAL_ERROR
+    "External build failed: ${res}"
+  )
+endif()
 
-add_library(cdk STATIC ${cdk_sources} ${HEADERS})
+# Note: When minimal cmake version is upgraded to 3.12 then
+# file(TOUCH) can be used instead.
 
-target_link_libraries(cdk
-  PUBLIC  cdk_mysqlx cdk_parser
-  PRIVATE ext::pb-lite  # required by codecc.cc
-)
+file(WRITE ${stamp} "")
 
-add_coverage(cdk)
-
-EXPORT(TARGETS cdk
-  APPEND FILE ${PROJECT_BINARY_DIR}/exports.cmake
-)
-
+message("== Extrnal build done")
 

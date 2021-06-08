@@ -156,6 +156,16 @@ endfunction()
 # Compiler specific settings.
 #
 
+if(CMAKE_CXX_COMPILER_ID)
+  set(compiler_id ${CMAKE_CXX_COMPILER_ID})
+  set(compiler_version ${CMAKE_CXX_COMPILER_VERSION})
+else()
+  # Note: for C only projects
+
+  set(compiler_id ${CMAKE_C_COMPILER_ID})
+  set(compiler_version ${CMAKE_C_COMPILER_VERSION})
+endif()
+
 if(MSVC)
 
   # VS_VER  -- MSVC toolchain version (14,15 etc)
@@ -163,23 +173,23 @@ if(MSVC)
   #
   # set_msvcrt(X) - X = static/dynamic
 
-  set(MSVC ${CMAKE_CXX_COMPILER_VERSION} CACHE INTERNAL "")
+  set(MSVC ${compiler_version} CACHE INTERNAL "")
   include(compiler/MSVC OPTIONAL)
 
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
+elseif(compiler_id MATCHES "SunPro")
 
-  set(SUNPRO ${CMAKE_CXX_COMPILER_VERSION} CACHE INTERNAL "")
+  set(SUNPRO ${compiler_version} CACHE INTERNAL "")
   include(compiler/SUNPRO OPTIONAL)
 
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+elseif(compiler_id MATCHES "Clang")
 
-  set(CLANG ${CMAKE_CXX_COMPILER_VERSION} CACHE INTERNAL "")
+  set(CLANG ${compiler_version} CACHE INTERNAL "")
   include(compiler/CLANG OPTIONAL)
 
 else()
 
   if(CMAKE_COMPILER_IS_GNUCXX)
-    set(GCC ${CMAKE_CXX_COMPILER_VERSION} CACHE INTERNAL "")
+    set(GCC ${compiler_version} CACHE INTERNAL "")
   endif()
   include(compiler/GCC OPTIONAL)
 

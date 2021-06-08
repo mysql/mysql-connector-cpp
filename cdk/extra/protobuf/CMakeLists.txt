@@ -54,7 +54,7 @@
 cmake_minimum_required(VERSION 3.1)
 PROJECT(Protobuf)
 
-include(../cmake/setup.cmake)
+include(../setup.cmake)
 include(platform)
 
 SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.11.4")
