@@ -55,11 +55,7 @@ License:        %{license_type}
 URL:            https://dev.mysql.com/doc/connector-cpp/en/
 Source0:        https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++%{?product_suffix}-%{version}-src.tar.gz
 #BuildRequires:  boost-devel
-%if 0%{?rhel} < 8
-BuildRequires:  cmake3
-%else
-BuildRequires:  cmake
-%endif
+BuildRequires:  cmake%{?el6:3}%{?el7:3}
 %if 0%{?fedora} || 0%{?suse_version}
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -126,11 +122,7 @@ test suite for MySQL Connector/C++
 %endif
 %global __cmake_explicit_opts -DCMAKE_INSTALL_PREFIX="%_prefix" -DCMAKE_C_FLAGS:STRING="%optflags" -DCMAKE_CXX_FLAGS:STRING="%optflags"
 %global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
-%if 0%{?rhel} < 8
-%global __cmake_cmd cmake3 %{__cmake_common_opts} %{__cmake_explicit_opts} ..
-%else
-%global __cmake_cmd cmake %{__cmake_common_opts} %{__cmake_explicit_opts} ..
-%endif
+%global __cmake_cmd cmake%{?el6:3}%{?el7:3} %{__cmake_common_opts} %{__cmake_explicit_opts} ..
 mkdir build-dynamic && pushd build-dynamic
 pwd
 %__cmake_cmd
@@ -215,7 +207,8 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %endif
 
 %changelog
-* Wed Jun 09 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.26-1
+* Thu Jun 10 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.26-1
+- Updated the platforms that need cmake3
 - The cmake3 binary isn't required for el8 platforms
 
 * Fri Feb 05 2021 Kent Boortz <kent.boortz@oracle.com> - 8.0.24-1
