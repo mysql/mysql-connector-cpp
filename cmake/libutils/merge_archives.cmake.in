@@ -174,9 +174,11 @@ function(main)
   endforeach()
   message("Merge options: ${LINK_OPTIONS}")
 
-  if(MSBUILD)
+  if(MSVC)
+    message("- using MSVC tools")
     merge_libraries_win()
   elseif(APPLE)
+    message("- using Mac tools")
     merge_libraries_apple()
   else()
 
@@ -185,6 +187,7 @@ function(main)
     # "<LIBS>" entry. This is used to construct the same linker invocation as
     # would be used by cmake but with special handling of the merged libraries.
 
+    message("- using gcc tools")
     merge_libraries_gcc()
 
   endif()

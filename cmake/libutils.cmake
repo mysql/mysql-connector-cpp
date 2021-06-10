@@ -180,7 +180,7 @@ function(merge_libraries TARGET)
   # by merge_archives script is appended to that file.
   #
 
-  if(NOT MSBUILD OR NOT TYPE STREQUAL "SHARED")
+  if(NOT MSVC OR NOT TYPE STREQUAL "SHARED")
 
     set(log_name "${TARGET}.log")
     set(log_file
@@ -194,6 +194,7 @@ function(merge_libraries TARGET)
       -DTYPE=${TYPE}
       -DBUILD_LOG=${log_file}.${TYPE}
       -DMSBUILD=${MSBUILD}
+      -DMSVC=${MSVC}
       -DINFO=${INFO}
       -DINFO_PREFIX=${INFO_PREFIX}
       -P ${LIBUTILS_BIN_DIR}/merge_archives.cmake
@@ -212,7 +213,7 @@ function(merge_libraries TARGET)
   # differs for different build tools.
   #
 
-  if(NOT MSBUILD)
+  if(NOT MSVC)
 
     # TODO: Will it work with XCode?
 
@@ -250,7 +251,7 @@ function(merge_libraries TARGET)
       RULE_LAUNCH_LINK "${LIBUTILS_BIN_DIR}/save_linker_opts ${log_file}.SHARED "
     )
 
-  else(NOT MSBUILD)
+  else(NOT MSVC)
 
     # TODO: macOS case
 
@@ -283,6 +284,13 @@ function(merge_libraries TARGET)
 
     endif()
 
+    if(NOT MSBUILD)
+      message(FATAL_ERROR
+        "Sorry but building static connector on Windows using MSVC toolset"
+        " works only with msbuild at the moment."
+      )
+    endif()
+
     #
     # Merging into static library on Windows is done by merge_archives script
     # and in this case we need the build log with dependency information.
@@ -298,6 +306,9 @@ function(merge_libraries TARGET)
 
     add_custom_command(TARGET ${TARGET} PRE_BUILD
 
+      # TODO: This works only when the build tool is msbuild (as it uses
+      # msbuild cmd line options), fails with ninja for example.
+
       COMMAND ${CMAKE_COMMAND}
         --build .
         --target ${TARGET}-deps
@@ -310,7 +321,7 @@ function(merge_libraries TARGET)
       COMMENT "Extracting dependency info for target ${TARGET}"
     )
 
-  endif(NOT MSBUILD)
+  endif(NOT MSVC)
 
 endfunction(merge_libraries)
 
