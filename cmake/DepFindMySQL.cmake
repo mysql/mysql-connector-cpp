@@ -46,6 +46,7 @@
 #  MYSQL_LIB_DIR
 #  MYSQL_PLUGIN_DIR
 #  MYSQL_EXTERNAL_DEPENDENCIES
+#  MYSQL_EXTERNAL_SEARCHPATH
 #
 ##########################################################################
 
@@ -344,15 +345,30 @@ function(main)
   # the dependencies themselves.
 
   if(NOT MSVC)
+
+    set(searchpath "")
+    list(APPEND searchpath "-L${MYSQL_LIB_DIR}"
+                           "-L${MYSQL_LIB_DIR}/private")
+
+    if(MYSQL_EXTERNAL_SEARCHPATH)
+
+      foreach(search ${MYSQL_EXTERNAL_SEARCHPATH})
+        list(APPEND searchpath "-L${search}")
+      endforeach()
+
+    endif()
+
+    string(REPLACE ";" " " searchpath "${searchpath}")
+    message("  dependencies search path: ${searchpath}")
+
+
     set_property(TARGET MySQL::client-static
       PROPERTY INTERFACE_LINK_LIBRARIES
-      "-L${MYSQL_LIB_DIR}"
-      "-L${MYSQL_LIB_DIR}/private"
+      "${searchpath}"
     )
     set_property(TARGET MySQL::client-shared
       PROPERTY INTERFACE_LINK_LIBRARIES
-      "-L${MYSQL_LIB_DIR}"
-      "-L${MYSQL_LIB_DIR}/private"
+      "${searchpath}"
     )
   endif()
 
@@ -453,6 +469,11 @@ function(get_dependencies)
     "List of external libraries on which MySQL client library depends."
   )
 
+  set(MYSQL_EXTERNAL_SEARCHPATH "${MYSQL_EXTERNAL_SEARCHPATH}"
+    CACHE INTERNAL
+    "List of locations of external libraries on which MySQL client library depends as reported by mysql_config."
+  )
+
 endfunction(get_dependencies)
 
 
@@ -490,9 +511,10 @@ function(use_mysql_config)
 
   set(MYSQL_EXTERNAL_DEPENDENCIES "")
 
-  _mysql_conf(config_libs --libs)
-  string(REGEX MATCHALL " -l[^ ]+" config_libs ${config_libs})
+  _mysql_conf(config_libs_paths --libs)
+  string(REGEX MATCHALL " -l[^ ]+" config_libs ${config_libs_paths})
   message("-- libs: ${config_libs}")
+
 
   foreach(lib ${config_libs})
 
@@ -503,7 +525,7 @@ function(use_mysql_config)
     # explicit dependencies.
 
     if(NOT lib MATCHES
-        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic|^unwind|^execinfo)"
+        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic)"
       )
 
       list(APPEND MYSQL_EXTERNAL_DEPENDENCIES ${lib})
@@ -515,6 +537,23 @@ function(use_mysql_config)
   endforeach()
 
   set(MYSQL_EXTERNAL_DEPENDENCIES "${MYSQL_EXTERNAL_DEPENDENCIES}" PARENT_SCOPE)
+
+  # check if --libs have libs search path
+  set(MYSQL_EXTERNAL_SEARCHPATH "")
+
+  string(REGEX MATCHALL " -L[^ ]+" config_lib_search_path ${config_libs_paths})
+  message("-- libs search path: ${config_lib_search_path}")
+
+  foreach(search ${config_lib_search_path})
+
+    string(REGEX REPLACE " -L([^ ]+)" "\\1" search ${search})
+    message("-- checking search path: ${search}")
+
+
+    list(APPEND MYSQL_EXTERNAL_SEARCHPATH ${search})
+  endforeach()
+
+  set(MYSQL_EXTERNAL_SEARCHPATH "${MYSQL_EXTERNAL_SEARCHPATH}" PARENT_SCOPE)
 
 endfunction(use_mysql_config)
 
