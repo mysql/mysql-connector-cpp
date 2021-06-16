@@ -30,15 +30,18 @@
 
 // Author: kenton@google.com (Kenton Varda)
 
+// 2021-06-16: rafal.somla@oracle.com
+//  Disabled all generators other than C++
+
 #include <google/protobuf/compiler/cpp/cpp_generator.h>
-#include <google/protobuf/compiler/java/java_generator.h>
-#include <google/protobuf/compiler/js/js_generator.h>
+//#include <google/protobuf/compiler/java/java_generator.h>
+//#include <google/protobuf/compiler/js/js_generator.h>
 #include <google/protobuf/compiler/command_line_interface.h>
-#include <google/protobuf/compiler/python/python_generator.h>
-#include <google/protobuf/compiler/csharp/csharp_generator.h>
-#include <google/protobuf/compiler/objectivec/objectivec_generator.h>
-#include <google/protobuf/compiler/php/php_generator.h>
-#include <google/protobuf/compiler/ruby/ruby_generator.h>
+//#include <google/protobuf/compiler/python/python_generator.h>
+//#include <google/protobuf/compiler/csharp/csharp_generator.h>
+//#include <google/protobuf/compiler/objectivec/objectivec_generator.h>
+//#include <google/protobuf/compiler/php/php_generator.h>
+//#include <google/protobuf/compiler/ruby/ruby_generator.h>
 
 #include <google/protobuf/port_def.inc>
 
@@ -60,6 +63,8 @@ int ProtobufMain(int argc, char* argv[]) {
   cpp_generator.set_opensource_runtime(true);
   cpp_generator.set_runtime_include_base(GOOGLE_PROTOBUF_RUNTIME_INCLUDE_BASE);
 #endif
+
+#if 0
 
   // Proto2 Java
   java::JavaGenerator java_generator;
@@ -96,6 +101,8 @@ int ProtobufMain(int argc, char* argv[]) {
   js::Generator js_generator;
   cli.RegisterGenerator("--js_out", &js_generator,
                         "Generate JavaScript source.");
+
+#endif // 0
 
   return cli.Run(argc, argv);
 }
