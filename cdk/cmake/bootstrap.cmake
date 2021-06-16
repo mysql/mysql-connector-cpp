@@ -76,6 +76,11 @@ function(bootstrap)
     list(APPEND cmake_opts "-T" ${CMAKE_GENERATOR_TOOLSET})
   endif()
 
+  if(CMAKE_BUILD_TYPE)
+    message("-- build type: ${CMAKE_BUILD_TYPE}")
+    list(APPEND cmake_opts "-D" "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+  endif()
+
   message("-- ----")
 
   execute_process(
