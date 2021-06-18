@@ -76,8 +76,13 @@ public:
       catch (...)
       {
       }
-
-      detail::close(m_sock);
+      try
+      {
+        detail::close(m_sock);
+      }
+      catch (...)
+      {
+      }
       m_sock = detail::NULL_SOCKET;
     }
   }
