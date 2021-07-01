@@ -110,6 +110,7 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
   case sql::mysql::MYSQL_OPT_COMPRESSION_ALGORITHMS: return ::MYSQL_OPT_COMPRESSION_ALGORITHMS;
   case sql::mysql::MYSQL_OPT_ZSTD_COMPRESSION_LEVEL: return ::MYSQL_OPT_ZSTD_COMPRESSION_LEVEL;
   case sql::mysql::MYSQL_OPT_LOAD_DATA_LOCAL_DIR: return ::MYSQL_OPT_LOAD_DATA_LOCAL_DIR;
+  case sql::mysql::MYSQL_OPT_USER_PASSWORD: return ::MYSQL_OPT_USER_PASSWORD;
 #else
   case sql::mysql::MYSQL_OPT_SSL_VERIFY_SERVER_CERT: return ::MYSQL_OPT_SSL_VERIFY_SERVER_CERT;
   case sql::mysql::MYSQL_OPT_USE_REMOTE_CONNECTION: return ::MYSQL_OPT_USE_REMOTE_CONNECTION;
@@ -340,6 +341,7 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
   my_bool dummy= option_val ? '\1' : '\0';
   return api->options(mysql, get_mysql_option(option), &dummy);
 }
+/* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(int &) */
@@ -349,6 +351,7 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 {
   return api->options(mysql, get_mysql_option(option), &option_val);
 }
+/* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(SQLString &, SQLString &) */
@@ -357,6 +360,16 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
                const ::sql::SQLString &key, const ::sql::SQLString &value)
 {
   return api->options(mysql, get_mysql_option(option), key.c_str(), value.c_str());
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::options(int &, SQLString &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+               const int &factor, const ::sql::SQLString &value)
+{
+  return api->options(mysql, get_mysql_option(option), &factor, value.c_str());
 }
 /* }}} */
 

@@ -91,6 +91,7 @@ public:
   TEST_CASE(cached_sha2_auth);
   TEST_CASE(socket);
   TEST_CASE(dns_srv);
+  TEST_CASE(mfa);
   }
 
   /**
@@ -282,6 +283,13 @@ public:
    *
    */
   void dns_srv();
+
+  /*
+   * Test of MySQL_Connection::mfa()
+   *
+   */
+  void mfa();
+
 
 };
 

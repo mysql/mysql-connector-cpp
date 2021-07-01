@@ -127,6 +127,8 @@ public:
   int options(::sql::mysql::MySQL_Connection_Options, const int &) override;
   int options(::sql::mysql::MySQL_Connection_Options,
         const ::sql::SQLString &, const ::sql::SQLString &) override;
+  int options(::sql::mysql::MySQL_Connection_Options,
+              const int &, const ::sql::SQLString &) override;
 
   int get_option(::sql::mysql::MySQL_Connection_Options, const void * ) override;
   int get_option(::sql::mysql::MySQL_Connection_Options,

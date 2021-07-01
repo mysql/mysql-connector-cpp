@@ -573,6 +573,42 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       } else {
         throw sql::InvalidArgumentException("No string value passed for password");
       }
+    } else if (!it->first.compare(OPT_PASSWORD1)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password1 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 1;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password1");
+      }
+    } else if (!it->first.compare(OPT_PASSWORD2)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password2 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 2;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password2");
+      }
+    } else if (!it->first.compare(OPT_PASSWORD3)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password3 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 3;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password3");
+      }
     } else if (!it->first.compare(OPT_PORT)) {
       try {
         p_i = (it->second).get< int >();
