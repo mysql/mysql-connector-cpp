@@ -3110,21 +3110,31 @@ TEST_F(Crud, PS_find)
   docs = cFind.execute();
   check_ps("my_name_only", 0);
 
-  cFind.fields("max(age) as my_age", "name as my_name_only").groupBy("misc", "name").having("max(my_age) = 5");
-  docs = cFind.execute();
-  check_ps("my_age", 0);
-  check_ps("my_name_only", 0);
+  //This try/catch block is only needed untill BUG#33149565 is fixed.
+  //Remove it when this fails
+  try {
+    cFind.fields("max(age) as my_age", "name as my_name_only").groupBy("misc", "name").having("max(my_age) = 5");
+    docs = cFind.execute();
+    check_ps("my_age", 0);
+    check_ps("my_name_only", 0);
 
-  cFind.having("max(my_age) = 6");
-  docs = cFind.execute();
-  check_ps("my_age", 0);
-  check_ps("my_age", 0);
-  check_ps("= 6", 0);
 
-  docs = cFind.execute();
-  check_ps("my_age", 1);
-  check_ps("my_age", 1);
-  check_ps("= 6", 1);
+
+    cFind.having("max(my_age) = 6");
+    docs = cFind.execute();
+    check_ps("my_age", 0);
+    check_ps("my_age", 0);
+    check_ps("= 6", 0);
+
+    docs = cFind.execute();
+    check_ps("my_age", 1);
+    check_ps("my_age", 1);
+    check_ps("= 6", 1);
+
+    FAIL() << "BUG#33149565 is fixed";
+  }  catch (const mysqlx::Error &) {
+    std::cout << "Throws untill BUG#33149565 is fixed." << std::endl;
+  }
 
   /* Check multi fields */
   cFind = coll.find("F1 like :F1 AND F2 > :F2").fields("F1 as my_F1");
