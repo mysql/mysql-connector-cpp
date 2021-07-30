@@ -132,6 +132,11 @@
 #define OPT_READ_DEFAULT_GROUP      "readDefaultGroup"
 #define OPT_READ_DEFAULT_FILE       "readDefaultFile"
 
+/*
+  Auth plugin options
+*/
+#define OPT_OCI_CONFIG_FILE "OPT_OCI_CONFIG_FILE"
+
 
 namespace sql
 {

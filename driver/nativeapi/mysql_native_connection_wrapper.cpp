@@ -412,6 +412,46 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
 }
 /* }}} */
 
+int
+MySQL_NativeConnectionWrapper::plugin_option(
+    int plugin_type,
+    const ::sql::SQLString & plugin_name,
+    const ::sql::SQLString & option,
+    const ::sql::SQLString & value)
+try{
+
+  /* load client authentication plugin if required */
+  struct st_mysql_client_plugin *plugin =
+      api->client_find_plugin(mysql, plugin_name.c_str(), plugin_type);
+
+  /* set option value in plugin */
+  return api->plugin_options(plugin, option.c_str(), value.c_str());
+
+}
+catch(sql::InvalidArgumentException &e)
+{
+  std::string err(e.what());
+  err+= " for plugin " + plugin_name;
+  throw sql::InvalidArgumentException(err);
+}
+
+int MySQL_NativeConnectionWrapper::get_plugin_option(
+    int plugin_type,
+    const ::sql::SQLString & plugin_name,
+    const ::sql::SQLString & option,
+    const ::sql::SQLString & value)
+{
+
+
+  /* load client authentication plugin if required */
+  struct st_mysql_client_plugin *plugin =
+      api->client_find_plugin(mysql, plugin_name.c_str(),
+                              plugin_type);
+
+  /* get option value from plugin */
+  return api->plugin_get_option(plugin, option.c_str(), (void*)value.c_str());
+}
+
 
 /* {{{ MySQL_NativeConnectionWrapper::has_query_attributes() */
 bool MySQL_NativeConnectionWrapper::has_query_attributes()

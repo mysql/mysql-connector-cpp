@@ -136,6 +136,16 @@ public:
   int get_option(::sql::mysql::MySQL_Connection_Options, const bool &) override;
   int get_option(::sql::mysql::MySQL_Connection_Options, const int &) override;
 
+  int plugin_option(int plugin_type,
+                    const ::sql::SQLString & plugin_name,
+                    const ::sql::SQLString & option,
+                    const ::sql::SQLString & value) override;
+
+  int get_plugin_option(int plugin_type,
+                        const ::sql::SQLString & plugin_name,
+                        const ::sql::SQLString & option,
+                        const ::sql::SQLString & value) override;
+
   bool has_query_attributes() override;
 
   bool query_attr(unsigned number, const char **names, MYSQL_BIND *) override;

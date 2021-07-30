@@ -103,6 +103,12 @@ typedef int (STDCALL *ptr2mysql_options4)(MYSQL *, enum mysql_option, const void
 
 typedef int (STDCALL *ptr2mysql_get_option)(MYSQL *, enum mysql_option, const void *);
 
+typedef st_mysql_client_plugin* (*ptr2mysql_client_find_plugin)(MYSQL *, const char *, int);
+
+typedef int (*ptr2mysql_plugin_options)(st_mysql_client_plugin*, const char *, const void *);
+
+typedef int (*ptr2mysql_plugin_get_option)(st_mysql_client_plugin*, const char *, void *);
+
 typedef int (STDCALL *ptr2mysql_query)(MYSQL *, const char *);
 
 typedef int (STDCALL *ptr2mysql_ping)(MYSQL *);
@@ -241,6 +247,12 @@ public:
   virtual int options(MYSQL *, enum mysql_option option , const void *arg1, const void *arg2) = 0;
 
   virtual int get_option(MYSQL *, enum mysql_option option , const void *arg) = 0;
+
+  virtual st_mysql_client_plugin* client_find_plugin(MYSQL *, const char *plugin_name, int plugin_type) = 0;
+
+  virtual int plugin_options(st_mysql_client_plugin*, const char *option, const void *value) = 0;
+
+  virtual int plugin_get_option(st_mysql_client_plugin*, const char *option, void *value) =0;
 
   virtual int ping(MYSQL *) = 0;
 
