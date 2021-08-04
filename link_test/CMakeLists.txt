@@ -156,26 +156,6 @@ endif()
 # ========================================================================
 # Dependencies
 
-
-if(NOT OPENSSL_FOUND)
-  if(NOT WITH_SSL MATCHES "^(system|yes)$")
-
-    if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
-      set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
-    endif()
-
-  endif()
-
-  find_package(OpenSSL)
-
-  if(OPENSSL_FOUND)
-    MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
-    MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
-    MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
-  endif()
-
-endif()
-
 #
 # Find Connector/C++ legacy library
 #
@@ -284,33 +264,62 @@ set_target_properties(MySQL::conncpp-jdbc PROPERTIES
 
 
 #
-# We need to link with libraries on which connector depends
-# (however, no need to do it on Windows).
+# When linking statically, we need to link with libraries on which
+# connector depends (however, no need to do it on Windows).
 #
 
-if(NOT WIN32)
+if(BUILD_STATIC AND NOT WIN32)
 
-    # Connector/C++ requires these libraries on Unix.
+  set(libs)
 
-    if(NOT APPLE)
-      set_property(TARGET MySQL::conncpp-jdbc
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  pthread dl rt
-      )
+  # Connector/C++ requires these libraries on Unix.
+
+  if(NOT APPLE)
+    list(APPEND libs pthread dl rt)
+  endif()
+
+  # On Solaris we additionally need couple more libs.
+
+  if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    list(APPEND libs socket nsl)
+  endif()
+
+  if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+    list(APPEND libs execinfo unwind)
+  else()
+    list(APPEND libs resolv)
+  endif()
+
+  # OpenSSL dependency
+
+  if(WITH_SSL MATCHES "^(system|yes)$")
+
+    list(APPEND libs ssl crypto)
+
+  else()
+
+    if(NOT OPENSSL_FOUND)
+
+      if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
+        set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
+      endif()
+
+      find_package(OpenSSL REQUIRED)
+
+      MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
+      MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
+      MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
+
     endif()
 
-    # On Solaris we additionally need couple more libs.
+    list(APPEND libs ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 
-    if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-      set_property(TARGET MySQL::conncpp-jdbc
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  socket nsl
-      )
-    endif()
+  endif()
 
-    if(OPENSSL_FOUND)
-      set_property(TARGET MySQL::conncpp-jdbc
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
-        )
-    endif()
+  set_property(TARGET MySQL::conncpp-jdbc
+    APPEND PROPERTY INTERFACE_LINK_LIBRARIES
+    ${libs}
+  )
 
 endif()
 
@@ -402,30 +411,6 @@ endif(jdbc_test_stand_alone)
 add_executable(jdbc_test jdbc_test.cc)
 target_link_libraries(jdbc_test PRIVATE MySQL::conncpp-jdbc)
 
-if(WIN32)
-  # Connector needs to Link with Dnsapi
-  target_link_libraries(jdbc_test PRIVATE Dnsapi)
-elseif(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-  # Connector needs to Link with libresolv
-  target_link_libraries(jdbc_test PRIVATE resolv)
-endif()
-
-#
-# FreeBSD has other dependencies
-#
-
-if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-  target_link_libraries(jdbc_test PRIVATE execinfo unwind)
-endif()
-
-#
-# We need to link to OpenSSL libraries too.
-#
-
-if(NOT WIN32 AND OPENSSL_FOUND)
-    target_link_libraries(jdbc_test PRIVATE ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
-    )
-endif()
 
 #
 # Set RPATH so that libraries in run/ folder are found by the executable
