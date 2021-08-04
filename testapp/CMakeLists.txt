@@ -45,9 +45,6 @@ PROJECT(MySQL_CONCPP_TEST)
 #
 # WITH_JDBC               also build JDBC API test application
 #
-# WITH_BOOST              where to look for Boost (required only when building
-#                         JDBC API application)
-#
 #
 # Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
 # set.
@@ -122,28 +119,14 @@ set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
   "Set to 'builtin' if connector was built with built-in SSL support"
 )
 
-if(NOT WITH_SSL MATCHES "^(system|yes)$")
-
-  if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
-    set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
-  endif()
-
-endif()
-
-find_package(OpenSSL)
-
-if(OPENSSL_FOUND)
-  MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
-  MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
-  MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
-endif()
-
 option(WITH_JDBC "Also build the JDBC API test application" OFF)
 
 option(BUILD_STATIC "Link statically with the connector library" OFF)
 
 if(BUILD_STATIC)
   message("Linking statically")
+else()
+  message("Liniking dynamically")
 endif()
 
 option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
@@ -266,52 +249,58 @@ set_target_properties(MySQL::conncpp PROPERTIES
 
 
 #
-# We need to link with libraries on which connector depends
-# (however, no need to do it on Windows).
+# When linking statically, we need to link with libraries on which
+# connector depends (however, no need to do it on Windows).
 #
 
-if(NOT WIN32)
+if(BUILD_STATIC AND NOT WIN32)
 
-    # Connector/C++ requires these libraries on Unix.
+  set(libs)
 
-    if(NOT APPLE)
-      set_property(TARGET MySQL::conncpp
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  pthread # rt
-      )
+  # Connector/C++ requires these libraries on Unix.
+
+  if(NOT APPLE)
+    list(APPEND libs pthread)
+  endif()
+
+  # On Solaris we additionally need couple more libs.
+
+  if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    list(APPEND libs socket nsl)
+  endif()
+
+  if(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+    # Connector needs to Link with libresolv
+    list(APPEND libs resolv)
+  endif()
+
+  # OpenSSL dependency
+
+  if(WITH_SSL MATCHES "^(system|yes)$")
+
+    list(APPEND libs ssl crypto)
+
+  else()
+
+    if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
+      set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
     endif()
 
-    # On Solaris we additionally need couple more libs.
+    find_package(OpenSSL REQUIRED)
 
-    if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-      set_property(TARGET MySQL::conncpp
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES  socket nsl
-      )
-    endif()
+    MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
+    MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
+    MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
 
-    #
-    # If connector uses OpenSSL libraries, we need to
-    # link to them too.
-    #
+    list(APPEND libs ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 
-    if(OPENSSL_FOUND)
-      set_property(TARGET MySQL::conncpp
-        APPEND PROPERTY INTERFACE_LINK_LIBRARIES
-        ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
-        )
-    endif()
+  endif()
 
-    if(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-      # Connector needs to Link with libresolv
-      set_property(TARGET MySQL::conncpp
-	APPEND PROPERTY INTERFACE_LINK_LIBRARIES resolv
-      )
-    endif()
-
-else()
-  # Connector needs to Link with Dnsapi
   set_property(TARGET MySQL::conncpp
-    APPEND PROPERTY INTERFACE_LINK_LIBRARIES Dnsapi
+    APPEND PROPERTY INTERFACE_LINK_LIBRARIES
+    ${libs}
   )
+
 endif()
 
 
