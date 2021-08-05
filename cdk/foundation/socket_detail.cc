@@ -54,6 +54,7 @@ PUSH_SYS_WARNINGS_CDK
 #include <arpa/nameser.h>
 #else
 #include <windns.h>
+#pragma comment(lib,"Dnsapi")
 #endif
 POP_SYS_WARNINGS_CDK
 
