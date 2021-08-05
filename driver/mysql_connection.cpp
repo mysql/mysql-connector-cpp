@@ -51,6 +51,7 @@
 #else
 #include <winsock2.h>
 #include <windns.h>
+#pragma comment(lib,"Dnsapi")
 #endif
 #include <mysqld_error.h>
 #include <cppconn/exception.h>
