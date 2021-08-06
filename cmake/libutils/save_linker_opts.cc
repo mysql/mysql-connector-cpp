@@ -30,15 +30,26 @@
 
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 
 using namespace std;
 
 int main(int argc, char* argv[])
 {
+  char pwd[1024];
+
+  if (!getcwd(pwd, sizeof(pwd)))
+    return 1;
+
   //cout << "Got " << argc << " arguments" << endl;
   //cout << "Output file: " << argv[1] << endl;
+  //cout << "pwd: " << pwd << endl;
 
   ofstream out(argv[1]);
+
+  // Note: first line in the output is the working directory
+
+  out << pwd << endl;
 
   // Note: argv[2] is the compiler/linker command
 

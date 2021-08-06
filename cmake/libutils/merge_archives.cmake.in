@@ -126,10 +126,20 @@ function(main)
   #
 
   if(MSBUILD)
+
     parse_build_log_msbuild("${BUILD_LOG}")
+    set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
   else()
+ 
     # In this case BUILD_LOG contains extracted linker options, one per line
+    # but the first line is the working directory in which the linker was
+    # invoked (important for resolving relative paths)
+  
     file(STRINGS "${BUILD_LOG}" DEPS)
+    list(GET DEPS 0 BUILD_DIR)
+    list(REMOVE_AT DEPS 0) 
+
   endif()
 
   #
@@ -231,6 +241,7 @@ function(merge_libraries_gcc)
         -o "${TARGET}"
         ${link_line}
       RESULT_VARIABLE res
+      WORKING_DIRECTORY ${BUILD_DIR}
     )
 
     if(res)
@@ -325,10 +336,12 @@ function(merge_libraries_gcc)
   execute_process(
     COMMAND ${CMAKE_AR} -r ${TARGET} ${merge_objs}
     RESULT_VARIABLE res
+    WORKING_DIRECTORY ${BUILD_DIR}
   )
   execute_process(
     COMMAND ${CMAKE_RANLIB} ${TARGET}
     RESULT_VARIABLE res1
+    WORKING_DIRECTORY ${BUILD_DIR}
   )
 
   if(res OR res1)
@@ -368,6 +381,7 @@ function(merge_libraries_win)
     OUTPUT_VARIABLE merge_out
     ERROR_VARIABLE  merge_err
     RESULT_VARIABLE merge_res
+    WORKING_DIRECTORY ${BUILD_DIR}
   )
  #message("-- merge_res: ${merge_res}")
 
@@ -435,6 +449,7 @@ function(merge_libraries_apple)
         -o "${TARGET}"
         ${link_line}
       RESULT_VARIABLE res
+      WORKING_DIRECTORY ${BUILD_DIR}
     )
 
     if(res)
@@ -462,6 +477,7 @@ function(merge_libraries_apple)
     ERROR_VARIABLE  merge_err
     RESULT_VARIABLE merge_res
     ERROR_QUIET
+    WORKING_DIRECTORY ${BUILD_DIR}
   )
   #message("-- merge_res: ${merge_res}")
 
