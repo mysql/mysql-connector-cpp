@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -62,6 +62,8 @@ IF(DEB_CODENAME STREQUAL "stretch")
   SET (DEB_PLATFORMRELEASE "debian9")
 ELSEIF(DEB_CODENAME STREQUAL "buster")
   SET (DEB_PLATFORMRELEASE "debian10")
+ELSEIF(DEB_CODENAME STREQUAL "bullseye")
+  SET (DEB_PLATFORMRELEASE "debian11")
 ELSEIF(DEB_CODENAME STREQUAL "sid")
   IF (DEFINED DEB_GCC_SNAPSHOT)
     SET (DEB_CMAKE_EXTRAS "${DEB_CMAKE_EXTRAS} -DCMAKE_C_COMPILER=/usr/lib/gcc-snapshot/bin/gcc -DCMAKE_CXX_COMPILER=/usr/lib/gcc-snapshot/bin/g++ -DMYSQL_MAINTAINER_MODE=0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
