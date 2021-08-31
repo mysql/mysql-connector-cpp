@@ -359,7 +359,9 @@ int
 LibmysqlStaticProxy::plugin_options(st_mysql_client_plugin *plugin, const char *option, const void *value)
 {
   if (::mysql_plugin_options(plugin, option, value)) {
-    throw sql::InvalidArgumentException("Unsupported option provided to mysql_plugin_options()");
+    std::string err("Failed to set plugin option");
+    err += " '" + std::string(option) + "'";
+    throw sql::InvalidArgumentException(err);
   } else {
     return 0;
   }

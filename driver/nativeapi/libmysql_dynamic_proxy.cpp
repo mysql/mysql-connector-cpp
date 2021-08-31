@@ -482,12 +482,14 @@ LibmysqlDynamicProxy::plugin_options(st_mysql_client_plugin *plugin, const char 
   static ptr2mysql_plugin_options ptr2_plugin_options = symbol_safe_cast<ptr2mysql_plugin_options>(GetProcAddr("mysql_plugin_options"));
   if (ptr2_plugin_options != NULL) {
     if (((*ptr2_plugin_options)(plugin, option, value))) {
-      throw sql::InvalidArgumentException("Unsupported option provided to mysql_plugin_options()");
+      std::string err("Failed to set plugin option");
+      err += " '" + std::string(option) + "'";
+      throw sql::InvalidArgumentException(err);
     } else {
       return 0;
     }
   } else {
-    throw ::sql::MethodNotImplementedException("::mysql_options4()");
+    throw ::sql::MethodNotImplementedException("::mysql_plugin_options");
   }
 }
 /* }}} */
