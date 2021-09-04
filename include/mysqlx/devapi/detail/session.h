@@ -85,6 +85,11 @@ protected:
     : m_sess(sess), m_name(name)
   {}
 
+  Db_obj_base(const Db_obj_base&) = default;
+  Db_obj_base& operator=(const Db_obj_base&) = default;
+  Db_obj_base(Db_obj_base&&) = default;
+  Db_obj_base& operator=(Db_obj_base&&) = default;
+
   virtual ~Db_obj_base()
   {}
 };
