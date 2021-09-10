@@ -338,6 +338,50 @@ LibmysqlStaticProxy::get_option(MYSQL * mysql, enum mysql_option option, const v
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::client_find_plugin() */
+st_mysql_client_plugin*
+LibmysqlStaticProxy::client_find_plugin(MYSQL *mysql, const char *plugin_name, int plugin_type)
+{
+  auto *plugin = ::mysql_client_find_plugin(mysql, plugin_name, plugin_type);
+  if(!plugin)
+  {
+    std::string err("Couldn't load plugin ");
+    err+=plugin_name;
+    throw sql::MethodNotImplementedException(err);
+  }
+  return plugin;
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::plugin_options() */
+int
+LibmysqlStaticProxy::plugin_options(st_mysql_client_plugin *plugin, const char *option, const void *value)
+{
+  if (::mysql_plugin_options(plugin, option, value)) {
+    std::string err("Failed to set plugin option");
+    err += " '" + std::string(option) + "'";
+    throw sql::InvalidArgumentException(err);
+  } else {
+    return 0;
+  }
+}
+/* }}} */
+
+
+/* {{{ LibmysqlStaticProxy::plugin_get_option() */
+int
+LibmysqlStaticProxy::plugin_get_option(st_mysql_client_plugin *plugin, const char *option, void *value)
+{
+  if (::mysql_plugin_get_option(plugin, option, value)) {
+    throw sql::InvalidArgumentException("Unsupported option provided to mysql_plugin_get_option()");
+  } else {
+    return 0;
+  }
+}
+/* }}} */
+
+
 /* {{{ LibmysqlStaticProxy::query() */
 int
 LibmysqlStaticProxy::query(MYSQL * mysql, const char *stmt_str)

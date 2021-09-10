@@ -3741,5 +3741,143 @@ void connection::dns_srv()
   }
 }
 
+void connection::mfa()
+{
+  logMsg("connection::mfa - multi factor authentication");
+
+  try {
+    stmt->execute("UNINSTALL PLUGIN cleartext_plugin_server");
+  }  catch (...) {
+  }
+
+  try {
+    stmt->execute("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin.so'");
+  }  catch (...) {
+    SKIP("Server doesn't support auth test plugin cleartext_plugin_server");
+  }
+
+  struct MFA_TEST_DATA
+  {
+    const char* user;
+    const char* pwd;
+    const char* pwd1;
+    const char* pwd2;
+    const char* pwd3;
+    bool succeed;
+  };
+
+
+  MFA_TEST_DATA test_data[] =
+  {
+  // user1 tests
+  {"user_1f", "pass1", nullptr, nullptr, nullptr, true  },
+  {"user_1f", "pass1", "pass1", nullptr, nullptr, true  },
+  {"user_1f", "badp1", "pass1", nullptr, nullptr, true  },
+  {"user_1f", nullptr, "pass1", nullptr, nullptr, true  },
+
+  {"user_1f", nullptr, nullptr, nullptr, nullptr, false },
+  {"user_1f", "badp1", "badp1", "pass1", nullptr, false },
+  {"user_1f", nullptr, nullptr, "pass1", nullptr, false },
+  {"user_1f", nullptr, nullptr, nullptr, "pass1", false },
+
+  // user2 tests
+  {"user_2f", "pass1", nullptr, "pass2", nullptr, true  },
+  {"user_2f", "pass1", "pass1", "pass2", nullptr, true  },
+  {"user_2f", "badp1", "pass1", "pass2", nullptr, true  },
+  {"user_2f", nullptr, "pass1", "pass2", nullptr, true  },
+
+  {"user_2f", "pass2", nullptr, "pass1", nullptr, false },
+  {"user_2f", "pass2", "pass2", "pass1", nullptr, false },
+  {"user_2f", "pass2", "badp2", "pass1", nullptr, false },
+  {"user_2f", nullptr, "pass2", "pass1", nullptr, false },
+
+  {"user_2f", "pass1", nullptr, nullptr, "pass2", false },
+  {"user_2f", "pass1", "pass1", nullptr, "pass2", false },
+  {"user_2f", "badp1", "pass1", nullptr, "pass2", false },
+  {"user_2f", nullptr, "pass1", nullptr, "pass2", false },
+
+  {"user_2f", "pass1", nullptr   , "badp1", "pass2", false },
+  {"user_2f", "pass1", "pass1", "badp1", "pass2", false },
+  {"user_2f", "badp1", "pass1", "badp1", "pass2", false },
+  {"user_2f", nullptr   , "pass1", "badp1", "pass2", false },
+
+  // user3 tests
+  {"user_3f", "pass1", nullptr   , "pass2", "pass3", true  },
+  {"user_3f", "pass1", "pass1", "pass2", "pass3", true  },
+  {"user_3f", "badp1", "pass1", "pass2", "pass3", true  },
+  {"user_3f", nullptr   , "pass1", "pass2", "pass3", true  },
+
+  {"user_3f", "pass1", nullptr   , "pass3", "pass2", false },
+  {"user_3f", "pass1", "pass1", "pass3", "pass2", false },
+  {"user_3f", "badp1", "pass1", "pass3", "pass2", false },
+  {"user_3f", nullptr   , "pass1", "pass3", "pass2", false },
+
+  {"user_3f", "pass3", nullptr   , "badp1", "pass2", false },
+  {"user_3f", "pass3", "pass3", "badp1", "pass2", false },
+  {"user_3f", "pass3", "badp3", "badp1", "pass2", false },
+  {"user_3f", nullptr   , "pass3", "badp1", "pass2", false },
+
+  {"user_3f", "pass1", nullptr   , "pass2", "badp3", false },
+  {"user_3f", "pass1", "pass1", "pass2", "badp3", false },
+  {"user_3f", "badp1", "pass1", "pass2", "badp3", false },
+  {"user_3f", nullptr   , "pass1", "pass2", "badp3", false },
+
+  };
+
+
+  stmt->execute("drop user if exists  user_1f");
+  stmt->execute("drop user if exists  user_2f");
+  stmt->execute("drop user if exists  user_3f");
+
+  stmt->execute("create user user_1f IDENTIFIED WITH cleartext_plugin_server BY 'pass1'");
+  stmt->execute("create user user_2f IDENTIFIED WITH cleartext_plugin_server BY 'pass1' "
+                "AND IDENTIFIED WITH cleartext_plugin_server BY 'pass2'; ");
+  stmt->execute("create user user_3f IDENTIFIED WITH cleartext_plugin_server by 'pass1' "
+                "AND IDENTIFIED WITH cleartext_plugin_server BY 'pass2' "
+                "AND IDENTIFIED WITH cleartext_plugin_server BY 'pass3'; ");
+
+
+  auto check_connection = [this] (sql::Connection* conn) -> void
+  {
+    std::unique_ptr<sql::Statement> my_stmt(conn->createStatement());
+    std::unique_ptr<sql::ResultSet> my_res(my_stmt->executeQuery("select @@version"));
+    my_res->next();
+    std::string version = my_res->getString(1);
+
+    logMsg(std::string("Server Version ")+version);
+
+    delete conn;
+  };
+
+  for(auto &data : test_data)
+  {
+    sql::ConnectOptionsMap opt;
+    opt[OPT_ENABLE_CLEARTEXT_PLUGIN] = true;
+    opt[OPT_USERNAME] = data.user;
+    if(data.pwd)
+      opt[OPT_PASSWORD] = data.pwd;
+    if(data.pwd1)
+      opt[OPT_PASSWORD1] = data.pwd1;
+    if(data.pwd2)
+      opt[OPT_PASSWORD2] = data.pwd2;
+    if(data.pwd3)
+      opt[OPT_PASSWORD3] = data.pwd3;
+
+    if(data.succeed)
+    {
+      check_connection(getConnection(&opt));
+    }
+    else
+    {
+      try {
+        getConnection(&opt);
+        FAIL("Should fail to connect");
+      }  catch (sql::SQLException&) {
+      }
+    }
+  }
+
+}
+
 } /* namespace connection */
 } /* namespace testsuite */

@@ -110,6 +110,7 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
   case sql::mysql::MYSQL_OPT_COMPRESSION_ALGORITHMS: return ::MYSQL_OPT_COMPRESSION_ALGORITHMS;
   case sql::mysql::MYSQL_OPT_ZSTD_COMPRESSION_LEVEL: return ::MYSQL_OPT_ZSTD_COMPRESSION_LEVEL;
   case sql::mysql::MYSQL_OPT_LOAD_DATA_LOCAL_DIR: return ::MYSQL_OPT_LOAD_DATA_LOCAL_DIR;
+  case sql::mysql::MYSQL_OPT_USER_PASSWORD: return ::MYSQL_OPT_USER_PASSWORD;
 #else
   case sql::mysql::MYSQL_OPT_SSL_VERIFY_SERVER_CERT: return ::MYSQL_OPT_SSL_VERIFY_SERVER_CERT;
   case sql::mysql::MYSQL_OPT_USE_REMOTE_CONNECTION: return ::MYSQL_OPT_USE_REMOTE_CONNECTION;
@@ -340,6 +341,7 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
   my_bool dummy= option_val ? '\1' : '\0';
   return api->options(mysql, get_mysql_option(option), &dummy);
 }
+/* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(int &) */
@@ -349,6 +351,7 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
 {
   return api->options(mysql, get_mysql_option(option), &option_val);
 }
+/* }}} */
 
 
 /* {{{ MySQL_NativeConnectionWrapper::options(SQLString &, SQLString &) */
@@ -357,6 +360,16 @@ MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options op
                const ::sql::SQLString &key, const ::sql::SQLString &value)
 {
   return api->options(mysql, get_mysql_option(option), key.c_str(), value.c_str());
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeConnectionWrapper::options(int &, SQLString &) */
+int
+MySQL_NativeConnectionWrapper::options(::sql::mysql::MySQL_Connection_Options option,
+               const int &factor, const ::sql::SQLString &value)
+{
+  return api->options(mysql, get_mysql_option(option), &factor, value.c_str());
 }
 /* }}} */
 
@@ -398,6 +411,46 @@ MySQL_NativeConnectionWrapper::get_option(::sql::mysql::MySQL_Connection_Options
   return api->get_option(mysql, get_mysql_option(option), &option_val);
 }
 /* }}} */
+
+int
+MySQL_NativeConnectionWrapper::plugin_option(
+    int plugin_type,
+    const ::sql::SQLString & plugin_name,
+    const ::sql::SQLString & option,
+    const ::sql::SQLString & value)
+try{
+
+  /* load client authentication plugin if required */
+  struct st_mysql_client_plugin *plugin =
+      api->client_find_plugin(mysql, plugin_name.c_str(), plugin_type);
+
+  /* set option value in plugin */
+  return api->plugin_options(plugin, option.c_str(), value.c_str());
+
+}
+catch(sql::InvalidArgumentException &e)
+{
+  std::string err(e.what());
+  err+= " for plugin " + plugin_name;
+  throw sql::InvalidArgumentException(err);
+}
+
+int MySQL_NativeConnectionWrapper::get_plugin_option(
+    int plugin_type,
+    const ::sql::SQLString & plugin_name,
+    const ::sql::SQLString & option,
+    const ::sql::SQLString & value)
+{
+
+
+  /* load client authentication plugin if required */
+  struct st_mysql_client_plugin *plugin =
+      api->client_find_plugin(mysql, plugin_name.c_str(),
+                              plugin_type);
+
+  /* get option value from plugin */
+  return api->plugin_get_option(plugin, option.c_str(), (void*)value.c_str());
+}
 
 
 /* {{{ MySQL_NativeConnectionWrapper::has_query_attributes() */

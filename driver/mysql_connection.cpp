@@ -507,10 +507,13 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   bool secure_auth= true;
 #endif
 
+  sql::ConnectOptionsMap::const_iterator it;
+
   /* Port from options must be set as default for all hosts where port
      is not specified */
   {
-    sql::ConnectOptionsMap::const_iterator it = properties.find("port");
+    it = properties.find("port");
+
     if (it != properties.end())	{
       try {
         p_i = (it->second).get< int >();
@@ -527,31 +530,56 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   /* Values set in properties individually should have priority over those
      we restore from Uri */
-  sql::ConnectOptionsMap::const_iterator it = properties.find("hostName");
+  {
+    it = properties.find("hostName");
 
-  if (it != properties.end())	{
-    try {
-      p_s = (it->second).get< sql::SQLString >();
-    } catch (sql::InvalidArgumentException&) {
-      throw sql::InvalidArgumentException("Wrong type passed for userName expected sql::SQLString");
-    }
-    if (p_s) {
-      /*
-        Parsing uri prior to processing all parameters, so indivudually
-        specified parameters precede over those in the uri
-      */
-      if(!parseUri(*p_s, uri))
-        throw sql::InvalidArgumentException("Invalid hostname URI");
+    if (it != properties.end())	{
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for userName expected sql::SQLString");
+      }
+      if (p_s) {
+        /*
+          Parsing uri prior to processing all parameters, so indivudually
+          specified parameters precede over those in the uri
+        */
+        if(!parseUri(*p_s, uri))
+          throw sql::InvalidArgumentException("Invalid hostname URI");
 
-    } else {
-      throw sql::InvalidArgumentException("No string value passed for hostName");
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for hostName");
+      }
     }
   }
 
+  /*
+    Note: We set pluginDir option early because other options that are plugin
+    specific might require loading plugins before they can be set.
+  */
 
-#define PROCESS_CONN_OPTION(option_type, options_map) process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
+  {
+    it = properties.find(OPT_PLUGIN_DIR);
 
-    for (it = properties.begin(); it != properties.end(); ++it) {
+    if (it != properties.end()) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for pluginDir expected sql::SQLString");
+      }
+      if (p_s) {
+        proxy->options(sql::mysql::MYSQL_PLUGIN_DIR, *p_s);
+      }
+      else {
+        throw sql::InvalidArgumentException("No string value passed for pluginDir");
+      }
+    }
+  }
+
+#define PROCESS_CONN_OPTION(option_type, options_map) \
+  process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
+
+  for (it = properties.begin(); it != properties.end(); ++it) {
     if (!it->first.compare(OPT_USERNAME)) {
       try {
         p_s = (it->second).get< sql::SQLString >();
@@ -573,6 +601,42 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         password = *p_s;
       } else {
         throw sql::InvalidArgumentException("No string value passed for password");
+      }
+    } else if (!it->first.compare(OPT_PASSWORD1)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password1 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 1;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password1");
+      }
+    } else if (!it->first.compare(OPT_PASSWORD2)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password2 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 2;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password2");
+      }
+    } else if (!it->first.compare(OPT_PASSWORD3)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for password3 expected sql::SQLString");
+      }
+      if (p_s) {
+        int num = 3;
+        proxy->options(sql::mysql::MYSQL_OPT_USER_PASSWORD, num, *p_s);
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for password3");
       }
     } else if (!it->first.compare(OPT_PORT)) {
       try {
@@ -716,7 +780,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       intern->defaultStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_i);
     /* The connector is not ready for unbuffered as we need to refetch */
     } else if (!it->first.compare("defaultPreparedStatementResultType")) {
-#if WE_SUPPORT_USE_RESULT_WITH_PS
+  #if WE_SUPPORT_USE_RESULT_WITH_PS
       try {
         p_i = (it->second).get< int >();
       } catch (sql::InvalidArgumentException&) {
@@ -739,10 +803,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException(msg.str());
       } while (0);
       intern->defaultPreparedStatementResultType = static_cast< sql::ResultSet::enum_type >(*p_i);
-#else
+  #else
       throw SQLException("defaultPreparedStatementResultType parameter still not implemented");
 
-#endif
+  #endif
     } else if (!it->first.compare(OPT_METADATA_INFO_SCHEMA)) {
       try {
         p_b = (it->second).get<bool>();
@@ -832,13 +896,13 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       } catch (sql::InvalidArgumentException&) {
         throw sql::InvalidArgumentException("Wrong type passed for useLegacyAuth expected sql::SQLString");
       }
-#if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
+  #if MYCPPCONN_STATIC_MYSQL_VERSION_ID < 80000
       if (p_b) {
         secure_auth= !*p_b;
       } else {
         throw sql::InvalidArgumentException("No bool value passed for useLegacyAuth");
       }
-#endif
+  #endif
     } else if (!it->first.compare(OPT_CONNECT_ATTR_ADD)) {
       const std::map< sql::SQLString, sql::SQLString > *conVal;
       try {
@@ -874,27 +938,48 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     } else if (!it->first.compare(OPT_CONNECT_ATTR_RESET)) {
       proxy->options(MYSQL_OPT_CONNECT_ATTR_RESET, 0);
 
-#if MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80000
+  #if MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80000
 
     //Deprecated
     } else if (!it->first.compare("sslVerify")) {
 
       ssl_mode ssl_mode_val = (it->second).get< bool >() ? SSL_MODE_VERIFY_CA
-                                           : SSL_MODE_PREFERRED;
+                                            : SSL_MODE_PREFERRED;
       proxy->options(MYSQL_OPT_SSL_MODE, &ssl_mode_val);
 
     //Deprecated
     } else if (!it->first.compare("sslEnforce")) {
       ssl_mode ssl_mode_val = (it->second).get< bool >() ? SSL_MODE_REQUIRED
-                                                         : SSL_MODE_PREFERRED;
+                                                          : SSL_MODE_PREFERRED;
       proxy->options(MYSQL_OPT_SSL_MODE, &ssl_mode_val);
 
-#endif
+  #endif
+    } else if (!it->first.compare(OPT_OCI_CONFIG_FILE)) {
+      try {
+        p_s= (it->second).get<sql::SQLString>();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for OPT_OCI_CONFIG_FILE. Expected sql::SQLString.");
+      }
 
+      try {
+        proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                                "authentication_oci_client",
+                                "oci-config-file",
+                                *p_s);
+      }  catch (sql::InvalidArgumentException &e) {
+        throw ::sql::SQLUnsupportedOptionException(
+          "Failed to set config file for authentication_oci_client plugin",
+          OPT_OCI_CONFIG_FILE
+        );
+      }
+
+    }
+    else if (!it->first.compare(OPT_PLUGIN_DIR)) {
+      // Nothing to do here: this option was handeld before the loop
 
     /* If you need to add new integer connection option that should result in
-       calling mysql_optiong - add its mapping to the intOptions array
-     */
+        calling mysql_optiong - add its mapping to the intOptions array
+      */
     } else if (PROCESS_CONN_OPTION(int, intOptions)) {
       // Nothing to do here
 

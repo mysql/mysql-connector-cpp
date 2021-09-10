@@ -140,6 +140,12 @@ public:
 
   int get_option(MYSQL *, enum mysql_option, const void *) override;
 
+  st_mysql_client_plugin* client_find_plugin(MYSQL *, const char *plugin_name, int plugin_type) override;
+
+  int plugin_options(st_mysql_client_plugin*, const char *option, const void *value) override;
+
+  int plugin_get_option(st_mysql_client_plugin*, const char *option, void *value) override;
+
   int ping(MYSQL *) override;
 
   int query(MYSQL *, const char *) override;
