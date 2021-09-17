@@ -174,6 +174,7 @@ void resultsetmetadata::doGetColumnCount(bool is_ps)
 void resultsetmetadata::getColumnDisplaySize()
 {
   logMsg("resultsetmetadata::getColumnDisplaySize() - MySQL_ResultSetMetaData::getColumnDisplaySize()");
+  SKIP("Untill Bug #33357146 is fixed");
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
