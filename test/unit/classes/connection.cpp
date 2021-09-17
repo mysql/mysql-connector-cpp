@@ -3239,19 +3239,25 @@ void connection::localInfile()
       temp_dir = "/tmp/";
 #endif
 
-      dir = temp_dir + "test/";
+#ifndef _WIN32
+      std::string pid = std::to_string(getpid());
+#else
+      std::string pid = std::to_string(GetCurrentProcessId());
+#endif
+
+      dir = temp_dir + std::string("test")+pid+"/";
       file_path = dir + "infile.txt";
 
       dataDir dir_test(dir);
-      dataDir dir_link(temp_dir + "test_link/");
-      dataDir dir_subdir_link(temp_dir + "test_subdir_link/");
+      dataDir dir_link(temp_dir + "test_link" + pid +"/");
+      dataDir dir_subdir_link(temp_dir + "test_subdir_link" + pid + "/");
 
       dataFile infile(dir, "infile.txt");
 
 #ifndef _WIN32
-      dataFile infile_wo("/tmp/test/", "infile_wo.txt", true);
-      dataSymlink sl(file_path, temp_dir + "test_link/link_infile.txt");
-      dataSymlink sld(dir, temp_dir + "test_subdir_link/subdir");
+      dataFile infile_wo(dir, "infile_wo.txt", true);
+      dataSymlink sl(file_path, temp_dir + "test_link"+ pid + "/link_infile.txt");
+      dataSymlink sld(dir, temp_dir + "test_subdir_link"+ pid + "/subdir");
       std::string sld_file = sld.path();
       sld_file.append("/infile.txt");
 #endif
