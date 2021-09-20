@@ -174,7 +174,6 @@ void resultsetmetadata::doGetColumnCount(bool is_ps)
 void resultsetmetadata::getColumnDisplaySize()
 {
   logMsg("resultsetmetadata::getColumnDisplaySize() - MySQL_ResultSetMetaData::getColumnDisplaySize()");
-  SKIP("Untill Bug #33357146 is fixed");
   try
   {
     /* This is a dull test, its about code coverage not achieved with the JDBC tests */
@@ -202,7 +201,8 @@ void resultsetmetadata::doGetColumnDisplaySize(bool is_ps)
   ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(2));
   ASSERT_EQUALS((unsigned int) 5, meta->getColumnDisplaySize(3));
   ASSERT_EQUALS((unsigned int) 1, meta->getColumnDisplaySize(4));
-  ASSERT_EQUALS((unsigned int) 3, meta->getColumnDisplaySize(5));
+  // Integer now adds +1 for sign
+  ASSERT_EQUALS((unsigned int) 4, meta->getColumnDisplaySize(5));
 
   try
   {
@@ -1286,9 +1286,6 @@ void resultsetmetadata::doIsSearchable(bool is_ps)
 void resultsetmetadata::isSigned()
 {
   logMsg("resultsetmetadata::isSigned() - MySQL_ResultSetMetaData::isSigned");
-
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
 
   std::stringstream sql;
   std::vector<columndefinition>::iterator it;
