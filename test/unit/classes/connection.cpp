@@ -2457,9 +2457,6 @@ void connection::connectAttrAdd()
 {
   logMsg("connection::connectAttr - MYSQL_OPT_CONNECT_ATTR_ADD|MYSQL_OPT_CONNECT_ATTR_DELETE");
 
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
-
   int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 56006)
   {
@@ -2628,11 +2625,11 @@ void connection::connectAttrAdd()
     if (perf_conn_attr_size < 512) {
       SKIP("The performance_schema_session_connect_attrs_size is less then 512");
     } else if (perf_conn_attr_size >= 512 && perf_conn_attr_size < 1024) {
-      max_count= 32;
+      max_count= 20;
     } else if (perf_conn_attr_size >= 1024 && perf_conn_attr_size < 2048) {
-      max_count= 64;
+      max_count= 50;
     } else if (perf_conn_attr_size >= 2048) {
-      max_count= 128;
+      max_count= 100;
     }
 
     try
@@ -2645,7 +2642,7 @@ void connection::connectAttrAdd()
 
       for (i=1; i <= max_count; ++i) {
         skey.str("");
-        skey << "keymu" << i;
+        skey << "keymu" <<  std::setw(3) << std::setfill('0') << i;
         connectAttrMap[skey.str()] = "value";
       }
 
@@ -2659,12 +2656,12 @@ void connection::connectAttrAdd()
       stmt.reset(conn2->createStatement());
       res.reset(stmt->executeQuery("SELECT ATTR_NAME, ATTR_VALUE FROM "
             "performance_schema.session_account_connect_attrs WHERE "
-            "ATTR_NAME LIKE '%keymu%' ORDER BY SUBSTRING(ATTR_NAME, 6)+0 ASC;"));
+            "ATTR_NAME LIKE '%keymu%' ORDER BY SUBSTRING(ATTR_NAME, 6) ASC;"));
 
       i=0;
       while (res->next()) {
         skey.str("");
-        skey << "keymu" << ++i;
+        skey << "keymu" << std::setw(3) << std::setfill('0') << ++i;
         ASSERT_EQUALS(res->getString("ATTR_NAME"), skey.str());
         ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value");
       }
@@ -3078,7 +3075,7 @@ void connection::localInfile()
 
       sql::SQLString orig_dir_path = load_data_path;
       sql::SQLString dir_path = conn->getClientOption(OPT_LOAD_DATA_LOCAL_DIR);
-      ASSERT_EQUALS(orig_dir_path, dir_path);
+      ASSERT( dir_path->find(orig_dir_path) != sql::SQLString::npos);
 
       conn->setClientOption(OPT_LOAD_DATA_LOCAL_DIR, nullptr);
 
@@ -3239,19 +3236,25 @@ void connection::localInfile()
       temp_dir = "/tmp/";
 #endif
 
-      dir = temp_dir + "test/";
+#ifndef _WIN32
+      std::string pid = std::to_string(getpid());
+#else
+      std::string pid = std::to_string(GetCurrentProcessId());
+#endif
+
+      dir = temp_dir + std::string("test")+pid+"/";
       file_path = dir + "infile.txt";
 
       dataDir dir_test(dir);
-      dataDir dir_link(temp_dir + "test_link/");
-      dataDir dir_subdir_link(temp_dir + "test_subdir_link/");
+      dataDir dir_link(temp_dir + "test_link" + pid +"/");
+      dataDir dir_subdir_link(temp_dir + "test_subdir_link" + pid + "/");
 
       dataFile infile(dir, "infile.txt");
 
 #ifndef _WIN32
-      dataFile infile_wo("/tmp/test/", "infile_wo.txt", true);
-      dataSymlink sl(file_path, temp_dir + "test_link/link_infile.txt");
-      dataSymlink sld(dir, temp_dir + "test_subdir_link/subdir");
+      dataFile infile_wo(dir, "infile_wo.txt", true);
+      dataSymlink sl(file_path, temp_dir + "test_link"+ pid + "/link_infile.txt");
+      dataSymlink sld(dir, temp_dir + "test_subdir_link"+ pid + "/subdir");
       std::string sld_file = sld.path();
       sld_file.append("/infile.txt");
 #endif
