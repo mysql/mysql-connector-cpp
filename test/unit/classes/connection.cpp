@@ -2457,9 +2457,6 @@ void connection::connectAttrAdd()
 {
   logMsg("connection::connectAttr - MYSQL_OPT_CONNECT_ATTR_ADD|MYSQL_OPT_CONNECT_ATTR_DELETE");
 
-  //TODO: Enable it after fixing
-  SKIP("Removed untill fixed");
-
   int serverVersion=getMySQLVersion(con);
   if ( serverVersion < 56006)
   {
@@ -2645,7 +2642,7 @@ void connection::connectAttrAdd()
 
       for (i=1; i <= max_count; ++i) {
         skey.str("");
-        skey << "keymu" << i;
+        skey << "keymu" <<  std::setw(3) << std::setfill('0') << i;
         connectAttrMap[skey.str()] = "value";
       }
 
@@ -2659,12 +2656,12 @@ void connection::connectAttrAdd()
       stmt.reset(conn2->createStatement());
       res.reset(stmt->executeQuery("SELECT ATTR_NAME, ATTR_VALUE FROM "
             "performance_schema.session_account_connect_attrs WHERE "
-            "ATTR_NAME LIKE '%keymu%' ORDER BY SUBSTRING(ATTR_NAME, 6)+0 ASC;"));
+            "ATTR_NAME LIKE '%keymu%' ORDER BY SUBSTRING(ATTR_NAME, 6) ASC;"));
 
       i=0;
       while (res->next()) {
         skey.str("");
-        skey << "keymu" << ++i;
+        skey << "keymu" << std::setw(3) << std::setfill('0') << ++i;
         ASSERT_EQUALS(res->getString("ATTR_NAME"), skey.str());
         ASSERT_EQUALS(res->getString("ATTR_VALUE"), "value");
       }
@@ -3078,7 +3075,7 @@ void connection::localInfile()
 
       sql::SQLString orig_dir_path = load_data_path;
       sql::SQLString dir_path = conn->getClientOption(OPT_LOAD_DATA_LOCAL_DIR);
-      ASSERT_EQUALS(orig_dir_path, dir_path);
+      ASSERT( dir_path->find(orig_dir_path) != sql::SQLString::npos);
 
       conn->setClientOption(OPT_LOAD_DATA_LOCAL_DIR, nullptr);
 
