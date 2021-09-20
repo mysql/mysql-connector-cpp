@@ -2625,11 +2625,11 @@ void connection::connectAttrAdd()
     if (perf_conn_attr_size < 512) {
       SKIP("The performance_schema_session_connect_attrs_size is less then 512");
     } else if (perf_conn_attr_size >= 512 && perf_conn_attr_size < 1024) {
-      max_count= 32;
+      max_count= 20;
     } else if (perf_conn_attr_size >= 1024 && perf_conn_attr_size < 2048) {
-      max_count= 64;
+      max_count= 50;
     } else if (perf_conn_attr_size >= 2048) {
-      max_count= 128;
+      max_count= 100;
     }
 
     try
