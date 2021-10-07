@@ -927,3 +927,24 @@ TEST_F(Bugs, Bug29788255)
   res = coll.find("(1+6) in [2,3,7]").execute();
   EXPECT_EQ(1, res.count());
 }
+
+TEST_F(Bugs, Bug33352469)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  auto &sess = get_sess();
+  auto sch = sess.createSchema("test", true);
+  auto coll = sch.createCollection("Bug#33352469");
+
+  coll.remove("true").execute();
+  auto res = coll.add(R"({"_id":"1", "name": "user1"})")
+                 .add(R"({"_id":"2", "name": "user2"})")
+                 .execute();
+  EXPECT_EQ(2, coll.find().execute().count());
+
+  auto remove = coll.remove(R"(_id=:id)");
+  remove.bind("id", "1").execute();
+  EXPECT_EQ(1, coll.find().execute().count());
+  remove.bind("id", "2").execute();
+  EXPECT_EQ(0, coll.find().execute().count());
+}
