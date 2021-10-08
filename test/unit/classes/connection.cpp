@@ -3572,6 +3572,21 @@ void connection::tls_version()
 
   connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
 
+  // Using ALL TLS version... should connect
+  connection_properties["OPT_TLS_VERSION"] = tls_available;
+
+  created_objects.clear();
+  try
+  {
+    con.reset(driver->connect(connection_properties));
+  }
+  catch (sql::SQLException &)
+  {
+    FAIL("ALL TLS available versions used and still can't connect!");
+  }
+
+
+
   // Using wrong TLS version... should fail to connect
   connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv999");
 
@@ -3585,6 +3600,8 @@ void connection::tls_version()
   {
     //Should FAIL to connect
   }
+
+
 
 
   for (std::vector<std::string>::const_iterator version = tls_versions.begin();
@@ -3877,6 +3894,60 @@ void connection::mfa()
         FAIL("Should fail to connect");
       }  catch (sql::SQLException&) {
       }
+    }
+  }
+
+}
+
+void connection::tls_deprecation()
+{
+  sql::ConnectOptionsMap opt;
+  opt[OPT_HOSTNAME]=url;
+  opt[OPT_USERNAME]=user;
+  opt[OPT_PASSWORD]=passwd;
+  opt[OPT_SSL_MODE]=sql::SSL_MODE_REQUIRED;
+
+  struct TEST_CASES
+  {
+    const std::string& tls_versions;
+    bool succeed;
+  };
+
+  TEST_CASES test_cases[] =
+  {
+    {"TLSv1.1,TLSv1.2" ,true },
+    {"foo,TLSv1.3"     ,true },
+    {"TLSv1.0,TLSv1.1" ,false},
+    {"foo,TLSv1.1"     ,false},
+    {"foo,bar"         ,false},
+    {""                ,false}
+  };
+
+  for(auto test : test_cases)
+  {
+    logMsg(test.tls_versions);
+    opt[OPT_TLS_VERSION] = test.tls_versions;
+    try {
+      Connection test_connection(driver->connect(opt));
+      if(!test.succeed)
+      {
+        std::stringstream err;
+        err << "TLS versions (" << test.tls_versions << ") SHOULD THROW EXCEPTION";
+        FAIL(err.str());
+      }
+      stmt.reset(test_connection->createStatement());
+      res.reset(stmt->executeQuery("select @@version"));
+
+      res->next();
+      std::string version = res->getString(1);
+
+      logMsg(std::string("Server Version ")+version);
+
+    }  catch (sql::SQLException &e) {
+      logMsg(e.what());
+      ASSERT_EQUALS(false, test.succeed);
+      ASSERT_EQUALS(2026, e.getErrorCode());
+      ASSERT_EQUALS("SSL connection error: TLS version is invalid, valid versions are: TLSv1.2, TLSv1.3", e.what());
     }
   }
 

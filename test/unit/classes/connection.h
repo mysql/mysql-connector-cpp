@@ -92,6 +92,7 @@ public:
   TEST_CASE(socket);
   TEST_CASE(dns_srv);
   TEST_CASE(mfa);
+  TEST_CASE(tls_deprecation);
   }
 
   /**
@@ -289,6 +290,12 @@ public:
    *
    */
   void mfa();
+
+  /*
+   * Test of MySQL_Connection::tls_deprecation()
+   *
+   */
+  void tls_deprecation();
 
 
 };

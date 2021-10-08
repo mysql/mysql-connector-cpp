@@ -301,7 +301,7 @@ static const String2IntMap stringOptions[]=
     {OPT_READ_DEFAULT_FILE,    MYSQL_READ_DEFAULT_FILE, false},
     {OPT_CHARSET_NAME,         MYSQL_SET_CHARSET_NAME, true},
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
-    {OPT_TLS_VERSION,          MYSQL_OPT_TLS_VERSION, false},
+    {OPT_TLS_VERSION,          MYSQL_OPT_TLS_VERSION, true},
 #endif
     {OPT_LOAD_DATA_LOCAL_DIR, MYSQL_OPT_LOAD_DATA_LOCAL_DIR, false}
   };
@@ -755,6 +755,23 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException("No string value passed for sslCipher");
       }
       ssl_used = true;
+    } else if (!it->first.compare(OPT_TLS_VERSION)) {
+      try {
+        p_s = (it->second).get< sql::SQLString >();
+      } catch (sql::InvalidArgumentException&) {
+        throw sql::InvalidArgumentException("Wrong type passed for OPT_TLS_VERSION expected sql::SQLString");
+      }
+      if (p_s) {
+        try {
+          proxy->options(sql::mysql::MYSQL_OPT_TLS_VERSION, *p_s);
+        }  catch (const sql::InvalidArgumentException&) {
+          //We will not throw error here, but wait for connection error
+          //libmysqlclient treats not valid TLS versions as invalid options.
+        }
+
+      } else {
+        throw sql::InvalidArgumentException("No string value passed for OPT_TLS_VERSION");
+      }
     } else if (!it->first.compare(OPT_DEFAULT_STMT_RESULT_TYPE)) {
       try {
         p_i = (it->second).get< int >();
@@ -1103,7 +1120,13 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
                        " the password with mysql client that is capable to do that,"
                        " or rebuild your instance of Connector/C++ against mysql client"
                        " library that supports resetting of an expired password.";
-      } else {
+      } else if(native_error == CR_SSL_CONNECTION_ERROR){
+        error_message= proxy->error();
+        if(error_message.find("TLS version") != std::string::npos)
+        {
+          error_message+=", valid versions are: TLSv1.2, TLSv1.3";
+        }
+      }else {
         error_message= proxy->error();
       }
 
