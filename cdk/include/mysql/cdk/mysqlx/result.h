@@ -155,6 +155,7 @@ class Col_metadata
   {
     switch (m_type)
     {
+    case protocol::mysqlx::col_type::BIT:
     case protocol::mysqlx::col_type::SINT:
     case protocol::mysqlx::col_type::UINT:
       return TYPE_INTEGER == type;
@@ -198,6 +199,9 @@ class Col_metadata
       break;
     case protocol::mysqlx::col_type::UINT:
       Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::UINT);
+      break;
+    case protocol::mysqlx::col_type::BIT:
+      Format<TYPE_INTEGER>::Access::set_fmt(fmt, Format<TYPE_INTEGER>::BIT);
       break;
     }
     Format<TYPE_INTEGER>::Access::set_length(fmt, m_length);

@@ -45,6 +45,9 @@ uint32_t get_type(const Format_info &fi)
   {
     auto &format = fi.get<cdk::TYPE_INTEGER>().m_format;
 
+    if(format.is_bit())
+      return MYSQLX_TYPE_BIT;
+
     if (format.length() == 1)
       return MYSQLX_TYPE_BOOL;
 
@@ -72,17 +75,17 @@ uint32_t get_type(const Format_info &fi)
 
     switch(format.type())
     {
-      case cdk::Format<cdk::TYPE_DATETIME>::TIME:
-        return MYSQLX_TYPE_TIME;
-      case cdk::Format<cdk::TYPE_DATETIME>::TIMESTAMP:
-        return MYSQLX_TYPE_TIMESTAMP;
-      default:
-        return MYSQLX_TYPE_DATETIME;
+    case cdk::Format<cdk::TYPE_DATETIME>::TIME:
+      return MYSQLX_TYPE_TIME;
+    case cdk::Format<cdk::TYPE_DATETIME>::TIMESTAMP:
+      return MYSQLX_TYPE_TIMESTAMP;
+    default:
+      return MYSQLX_TYPE_DATETIME;
     }
     break;
   }
 
-  // TODO: differ the blob types by their length
+    // TODO: differ the blob types by their length
   case cdk::TYPE_BYTES:
   {
     // TODO: use it when GEOMETRY type is supported by CDK

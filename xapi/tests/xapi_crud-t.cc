@@ -2342,7 +2342,7 @@ TEST_F(xapi_bugs, myc_297_col_types)
   EXPECT_EQ(MYSQLX_TYPE_DATETIME, (mysqlx_data_type_t)mysqlx_column_get_type(res, 11));
   EXPECT_EQ(MYSQLX_TYPE_TIME, (mysqlx_data_type_t)mysqlx_column_get_type(res, 12));
   EXPECT_EQ(MYSQLX_TYPE_DECIMAL, (mysqlx_data_type_t)mysqlx_column_get_type(res, 13));
-  EXPECT_EQ(MYSQLX_TYPE_BYTES, (mysqlx_data_type_t)mysqlx_column_get_type(res, 14));
+  EXPECT_EQ(MYSQLX_TYPE_BIT, (mysqlx_data_type_t)mysqlx_column_get_type(res, 14));
   EXPECT_EQ(MYSQLX_TYPE_ENUM, (mysqlx_data_type_t)mysqlx_column_get_type(res, 15));
   EXPECT_EQ(MYSQLX_TYPE_SET, (mysqlx_data_type_t)mysqlx_column_get_type(res, 16));
   EXPECT_EQ(MYSQLX_TYPE_GEOMETRY, (mysqlx_data_type_t)mysqlx_column_get_type(res, 17));
