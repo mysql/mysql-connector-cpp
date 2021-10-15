@@ -4123,3 +4123,59 @@ TEST_F(Sess, compression_algorithms)
 
   }
 }
+
+TEST_F(Sess, tls_ver_deprecate)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  struct TEST_CASES
+  {
+    const std::string& tls_versions;
+    bool succeed;
+  };
+
+  bool has_tlsv1_3 = check_tls_ver("TLSv1.3");
+
+  TEST_CASES test_cases[] =
+  {
+    {"TLSv1.1,TLSv1.2" ,true        },
+    {"foo,TLSv1.3"     ,has_tlsv1_3 },
+    {"TLSv1.0,TLSv1.1" ,false       },
+    {"foo,TLSv1.1"     ,false       },
+    {"foo,bar"         ,false       },
+    {""                ,false       }
+  };
+
+  for(auto test : test_cases)
+  {
+
+    std::cout << "Testing:" << test.tls_versions << std::endl;
+
+    {
+      SessionSettings opt(SessionOption::HOST, get_host(),
+                          SessionOption::PORT, get_port(),
+                          SessionOption::USER, get_user(),
+                          SessionOption::PWD, get_password(),
+                          SessionOption::SSL_MODE,  SSLMode::REQUIRED);
+      EXPECT_EQ(test.succeed, check_tls_ver(test.tls_versions.c_str()));
+    }
+    //URI
+    std::stringstream uri;
+    uri << get_uri() << "/?tls-versions=[" << test.tls_versions << "]";
+
+    if(test.succeed)
+    {
+      EXPECT_NO_THROW(mysqlx::Session(uri.str()));
+    }
+    else
+    {
+      try {
+        mysqlx::Session(uri.str());
+
+      }  catch (const std::exception& e) {
+        EXPECT_EQ(std::string(e.what()), "No valid TLS version was given, valid versions are: TLSv1.2, TLSv1.3");
+      }
+    }
+  }
+
+}

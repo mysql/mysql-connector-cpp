@@ -257,7 +257,7 @@ Session_detail::Session_detail(common::Settings_impl &settings)
   catch(const cdk::Error &e)
   {
     if (e.code() == cdk::cdkerrc::tls_versions)
-      throw_error("No supported TLS protocol version found in the 'tls-versions' list");
+      throw_error("No valid TLS version was given, valid versions are: TLSv1.2, TLSv1.3");
 
     else if (e.code() == cdk::cdkerrc::tls_ciphers)
       throw_error("No valid cipher suite found in the 'tls-ciphersuites' list");

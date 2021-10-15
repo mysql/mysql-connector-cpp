@@ -364,7 +364,12 @@ void prepare_options(
       switch (opt_val.first)
       {
       case Option::TLS_VERSIONS:
+        try {
         tls_opt.add_version(opt_val.second.get_string());
+      }  catch (const cdk::Error&) {
+          //unexpected TLS versions are not errors. Only if no valid tls version
+          //is available, an error will be thrown below.
+        }
         break;
       case Option::TLS_CIPHERSUITES:
         tls_opt.add_ciphersuite(opt_val.second.get_string());
