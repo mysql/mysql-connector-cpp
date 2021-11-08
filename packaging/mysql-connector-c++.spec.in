@@ -91,22 +91,6 @@ Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
 %description    devel
 This package contains the development header files and libraries necessary
 to develop MySQL client applications in C++.
-%if 0%{?with_tests:1} && 0%{?with_gtest:1}
-
-%package        test
-Summary:        Regression tests for MySQL Connector/C++
-%if 0%{?commercial}
-Requires:       mysql-connector-c++-commercial =  %{version}-%{release}
-Requires:       mysql-connector-c++-commercial-jdbc =  %{version}-%{release}
-Obsoletes:      mysql-connector-c++-test < %{version}-%{release}
-%else
-Requires:       mysql-connector-c++ =  %{version}-%{release}
-Requires:       mysql-connector-c++-jdbc =  %{version}-%{release}
-%endif
-%description    test
-This package contains the test files necessary to run regression
-test suite for MySQL Connector/C++
-%endif
 
 %prep
 %setup -q -n mysql-connector-c++%{product_suffix}-%{version}-src
@@ -115,13 +99,8 @@ test suite for MySQL Connector/C++
 
 %{?gcc_toolset:source /opt/rh/%{gcc_toolset}/enable}
 
-%if 0%{?with_tests:1} && 0%{?with_gtest:1}
-%global __cmake_test_opts -DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}
-%else
-%global __cmake_test_opts %{nil}
-%endif
 %global __cmake_explicit_opts -DCMAKE_INSTALL_PREFIX="%_prefix" -DCMAKE_C_FLAGS:STRING="%optflags" -DCMAKE_CXX_FLAGS:STRING="%optflags"
-%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
+%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
 %global __cmake_cmd cmake%{?el6:3}%{?el7:3} %{__cmake_common_opts} %{__cmake_explicit_opts} ..
 mkdir build-dynamic && pushd build-dynamic
 pwd
@@ -139,29 +118,9 @@ popd
 
 pushd build-dynamic
 make DESTDIR=%{buildroot} install
-%if 0%{?with_tests:1} && 0%{?with_gtest:1}
-# Generating the test groups and run CMake again
-# to process the generated TestGroups.cmake file
-LD_LIBRARY_PATH=. ./run_unit_tests --generate_test_groups=TestGroups.cmake
-%__cmake_cmd
-# Move the test executable and test definition to private libdir
-install -d -m0755 %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic
-mv CTestTestfile.cmake %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic/
-mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/dynamic/
-%endif
 popd
 pushd build-static
 make DESTDIR=%{buildroot} install
-%if 0%{?with_tests:1} && 0%{?with_gtest:1}
-# Generating the test groups and run CMake again
-# to process the generated TestGroups.cmake file
-./run_unit_tests --generate_test_groups=TestGroups.cmake
-%__cmake_cmd -DBUILD_STATIC=ON
-# Move the test executable and test definition to private libdir
-install -d -m0755 %{buildroot}%{_libdir}/mysql-cppconn-8/static
-mv CTestTestfile.cmake %{buildroot}%{_libdir}/mysql-cppconn-8/static/
-mv run_unit_tests      %{buildroot}%{_libdir}/mysql-cppconn-8/static/
-%endif
 popd
 # Add compat dir and remove unwanted file
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
@@ -194,19 +153,11 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_includedir}/mysql-cppconn-8/mysqlx
 %{_includedir}/mysql-cppconn-8/mysql
 %{_includedir}/mysql-cppconn-8/jdbc
-%if 0%{?with_tests:1} && 0%{?with_gtest:1}
-
-%files test
-%dir %{_libdir}/mysql-cppconn-8
-%dir %{_libdir}/mysql-cppconn-8/dynamic
-%dir %{_libdir}/mysql-cppconn-8/static
-%{_libdir}/mysql-cppconn-8/dynamic/run_unit_tests
-%{_libdir}/mysql-cppconn-8/dynamic/CTestTestfile.cmake
-%{_libdir}/mysql-cppconn-8/static/run_unit_tests
-%{_libdir}/mysql-cppconn-8/static/CTestTestfile.cmake
-%endif
 
 %changelog
+* Mon Nov 08 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.28-1
+- Removed the internal testing package
+
 * Thu Jun 10 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.26-1
 - Updated the platforms that need cmake3
 - The cmake3 binary isn't required for el8 platforms
