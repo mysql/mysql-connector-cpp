@@ -115,6 +115,9 @@ Type get_api_type(cdk::Type_info type, const Format_info &fmt)
     const Format_descr<cdk::TYPE_INTEGER> &fd
       = fmt.get<cdk::TYPE_INTEGER>();
 
+    if(fd.m_format.is_bit())
+      return Type::BIT;
+
     size_t f_len = fd.m_format.length();
 
     if (f_len < 5)

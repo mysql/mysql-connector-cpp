@@ -653,6 +653,7 @@ Type_info Cursor::type(col_count_t pos) const
 
   switch (md.m_type)
   {
+  case col_type::BIT:
   case col_type::SINT:
   case col_type::UINT:
     return TYPE_INTEGER;
@@ -680,7 +681,7 @@ Type_info Cursor::type(col_count_t pos) const
     return TYPE_STRING;
 
   default:
-    // TODO: correctly handle all X types (BIT)
+    // TODO: correctly handle all X types
     return TYPE_BYTES;
   }
 }

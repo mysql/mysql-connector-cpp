@@ -79,8 +79,6 @@ POP_SYS_WARNINGS_CDK
 // Note: this list must be in increasing order.
 
 #define TLS_VERSIONS(X) \
-  X("TLSv1",   TLS1_VERSION,   1,0) \
-  X("TLSv1.1", TLS1_1_VERSION, 1,1) \
   X("TLSv1.2", TLS1_2_VERSION, 1,2) \
   X("TLSv1.3", TLS1_3_VERSION, 1,3) \
 

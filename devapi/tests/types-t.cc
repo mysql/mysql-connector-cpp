@@ -221,7 +221,8 @@ TEST_F(Types, basic)
     "  c1 DECIMAL(4,2),"
     "  c2 FLOAT,"
     "  c3 DOUBLE,"
-    "  c4 VARCHAR(32)"
+    "  c4 VARCHAR(32),"
+    "  c5 BIT(64)"
     ")");
 
   Table types = getSchema("test").getTable("types");
@@ -231,14 +232,15 @@ TEST_F(Types, basic)
   float  data_float[]   = { 3.1415F, -2.7182F };
   double data_double[]  = { 3.141592, -2.718281 };
   string data_string[]  = { "First row", "Second row" };
+  uint64_t data_bit[]   = {0xFEDCBA9876543210,0x0123456789ABCDEF};
 
   Row row(data_int[0], data_decimal[0], data_float[0], data_double[0],
-          data_string[0]);
+          data_string[0], data_bit[0]);
 
   types.insert()
     .values(row)
     .values(data_int[1], data_decimal[1], data_float[1], data_double[1],
-            data_string[1])
+            data_string[1], data_bit[1])
     .execute();
 
   cout << "Table prepared, querying it..." << endl;
@@ -279,6 +281,13 @@ TEST_F(Types, basic)
     << c4.getLength();
   cout << ", collation: " << c4.getCollationName() << endl;
 
+  const Column &c5 = res.getColumn(5);
+  EXPECT_EQ(string("c5"), c5.getColumnName());
+  EXPECT_EQ(Type::BIT, c5.getType());
+  cout << "column " << res.getColumn(5) << " length: "
+    << c5.getLength();
+  EXPECT_EQ(64, c5.getLength());
+
   for (unsigned i = 0; (row = res.fetchOne()); ++i)
   {
     cout << "== next row ==" << endl;
@@ -294,15 +303,50 @@ TEST_F(Types, basic)
     EXPECT_EQ(Value::FLOAT,  row[2].getType());
     EXPECT_EQ(Value::DOUBLE, row[3].getType());
     EXPECT_EQ(Value::STRING, row[4].getType());
+    EXPECT_EQ(Value::UINT64, row[5].getType());
 
     EXPECT_EQ(data_int[i], (int)row[0]);
     EXPECT_EQ(data_decimal[i], (double)row[1]);
     EXPECT_EQ(data_float[i], (float)row[2]);
     EXPECT_EQ(data_double[i], (double)row[3]);
     EXPECT_EQ(data_string[i], (string)row[4]);
+    EXPECT_EQ(data_bit[i], (uint64_t)row[5]);
 
     EXPECT_GT(row[1].getRawBytes().size(), 1);
     EXPECT_EQ(data_string[i].length(), string(row[4]).length());
+
+  }
+
+  cout << "Testing null value" << endl;
+
+  types.update()
+      .set("c0", nullvalue)
+      .set("c1", nullvalue)
+      .set("c2", nullvalue)
+      .set("c3", nullvalue)
+      .set("c4", nullvalue)
+      .set("c5", nullvalue)
+      .where("c0 = 7")
+      .execute();
+
+  types.update()
+      .set("c0", nullptr)
+      .set("c1", nullptr)
+      .set("c2", nullptr)
+      .set("c3", nullptr)
+      .set("c4", nullptr)
+      .set("c5", nullptr)
+      .where("c0 = -7")
+      .execute();
+
+  res = types.select().execute();
+  for(auto row : res)
+  {
+    EXPECT_TRUE(row);
+    for(unsigned i=0; i <res.getColumnCount(); ++i)
+    {
+      EXPECT_TRUE(row[i].isNull());
+    }
   }
 
   cout << "Testing Boolean value" << endl;
@@ -319,16 +363,6 @@ TEST_F(Types, basic)
 
   cout << "value: " << row[0] << endl;
   EXPECT_FALSE((bool)row[0]);
-
-  cout << "Testing null value" << endl;
-
-  types.update().set("c0", nullvalue).set("c1", nullptr).execute();
-  res = types.select("c0","c1").execute();
-  row = res.fetchOne();
-
-  EXPECT_TRUE(row);
-  EXPECT_TRUE(row[0].isNull());
-  EXPECT_TRUE(row[1].isNull());
 
   cout << "Done!" << endl;
 }
@@ -592,6 +626,99 @@ TEST_F(Types, blob)
 
   for (const byte *ptr = data.begin(); ptr < data.end(); ++ptr)
     EXPECT_EQ(*ptr, dd.begin()[ptr- data.begin()]);
+
+  cout << "Data matches!" << endl;
+}
+
+TEST_F(Types, bit)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  cout << "Preparing test.types..." << endl;
+
+  sql("DROP TABLE IF EXISTS test.types");
+  sql(
+    "CREATE TABLE test.types("
+    "  c64 BIT(64),"
+    "  c32 BIT(32),"
+    "  c16 BIT(16),"
+    "  c8  BIT( 8),"
+    "  c1  BIT( 1)"
+    ")"
+  );
+
+  Table types = getSchema("test").getTable("types");
+
+
+  uint64_t data64 = std::numeric_limits<uint64_t>::max();
+  uint32_t data32 = std::numeric_limits<uint32_t>::max();
+  uint16_t data16 = std::numeric_limits<uint16_t>::max();
+  uint8_t data8 = std::numeric_limits<uint8_t>::max();
+  uint8_t data1 = 1;
+
+  types.insert().values(data64, data32, data16, data8, data1)
+                .values(nullptr, nullptr, nullptr,nullptr,nullptr).execute();
+
+  cout << "Table prepared, querying it..." << endl;
+
+  RowResult res = types.select().execute();
+
+  auto column_type = [&res](int idx)
+  {
+    const Column &c = res.getColumn(idx);
+    EXPECT_EQ(Type::BIT, c.getType());
+  };
+
+  column_type(0);
+  column_type(1);
+  column_type(2);
+  column_type(3);
+  column_type(4);
+
+  Row row = res.fetchOne();
+
+  cout << "Got a row, checking data..." << endl;
+
+
+  Value v64 = row[0];
+  Value v32 = row[1];
+  Value v16 = row[2];
+  Value v8  = row[3];
+  Value v1  = row[4];
+
+  EXPECT_EQ(Value::UINT64, v64.getType());
+  EXPECT_EQ(Value::UINT64, v32.getType());
+  EXPECT_EQ(Value::UINT64, v16.getType());
+  EXPECT_EQ(Value::UINT64, v8 .getType());
+  EXPECT_EQ(Value::UINT64, v1 .getType());
+
+
+  EXPECT_EQ(v64.get<uint64_t>(), data64);
+  EXPECT_EQ(v32.get<uint64_t>(), data32);
+  EXPECT_EQ(v16.get<uint64_t>(), data16);
+  EXPECT_EQ(v8 .get<uint64_t>(), data8 );
+  EXPECT_EQ(v1 .get<uint64_t>(), data1 );
+
+  EXPECT_EQ(v64.get<uint64_t>(), data64);
+  EXPECT_EQ(v32.get<uint64_t>(), data32);
+  EXPECT_EQ(v16.get<uint64_t>(), data16);
+  EXPECT_EQ(v8 .get<uint64_t>(), data8 );
+  EXPECT_EQ(v1 .get<uint64_t>(), data1 );
+
+  //second row
+  row = res.fetchOne();
+
+  v64 = row[0];
+  v32 = row[1];
+  v16 = row[2];
+  v8  = row[3];
+  v1  = row[4];
+
+  EXPECT_EQ(Value::VNULL, v64.getType());
+  EXPECT_EQ(Value::VNULL, v32.getType());
+  EXPECT_EQ(Value::VNULL, v16.getType());
+  EXPECT_EQ(Value::VNULL, v8 .getType());
+  EXPECT_EQ(Value::VNULL, v1 .getType());
 
   cout << "Data matches!" << endl;
 }

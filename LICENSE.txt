@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/C++ 8.0.
 
-   Last updated: July 2021
+   Last updated: September 2021
 
 Licensing Information
 
@@ -428,6 +428,7 @@ The Universal FOSS Exception, Version 1.0
    Software with Other FOSS, and the constants, function signatures, data
    structures and other invocation methods used to run or interact with
    each of them (as to each, such software's "Interfaces"):
+
     i. The Software's Interfaces may, to the extent permitted by the
        license of the Other FOSS, be copied into, used and distributed in
        the Other FOSS in order to enable interoperability, without
@@ -437,6 +438,7 @@ The Universal FOSS Exception, Version 1.0
        including without limitation as used in the Other FOSS (which upon
        any such use also then contains a portion of the Software under the
        Software License).
+
    ii. The Other FOSS's Interfaces may, to the extent permitted by the
        license of the Other FOSS, be copied into, used and distributed in
        the Software in order to enable interoperability, without requiring
@@ -444,6 +446,7 @@ The Universal FOSS Exception, Version 1.0
        License or otherwise altering their original terms, if this does
        not require any portion of the Software other than such Interfaces
        to be licensed under the terms other than the Software License.
+
    iii. If only Interfaces and no other code is copied between the
        Software and the Other FOSS in either direction, the use and/or
        distribution of the Software with the Other FOSS shall not be
@@ -477,6 +480,7 @@ Licenses for Third-Party Components
 Cyrus SASL
 
    Cyrus SASL
+
 * Copyright (c) 1994-2012 Carnegie Mellon University.  All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -1918,6 +1922,7 @@ OpenSSL License
    the original SSLeay license, separate from the Oracle product. If you
    do not wish to install this library, you may remove it, but the Oracle
    program might not operate properly or at all without it.
+
   LICENSE ISSUES
   ==============
 
@@ -2158,6 +2163,7 @@ SOFTWARE.
 ZSTD
 
    Zstandard
+
 Zstandard is dual-licensed under [BSD](LICENSE) and [GPLv2](COPYING).
 
  /*
@@ -2563,6 +2569,7 @@ Written Offer for Source Code
    request to the address listed below or by sending an email to Oracle
    using the following link:
    http://www.oracle.com/goto/opensourcecode/request.
+
   Oracle America, Inc.
   Attn: Senior Vice President
   Development and Engineering Legal
@@ -2570,20 +2577,30 @@ Written Offer for Source Code
   Redwood Shores, CA 94065
 
    Your request should include:
+
      * The name of the binary for which you are requesting the source code
+
      * The name and version number of the Oracle product containing the
        binary
+
      * The date you received the Oracle product
+
      * Your name
+
      * Your company name (if applicable)
+
      * Your return mailing address and email, and
+
      * A telephone number in the event we need to reach you.
+
 
    We may charge you a fee to cover the cost of physical media and
    processing.
 
    Your request must be sent
+
     a. within three (3) years of the date you received the Oracle product
        that included the binary that is the subject of your request, or
+
     b. in the case of code licensed under the GPL v3 for as long as Oracle
        offers spare parts or customer support for that product model.

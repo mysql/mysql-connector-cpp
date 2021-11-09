@@ -67,7 +67,7 @@ class Format<TYPE_INTEGER> : public Format_base
 {
 public:
 
-  enum Fmt { UINT, SINT };
+  enum Fmt { UINT, SINT, BIT };
 
   Format(const Format_info &fi)
     : Format_base(TYPE_INTEGER, fi)
@@ -76,7 +76,8 @@ public:
     fi.get_info(*this);
   }
 
-  bool is_unsigned() const { return UINT == m_fmt; }
+  bool is_bit() const { return BIT == m_fmt;}
+  bool is_unsigned() const { return UINT == m_fmt || BIT == m_fmt; }
   size_t length() const { return m_length; }
 
 protected:
