@@ -99,8 +99,13 @@ to develop MySQL client applications in C++.
 
 %{?gcc_toolset:source /opt/rh/%{gcc_toolset}/enable}
 
+%if 0%{?with_tests:1} && 0%{?with_gtest:1}
+%global __cmake_test_opts -DWITH_TESTS=1 -DWITH_GTEST=%{with_gtest}
+%else
+%global __cmake_test_opts %{nil}
+%endif
 %global __cmake_explicit_opts -DCMAKE_INSTALL_PREFIX="%_prefix" -DCMAKE_C_FLAGS:STRING="%optflags" -DCMAKE_CXX_FLAGS:STRING="%optflags"
-%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
+%global __cmake_common_opts -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir}/mysql-cppconn-8 -DWITH_JDBC=ON -DWITH_SSL=system %{__cmake_test_opts} %{?mysql_opt} -DDEBUG_PREFIX_MAP=OFF
 %global __cmake_cmd cmake%{?el6:3}%{?el7:3} %{__cmake_common_opts} %{__cmake_explicit_opts} ..
 mkdir build-dynamic && pushd build-dynamic
 pwd
@@ -155,7 +160,7 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_includedir}/mysql-cppconn-8/jdbc
 
 %changelog
-* Mon Nov 08 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.28-1
+* Tue Nov 09 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.28-1
 - Removed the internal testing package
 
 * Thu Jun 10 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.26-1
