@@ -4130,7 +4130,7 @@ TEST_F(Sess, tls_ver_deprecate)
 
   struct TEST_CASES
   {
-    const std::string& tls_versions;
+    std::string tls_versions;
     bool succeed;
   };
 
