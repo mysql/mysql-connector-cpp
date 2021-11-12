@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/C++ 8.0.
 
-   Last updated: September 2021
+   Last updated: November 2021
 
 Licensing Information
 
