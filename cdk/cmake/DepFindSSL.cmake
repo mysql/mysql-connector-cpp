@@ -88,11 +88,7 @@ function(main)
 
   set(OPENSSL_LIB_DIR "${OPENSSL_LIB_DIR}" CACHE INTERNAL "")
 
-  if(NOT OPENSSL_VERSION_MAJOR EQUAL 1)
-    message(SEND_ERROR "OpenSSL version 1.x is required but version ${OPENSSL_VERSION} was found")
-  else()
-    message(STATUS "Using OpenSSL version: ${OPENSSL_VERSION}")
-  endif()
+  message(STATUS "Using OpenSSL version: ${OPENSSL_VERSION}")
 
   set(OPENSSL_VERSION_GLOBAL ${OPENSSL_VERSION} CACHE INTERNAL "OpenSSL Version")
   #message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")

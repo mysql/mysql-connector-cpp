@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <stdexcept>
 #include <string.h>  // memset
+#include <assert.h>
 
 // Avoid warnings from protobuf
 #if defined __GNUC__
@@ -41,7 +42,7 @@
 #pragma warning (push)
 #endif
 
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -59,68 +60,90 @@
 typedef unsigned char byte;
 typedef size_t length_t;
 
-class SHA
+class Hash
 {
-  SHA_CTX m_sha;
+  EVP_MD_CTX *m_ctx = nullptr;
+  const EVP_MD *m_md;
+
+protected:
 
   void init()
   {
-    SHA1_Init(&m_sha);
+    if(!m_ctx)
+    {
+      m_ctx = EVP_MD_CTX_new();
+    }
+    else
+    {
+      EVP_MD_CTX_reset(m_ctx);
+    }
+
+    EVP_DigestInit_ex(m_ctx, m_md, nullptr);
+
+  }
+
+  Hash(const EVP_MD *md)
+    : m_md(md)
+  {
+    init();
+  }
+
+  ~Hash()
+  {
+    if(m_ctx)
+      EVP_MD_CTX_free(m_ctx);
   }
 
   public:
+
+
+  void Update(byte* data, length_t length)
+  {
+    EVP_DigestUpdate(m_ctx, data, length);
+  }
+
+  void Final(byte* hash)
+  {
+    unsigned int s;
+    EVP_DigestFinal(m_ctx, hash, &s);
+    assert(s==getDigestSize());
+    init();
+  }
+
+  virtual size_t getDigestSize() const  = 0;
+
+};
+
+class SHA
+    : public Hash
+{
+
+  public:
+
+  SHA()
+    : Hash(EVP_sha1())
+  {}
 
   enum { DIGEST_SIZE = SHA1_HASH_SIZE };   // in Bytes
 
-  SHA()
-  {
-    init();
-  }
+  size_t getDigestSize() const override {return SHA1_HASH_SIZE; }
 
-  void Update(byte* data, length_t length)
-  {
-    SHA1_Update(&m_sha, data, length);
-  }
-
-  void Final(byte* hash)
-  {
-    SHA1_Final(hash, &m_sha);
-    init();
-  }
-
-  size_t getDigestSize() const {return SHA1_HASH_SIZE; }
 };
 
 class SHA256
+    : public Hash
 {
-  SHA256_CTX m_sha;
-
-  void init()
-  {
-    SHA256_Init(&m_sha);
-  }
 
   public:
 
+  SHA256()
+    : Hash(EVP_sha256())
+  {}
+
   enum { DIGEST_SIZE = SHA256_HASH_SIZE };   // in Bytes
 
-  SHA256()
-  {
-    init();
-  }
+  size_t getDigestSize() const override {return SHA256_HASH_SIZE; }
 
-  void Update(byte* data, length_t length)
-  {
-    SHA256_Update(&m_sha, data, length);
-  }
-
-  void Final(byte* hash)
-  {
-    SHA256_Final(hash, &m_sha);
-    init();
-  }
-
-  size_t getDigestSize() const {return SHA256_HASH_SIZE; }
 };
 
 
