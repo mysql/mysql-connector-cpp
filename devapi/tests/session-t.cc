@@ -33,6 +33,7 @@
 #include <future>
 #include <chrono>
 #include <thread>
+#include <map>
 
 using std::cout;
 using std::endl;
@@ -348,25 +349,14 @@ TEST_F(Sess, tls_ver_ciphers)
       );
     }
 
-    // Negative: option defined twice
-
-    EXPECT_THROW(
-      mysqlx::Session sess(get_uri() + "&tls-versions=[TLSv1.3]"), Error
-    );
-
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        get_uri() + "&tls-ciphersuites=[TLS_RSA_WITH_IDEA_CBC_SHA]"
-      ),
-      Error
-    );
-
-    EXPECT_THROW(
-      mysqlx::Session sess(
-        get_uri() + "/?tls-versions=[]&tls-versions=[TLSv1.3]"
-      ),
-      Error
-    );
+    //Second tls-version will be used
+    if (check_tls_ver("TLSv1.3"))
+    {
+      EXPECT_NO_THROW(
+            mysqlx::Session sess(
+              get_uri() + "/?tls-versions=[]&tls-versions=[TLSv1.3]"
+      ));
+    }
 
     EXPECT_THROW(
       mysqlx::Session sess(
@@ -490,28 +480,6 @@ TEST_F(Sess, tls_ver_ciphers)
 
       EXPECT_NO_THROW(opt.set(SessionOption::TLS_VERSIONS, "TLSv1.3"));
       EXPECT_THROW(mysqlx::Session sess(opt), Error);
-    }
-
-    // Negative: option defined twice
-
-    {
-      SessionSettings opt = opt0;
-
-      EXPECT_THROW(
-        opt.set(
-          SessionOption::TLS_VERSIONS, "one",
-          SessionOption::TLS_VERSIONS, "two"
-        ),
-        Error
-      );
-
-      EXPECT_THROW(
-        opt.set(
-          SessionOption::TLS_CIPHERSUITES, "one",
-          SessionOption::TLS_CIPHERSUITES, "two"
-        ),
-        Error
-      );
     }
 
   }
@@ -1074,6 +1042,20 @@ TEST_F(Sess, auth_external)
   EXPECT_THROW(mysqlx::Session sess(uri.str()), Error);
 }
 
+//Test if ssl is enabled using cipher
+auto check_ssl_impl = [](mysqlx::Session &sess, bool enable, int line)
+{
+  SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
+
+  auto row = res.fetchOne();
+  cout << "Line "<< line << ": " << row[0] << ":" << row[1] << endl;
+
+  string cipher = row[1];
+
+  EXPECT_EQ(enable, !cipher.empty());
+};
+
+#define check_ssl(x,y) check_ssl_impl(x, y, __LINE__)
 
 TEST_F(Sess, ssl_session)
 {
@@ -1081,21 +1063,6 @@ TEST_F(Sess, ssl_session)
   SKIP_IF_NO_XPLUGIN;
 
   USE_NATIVE_PWD;
-
-  //Test if ssl is enabled using cipher
-  auto check_ssl_impl = [](mysqlx::Session &sess, bool enable, int line)
-  {
-    SqlResult res =  sess.sql("SHOW STATUS LIKE 'mysqlx_ssl_cipher'").execute();
-
-    auto row = res.fetchOne();
-    cout << "Line "<< line << ": " << row[0] << ":" << row[1] << endl;
-
-    string cipher = row[1];
-
-    EXPECT_EQ(enable, !cipher.empty());
-  };
-
-#define check_ssl(x,y) check_ssl_impl(x, y, __LINE__)
 
   SessionSettings common_opts(
     SessionOption::HOST, get_host(),
@@ -1159,13 +1126,15 @@ TEST_F(Sess, ssl_session)
   }
 
 
-  //with ssl-ca and SSLMode < VERI FY_CA
+  //with bad ssl-ca and SSLMode < VERIFY_CA it works, since SSL_CA is not used
   {
     SessionSettings opts = common_opts;
-    EXPECT_THROW(opts.set(
+    opts.set(
       SessionOption::SSL_MODE, SSLMode::REQUIRED,
       SessionOption::SSL_CA, "unknown"
-    ), Error);
+    );
+    mysqlx::Session sess(opts);
+    check_ssl(sess, true);
   }
 
   //using wrong ssl-ca and ssl-ca-path on URI
@@ -1205,40 +1174,42 @@ TEST_F(Sess, ssl_session)
   //using ssl-ca as SessionSettings
 
   {
-    string bad_uri;
+    string new_uri;
 
-    bad_uri = uri.str() + "&ssl-mode=DISABLED";
-    EXPECT_THROW(mysqlx::Session sess(bad_uri) , mysqlx::Error);
-
-    bad_uri = uri.str() + "&ssl-mode=REQUIRED";
-    EXPECT_THROW(mysqlx::Session sess(bad_uri) , mysqlx::Error);
+    //since ssl-mode=DISABLED, ssl-ca is no longer used and no SSL should be used
+    new_uri = uri.str() + "&ssl-mode=DISABLED";
+    {
+      mysqlx::Session sess(new_uri);
+      check_ssl(sess, false);
+    }
 
     SessionSettings opts = common_opts;
 
-    EXPECT_THROW(opts.set(
-      SessionOption::SSL_MODE, SSLMode::DISABLED,
-      SessionOption::SSL_CA, ssl_ca
-    ), Error);
+    {
+      opts.set(
+            SessionOption::SSL_MODE, SSLMode::DISABLED,
+            SessionOption::SSL_CA, ssl_ca
+            );
+      mysqlx::Session sess(opts);
+      check_ssl(sess, false);
+    }
 
-    EXPECT_THROW(opts.set(
-      SessionOption::SSL_MODE, SSLMode::REQUIRED,
-      SessionOption::SSL_CA, ssl_ca
-    ), Error);
   }
 
   //using ssl-ca but with the wrong CA
 
   {
     /*
-      Becaue we do not give valid CA setting, session creation should fail
-      when verifying server certificate.
+      We do not give valid CA setting, but since we are not setting SSL-MODE to
+      VERIFY, it will succeed.
     */
 
     SessionSettings opts = common_opts;
 
     opts.set(SessionOption::SSL_CA, "wrong_ca.pem");
 
-    EXPECT_THROW(mysqlx::Session sess(opts), Error);
+    mysqlx::Session sess(opts);
+    check_ssl(sess, true);
   }
 
   //using ssl-mode=VERIFY_IDENTITY and ssl-ca as SessionSettings
@@ -1284,64 +1255,8 @@ TEST_F(Sess, ssl_session)
 
   }
 
-  //Errors
   {
-    //Defined twice
-    EXPECT_THROW(SessionSettings(SessionOption::SSL_MODE, SSLMode::DISABLED,
-                                 SessionOption::SSL_MODE, SSLMode::DISABLED),
-                 Error);
-
-    EXPECT_THROW(SessionSettings(SessionOption::SSL_CA, "dummy",
-                                 SessionOption::SSL_CA, "dummy"),
-                 Error);
-
-    EXPECT_THROW(SessionSettings(SessionOption::SSL_MODE, SSLMode::DISABLED,
-                                 SessionOption::SSL_CA, "dummy"),
-                Error);
-
-    SessionSettings sess(SessionOption::SSL_CA, "dummy");
-    sess.set(SessionOption::HOST, get_host());
-
-    EXPECT_THROW(sess.set(SessionOption::PORT, 13000), Error);
-    EXPECT_THROW(sess.set(SessionOption::PRIORITY, 1), Error);
-    EXPECT_THROW(sess.set(SessionOption::HOST, get_host(),
-                          SessionOption::PORT, 13000,
-                          SessionOption::PRIORITY, 1,
-                          SessionOption::PORT, 13000,
-                          SessionOption::PORT, 13000,
-                          SessionOption::PRIORITY, 1), Error);
-
-
-    sess.set(SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY);
-
-    EXPECT_THROW(sess.set(SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY,
-                          SessionOption::SSL_MODE, SSLMode::VERIFY_IDENTITY),
-                 Error);
-  }
-
-  {
-    //Defined twice
     std::string uri = get_uri();
-
-    try {
-      mysqlx::Session(uri + "?ssl-mode=disabled&ssl-mode=verify_ca");
-      FAIL() << "No error thrown";
-    }
-    catch (Error &e)
-    {
-      cout << "Expected error: " << e << endl;
-      EXPECT_EQ(string("Option SSL_MODE defined twice"),string(e.what()));
-    }
-
-    try {
-      mysqlx::Session(uri + "?ssl-ca=unknown&ssl-ca=hereItIs");
-      FAIL() << "No error thrown";
-    }
-    catch (Error &e)
-    {
-      cout << "Expected error: " << e << endl;
-      EXPECT_EQ(string("Option SSL_CA defined twice"),string(e.what()));
-    }
 
     try {
       mysqlx::Session(uri + "?ssl-mode=Whatever");
@@ -4177,5 +4092,135 @@ TEST_F(Sess, tls_ver_deprecate)
       }
     }
   }
+
+}
+
+TEST_F(Sess, normalize_ssl_options)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  std::map<SessionOption::Enum,std::string> options =
+  {
+    {SessionOption::SSL_CA, "ssl-ca"},
+    {SessionOption::SSL_CAPATH, "ssl-capath"},
+    {SessionOption::SSL_CRL, "ssl-crl"},
+    {SessionOption::SSL_CRLPATH, "ssl-crlpath"},
+    {SessionOption::TLS_VERSIONS, "tls-version"},
+    {SessionOption::TLS_VERSIONS, "tls-versions"},
+    {SessionOption::TLS_CIPHERSUITES, "tls-ciphersuites"},
+  };
+
+  for(auto &opt : options)
+  {
+    {
+      SessionSettings settings(SessionOption::HOST, get_host(),
+                               SessionOption::PORT, get_port(),
+                               SessionOption::USER, get_user(),
+                               SessionOption::PWD, get_password(),
+                               SessionOption::SSL_MODE, SSLMode::DISABLED,
+                               opt.first, "BAD",
+                               opt.first, "GOOD");
+      mysqlx::Session s(settings);
+      check_ssl(s, false);
+
+      bool found = false;
+      for(auto el : settings)
+      {
+        if(el.first == opt.first)
+        {
+          //Comute the found flag
+          found = !found;
+          EXPECT_EQ("GOOD", el.second.get<std::string>());
+        }
+      }
+      EXPECT_TRUE(found);
+    }
+
+    {
+      std::stringstream uri;
+      uri << get_uri()
+          << "/?ssl-mode=disabled&"
+          << opt.second << "=BAD&"
+          << opt.second << "=GOOD";
+      SessionSettings settings(uri.str());
+      mysqlx::Session s(settings);
+      check_ssl(s, false);
+
+      bool found = false;
+      for(auto el : settings)
+      {
+        if(el.first == opt.first)
+        {
+          //Comute the found flag
+          found = !found;
+          EXPECT_EQ("GOOD", el.second.get<std::string>());
+        }
+      }
+      EXPECT_TRUE(found);
+
+    }
+
+    // mix URI with options
+    {
+      std::stringstream uri;
+      uri << get_uri() << "/?ssl-mode=REQUIRED&" << opt.second << "=BAD";
+
+
+      SessionSettings settings(SessionOption::URI, uri.str(),
+                               SessionOption::SSL_MODE, SSLMode::DISABLED,
+                               opt.first, "GOOD");
+      mysqlx::Session s(settings);
+      check_ssl(s, false);
+
+      bool found = false;
+      for(auto el : settings)
+      {
+        if(el.first == opt.first)
+        {
+          //Comute the found flag
+          found = !found;
+          EXPECT_EQ("GOOD", el.second.get<std::string>());
+        }
+      }
+      EXPECT_TRUE(found);
+    }
+  }
+
+  //Defined Twice. Last one wins
+  {
+
+    SessionSettings settings(SessionOption::HOST, get_host(),
+                             SessionOption::PORT, get_port(),
+                             SessionOption::USER, get_user(),
+                             SessionOption::PWD, get_password(),
+                             SessionOption::SSL_MODE, SSLMode::DISABLED,
+                             SessionOption::SSL_MODE, SSLMode::REQUIRED);
+    mysqlx::Session s(settings);
+    check_ssl(s, true);
+  }
+  {
+    mysqlx::Session s(SessionOption::HOST, get_host(),
+                      SessionOption::PORT, get_port(),
+                      SessionOption::USER, get_user(),
+                      SessionOption::PWD, get_password(),
+                      SessionOption::SSL_MODE, SSLMode::REQUIRED,
+                      SessionOption::SSL_MODE, SSLMode::DISABLED);
+    check_ssl(s, false);
+  }
+
+  {
+    std::stringstream uri;
+    uri << get_uri() << "/?ssl-mode=disabled&" << "ssl-mode=required";
+    mysqlx::Session s(uri.str());
+    check_ssl(s, true);
+  }
+
+  {
+    std::stringstream uri;
+    uri << get_uri() << "/?ssl-mode=required&" << "ssl-mode=disabled";
+    mysqlx::Session s(uri.str());
+    check_ssl(s, false);
+  }
+
 
 }
