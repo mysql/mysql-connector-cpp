@@ -68,16 +68,16 @@
 /*
  SSL related
 */
-#define OPT_SSL_MODE          "OPT_SSL_MODE"
-#define OPT_SSL_KEY           "sslKey"
-#define OPT_SSL_CERT          "sslCert"
-#define OPT_SSL_CA            "sslCA"
-#define OPT_SSL_CAPATH        "sslCAPath"
-#define OPT_SSL_CIPHER        "sslCipher"
-#define OPT_SSL_CRL           "sslCRL"
-#define OPT_SSL_CRLPATH       "sslCRLPath"
+#define OPT_SSL_MODE          "ssl-mode"
+#define OPT_SSL_KEY           "ssl-key"
+#define OPT_SSL_CERT          "ssl-cert"
+#define OPT_SSL_CA            "ssl-ca"
+#define OPT_SSL_CAPATH        "ssl-capath"
+#define OPT_SSL_CIPHER        "ssl-cipher"
+#define OPT_SSL_CRL           "ssl-crl"
+#define OPT_SSL_CRLPATH       "ssl-crlpath"
 #define OPT_SERVER_PUBLIC_KEY "rsaKey"
-#define OPT_TLS_VERSION       "OPT_TLS_VERSION"
+#define OPT_TLS_VERSION       "tls-version"
 
 /*
  Connection related
