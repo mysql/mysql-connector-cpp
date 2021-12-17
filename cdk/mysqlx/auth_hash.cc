@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -42,7 +42,14 @@
 #pragma warning (push)
 #endif
 
+#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER <= 0x10100fffL
+//Used on OpenSSL 1.0
+#include <openssl/sha.h>
+#else
 #include <openssl/evp.h>
+#endif
+
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -59,6 +66,75 @@
 
 typedef unsigned char byte;
 typedef size_t length_t;
+
+#if OPENSSL_VERSION_NUMBER <= 0x10100fffL
+//Used on OpenSSL 1.0
+
+class SHA
+{
+  SHA_CTX m_sha;
+
+  void init()
+  {
+    SHA1_Init(&m_sha);
+  }
+
+  public:
+
+  enum { DIGEST_SIZE = SHA1_HASH_SIZE };   // in Bytes
+
+  SHA()
+  {
+    init();
+  }
+
+  void Update(byte* data, length_t length)
+  {
+    SHA1_Update(&m_sha, data, length);
+  }
+
+  void Final(byte* hash)
+  {
+    SHA1_Final(hash, &m_sha);
+    init();
+  }
+
+  size_t getDigestSize() const {return SHA1_HASH_SIZE; }
+};
+
+class SHA256
+{
+  SHA256_CTX m_sha;
+
+  void init()
+  {
+    SHA256_Init(&m_sha);
+  }
+
+  public:
+
+  enum { DIGEST_SIZE = SHA256_HASH_SIZE };   // in Bytes
+
+  SHA256()
+  {
+    init();
+  }
+
+  void Update(byte* data, length_t length)
+  {
+    SHA256_Update(&m_sha, data, length);
+  }
+
+  void Final(byte* hash)
+  {
+    SHA256_Final(hash, &m_sha);
+    init();
+  }
+
+  size_t getDigestSize() const {return SHA256_HASH_SIZE; }
+};
+
+#else
 
 class Hash
 {
@@ -146,6 +222,7 @@ class SHA256
 
 };
 
+#endif
 
 static void my_crypt(uint8_t *to, const uint8_t *s1, const uint8_t *s2, size_t len)
 {
