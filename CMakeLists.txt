@@ -392,32 +392,46 @@ if(BUNDLE_DEPENDENCIES)
   #
 
   file(GLOB _bundled1 "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-  file(GLOB _bundled2 "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+
+  # In Windows we need to bundle libraries from bin directory instead
+  # of private.
+
+  if(WIN32)
+    set(_bundled2_path "${MYSQL_LIB_DIR}/../bin")
+    set(_bundled_dest "bin")
+  else()
+    set(_bundled2_path "${MYSQL_LIB_DIR}/private")
+    set(_bundled_dest "${INSTALL_LIB_DIR}/private")
+  endif()
+
+  file(GLOB _bundled2 "${_bundled2_path}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
   foreach(lib IN LISTS _bundled1 _bundled2)
 
     get_filename_component(lib_name ${lib} NAME_WE)
 
     # ssl|crypto are bundled on cdk/cmake/DepFindSSL.cmake
-    if(NOT lib_name MATCHES "mysql|libprotobuf|liblber|libldap_r|libssl|libcrypto")
+    if(NOT lib_name MATCHES "mysql|libprotobuf|liblber|libldap_r|libssl|libcrypto|libcurl|libmecab")
+      message("found bundled libs: ${lib}")
 
-    message("found bundled libs: ${lib}")
-
-    install(FILES "${lib}"
-      DESTINATION "${INSTALL_LIB_DIR}/private"
-      COMPONENT JDBCDll
-    )
+      install(FILES "${lib}"
+        DESTINATION ${_bundled_dest}
+        COMPONENT JDBCDll
+      )
 
     endif()
 
-    # Also bundle modules required by the SASL library if it is bundled
+    if(NOT WIN32)
+      # Also bundle modules required by the SASL library if it is bundled
 
-    if(lib_name MATCHES "libsasl")
+      if(lib_name MATCHES "libsasl")
 
-      install(DIRECTORY "${MYSQL_LIB_DIR}/private/sasl2"
-        DESTINATION "${INSTALL_LIB_DIR}/private"
-        COMPONENT JDBCDll
-      )
+        install(DIRECTORY "${_bundled2_path}/sasl2"
+          DESTINATION ${_bundled_dest}
+          COMPONENT JDBCDll
+        )
+
+      endif()
 
     endif()
 
