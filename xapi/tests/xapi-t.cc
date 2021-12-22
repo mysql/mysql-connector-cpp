@@ -1497,8 +1497,6 @@ DO_CONNECT:
         EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt1,
           OPT_SSL_CA(ca.c_str()), PARAM_END
           ));
-        cout << "Expected error: "
-          << mysqlx_error_message(mysqlx_error(opt1)) << std::endl;
       }
 
       mysqlx_free(opt1);
@@ -1599,8 +1597,8 @@ TEST_F(xapi, conn_options_atomic)
   EXPECT_STREQ(test_db2, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_MODE, &ssl_mode));
   EXPECT_EQ(true, SSL_MODE_DISABLED == ssl_mode);
-  // the SSL_CA option was not set in the end, so can't read it
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf));
+  EXPECT_STREQ("ca.pem", buf);
 
   mysqlx_free(opt);
 }

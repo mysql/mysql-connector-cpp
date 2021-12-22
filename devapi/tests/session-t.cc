@@ -1188,7 +1188,7 @@ TEST_F(Sess, ssl_session)
     {
       opts.set(
             SessionOption::SSL_MODE, SSLMode::DISABLED,
-            SessionOption::SSL_CA, ssl_ca
+            SessionOption::SSL_CA, "BAD"
             );
       mysqlx::Session sess(opts);
       check_ssl(sess, false);
