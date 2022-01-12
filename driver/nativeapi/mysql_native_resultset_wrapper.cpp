@@ -46,9 +46,9 @@ namespace NativeAPI
 {
 
 /* {{{ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper */
-MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::MYSQL_RES * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
+MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::MYSQL *_mysql,::MYSQL_RES * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
                       /*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
-  : /*logger(l),*/ capi(_capi), rs(res)
+  : /*logger(l),*/ capi(_capi), mysql(_mysql), rs(res)
 {
 }
 /* }}} */
@@ -61,6 +61,13 @@ MySQL_NativeResultsetWrapper::~MySQL_NativeResultsetWrapper()
 }
 /* }}} */
 
+/* {{{ MySQL_NativeResultsetWrapper::server_version */
+unsigned long
+MySQL_NativeResultsetWrapper::server_version()
+{
+  return capi->get_server_version(mysql);
+}
+/* }}} */
 
 /* {{{ MySQL_NativeResultsetWrapper::data_seek */
 void

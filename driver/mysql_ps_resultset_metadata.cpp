@@ -56,11 +56,13 @@ namespace mysql
 
 /* {{{ MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData -I- */
 MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
-                                  boost::shared_ptr< MySQL_DebugLogger> & l)
+    boost::shared_ptr< MySQL_DebugLogger> & l)
   : proxy(_proxy), logger(l), result_meta( _proxy->result_metadata()),
-    num_fields(_proxy->field_count())
+    num_fields(_proxy->field_count()),
+    server_version(_proxy->server_version())
 {
   CPP_ENTER("MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData");
+
 }
 /* }}} */
 
@@ -164,7 +166,7 @@ MySQL_PreparedResultSetMetaData::getColumnType(unsigned int columnIndex)
   int mysql_type = getFieldMeta(columnIndex)->type;
   CPP_INFO_FMT("type=%d", mysql_type);
   int ret = sql::mysql::util::mysql_type_to_datatype(
-          getFieldMeta(columnIndex)
+          getFieldMeta(columnIndex), server_version
         );
   CPP_INFO_FMT("our type is %d", ret);
   return ret;

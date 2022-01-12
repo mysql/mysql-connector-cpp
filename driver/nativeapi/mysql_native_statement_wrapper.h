@@ -72,49 +72,51 @@ public:
   MySQL_NativeStatementWrapper(::MYSQL_STMT *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
   ~MySQL_NativeStatementWrapper();
 
-  uint64_t affected_rows();
+  unsigned long server_version() override;
 
-  bool attr_set(MySQL_Statement_Options option, const void *arg);
+  uint64_t affected_rows() override;
 
-  bool bind_param(::MYSQL_BIND *);
+  bool attr_set(MySQL_Statement_Options option, const void *arg) override;
 
-  bool bind_result(::MYSQL_BIND *);
+  bool bind_param(::MYSQL_BIND *) override;
 
-  void data_seek(uint64_t );
+  bool bind_result(::MYSQL_BIND *) override;
 
-  unsigned int errNo();
+  void data_seek(uint64_t ) override;
 
-  sql::SQLString error();
+  unsigned int errNo() override;
 
-  int execute ();
+  sql::SQLString error() override;
 
-  int fetch();
+  int execute () override;
 
-  unsigned int field_count();
+  int fetch() override;
 
-  bool more_results();
+  unsigned int field_count() override;
 
-  int next_result();
+  bool more_results() override;
 
-  uint64_t num_rows();
+  int next_result() override;
 
-  unsigned long param_count();
+  uint64_t num_rows() override;
 
-  int prepare (const ::sql::SQLString &);
+  unsigned long param_count() override;
 
-  NativeResultsetWrapper * result_metadata();
+  int prepare (const ::sql::SQLString &) override;
 
-  bool send_long_data(unsigned int par_number, const char * data, unsigned long len);
+  NativeResultsetWrapper * result_metadata() override;
 
-  ::sql::SQLString sqlstate();
+  bool send_long_data(unsigned int par_number, const char * data, unsigned long len) override;
 
-  int store_result();
+  ::sql::SQLString sqlstate() override;
 
-  int stmt_next_result();
+  int store_result() override;
 
-  bool stmt_free_result();
+  int stmt_next_result() override;
 
-  unsigned int warning_count();
+  bool stmt_free_result() override;
+
+  unsigned int warning_count() override;
 };
 
 

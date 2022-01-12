@@ -565,7 +565,7 @@ MySQL_NativeConnectionWrapper::store_result()
     return NULL;
   }
 
-  return new MySQL_NativeResultsetWrapper(raw, api);
+  return new MySQL_NativeResultsetWrapper(mysql, raw, api);
 }
 /* }}} */
 
@@ -601,7 +601,7 @@ MySQL_NativeConnectionWrapper::use_result()
     return NULL;
   }
 
-  return new MySQL_NativeResultsetWrapper(raw, api);
+  return new MySQL_NativeResultsetWrapper(mysql, raw, api);
 }
 /* }}} */
 

@@ -185,7 +185,8 @@ void throwSQLException(::sql::mysql::NativeAPI::NativeConnectionWrapper & proxy)
 void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);
 
 int mysql_string_type_to_datatype(const sql::SQLString & name);
-int mysql_type_to_datatype(const MYSQL_FIELD * const field);
+int mysql_type_to_datatype(const MYSQL_FIELD * const fieldm,
+                           unsigned long server_version);
 const char * mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::mysql::MySQL_DebugLogger > & l);
 
 char * utf8_strup(const char * const src, size_t srclen);

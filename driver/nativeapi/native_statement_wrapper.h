@@ -72,6 +72,8 @@ public:
 
   virtual ~NativeStatementWrapper(){}
 
+  virtual unsigned long server_version() = 0;
+
   virtual uint64_t affected_rows() = 0;
 
   virtual bool attr_set(MySQL_Statement_Options attr, const void *arg) = 0;

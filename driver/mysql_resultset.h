@@ -80,6 +80,8 @@ class MySQL_ResultSet : public sql::ResultSet
 
   sql::ResultSet::enum_type resultset_type;
 
+  unsigned long server_version;
+
 protected:
   void checkValid() const;
   void checkScrollable() const;

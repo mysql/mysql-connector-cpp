@@ -68,6 +68,15 @@ MySQL_NativeStatementWrapper::~MySQL_NativeStatementWrapper()
 
 
 /* {{{ MySQL_NativeStatementWrapper::affected_rows() */
+unsigned long
+MySQL_NativeStatementWrapper::server_version()
+{
+  return api->get_server_version(stmt->mysql);
+}
+/* }}} */
+
+
+/* {{{ MySQL_NativeStatementWrapper::affected_rows() */
 uint64_t
 MySQL_NativeStatementWrapper::affected_rows()
 {
@@ -212,7 +221,7 @@ MySQL_NativeStatementWrapper::result_metadata()
     return NULL;
   }
 
-  return new MySQL_NativeResultsetWrapper(raw, api);
+  return new MySQL_NativeResultsetWrapper(stmt->mysql, raw, api);
 }
 /* }}} */
 

@@ -61,6 +61,7 @@ class MySQL_ResultSetMetaData : public sql::ResultSetMetaData
 {
   boost::weak_ptr< NativeAPI::NativeResultsetWrapper > result;
   boost::shared_ptr< MySQL_DebugLogger > logger;
+  unsigned long server_version;
   unsigned int num_fields;
 
 public:

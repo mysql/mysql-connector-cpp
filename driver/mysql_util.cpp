@@ -397,11 +397,12 @@ const OUR_CHARSET * find_charset(unsigned int charsetnr)
 
 /* {{{ mysql_to_datatype() -I- */
 int
-mysql_type_to_datatype(const MYSQL_FIELD * const field)
+mysql_type_to_datatype(const MYSQL_FIELD * const field,
+                       unsigned long server_version)
 {
   switch (field->type) {
     case MYSQL_TYPE_BIT:
-      if (field->flags !=(BINARY_FLAG|UNSIGNED_FLAG))
+      if (server_version >= 80028 || !(field->flags & BINARY_FLAG))
         return sql::DataType::BIT;
       return sql::DataType::BINARY;
     case MYSQL_TYPE_DECIMAL:

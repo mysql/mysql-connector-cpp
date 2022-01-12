@@ -81,6 +81,8 @@ MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWr
     std::cout << "Elements=" << field_name_to_index_map.size() << "\n";
 #endif
     rs_meta.reset(new MySQL_ResultSetMetaData(result, logger));
+
+    server_version = proxy.lock()->get_server_version();
 }
 /* }}} */
 
@@ -512,11 +514,11 @@ MySQL_ResultSet::getInt64(const uint32_t columnIndex) const
         return 0;
     }
 
-
     CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
+
     was_null = false;
     if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
-                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
+        (server_version >= 80028 || !(getFieldMeta(columnIndex)->flags & BINARY_FLAG))) {
         uint64_t uval = 0;
         std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
         if (length.rem) {
@@ -579,8 +581,9 @@ MySQL_ResultSet::getUInt64(const uint32_t columnIndex) const
 
     CPP_INFO_FMT("%ssigned", (getFieldMeta(columnIndex)->flags & UNSIGNED_FLAG)? "un":"");
     was_null = false;
+
     if (getFieldMeta(columnIndex)->type == MYSQL_TYPE_BIT &&
-                getFieldMeta(columnIndex)->flags != (BINARY_FLAG|UNSIGNED_FLAG)) {
+        ( server_version >= 80028 || !(getFieldMeta(columnIndex)->flags & BINARY_FLAG))) {
         uint64_t uval = 0;
         std::div_t length= std::div(getFieldMeta(columnIndex)->length, 8);
         if (length.rem) {

@@ -64,6 +64,7 @@ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::N
   if (result_p) {
     num_fields = result_p->num_fields();
   }
+  server_version = result.lock()->server_version();
 }
 /* }}} */
 
@@ -179,7 +180,9 @@ MySQL_ResultSetMetaData::getColumnType(unsigned int columnIndex)
   checkValid();
   checkColumnIndex(columnIndex);
 
-  return sql::mysql::util::mysql_type_to_datatype(getFieldMeta(columnIndex));
+  return sql::mysql::util::mysql_type_to_datatype(
+    getFieldMeta(columnIndex),
+    server_version);
 }
 /* }}} */
 

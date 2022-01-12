@@ -40,7 +40,10 @@
 
 #if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
 struct MYSQL_RES;
+struct MYSQL;
 #else
+struct st_mysql;
+#define MYSQL st_mysql
 struct st_mysql_res;
 #define MYSQL_RES st_mysql_res
 #endif
@@ -60,23 +63,25 @@ class IMySQLCAPI;
 class MySQL_NativeResultsetWrapper : public NativeResultsetWrapper
 {
 public:
-  MySQL_NativeResultsetWrapper(::MYSQL_RES *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
+  MySQL_NativeResultsetWrapper(::MYSQL *,::MYSQL_RES *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
 
   ~MySQL_NativeResultsetWrapper();
 
-  void data_seek(uint64_t);
+  unsigned long server_version() override;
 
-  ::MYSQL_FIELD * fetch_field();
+  void data_seek(uint64_t) override;
 
-  ::MYSQL_FIELD * fetch_field_direct(unsigned int);
+  ::MYSQL_FIELD * fetch_field() override;
 
-  unsigned long * fetch_lengths();
+  ::MYSQL_FIELD * fetch_field_direct(unsigned int) override;
 
-  char** fetch_row();
+  unsigned long * fetch_lengths() override;
 
-  unsigned int num_fields();
+  char** fetch_row() override;
 
-  uint64_t num_rows();
+  unsigned int num_fields() override;
+
+  uint64_t num_rows() override;
 
   //boost::shared_ptr<IMySQLCAPI> getApiHandle();
 
@@ -89,6 +94,7 @@ private:
 
   boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
 
+  ::MYSQL *mysql;
   ::MYSQL_RES * rs;
 };
 

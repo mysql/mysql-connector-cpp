@@ -63,6 +63,8 @@ class MySQL_PreparedResultSetMetaData : public sql::ResultSetMetaData
 
   unsigned int num_fields;
 
+  unsigned long server_version;
+
 public:
   MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
                     boost::shared_ptr< MySQL_DebugLogger> & l);

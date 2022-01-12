@@ -718,10 +718,6 @@ void bugs::bug68523()
 
 void bugs::bug66235()
 {
-  // TODO: remove this block when the test is fixed
-  if (!getenv("RUN_BUG_66235"))
-    return;
-
   logMsg("bug::bug66235");
   try
   {
@@ -824,10 +820,6 @@ void bugs::bug21066575()
 
 void bugs::bug14520822()
 {
-  // TODO: remove this block when the test is fixed
-  if (!getenv("RUN_BUG_14520822"))
-    return;
-
   logMsg("bug::bug14520822");
   try
   {

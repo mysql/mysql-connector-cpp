@@ -60,6 +60,8 @@ class NativeResultsetWrapper : public boost::noncopyable
 public:
   virtual ~NativeResultsetWrapper(){}
 
+  virtual unsigned long server_version() = 0;
+
   virtual void data_seek(uint64_t) = 0;
 
   virtual ::MYSQL_FIELD * fetch_field() = 0;
