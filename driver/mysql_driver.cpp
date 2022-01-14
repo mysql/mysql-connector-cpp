@@ -168,6 +168,21 @@ void MySQL_Driver::threadEnd()
   proxy->thread_end();
 }
 
+
+void MySQL_Driver::setCallBack(sql::Fido_Callback&& cb)
+{
+  fido_callback_store = std::move(cb);
+  fido_callback = &fido_callback_store;
+}
+
+
+void MySQL_Driver::setCallBack(sql::Fido_Callback& cb)
+{
+  fido_callback_store = Fido_Callback{};
+  fido_callback = &cb;
+}
+
+
 } /* namespace mysql */
 
 } /* namespace sql */

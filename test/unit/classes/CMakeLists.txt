@@ -50,6 +50,9 @@ ENDIF(WIN32)
 
 add_unit_test(connection)
 
+IF(NOT WIN32)
+  target_link_libraries(test_connection pthread)
+ENDIF(NOT WIN32)
 
 SET(test_databasemetadata_sources
   ../unit_fixture.cpp

@@ -142,6 +142,11 @@ public:
   virtual int plugin_option(int plugin_type,
                             const ::sql::SQLString & plugin_name,
                             const ::sql::SQLString & option,
+                            const void * value) = 0;
+
+  virtual int plugin_option(int plugin_type,
+                            const ::sql::SQLString & plugin_name,
+                            const ::sql::SQLString & option,
                             const ::sql::SQLString & value) = 0;
 
   virtual int get_plugin_option(int plugin_type,

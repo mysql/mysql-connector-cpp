@@ -93,6 +93,7 @@ public:
   TEST_CASE(dns_srv);
   TEST_CASE(mfa);
   TEST_CASE(tls_deprecation);
+  TEST_CASE(fido_test);
   }
 
   /**
@@ -297,6 +298,11 @@ public:
    */
   void tls_deprecation();
 
+  /*
+   * Test for checking fido connection.
+   *
+   */
+  void fido_test();
 
 };
 

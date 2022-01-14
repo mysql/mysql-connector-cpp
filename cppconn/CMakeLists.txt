@@ -65,6 +65,7 @@ CONFIGURE_FILE(version_info.h.cmake version_info.h @ONLY)
 
 SET(MYSQLCPPCONN_INSTALL_HEADERS
     build_config.h
+    callback.h
     "${CMAKE_CURRENT_BINARY_DIR}/config.h"
     connection.h
     datatype.h

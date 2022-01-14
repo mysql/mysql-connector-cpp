@@ -417,6 +417,29 @@ MySQL_NativeConnectionWrapper::plugin_option(
     int plugin_type,
     const ::sql::SQLString & plugin_name,
     const ::sql::SQLString & option,
+    const void * value)
+try{
+
+  /* load client authentication plugin if required */
+  struct st_mysql_client_plugin *plugin =
+      api->client_find_plugin(mysql, plugin_name.c_str(), plugin_type);
+
+  /* set option value in plugin */
+  return api->plugin_options(plugin, option.c_str(), value);
+
+}
+catch(sql::InvalidArgumentException &e)
+{
+  std::string err(e.what());
+  err+= " for plugin " + std::string(plugin_name);
+  throw sql::InvalidArgumentException(err);
+}
+
+int
+MySQL_NativeConnectionWrapper::plugin_option(
+    int plugin_type,
+    const ::sql::SQLString & plugin_name,
+    const ::sql::SQLString & option,
     const ::sql::SQLString & value)
 try{
 

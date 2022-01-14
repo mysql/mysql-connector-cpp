@@ -65,6 +65,9 @@ class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 #pragma warning(pop)
 #endif
 
+  ::sql::Fido_Callback* fido_callback = nullptr;
+  ::sql::Fido_Callback fido_callback_store;
+
 public:
   MySQL_Driver();
   MySQL_Driver(const ::sql::SQLString & clientLib);
@@ -83,6 +86,10 @@ public:
 
   const sql::SQLString & getName();
 
+  void setCallBack(sql::Fido_Callback &cb);
+
+  void setCallBack(sql::Fido_Callback &&cb);
+
   void threadInit();
 
   void threadEnd();
@@ -91,6 +98,9 @@ private:
   /* Prevent use of these */
   MySQL_Driver(const MySQL_Driver &);
   void operator=(MySQL_Driver &);
+
+  friend MySQL_Connection;
+
 };
 
 /** We do not hide the function if MYSQLCLIENT_STATIC_BINDING(or anything else) not defined

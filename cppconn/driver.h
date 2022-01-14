@@ -35,6 +35,7 @@
 
 #include "connection.h"
 #include "build_config.h"
+#include "callback.h"
 
 namespace sql
 {
@@ -57,6 +58,10 @@ public:
   virtual int getPatchVersion() = 0;
 
   virtual const sql::SQLString & getName() = 0;
+
+  virtual void setCallBack(sql::Fido_Callback &cb) = 0;
+
+  virtual void setCallBack(sql::Fido_Callback &&cb) = 0;
 
   virtual void threadInit() = 0;
 

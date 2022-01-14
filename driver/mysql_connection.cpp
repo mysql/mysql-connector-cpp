@@ -40,6 +40,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <mutex>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -81,7 +82,8 @@
 #else
 #include <string.h>
 #endif
-
+#include "cppconn/callback.h"
+#include "mysql_driver.h"
 #include "mysql_connection.h"
 #include "mysql_connection_data.h"
 #include "mysql_prepared_statement.h"
@@ -94,6 +96,18 @@
 #ifndef ER_MUST_CHANGE_PASSWORD_LOGIN
 # define ER_MUST_CHANGE_PASSWORD_LOGIN 1820
 #endif
+
+std::mutex callback_mutex;
+
+sql::Fido_Callback * fido_callback_instance = nullptr;
+
+static void fido_callback_func(const char* msg)
+{
+  if (!fido_callback_instance)
+    return;
+  (*fido_callback_instance)(msg);
+}
+
 
 namespace sql
 {
@@ -485,7 +499,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   MySQL_Uri uri;
   MySQL_Uri::Host_data host;
-
 
   sql::SQLString userName;
   sql::SQLString password;
@@ -1167,6 +1180,64 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
 
   }
+
+  /*
+   * Helper class to simplify setting and resetting of the plugin callback.
+   */
+  struct Fido_Callback_Setter
+  {
+    NativeAPI::NativeConnectionWrapper *proxy = nullptr;
+
+    /*
+     * Construct the setter using the callback and proxy.
+     */
+    Fido_Callback_Setter(Fido_Callback *callback,
+      NativeAPI::NativeConnectionWrapper *_proxy) :
+        proxy(_proxy)
+    {
+      if (proxy && callback && *callback)
+      {
+        callback_mutex.lock();
+        try
+        {
+          fido_callback_instance = callback;
+          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+            "authentication_fido_client",
+            "fido_messages_callback",
+            (const void*)fido_callback_func
+          );
+
+        }
+        catch (sql::InvalidArgumentException& e) {
+          throw ::sql::SQLUnsupportedOptionException(
+            "Failed to set fido message callback for authentication_fido_client plugin",
+            OPT_OCI_CONFIG_FILE
+          );
+        }
+      }
+    }
+
+    ~Fido_Callback_Setter()
+    {
+      if(fido_callback_instance && proxy)
+      {
+        try
+        {
+          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+            "authentication_fido_client",
+            "fido_messages_callback",
+            nullptr);
+        }
+        catch(...) {}
+        fido_callback_instance = nullptr;
+        callback_mutex.unlock();
+      }
+    }
+  };
+
+  Fido_Callback_Setter setter(
+    static_cast<MySQL_Driver*>(driver)->fido_callback,
+    proxy.get());
 
   //Connect loop
   {

@@ -139,6 +139,11 @@ public:
   int plugin_option(int plugin_type,
                     const ::sql::SQLString & plugin_name,
                     const ::sql::SQLString & option,
+                    const void *) override;
+
+  int plugin_option(int plugin_type,
+                    const ::sql::SQLString & plugin_name,
+                    const ::sql::SQLString & option,
                     const ::sql::SQLString & value) override;
 
   int get_plugin_option(int plugin_type,
