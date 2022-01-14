@@ -32,6 +32,7 @@
 #include "../jdbc/mysql_driver.h"
 #include "../jdbc/mysql_error.h"
 #include "../jdbc/cppconn/build_config.h"
+#include "../jdbc/cppconn/callback.h"
 #include "../jdbc/cppconn/config.h"
 #include "../jdbc/cppconn/connection.h"
 #include "../jdbc/cppconn/datatype.h"
