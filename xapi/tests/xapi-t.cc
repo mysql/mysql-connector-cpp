@@ -827,7 +827,7 @@ DO_CONNECT:
   std::string conn_str_ca = get_ca();
   cout << "CA file: " << conn_str_ca << endl;
 
-  /* If ssl-ca set ssl-mode can not be DISABLED or REQUIRED*/
+  /* ssl-ca doesn't affect ssl-mode*/
 
   for (unsigned i = 0; i < 2; ++i)
   {
@@ -842,10 +842,12 @@ DO_CONNECT:
     if (local_sess)
     {
       mysqlx_session_close(local_sess);
-      FAIL() << "Connection should not be established" << endl;
     }
-    cout << "Expected error: " << mysqlx_error_message(error) << endl;
-    mysqlx_free(error);
+    else
+    {
+      FAIL() << mysqlx_error_message(error) << endl;
+      mysqlx_free(error);
+    }
   }
 
   /* Same thing with VERIFY_CA should work */
@@ -863,6 +865,7 @@ DO_CONNECT:
     {
       std::stringstream str;
       str << "Connection could not be established: " << mysqlx_error_message(error) << endl;
+      str << conn_str << endl;
       mysqlx_free(error);
       FAIL() << str.str();
     }
@@ -1476,7 +1479,8 @@ DO_CONNECT:
     EXPECT_STREQ(ca.c_str(), buf_check);
 
     /*
-      Check invalid ssl options combinations.
+      ssl options don't change eachother, so no error occurs if ssl is disabled
+      and SSL_CA is set.
     */
 
     {
@@ -1490,11 +1494,9 @@ DO_CONNECT:
           PARAM_END
           ));
 
-        EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt1,
+        EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt1,
           OPT_SSL_CA(ca.c_str()), PARAM_END
           ));
-        cout << "Expected error: "
-          << mysqlx_error_message(mysqlx_error(opt1)) << std::endl;
       }
 
       mysqlx_free(opt1);
@@ -1570,8 +1572,9 @@ TEST_F(xapi, conn_options_atomic)
                        OPT_SSL_MODE(SSL_MODE_REQUIRED),
                        PARAM_END));
 
-  // Setting options Call 2
-  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(opt,
+  // Setting options Call 2 doesn't return error but overwrite the previous
+  // values
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(opt,
                        OPT_HOST(test_host2),
                        OPT_PORT(test_port2),
                        OPT_USER(test_user2),
@@ -1581,21 +1584,21 @@ TEST_F(xapi, conn_options_atomic)
                        OPT_SSL_CA("ca.pem"),
                        PARAM_END));
 
-  //  Call 2 failed, but opt settings are supposed to be from Call 1
+  //  Call 2 overwrite the Call 1 values
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_HOST, buf));
-  EXPECT_STREQ(test_host1, buf);
+  EXPECT_STREQ(test_host2, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PORT, &port));
-  EXPECT_EQ(true, test_port1 == port);
+  EXPECT_EQ(true, test_port2 == port);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_USER, buf));
-  EXPECT_STREQ(test_user1, buf);
+  EXPECT_STREQ(test_user2, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_PWD, buf));
-  EXPECT_STREQ(test_pwd1, buf);
+  EXPECT_STREQ(test_pwd2, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_DB, buf));
-  EXPECT_STREQ(test_db1, buf);
+  EXPECT_STREQ(test_db2, buf);
   EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_MODE, &ssl_mode));
-  EXPECT_EQ(true, SSL_MODE_REQUIRED == ssl_mode);
-  // the SSL_CA option was not set in the end, so can't read it
-  EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf));
+  EXPECT_EQ(true, SSL_MODE_DISABLED == ssl_mode);
+  EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(opt, MYSQLX_OPT_SSL_CA, buf));
+  EXPECT_STREQ("ca.pem", buf);
 
   mysqlx_free(opt);
 }
@@ -2052,6 +2055,7 @@ TEST_F(xapi, sha256_memory)
                          PARAM_END));
     local_sess = mysqlx_get_session_from_options(default_opt,
                                                  NULL);
+    mysqlx_free(default_opt);
     if (!local_sess)
       FAIL() << "Fail auth against caching_sha2_password";
 
@@ -2414,6 +2418,7 @@ TEST_F(xapi, connection_attrs)
 
     if (sess)
       FAIL() << "Bad variable names... should fail!";
+    mysqlx_free(error);
 
     sess = mysqlx_get_session_from_url(
              (std::string(uri_base.str())+"?connection-attributes=fail").c_str(),
@@ -2421,6 +2426,7 @@ TEST_F(xapi, connection_attrs)
 
     if (sess)
       FAIL() << "Bad variable names... should fail!";
+    mysqlx_free(error);
 
   }
 
@@ -2527,6 +2533,7 @@ TEST_F(xapi, dns_srv)
     EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@_mysqlx._tcp.localhost:33060",
       nullptr, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_free(error);
   }
 
   {
@@ -2552,6 +2559,7 @@ TEST_F(xapi, dns_srv)
     EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@(/_mysqlx/_tcp/localhost)",
       nullptr, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_free(error);
   }
 
   {
@@ -2577,6 +2585,7 @@ TEST_F(xapi, dns_srv)
     EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+srv://root@[_mysqlx._tcp.localhost,_mysqlx._tcp.host2]",
       nullptr, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_free(error);
   }
 
   {
@@ -2592,7 +2601,6 @@ TEST_F(xapi, dns_srv)
     ));
 
     std::cout << "Expected Error: " << mysqlx_error_message(opt) << std::endl;
-
     mysqlx_free_options(opt);
   }
 
@@ -2602,6 +2610,7 @@ TEST_F(xapi, dns_srv)
     EXPECT_EQ(nullptr, mysqlx_get_client_from_url("mysqlx+foo://root@_mysqlx._tcp.localhost",
       nullptr, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_free(error);
   }
 
   //Unable to locate any hosts for {hostname}
@@ -2611,6 +2620,7 @@ TEST_F(xapi, dns_srv)
       nullptr, &error);
     EXPECT_EQ(nullptr, mysqlx_get_session_from_client(cli, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
+    mysqlx_free(error);
     mysqlx_client_close(cli);
   }
 
@@ -2627,7 +2637,7 @@ TEST_F(xapi, dns_srv)
 
     EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
     std::cout << "Expected Error: " << mysqlx_error_message(error) << std::endl;
-
+    mysqlx_free(error);
     mysqlx_free_options(opt);
   }
 
@@ -2910,11 +2920,11 @@ TEST_F(xapi, tls_ver_ciphers)
     mysqlx_session_close(sess);
 
 
-    // Negative: option defined twice
+    // Option defined twice is not an error
 
     mysqlx_free_options(opt);
     opt = mysqlx_session_options_new();
-    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
       opt,
       OPT_HOST(get_host()),
       OPT_PORT(get_port()),
@@ -2929,7 +2939,7 @@ TEST_F(xapi, tls_ver_ciphers)
 
     mysqlx_free_options(opt);
     opt = mysqlx_session_options_new();
-    EXPECT_EQ(RESULT_ERROR, mysqlx_session_option_set(
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(
       opt,
       OPT_HOST(get_host()),
       OPT_PORT(get_port()),
@@ -2941,6 +2951,7 @@ TEST_F(xapi, tls_ver_ciphers)
       OPT_TLS_CIPHERSUITES("  DHE-RSA-AES128-GCM-SHA256 , \t\nTLS_DHE_RSA_WITH_AES_128_GCM_SHA256 "),
       PARAM_END
     ));
+    mysqlx_free(opt);
 
   }
 }
@@ -3162,14 +3173,19 @@ TEST_F(xapi, compression_algorithms)
     //If compression=REQUIRED and no valid algorithm selected, no session should be created
     tmp = uri + "compression=required&compression-algorithms=";
     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    mysqlx_free(error);
     tmp = uri + "compression=required&compression-algorithms=[]";
     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    mysqlx_free(error);
     tmp = uri + "compression=required&compression-algorithms=BAD_Algorithm";
     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    mysqlx_free(error);
     tmp = uri + "compression=required&compression-algorithms=[BAD_Algorithm]";
     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    mysqlx_free(error);
     tmp = uri + "compression=required&compression-algorithms=[BAD_Algorithm,BAD_Algorithm]";
     EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), &error));
+    mysqlx_free(error);
 
 
     //Using text only, used algorithm should be LZ4_MESSAGE
@@ -3351,6 +3367,7 @@ TEST_F(xapi, compression_algorithms)
                                                    PARAM_END));
     EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, &error));
     mysqlx_free(opt);
+    mysqlx_free(error);
 
     //In these cases, algorithm set on the server side is different from the algorithms in connection
     //and compression is REQUIRED, no session should be created
@@ -3370,9 +3387,11 @@ TEST_F(xapi, compression_algorithms)
                                                    PARAM_END));
      EXPECT_EQ(nullptr, mysqlx_get_session_from_options(opt, & error));
      mysqlx_free(opt);
+     mysqlx_free(error);
 
      tmp = uri + "compression=required&compression-algorithms=[" + d.second + "," + d.third + "]";
      EXPECT_EQ(nullptr, mysqlx_get_session_from_url(tmp.c_str(), & error));
+     mysqlx_free(error);
 
      //Restoring to the original value of mysqlx_compression_algorithms
      qry ="Set global mysqlx_compression_algorithms='"+var_value+"';";
@@ -3382,6 +3401,210 @@ TEST_F(xapi, compression_algorithms)
                  std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::system_clock::now() - start_time).count() << "ms" <<std::endl;
 
+  }
+
+}
+
+#define check_ssl(x,b) \
+{\
+  std::string ssl = get_ssl_cipher(x);\
+  if (b)\
+  {\
+    EXPECT_FALSE(ssl.empty());\
+    cout << "SSL Cipher: " << ssl << endl;\
+  }\
+  else\
+    EXPECT_TRUE(ssl.empty());\
+}\
+while(false)
+
+
+TEST_F(xapi, normalize_ssl_options)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  mysqlx_error_t *error;
+  mysqlx_session_t *sess;
+  char buf[100];
+
+  std::map<mysqlx_opt_type_enum,std::string> options =
+  {
+    {MYSQLX_OPT_SSL_CA, "ssl-ca"},
+    {MYSQLX_OPT_SSL_CAPATH, "ssl-capath"},
+    {MYSQLX_OPT_SSL_CRL, "ssl-crl"},
+    {MYSQLX_OPT_SSL_CRLPATH, "ssl-crlpath"},
+    {MYSQLX_OPT_TLS_VERSIONS, "tls-version"},
+    {MYSQLX_OPT_TLS_VERSIONS, "tls-versions"},
+    {MYSQLX_OPT_TLS_CIPHERSUITES, "tls-ciphersuites"}
+  };
+
+  for(auto &opt_test : options)
+  {
+    {
+      auto session_opt = mysqlx_session_options_new();
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(session_opt,
+                                                     OPT_HOST(get_host()),
+                                                     OPT_PORT(get_port()),
+                                                     OPT_USER(get_user()),
+                                                     OPT_PWD(get_password()),
+                                                     OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                                     opt_test.first,"BAD",
+                                                     opt_test.first,"GOOD",
+                                                     PARAM_END));
+
+      sess = mysqlx_get_session_from_options(session_opt, &error);
+
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(session_opt, opt_test.first, buf));
+      EXPECT_STRCASEEQ("GOOD", buf);
+
+      mysqlx_free(session_opt);
+
+      if(!sess)
+      {
+        std::stringstream str;
+        str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+        mysqlx_free(error);
+        FAIL() << str.str();
+      }
+      check_ssl(sess, false);
+      mysqlx_session_close(sess);
+    }
+
+    {
+      std::stringstream uri;
+      uri << get_uri() << "/?ssl-mode=disabled&" << opt_test.second << "=BAD&" << opt_test.second << "=GOOD";
+
+      auto session_opt = mysqlx_session_options_new();
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(session_opt,
+                                                     MYSQLX_OPT_URI,uri.str().c_str(),
+                                                     PARAM_END));
+
+      auto sess = mysqlx_get_session_from_options(session_opt, &error);
+
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(session_opt, opt_test.first, buf));
+      EXPECT_STRCASEEQ("GOOD", buf);
+
+      mysqlx_free(session_opt);
+
+      if(!sess)
+      {
+        std::stringstream str;
+        str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+        mysqlx_free(error);
+        FAIL() << str.str();
+      }
+      check_ssl(sess, false);
+      mysqlx_session_close(sess);
+    }
+
+    // mix URI with options
+    {
+      std::stringstream uri;
+      uri << get_uri() << "/?ssl-mode=REQUIRED&" << opt_test.second << "=BAD";
+
+      auto session_opt = mysqlx_session_options_new();
+      EXPECT_EQ(
+            RESULT_OK,
+            mysqlx_session_option_set(
+              session_opt,
+              MYSQLX_OPT_URI, uri.str().c_str(),
+              OPT_SSL_MODE(SSL_MODE_DISABLED),
+              opt_test.first,"GOOD",
+              PARAM_END));
+
+      auto sess = mysqlx_get_session_from_options(session_opt, &error);
+
+      EXPECT_EQ(RESULT_OK, mysqlx_session_option_get(session_opt, opt_test.first, buf));
+      EXPECT_STRCASEEQ("GOOD", buf);
+
+      mysqlx_free(session_opt);
+      if(!sess)
+      {
+        std::stringstream str;
+        str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+        mysqlx_free(error);
+        FAIL() << str.str();
+      }
+
+      check_ssl(sess, false);
+      mysqlx_session_close(sess);
+    }
+  }
+
+  //Defined Twice. Last one wins
+  {
+    auto session_opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(session_opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                                   OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                                                   PARAM_END));
+    sess = mysqlx_get_session_from_options(session_opt,&error);
+    mysqlx_free(session_opt);
+    if(!sess)
+    {
+      std::stringstream str;
+      str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+      mysqlx_free(error);
+      FAIL() << str.str();
+    }
+    check_ssl(sess, true);
+    mysqlx_session_close(sess);
+  }
+  {
+    auto session_opt = mysqlx_session_options_new();
+    EXPECT_EQ(RESULT_OK, mysqlx_session_option_set(session_opt,
+                                                   OPT_HOST(get_host()),
+                                                   OPT_PORT(get_port()),
+                                                   OPT_USER(get_user()),
+                                                   OPT_PWD(get_password()),
+                                                   OPT_SSL_MODE(SSL_MODE_REQUIRED),
+                                                   OPT_SSL_MODE(SSL_MODE_DISABLED),
+                                                   PARAM_END));
+    sess = mysqlx_get_session_from_options(session_opt,&error);
+    mysqlx_free(session_opt);
+    if(!sess)
+    {
+      std::stringstream str;
+      str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+      mysqlx_free(error);
+      FAIL() << str.str();
+    }
+    check_ssl(sess, false);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    std::stringstream uri;
+    uri << get_uri() << "/?ssl-mode=disabled&" << "ssl-mode=required";
+    sess = mysqlx_get_session_from_url(uri.str().c_str(), &error);
+    if(!sess)
+    {
+      std::stringstream str;
+      str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+      mysqlx_free(error);
+      FAIL() << str.str();
+    }
+    check_ssl(sess, true);
+    mysqlx_session_close(sess);
+  }
+
+  {
+    std::stringstream uri;
+    uri << get_uri() << "/?ssl-mode=required&" << "ssl-mode=disabled";
+    sess = mysqlx_get_session_from_url(uri.str().c_str(), &error);
+    if(!sess)
+    {
+      std::stringstream str;
+      str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+      mysqlx_free(error);
+      FAIL() << str.str();
+    }
+    check_ssl(sess, false);
+    mysqlx_session_close(sess);
   }
 
 }

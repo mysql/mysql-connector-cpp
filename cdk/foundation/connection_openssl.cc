@@ -609,6 +609,20 @@ void connection_TLS_impl::do_connect()
             m_options.get_ca_path().empty()
             ? NULL : m_options.get_ca_path().c_str()) == 0)
         throw_openssl_error();
+
+      if (!m_options.get_crl().empty() || !m_options.get_crl_path().empty())
+      {
+        X509_STORE *store = SSL_CTX_get_cert_store(m_tls_ctx);
+        /* Load crls from the trusted ca */
+        if (X509_STORE_load_locations(
+              store,
+              m_options.get_crl().c_str(),
+              m_options.get_crl_path().c_str()) == 0 ||
+            X509_STORE_set_flags(
+              store,
+              X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL) == 0)
+          throw_openssl_error();
+      }
     }
     else
     {

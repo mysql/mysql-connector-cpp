@@ -146,8 +146,13 @@ public:
   void set_ca(const string &ca) { m_ca = ca; }
   void set_ca_path(const string &ca_path) { m_ca_path = ca_path; }
 
+  void set_crl(const string &crl) { m_crl = crl; }
+  void set_crl_path(const string &crl_path) { m_crl_path = crl_path; }
+
   const std::string &get_ca() const { return m_ca; }
   const std::string &get_ca_path() const { return m_ca_path; }
+  const std::string &get_crl() const { return m_crl; }
+  const std::string &get_crl_path() const { return m_crl_path; }
   const std::string &get_host_name() const { return m_host_name; }
 
   void set_host_name(const std::string &host_name)
@@ -181,6 +186,8 @@ protected:
   std::string m_key;
   std::string m_ca;
   std::string m_ca_path;
+  std::string m_crl;
+  std::string m_crl_path;
   std::string m_host_name;
   TLS_versions_list m_tls_versions;
   TLS_ciphersuites_list m_tls_ciphersuites;

@@ -536,6 +536,8 @@ TEST_F(xapi, lock_contention)
 
   mysqlx_transaction_rollback(s_nolock);
 
+  mysqlx_session_close(s_nolock);
+
 }
 
 

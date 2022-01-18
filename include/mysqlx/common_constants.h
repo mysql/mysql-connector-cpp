@@ -138,6 +138,18 @@
     Specify compression algorithms in order of preference
   */                                                                        \
   OPT_STR(x,COMPRESSION_ALGORITHMS,18)                                      \
+  /*!
+    Path to a directory containing PEM files specifying trusted root
+    certificates.
+  */              \
+  OPT_STR(x,SSL_CAPATH,19)                                                 \
+  /*! Path to a PEM file containing certificate revocation lists*/          \
+  OPT_STR(x,SSL_CRL,20)                                                     \
+  /*!
+    Path to a directory containing PEM files with certificate revocation
+    lists
+  */                                                                         \
+  OPT_STR(x,SSL_CRLPATH,21)                                                 \
   END_LIST
 
 
@@ -153,9 +165,13 @@
 #define URI_OPTION_LIST(X)  \
   X("ssl-mode", SSL_MODE)   \
   X("ssl-ca", SSL_CA)       \
+  X("ssl-capath", SSL_CAPATH)       \
+  X("ssl-crl", SSL_CRL)       \
+  X("ssl-crlpath", SSL_CRLPATH)       \
   X("auth", AUTH)           \
   X("connect-timeout", CONNECT_TIMEOUT) \
   X("connection-attributes",CONNECTION_ATTRIBUTES)\
+  X("tls-version", TLS_VERSIONS) \
   X("tls-versions", TLS_VERSIONS) \
   X("tls-ciphersuites", TLS_CIPHERSUITES) \
   X("compression", COMPRESSION) \

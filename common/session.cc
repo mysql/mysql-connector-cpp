@@ -323,8 +323,7 @@ void prepare_options(
   // Set TLS options
 
   /*
-    By default ssl-mode is REQUIRED. If ssl-mode was not explicitly set but
-    ssl-ca was, then mode defaults to VERIFY_CA.
+    By default ssl-mode is REQUIRED.
   */
 
   unsigned mode = unsigned(SSL_mode::REQUIRED);
@@ -335,25 +334,18 @@ void prepare_options(
     mode_set = true;
     mode = (unsigned)settings.get(Option::SSL_MODE).get_uint();
   }
-  else if (settings.has_option(Option::SSL_CA))
-  {
-    mode_set = true;
-    mode = unsigned(SSL_mode::VERIFY_CA);
-  }
 
   if (socket && mode_set && mode >= unsigned(SSL_mode::REQUIRED))
   {
     throw_error("SSL connection over Unix domain socket requested.");
   }
 
+#ifdef WITH_SSL
   if (unsigned(SSL_mode::DISABLED) == mode)
   {
-#ifdef WITH_SSL
     opts.set_tls(TLS_options::SSL_MODE::DISABLED);
-#endif
   }
   else
-#ifdef WITH_SSL
   {
     socket = true;  // so that PLAIN auth method is used below
 
@@ -398,6 +390,13 @@ void prepare_options(
 
     if (settings.has_option(Option::SSL_CA))
       tls_opt.set_ca(settings.get(Option::SSL_CA).get_string());
+    if(settings.has_option(Option::SSL_CAPATH))
+      tls_opt.set_ca_path(settings.get(Option::SSL_CAPATH).get_string());
+    if (settings.has_option(Option::SSL_CRL))
+      tls_opt.set_crl(settings.get(Option::SSL_CRL).get_string());
+    if(settings.has_option(Option::SSL_CRLPATH))
+      tls_opt.set_crl_path(settings.get(Option::SSL_CRLPATH).get_string());
+
     opts.set_tls(tls_opt);
   }
 #endif

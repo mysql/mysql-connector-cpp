@@ -768,17 +768,6 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SSL_MODE>(
     throw_error("secure connection requested but SSL is not supported")
 #endif
 
-  switch (m_data.m_ssl_mode)
-  {
-  case SSL_mode::VERIFY_CA:
-  case SSL_mode::VERIFY_IDENTITY:
-    break;
-
-  default:
-    if (m_data.m_ssl_ca)
-      throw_error("SSL_MODE ... not valid when SSL_CA is set");
-  }
-
   add_option(Session_option_impl::SSL_MODE, val);
 }
 
@@ -792,17 +781,6 @@ Settings_impl::Setter::set_option<Settings_impl::Session_option_impl::SSL_CA>(
 #ifndef WITH_SSL
   throw_error("SSL_CA option specified but SSL is not supported")
 #endif
-
-  switch (m_data.m_ssl_mode)
-  {
-  case SSL_mode::VERIFY_CA:
-  case SSL_mode::VERIFY_IDENTITY:
-  case SSL_mode::LAST:
-    break;
-
-  default:
-    throw_error("SSL_CA option is not compatible with SSL_MODE ...");
-  }
 
   m_data.m_ssl_ca = true;
   add_option(Session_option_impl::SSL_CA, val);
@@ -1127,19 +1105,6 @@ void Settings_impl::Setter::add_option(int opt, const T &val)
       m_opt_set.insert(opt);  // needed for double check when m_multi is false
       return;
     }
-    // if multi mode not enabled, fall-through to check for doubled option
-
-  default:
-    // Check for doubled option
-    if (0 < m_opt_set.count(opt))
-    {
-      std::string msg = "Option ";
-      msg += option_name(opt);
-      msg += " defined twice";
-      throw_error(msg.c_str());
-      return;
-    }
-    m_opt_set.insert(opt);
   }
 
   auto it = options.begin();

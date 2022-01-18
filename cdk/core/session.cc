@@ -307,11 +307,6 @@ Session_builder::tls_connect(Socket_base *connection, const TLS::Options &option
 
   unique_ptr<Socket_base> conn_ptr(connection);
 
-  if (!options.get_ca().empty() &&
-      options.ssl_mode() < TLS::Options::SSL_MODE::VERIFY_CA)
-    throw Error(cdkerrc::generic_error,
-                "ssl-ca set and ssl-mode different than VERIFY_CA or VERIFY_IDENTITY");
-
   if (options.ssl_mode() >= TLS::Options::SSL_MODE::VERIFY_CA &&
       options.get_ca().empty())
     throw Error(cdkerrc::generic_error,
