@@ -291,6 +291,7 @@ static const String2IntMap intOptions[]=
     {OPT_NET_BUFFER_LENGTH,   MYSQL_OPT_NET_BUFFER_LENGTH, false},
 #endif
     {OPT_SSL_MODE,            MYSQL_OPT_SSL_MODE    , false},
+    {"OPT_SSL_MODE",          MYSQL_OPT_SSL_MODE    , false},
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 80000
     {OPT_RETRY_COUNT,         MYSQL_OPT_RETRY_COUNT, false},
 #endif
@@ -305,7 +306,9 @@ static const String2IntMap stringOptions[]=
     {OPT_SSL_CAPATH,           MYSQL_OPT_SSL_CAPATH, true},
     {OPT_SSL_CIPHER,           MYSQL_OPT_SSL_CIPHER, true},
     {OPT_SSL_CRL,              MYSQL_OPT_SSL_CRL, false},
+    {"sslCRL",                 MYSQL_OPT_SSL_CRL, false},
     {OPT_SSL_CRLPATH,          MYSQL_OPT_SSL_CRLPATH, false},
+    {"sslCRLPath",             MYSQL_OPT_SSL_CRLPATH, false},
     {OPT_SERVER_PUBLIC_KEY,    MYSQL_SERVER_PUBLIC_KEY, false},
     {OPT_SET_CHARSET_DIR,      MYSQL_SET_CHARSET_DIR, false},
     {OPT_PLUGIN_DIR,           MYSQL_PLUGIN_DIR, false},
@@ -316,6 +319,7 @@ static const String2IntMap stringOptions[]=
     {OPT_CHARSET_NAME,         MYSQL_SET_CHARSET_NAME, true},
 #if MYCPPCONN_STATIC_MYSQL_VERSION_ID >= 50700
     {OPT_TLS_VERSION,          MYSQL_OPT_TLS_VERSION, true},
+    {"OPT_TLS_VERSION",        MYSQL_OPT_TLS_VERSION, true},
 #endif
     {OPT_LOAD_DATA_LOCAL_DIR, MYSQL_OPT_LOAD_DATA_LOCAL_DIR, false}
   };
@@ -708,67 +712,67 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       } else {
         throw sql::InvalidArgumentException("No string value passed for characterSetResults");
       }
-    } else if (!it->first.compare(OPT_SSL_KEY)) {
+    } else if (!it->first.compare(OPT_SSL_KEY) || !it->first.compare("sslKey")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for sslKey expected sql::SQLString");
+        throw sql::InvalidArgumentException("Wrong type passed for ssl-key expected sql::SQLString");
       }
       if (p_s) {
         sslKey = *p_s;
       } else {
-        throw sql::InvalidArgumentException("No string value passed for sslKey");
+        throw sql::InvalidArgumentException("No string value passed for ssl-key");
       }
       ssl_used = true;
-    } else if (!it->first.compare(OPT_SSL_CERT)) {
+    } else if (!it->first.compare(OPT_SSL_CERT) || !it->first.compare("sslCert")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for sslCert expected sql::SQLString");
+        throw sql::InvalidArgumentException("Wrong type passed for ssl-cert expected sql::SQLString");
       }
       if (p_s) {
         sslCert = *p_s;
       } else {
-        throw sql::InvalidArgumentException("No string value passed for sslCert");
+        throw sql::InvalidArgumentException("No string value passed for ssl-cert");
       }
       ssl_used = true;
-    } else if (!it->first.compare(OPT_SSL_CA)) {
+    } else if (!it->first.compare(OPT_SSL_CA) || !it->first.compare("sslCA") ) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for sslCA expected sql::SQLString");
+        throw sql::InvalidArgumentException("Wrong type passed for ssl-ca expected sql::SQLString");
       }
       if (p_s) {
         sslCA = *p_s;
       } else {
-        throw sql::InvalidArgumentException("No string value passed for sslCA");
+        throw sql::InvalidArgumentException("No string value passed for ssl-ca");
       }
       ssl_used = true;
-    } else if (!it->first.compare(OPT_SSL_CAPATH)) {
+    } else if (!it->first.compare(OPT_SSL_CAPATH) || !it->first.compare("sslCAPath")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for sslCAPath expected sql::SQLString");
+        throw sql::InvalidArgumentException("Wrong type passed for ssl-capath expected sql::SQLString");
       }
       if (p_s) {
         sslCAPath = *p_s;
       } else {
-        throw sql::InvalidArgumentException("No string value passed for sslCAPath");
+        throw sql::InvalidArgumentException("No string value passed for ssl-capath");
       }
       ssl_used = true;
-    } else if (!it->first.compare(OPT_SSL_CIPHER)) {
+    } else if (!it->first.compare(OPT_SSL_CIPHER) || !it->first.compare("sslCipher")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for sslCipher expected sql::SQLString");
+        throw sql::InvalidArgumentException("Wrong type passed for ssl-cipher expected sql::SQLString");
       }
       if (p_s) {
         sslCipher = *p_s;
       } else {
-        throw sql::InvalidArgumentException("No string value passed for sslCipher");
+        throw sql::InvalidArgumentException("No string value passed for ssl-cipher");
       }
       ssl_used = true;
-    } else if (!it->first.compare(OPT_TLS_VERSION)) {
+    } else if (!it->first.compare(OPT_TLS_VERSION) || !it->first.compare("OPT_TLS_VERSION")) {
       try {
         p_s = (it->second).get< sql::SQLString >();
       } catch (sql::InvalidArgumentException&) {
@@ -1076,6 +1080,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   */
 
   it = properties.find(OPT_SSL_MODE);
+
+  //Use legacy option
+  if(it == properties.end())
+    it = properties.find("OPT_SSL_MODE");
 
   if (it != properties.end())
   {

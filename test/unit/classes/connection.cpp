@@ -3455,7 +3455,7 @@ void connection::ssl_mode()
   connection_properties["userName"]=user;
   connection_properties["password"]=passwd;
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
 
   created_objects.clear();
   con.reset(driver->connect(connection_properties));
@@ -3482,7 +3482,7 @@ void connection::ssl_mode()
 
   ASSERT_EQUALS(0, static_cast<int>(res->getString(2).length()));
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_REQUIRED;
 
   try
   {
@@ -3510,12 +3510,12 @@ void connection::ssl_mode()
   connection_properties["userName"]="ssluser";
   connection_properties["password"]="sslpass";
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_REQUIRED;
 
   created_objects.clear();
   con.reset(driver->connect(connection_properties));
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
 
   //only to trigger setssl which changes SSL_MODE
   connection_properties["sslCA"] = "invalid_path";
@@ -3543,7 +3543,7 @@ void connection::tls_version()
   connection_properties["userName"]=user;
   connection_properties["password"]=passwd;
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
 
   created_objects.clear();
   con.reset(driver->connect(connection_properties));
@@ -3570,10 +3570,10 @@ void connection::tls_version()
     tls_versions.push_back(tls_available.substr(begin_pos, end_pos-begin_pos));
   }
 
-  connection_properties["OPT_SSL_MODE"] = sql::SSL_MODE_REQUIRED;
+  connection_properties[OPT_SSL_MODE] = sql::SSL_MODE_REQUIRED;
 
   // Using ALL TLS version... should connect
-  connection_properties["OPT_TLS_VERSION"] = tls_available;
+  connection_properties[OPT_TLS_VERSION] = tls_available;
 
   created_objects.clear();
   try
@@ -3588,7 +3588,7 @@ void connection::tls_version()
 
 
   // Using wrong TLS version... should fail to connect
-  connection_properties["OPT_TLS_VERSION"] = sql::SQLString("TLSv999");
+  connection_properties[OPT_TLS_VERSION] = sql::SQLString("TLSv999");
 
   created_objects.clear();
   try
@@ -3608,7 +3608,7 @@ void connection::tls_version()
        version != tls_versions.end();
        ++version)
   {
-    connection_properties["OPT_TLS_VERSION"] = sql::SQLString(*version);
+    connection_properties[OPT_TLS_VERSION] = sql::SQLString(*version);
 
     created_objects.clear();
     try
@@ -3656,7 +3656,7 @@ void connection::cached_sha2_auth()
   opts["userName"] = "doomuser";
   opts["password"] = "!sha2user_pass";
   opts["OPT_GET_SERVER_PUBLIC_KEY"] = false;
-  opts["OPT_SSL_MODE"] = sql::SSL_MODE_DISABLED;
+  opts[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
 
   try {
 
@@ -4162,6 +4162,99 @@ void connection::fido_test()
   }
   std::cout << "Success\n";
 }
+
+
+//Test if ssl is enabled using cipher
+auto check_ssl_impl = [](std::shared_ptr<sql::Connection> sess, bool enable, int line)
+{
+  std::unique_ptr<sql::Statement> stmt(sess->createStatement());
+  std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SHOW STATUS LIKE 'Ssl_cipher'"));
+
+  res->next();
+  std::cout << "Line "<< line << ": " << res->getString(1) << ":" << res->getString(2) << std::endl;
+
+  std::string cipher = res->getString(2);
+
+  ASSERT_EQUALS(enable, !cipher.empty());
+};
+
+#define check_ssl(x,y) check_ssl_impl(x, y, __LINE__)
+
+
+void connection::normalize_ssl_options()
+{
+
+  std::vector<std::string> options =
+  {
+    OPT_SSL_MODE,
+    OPT_SSL_CA,
+    OPT_SSL_CAPATH,
+    OPT_SSL_CRL,
+    OPT_SSL_CRLPATH,
+    OPT_TLS_VERSION,
+    "sslKey",
+    "sslCert",
+    "sslCA",
+    "sslCAPath",
+    "sslCipher",
+    "sslCRL",
+    "sslCRLPath",
+    "rsaKey",
+    "OPT_SSL_MODE",
+    "OPT_TLS_VERSION"
+  };
+
+  for(auto &opt : options)
+  {
+    {
+      std::cout << "Option: " << opt << std::endl;
+
+      sql::ConnectOptionsMap sess_opt;
+
+      if(opt == "OPT_SSL_MODE" || opt == OPT_SSL_MODE)
+      {
+        sess_opt[opt]=sql::SSL_MODE_DISABLED;
+      }
+      else
+      {
+        sess_opt[opt] ="BAD";
+        sess_opt[opt] ="GOOD";
+        sess_opt[OPT_SSL_MODE]=sql::SSL_MODE_DISABLED;
+      }
+
+
+      std::shared_ptr<sql::Connection> s(getConnection(&sess_opt));
+      check_ssl(s, false);
+
+       if(opt != "OPT_SSL_MODE" && opt != OPT_SSL_MODE)
+        ASSERT_EQUALS("GOOD", sess_opt[opt].get<std::string>());
+    }
+
+  }
+
+  //Defined Twice. Last one wins
+  {
+    sql::ConnectOptionsMap sess_opt;
+
+    sess_opt[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
+    sess_opt[OPT_SSL_MODE] = sql::SSL_MODE_REQUIRED;
+
+    std::shared_ptr<sql::Connection> s(getConnection(&sess_opt));
+    check_ssl(s, true);
+  }
+  {
+    sql::ConnectOptionsMap sess_opt;
+
+    sess_opt[OPT_SSL_MODE] = sql::SSL_MODE_REQUIRED;
+    sess_opt[OPT_SSL_MODE] = sql::SSL_MODE_DISABLED;
+
+    std::shared_ptr<sql::Connection> s(getConnection(&sess_opt));
+    check_ssl(s, false);
+  }
+
+}
+
+
 
 } /* namespace connection */
 } /* namespace testsuite */

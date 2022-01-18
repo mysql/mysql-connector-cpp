@@ -97,6 +97,7 @@ public:
   TEST_CASE(mfa);
   TEST_CASE(tls_deprecation);
   TEST_CASE(fido_test);
+  TEST_CASE(normalize_ssl_options);
   }
 
   /**
@@ -301,6 +302,12 @@ public:
    */
   void tls_deprecation();
 
+  /*
+   * Test of MySQL_Connection::normalize_ssl_options()
+   *
+   */
+  void normalize_ssl_options();
+  
   /*
    * Test for checking fido connection.
    *
