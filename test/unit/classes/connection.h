@@ -48,6 +48,9 @@ private:
   typedef unit_fixture super;
 
 protected:
+
+  bool check_tls_ver(const char* tls_ver);
+
 public:
 
   EXAMPLE_TEST_FIXTURE(connection)

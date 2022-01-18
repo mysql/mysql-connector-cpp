@@ -3899,12 +3899,26 @@ void connection::mfa()
 
 }
 
+bool connection::check_tls_ver(const char* tls_ver)
+{
+  try {
+
+    sql::ConnectOptionsMap opt;
+    opt[OPT_TLS_VERSION]=tls_ver;
+
+    Connection my_con(getConnection(&opt));
+
+    return my_con->isValid();
+
+  }
+  catch (const sql::SQLException&)
+  {
+    return false;
+  }
+}
+
 void connection::tls_deprecation()
 {
-  // TODO: remove this block when the test is fixed
-  if (!getenv("MYSQL_TLS_DEPRECATION"))
-    return;
-
   sql::ConnectOptionsMap opt;
   opt[OPT_HOSTNAME]=url;
   opt[OPT_USERNAME]=user;
@@ -3920,7 +3934,9 @@ void connection::tls_deprecation()
   TEST_CASES test_cases[] =
   {
     {"TLSv1.1,TLSv1.2" ,true },
-    {"foo,TLSv1.3"     ,true },
+    //Not all platforms support TLSv1.3
+    {"foo,TLSv1.3"     ,check_tls_ver("TLSv1.3")},
+    {"foo,TLSv1.2"     ,true },
     {"TLSv1.0,TLSv1.1" ,false},
     {"foo,TLSv1.1"     ,false},
     {"foo,bar"         ,false},
