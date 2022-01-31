@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, 2021, Oracle and/or its affiliates.
+# Copyright (c) 2018, 2022, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -37,8 +37,14 @@
 %{!?commercial:  %global product_suffix %{nil}}
 %{?el6:%global __strip /opt/rh/devtoolset-8/root/usr/bin/strip}
 %{?el6:%global gcc_toolset devtoolset-8}
+
+%ifarch aarch64
 %{?el7:%global gcc_toolset devtoolset-10}
-%{?el8:%global gcc_toolset gcc-toolset-10}
+%else
+%{?el7:%global gcc_toolset devtoolset-11}
+%endif
+
+%{?el8:%global gcc_toolset gcc-toolset-11}
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
 %endif
@@ -160,6 +166,9 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_includedir}/mysql-cppconn-8/jdbc
 
 %changelog
+* Tue Jan 25 2022 Prashant Tekriwal <prashant.tekriwal@oracle.com> - 8.0.29-1
+- Using devtoolset-11 for el7 x86 and el8(all)
+
 * Tue Nov 09 2021 Gipson Pulla <gipson.pulla@oracle.com> - 8.0.28-1
 - Removed the internal testing package
 
