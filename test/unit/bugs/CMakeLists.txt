@@ -27,29 +27,19 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-SET(bugs_sources
+SET(test_bugs_sources
   ../unit_fixture.cpp
   ../main.cpp
   bugs.cpp)
 
 IF(WIN32)
-  SET(bugs_sources
+  SET(test_bugs_sources
         ${bugs_sources}
   bugs.h
   ../unit_fixture.h)
 
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(unsorted_bugs ${bugs_sources})
-SET_TARGET_PROPERTIES(unsorted_bugs PROPERTIES
-  OUTPUT_NAME "unsorted_bugs"
-  FOLDER "Tests/jdbc"
-)
-TARGET_LINK_LIBRARIES(unsorted_bugs ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-ADD_TEST(NAME jdbc_unsorted_bugs
-  COMMAND
-  unsorted_bugs
-  )
+add_unit_test(bugs)
 
 MESSAGE(STATUS "Configuring bugs test cases - unsorted")
