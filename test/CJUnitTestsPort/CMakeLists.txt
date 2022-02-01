@@ -49,7 +49,7 @@ ENDIF(MYSQLCPPCONN_TEST_NOT_IMPLEMENTED)
 
 INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/include/jdbc")
 
-SET(jdbctests_sources
+SET(test_CJUnitTestsPort_sources
   ccpptests.cpp
   BaseTestFixture.cpp
   ../common/stringutils.cpp
@@ -70,8 +70,8 @@ SET(jdbctests_sources
 
 # It's convinient for VS users to have headers as part of project
 IF(WIN32)
-  SET(jdbctests_sources
-        ${jdbctests_sources}
+  SET(test_CJUnitTestsPort_sources
+        ${tests_CJUnitTestsPort_sources}
     BaseTestFixture.h
     ../common/stringutils.h
     resources.h
@@ -90,12 +90,7 @@ IF(WIN32)
     )
 ENDIF(WIN32)
 
-ADD_EXECUTABLE(CJUnitTestsPort ${jdbctests_sources})
-TARGET_LINK_LIBRARIES(CJUnitTestsPort ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
-
-set_target_properties(CJUnitTestsPort PROPERTIES FOLDER "Tests/jdbc")
-
-ADD_TEST(NAME jdbc_CJUnitTestsPort COMMAND CJUnitTestsPort)
+add_unit_test(CJUnitTestsPort)
 
 #Copy sql.properties file to build dir
 file(COPY sql.properties DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

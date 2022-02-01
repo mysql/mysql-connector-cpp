@@ -87,6 +87,29 @@ TARGET_LINK_LIBRARIES(driver_test ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIB
 #TODO: Check if this test should be added since it is failing!
 #ADD_TEST(NAME jdbc_driver_test COMMAND driver_test)
 
+function(add_unit_test NAME)
+
+  if (ARGN)
+    list(GET ARGN 0 TGT_NAME)
+  else()
+    set(TGT_NAME test_${NAME})
+  endif()
+
+  ADD_EXECUTABLE(${TGT_NAME} ${test_${NAME}_sources})
+  SET_TARGET_PROPERTIES(${TGT_NAME} PROPERTIES
+    OUTPUT_NAME "${NAME}"
+    LINK_FLAGS "${MYSQLCPPCONN_LINK_FLAGS_ENV} ${MYSQL_LINK_FLAGS}"
+    COMPILE_FLAGS "${MYSQLCPPCONN_COMPILE_FLAGS_ENV}"
+    FOLDER "Tests/jdbc"
+  )
+  TARGET_LINK_LIBRARIES(${TGT_NAME} ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
+
+  ADD_TEST(NAME jdbc_test_${NAME} COMMAND $<TARGET_FILE_NAME:${TGT_NAME}>)
+
+  MESSAGE(STATUS "Configuring unit tests - ${NAME}")
+
+endfunction()
+
 MESSAGE(STATUS "Configuring test cases")
 
 add_subdirectory(CJUnitTestsPort)
