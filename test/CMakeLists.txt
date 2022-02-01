@@ -104,7 +104,7 @@ function(add_unit_test NAME)
   )
   TARGET_LINK_LIBRARIES(${TGT_NAME} ${MY_TARGET_LINK_LIBRARIES} ${MY_GCOV_LINK_LIBRARIES})
 
-  ADD_TEST(NAME jdbc_test_${NAME} COMMAND $<TARGET_FILE_NAME:${TGT_NAME}>)
+  ADD_TEST(jdbc_test_${NAME} ${NAME})
 
   MESSAGE(STATUS "Configuring unit tests - ${NAME}")
 
