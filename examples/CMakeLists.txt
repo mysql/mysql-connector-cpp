@@ -147,7 +147,7 @@ IF(MYSQLCPPCONN_BUILD_EXAMPLES)
         ${MYSQLCPPCONN_BOOST_THREAD_LIBS} ${MYSQLCPPCONN_ICU_LIBRARY}
       )
 
-      ADD_TEST(NAME jdbc_${example} COMMAND ${example})
+      ADD_TEST(jdbc_${example} ${example})
 
     endforeach()
 
