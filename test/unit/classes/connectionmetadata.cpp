@@ -2364,7 +2364,7 @@ void connectionmetadata::getSchemaCharset()
 
   stmt.reset(con->createStatement());
   stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
-  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8mb3 COLLATE utf8_bin");
 
   /* SchemaCharset */
   res.reset(dbmeta->getSchemaCharset(con->getCatalog(), "charsetTestDatabase"));
@@ -2376,7 +2376,7 @@ void connectionmetadata::getSchemaCharset()
   ASSERT_EQUALS("SCHEMA_CHARSET", resmeta->getColumnLabel(3));
 
   ASSERT(res->getString("SCHEMA_NAME").caseCompare("charsetTestDatabase") == 0);
-  ASSERT_EQUALS("utf8", res->getString("SCHEMA_CHARSET"));
+  ASSERT_EQUALS("utf8mb3", res->getString("SCHEMA_CHARSET"));
 
   stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
   }
@@ -2447,11 +2447,11 @@ void connectionmetadata::getTableCharset()
 
   stmt.reset(con->createStatement());
   stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
-  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt->execute("CREATE DATABASE charsetTestDatabase CHARACTER SET utf8mb3 COLLATE utf8_bin");
   stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTable");
   stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTable(id INT) CHARACTER SET latin1 COLLATE latin1_general_ci");
   stmt->execute("DROP TABLE IF EXISTS charsetTestDatabase.charsetTestTableAnother");
-  stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTableAnother(id INT) CHARACTER SET utf8 COLLATE utf8_bin");
+  stmt->execute("CREATE TABLE charsetTestDatabase.charsetTestTableAnother(id INT) CHARACTER SET utf8mb3 COLLATE utf8_bin");
 
   /* TableCharset */
   res.reset(dbmeta->getTableCharset(con->getCatalog(), "charsetTestDatabase", "%charsetTestTable%"));
@@ -2470,7 +2470,7 @@ void connectionmetadata::getTableCharset()
   ASSERT(res->next());
   ASSERT(res->getString("TABLE_SCHEMA").caseCompare("charsetTestDatabase") == 0);
   ASSERT(res->getString("TABLE_NAME").caseCompare("charsetTestTableAnother") == 0);
-  ASSERT_EQUALS("utf8", res->getString("TABLE_CHARSET"));
+  ASSERT_EQUALS("utf8mb3", res->getString("TABLE_CHARSET"));
 
   stmt->execute("DROP DATABASE IF EXISTS charsetTestDatabase");
   }
