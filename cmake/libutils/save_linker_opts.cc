@@ -30,40 +30,46 @@
 
 #include <iostream>
 #include <fstream>
+#ifdef __linux__
 #include <unistd.h>
-
+#elif _WIN32
+#include <direct.h>
+#endif
 using namespace std;
 
 int main(int argc, char* argv[])
 {
-  char pwd[1024];
+	char pwd[1024];
+#ifdef __linux__
+	if (!getcwd(pwd, sizeof(pwd)))
+#elif _WIN32
+	if (!_getcwd(pwd, sizeof(pwd)))
+#endif
+		return 1;
 
-  if (!getcwd(pwd, sizeof(pwd)))
-    return 1;
+	//cout << "Got " << argc << " arguments" << endl;
+	//cout << "Output file: " << argv[1] << endl;
+	//cout << "pwd: " << pwd << endl;
 
-  //cout << "Got " << argc << " arguments" << endl;
-  //cout << "Output file: " << argv[1] << endl;
-  //cout << "pwd: " << pwd << endl;
+	ofstream out(argv[1]);
 
-  ofstream out(argv[1]);
+	// Note: first line in the output is the working directory
 
-  // Note: first line in the output is the working directory
+	out << pwd << endl;
 
-  out << pwd << endl;
+	// Note: argv[2] is the compiler/linker command
 
-  // Note: argv[2] is the compiler/linker command
+	for (unsigned pos = 3; pos < argc; pos++)
+	{
+		if (string(argv[pos]) == "-o")
+		{
+			pos++;
+			continue;
+		}
 
-  for(unsigned pos=3; pos < argc; pos++)
-  {
-    if(string(argv[pos]) == "-o")
-    {
-      pos ++;
-      continue;
-    }
-
-    //cout << "-- opt: " << argv[pos] << endl;
-    out << argv[pos] <<endl;
-  }
-  out.flush();
-  return 0;
+		//cout << "-- opt: " << argv[pos] << endl;
+		out << argv[pos] << endl;
+	}
+	out.flush();
+	return 0;
 }
