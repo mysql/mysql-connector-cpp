@@ -34,12 +34,12 @@ SET(test_bugs_sources
 
 IF(WIN32)
   SET(test_bugs_sources
-        ${bugs_sources}
+        ${test_bugs_sources}
   bugs.h
   ../unit_fixture.h)
 
 ENDIF(WIN32)
 
-add_unit_test(bugs)
+add_unit_test(bugs bugs)
 
 MESSAGE(STATUS "Configuring bugs test cases - unsorted")

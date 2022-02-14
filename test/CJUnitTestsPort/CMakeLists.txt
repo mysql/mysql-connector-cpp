@@ -71,7 +71,7 @@ SET(test_CJUnitTestsPort_sources
 # It's convinient for VS users to have headers as part of project
 IF(WIN32)
   SET(test_CJUnitTestsPort_sources
-        ${tests_CJUnitTestsPort_sources}
+        ${test_CJUnitTestsPort_sources}
     BaseTestFixture.h
     ../common/stringutils.h
     resources.h
@@ -90,7 +90,7 @@ IF(WIN32)
     )
 ENDIF(WIN32)
 
-add_unit_test(CJUnitTestsPort)
+add_unit_test(CJUnitTestsPort CJUnitTestsPort)
 
 #Copy sql.properties file to build dir
 file(COPY sql.properties DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
