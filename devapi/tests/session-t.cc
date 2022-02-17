@@ -4066,14 +4066,8 @@ TEST_F(Sess, tls_ver_deprecate)
 
     std::cout << "Testing:" << test.tls_versions << std::endl;
 
-    {
-      SessionSettings opt(SessionOption::HOST, get_host(),
-                          SessionOption::PORT, get_port(),
-                          SessionOption::USER, get_user(),
-                          SessionOption::PWD, get_password(),
-                          SessionOption::SSL_MODE,  SSLMode::REQUIRED);
-      EXPECT_EQ(test.succeed, check_tls_ver(test.tls_versions.c_str()));
-    }
+    EXPECT_EQ(test.succeed, check_tls_ver(test.tls_versions.c_str()));
+
     //URI
     std::stringstream uri;
     uri << get_uri() << "/?tls-versions=[" << test.tls_versions << "]";
@@ -4088,7 +4082,8 @@ TEST_F(Sess, tls_ver_deprecate)
         mysqlx::Session(uri.str());
 
       }  catch (const std::exception& e) {
-        EXPECT_EQ(std::string(e.what()), "No valid TLS version was given, valid versions are: TLSv1.2, TLSv1.3");
+        if (has_tlsv1_3)
+          EXPECT_EQ(std::string(e.what()), "No valid TLS version was given, valid versions are: TLSv1.2, TLSv1.3");
       }
     }
   }
