@@ -297,6 +297,7 @@ function(main)
 
   if(MYSQL_LIB_STATIC)
     target_link_libraries(mysql-client-if INTERFACE MySQL::client-static)
+    target_link_libraries(mysql-client-if INTERFACE SSL::ssl SSL::crypto)
   else()
     target_link_libraries(mysql-client-if INTERFACE MySQL::client-shared)
   endif()
@@ -513,7 +514,7 @@ function(use_mysql_config)
 
   _mysql_conf(config_libs_paths --libs)
   string(REGEX MATCHALL " -l[^ ]+" config_libs ${config_libs_paths})
-  message("-- libs: ${config_libs}")
+  # message("-- libs: ${config_libs}")
 
 
   foreach(lib ${config_libs})
@@ -523,9 +524,11 @@ function(use_mysql_config)
 
     # Libraries that are known to be internal compiler ones are not set as
     # explicit dependencies.
+    # Openssl dependency is treated differently, respecting users WITH_SSL
+    # option.
 
     if(NOT lib MATCHES
-        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic)"
+        "(mysqlclient|libmysql|^stdc|^gcc|^CrunG3|^c$|^statomic|^ssl|^crypto)"
       )
 
       list(APPEND MYSQL_EXTERNAL_DEPENDENCIES ${lib})
