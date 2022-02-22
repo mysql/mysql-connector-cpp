@@ -29,6 +29,9 @@
  */
 
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 #include "mysql_connection.h"
 #include "version_info.h"
@@ -186,6 +189,27 @@ void MySQL_Driver::setCallBack(sql::Fido_Callback& cb)
 } /* namespace mysql */
 
 } /* namespace sql */
+
+#if(_WIN32 && CONCPP_BUILD_SHARED)
+std::string driver_dll_path;
+
+BOOL WINAPI DllMain(
+  _In_ HINSTANCE hmodule,
+  _In_ DWORD,
+  _In_ LPVOID
+)
+{
+  /*
+    For Windows DLL we will store the current module path to allow detecting
+    directories with the plugins and dependencies.
+  */
+  char _driver_dll_path[1024] = { 0 };
+  GetModuleFileNameA(hmodule, _driver_dll_path, sizeof(_driver_dll_path));
+  driver_dll_path = _driver_dll_path;
+  driver_dll_path = driver_dll_path.substr(0, driver_dll_path.find_last_of('\\') + 1);
+  return true;
+}
+#endif
 
 /*
  * Local variables:

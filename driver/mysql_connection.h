@@ -36,6 +36,10 @@
 #include "cppconn/connection.h"
 #include <memory>
 
+#if(_WIN32 && CONCPP_BUILD_SHARED)
+extern std::string driver_dll_path;
+#endif
+
 namespace sql
 {
 namespace mysql

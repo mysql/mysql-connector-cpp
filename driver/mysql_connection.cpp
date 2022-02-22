@@ -576,6 +576,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   */
 
   {
+    sql::SQLString plugin_dir;
     it = properties.find(OPT_PLUGIN_DIR);
 
     if (it != properties.end()) {
@@ -584,12 +585,28 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       } catch (sql::InvalidArgumentException&) {
         throw sql::InvalidArgumentException("Wrong type passed for pluginDir expected sql::SQLString");
       }
-      if (p_s) {
-        proxy->options(sql::mysql::MYSQL_PLUGIN_DIR, *p_s);
-      }
-      else {
-        throw sql::InvalidArgumentException("No string value passed for pluginDir");
-      }
+    }
+#if(_WIN32 && CONCPP_BUILD_SHARED)
+    else {
+      /*
+        Note: For DLL in Windows we will try to set the plugin directory
+        based on driver_dll_path.
+      */
+      plugin_dir = driver_dll_path;
+#ifdef _DEBUG
+      // Debug dll is placed inside debug subdirectory
+      plugin_dir.append("..\\");
+#endif
+      plugin_dir.append("plugin");
+      p_s = &plugin_dir;
+    }
+#endif
+
+    if (p_s) {
+      proxy->options(sql::mysql::MYSQL_PLUGIN_DIR, *p_s);
+    } else if (it != properties.end()) {
+      // Throw only when OPT_PLUGIN_DIR is used, but no value is given
+      throw sql::InvalidArgumentException("No string value passed for pluginDir");
     }
   }
 
