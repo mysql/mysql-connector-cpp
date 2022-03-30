@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2015, 2022, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -20,31 +20,36 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-# The files in protobuf-3.11.4/ are almost unmodified versions of google
+# The files in protobuf-3.19.4/ are almost unmodified versions of google
 # source files taken from protobuf-cpp-3.11.4.tar.gz archive.
 # Changes:
 # - remove directories and files
-#    protobuf-3.11.4/benchmarks/
-#    protobuf-3.11.4/conformance/
-#    protobuf-3.11.4/editors/
-#    protobuf-3.11.4/examples/
-#    protobuf-3.11.4/m4/
-#    protobuf-3.11.4/objectivec/
-#    protobuf-3.11.4/python/
-#    protobuf-3.11.4/third_party/
-#    protobuf-3.11.4/util/
-#    protobuf-3.11.4/ar-lib
-#    protobuf-3.11.4/compile
-#    protobuf-3.11.4/config.guess
-#    protobuf-3.11.4/config.h.in
-#    protobuf-3.11.4/config.sub
-#    protobuf-3.11.4/configure
-#    protobuf-3.11.4/depcomp
-#    protobuf-3.11.4/install-sh
-#    protobuf-3.11.4/ltmain.sh
-#    protobuf-3.11.4/missing
-#    protobuf-3.11.4/test-driver
-#    protobuf-3.11.4/update_file_lists.sh
+#    protobuf-3.19.4/benchmarks/
+#    protobuf-3.19.4/conformance/
+#    protobuf-3.19.4/editors/
+#    protobuf-3.19.4/examples/
+#    protobuf-3.19.4/m4/
+#    protobuf-3.19.4/objectivec/
+#    protobuf-3.19.4/python/
+#    protobuf-3.19.4/third_party/
+#    protobuf-3.19.4/util/
+#    protobuf-3.19.4/ar-lib
+#    protobuf-3.19.4/compile
+#    protobuf-3.19.4/config.guess
+#    protobuf-3.19.4/config.h.in
+#    protobuf-3.19.4/config.sub
+#    protobuf-3.19.4/configure
+#    protobuf-3.19.4/depcomp
+#    protobuf-3.19.4/install-sh
+#    protobuf-3.19.4/ltmain.sh
+#    protobuf-3.19.4/missing
+#    protobuf-3.19.4/test-driver
+#    protobuf-3.19.4/update_file_lists.sh
+#    protobuf-3.19.4/autogen.sh
+#    protobuf-3.19.4/build_files_updated_unittest.sh
+#    protobuf-3.19.4/generate_descriptor_proto.sh
+#    protobuf-3.19.4/maven_install.json
+
 # - disable configuration check of cmake's mimimum version
 # - disable configuration zlib check
 # - disable installation script
@@ -57,7 +62,7 @@ PROJECT(Protobuf)
 include(../setup.cmake)
 include(platform)
 
-SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.11.4")
+SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.19.4")
 
 #
 # Produce position independent code.
@@ -65,6 +70,16 @@ SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.11.4")
 #
 
 enable_pic()
+enable_cxx11()
+
+# -O3 using GCC on SPARC leds to segfault on protoc
+if(SPARC AND GCC)
+  foreach(LANG C CXX)
+  foreach(TYPE RELEASE)
+    string(REPLACE "-O3" "-O2" CMAKE_${LANG}_FLAGS_${TYPE} "${CMAKE_${LANG}_FLAGS_${TYPE}}")
+  endforeach(TYPE)
+  endforeach(LANG)
+endif()
 
 #
 # Do not export any symbols

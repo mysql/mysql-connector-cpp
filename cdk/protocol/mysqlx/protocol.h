@@ -850,7 +850,7 @@ struct Prepare_traits<msg_type::cli_StmtExecute>
 
   static void release(Mysqlx::Prepare::Prepare &prepare)
   {
-    prepare.mutable_stmt()->release_stmt_execute();
+    static_cast<void>(prepare.mutable_stmt()->release_stmt_execute());
   }
 
 };
@@ -871,7 +871,7 @@ struct Prepare_traits<msg_type::cli_CrudFind>
 
   static void release(Mysqlx::Prepare::Prepare &prepare)
   {
-    prepare.mutable_stmt()->release_find();
+    static_cast<void>(prepare.mutable_stmt()->release_find());
   }
 
 };
@@ -892,7 +892,7 @@ struct Prepare_traits<msg_type::cli_CrudInsert>
 
   static void release(Mysqlx::Prepare::Prepare &prepare)
   {
-    prepare.mutable_stmt()->release_insert();
+    static_cast<void>(prepare.mutable_stmt()->release_insert());
   }
 
 
@@ -914,7 +914,7 @@ struct Prepare_traits<msg_type::cli_CrudUpdate>
 
   static void release(Mysqlx::Prepare::Prepare &prepare)
   {
-    prepare.mutable_stmt()->release_update();
+    static_cast<void>(prepare.mutable_stmt()->release_update());
   }
 
 };
@@ -936,7 +936,7 @@ struct Prepare_traits<msg_type::cli_CrudDelete>
 
   static void release(Mysqlx::Prepare::Prepare &prepare)
   {
-    prepare.mutable_stmt()->release_delete_();
+    static_cast<void>(prepare.mutable_stmt()->release_delete_());
   }
 
 };
