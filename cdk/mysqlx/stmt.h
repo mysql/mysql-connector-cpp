@@ -539,7 +539,10 @@ public:
   {
     // ignore other errors after failed prepare
     if (m_prepare_error && Severity::ERROR == severity)
+    {
+      delete err;
       return;
+    }
     Base::add_diagnostics(severity, err);
   }
 
