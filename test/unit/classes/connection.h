@@ -98,6 +98,7 @@ public:
   TEST_CASE(tls_deprecation);
   TEST_CASE(fido_test);
   TEST_CASE(normalize_ssl_options);
+  TEST_CASE(macro_version);
   }
 
   /**
@@ -307,15 +308,19 @@ public:
    *
    */
   void normalize_ssl_options();
-  
+
   /*
    * Test for checking fido connection.
    *
    */
   void fido_test();
 
+  /*
+   * Test version macros.
+   *
+   */
+  void macro_version();
 };
-
 
 REGISTER_FIXTURE(connection);
 } /* namespace classes */

@@ -4254,7 +4254,41 @@ void connection::normalize_ssl_options()
 
 }
 
+void connection::macro_version()
+{/*
+  Check if version is set and correct
+*/
+#if !defined(MYSQL_CONCPP_VERSION_NUMBER)
+  SKIP("MYSQL_CONCPP_VERSION_NUMBER macro not defined");
+#else
 
+#if !defined(MYSQL_CONCPP_VERSION_MAJOR)
+  FAIL("MYSQL_CONCPP_VERSION_MAJOR macro not defined");
+#elif !defined(MYSQL_CONCPP_VERSION_MINOR)
+  FAIL("MYSQL_CONCPP_VERSION_MINOR macro not defined");
+#elif !defined(MYSQL_CONCPP_VERSION_MICRO)
+  FAIL("MYSQL_CONCPP_VERSION_MICRO macro not defined");
+#endif
+
+  ASSERT_EQUALS(MYSQL_CONCPP_VERSION_NUMBER, MYCPPCONN_DM_VERSION_ID);
+
+  std::stringstream version_orig, version_generated, version_old;
+
+  version_orig << std::setfill('0')
+               << MYSQL_CONCPP_VERSION_MAJOR
+               << std::setw(2) << MYSQL_CONCPP_VERSION_MINOR
+               << std::setw(4) << MYSQL_CONCPP_VERSION_MICRO;
+
+  version_generated << MYSQL_CONCPP_VERSION_NUMBER;
+
+  version_old << MYCPPCONN_DM_VERSION_ID;
+
+  ASSERT_EQUALS(version_orig.str(), version_generated.str());
+
+  ASSERT_EQUALS(version_orig.str(), version_old.str());
+
+#endif
+}
 
 } /* namespace connection */
 } /* namespace testsuite */
