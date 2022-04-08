@@ -31,6 +31,8 @@
 #ifndef MYSQL_COMMON_CONSTANTS_H
 #define MYSQL_COMMON_CONSTANTS_H
 
+#include "version_info.h"
+
 #define DEFAULT_MYSQL_PORT  3306
 #define DEFAULT_MYSQLX_PORT 33060
 

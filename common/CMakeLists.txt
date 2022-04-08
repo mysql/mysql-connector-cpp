@@ -53,13 +53,17 @@ endif()
 # original version in the sources
 #
 
-configure_file(version_info.h version_info.h @ONLY)
+configure_file(version_info.h ${CMAKE_BINARY_DIR}/include/mysqlx/version_info.h @ONLY)
 
 # FIXME: This include path is made public, because other components
 # such as devapi use private headers of the common component.
 
 target_include_directories(common
-  BEFORE PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+  BEFORE PUBLIC ${CMAKE_BINARY_DIR}/include/mysqlx/
 )
+
+ADD_TEST_INCLUDES(${CMAKE_BINARY_DIR}/include/mysqlx/)
+
+INSTALL(FILES ${CMAKE_BINARY_DIR}/include/mysqlx/version_info.h DESTINATION ${INSTALL_INCLUDE_DIR}/mysqlx COMPONENT XDevAPIDev)
 
 add_subdirectory(tests)

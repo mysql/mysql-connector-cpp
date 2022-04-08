@@ -1,4 +1,4 @@
-# Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2016, 2022, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -38,6 +38,12 @@ set(CONCPP_VERSION_LEVEL  "" CACHE INTERNAL "version info")
 
 set(CONCPP_VERSION
   "${CONCPP_VERSION_MAJOR}.${CONCPP_VERSION_MINOR}.${CONCPP_VERSION_MICRO}"
+  CACHE INTERNAL "version info"
+)
+
+#Update padding when Minor / Micro length changes
+set(CONCPP_VERSION_NUMBER
+  "${CONCPP_VERSION_MAJOR}0${CONCPP_VERSION_MINOR}00${CONCPP_VERSION_MICRO}"
   CACHE INTERNAL "version info"
 )
 

@@ -34,6 +34,7 @@
 #include <chrono>
 #include <thread>
 #include <map>
+#include <sstream>
 
 using std::cout;
 using std::endl;
@@ -4218,4 +4219,35 @@ TEST_F(Sess, normalize_ssl_options)
   }
 
 
+}
+
+TEST_F(Sess, MACRO_VERSION)
+{
+/*
+  Check if version is set and correct
+*/
+#if !defined(MYSQL_CONCPP_VERSION_NUMBER)
+  SKIP_TEST("MYSQL_CONCPP_VERSION_NUMBER macro not defined");
+#else
+
+#if !defined(MYSQL_CONCPP_VERSION_MAJOR)
+  FAIL("MYSQL_CONCPP_VERSION_MAJOR macro not defined");
+#elif !defined(MYSQL_CONCPP_VERSION_MINOR)
+  FAIL("MYSQL_CONCPP_VERSION_MINOR macro not defined");
+#elif !defined(MYSQL_CONCPP_VERSION_MICRO)
+  FAIL("MYSQL_CONCPP_VERSION_MICRO macro not defined");
+#endif
+
+  std::stringstream version_orig, version_generated;
+
+  version_orig << std::setfill('0')
+               << MYSQL_CONCPP_VERSION_MAJOR
+               << std::setw(2) << MYSQL_CONCPP_VERSION_MINOR
+               << std::setw(4) << MYSQL_CONCPP_VERSION_MICRO;
+
+  version_generated << MYSQL_CONCPP_VERSION_NUMBER;
+
+  EXPECT_EQ(version_orig.str(), version_generated.str());
+
+#endif
 }

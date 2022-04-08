@@ -193,9 +193,9 @@ void mysqlx::common::Settings_impl::Data::init_connection_attr()
   m_connection_attr["_platform"] = platform;
   m_connection_attr["_source_host"] =
       cdk::foundation::connection::get_local_hostname();
-  m_connection_attr["_client_name"] = CONCPP_NAME;
-  m_connection_attr["_client_version"] = CONCPP_VERSION;
-  m_connection_attr["_client_license"] = CONCPP_LICENSE;
+  m_connection_attr["_client_name"] = MYSQL_CONCPP_NAME;
+  m_connection_attr["_client_version"] = MYSQL_CONCPP_VERSION;
+  m_connection_attr["_client_license"] = MYSQL_CONCPP_LICENSE;
 }
 
 void mysqlx::common::Settings_impl::Data::clear_connection_attr()
