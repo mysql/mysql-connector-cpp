@@ -380,7 +380,8 @@ public:
     or a list (or collection) of strings of the form
     `"<expression> AS <path>"`. In the latter case each `<expression>`
     is evaluated and `<path>` specifies where to put the value of
-    the expression in the resulting document.
+    the expression in the resulting document (see `CollectionModify` for more
+    information about document paths).
   */
 
   template <typename... Expr>
@@ -433,6 +434,24 @@ struct Collection_modify_base
 
 /**
   An operation which modifies all or selected documents in a collection.
+
+  Note that in operations such as `set()`, `unset()`, `arrayInsert()` and 
+  `arrayAppend()` the field argument is specified as a document path. It can be 
+  a simple field name, but it can be a more complex expression like
+  `$.foo.bar[3]`. One consequence of this is that document field names that 
+  contain spaces or other special characters need to be quoted, for example one 
+  needs to use this form
+  ```
+    .unset("\"field name with spaces\"")
+  ```
+  as `.unset("field name with spaces")` would be an invalid document path 
+  expression.
+  
+  Note also that wildcard paths that use `*` or `**` are not valid for these 
+  operations that modify documents.
+
+  See [MySQL Reference Manual](https://dev.mysql.com/doc/refman/en/json.html#json-path-syntax)
+  for more information on document path syntax supported by MySQL server.
 
   @ingroup devapi_op
 */
