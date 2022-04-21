@@ -428,6 +428,7 @@ set(IGNORED_LIBS
   libmysql lber libprotobuf
   ldap  # note: this is needed only by server-side plugin
   libcurl libmecab zlib
+  jemalloc
 )
 
 
