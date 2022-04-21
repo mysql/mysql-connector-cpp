@@ -471,9 +471,12 @@ macro(bundle_libs to_bundle ignored)
 
   #message("== bundle_libs: ${${to_bundle}}")
 
-  if(ARGN)
+  unset(_bundled)
+  unset(_bundled1)
 
-   file(GLOB _bundled ${ARGN})
+  if(${ARGC} GREATER 2)
+
+    file(GLOB _bundled ${ARGN})
   
   else()
 
@@ -485,7 +488,7 @@ macro(bundle_libs to_bundle ignored)
     # On windows, libs are in bin directory
 
     if(WIN32)
-      file(GLOB _bundled1 "${MYSQL_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      file(GLOB _bundled1 "${MYSQL_LIB_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
     endif()
 
   endif()
@@ -676,16 +679,21 @@ if(BUNDLE_DEPENDENCIES)
 
   # Bundle additional libraries listed in BUNDLED_LIBS 
   # For OpenSSL libs, first look in the location of the library that 
-  # is actually being used in the build.
+  # is actually being used in the build (for the win case, look also in ../bin/ 
+  # because this is where the DLLs can be found, as opposed to the 
+  # corresponding link libraries).
 
   #message("== BUNDLED_LIBS: ${BUNDLED_LIBS}")
   #message("== IGNORED_LIBS: ${IGNORED_LIBS}")
 
   get_filename_component(OPENSSL_DIR ${OPENSSL_LIBRARY} DIRECTORY)
 
+  #message(STATUS "bundle openssl libs")
   bundle_libs(BUNDLED_LIBS extra_libs
    "${OPENSSL_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+   "${OPENSSL_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
   )
+  #message(STATUS "bundle other libs")
   unset(extra_libs)
   bundle_libs(BUNDLED_LIBS extra_libs)
 
