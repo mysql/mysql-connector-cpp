@@ -2340,7 +2340,7 @@ void connectionmetadata::getSchemaCollation()
   ASSERT_EQUALS("SCHEMA_COLLATION", resmeta->getColumnLabel(3));
 
   ASSERT(res->getString("SCHEMA_NAME").caseCompare("collationTestDatabase") == 0);
-  ASSERT_EQUALS("utf8_bin", res->getString("SCHEMA_COLLATION"));
+  ASSERT_EQUALS("utf8mb3_bin", res->getString("SCHEMA_COLLATION"));
 
   stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
   }
@@ -2423,7 +2423,7 @@ void connectionmetadata::getTableCollation()
   ASSERT(res->next());
   ASSERT(res->getString("TABLE_SCHEMA").caseCompare("collationTestDatabase") == 0);
   ASSERT(res->getString("TABLE_NAME").caseCompare("collationTestTableAnother") == 0);
-  ASSERT_EQUALS("utf8_bin", res->getString("TABLE_COLLATION"));
+  ASSERT_EQUALS("utf8mb3_bin", res->getString("TABLE_COLLATION"));
 
   stmt->execute("DROP DATABASE IF EXISTS collationTestDatabase");
   }
