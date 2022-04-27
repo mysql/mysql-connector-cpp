@@ -94,7 +94,7 @@ cdk::Charset::value get_collation_cs(collation_id_t id)
   */
 
   if (0 == id)
-    return cdk::Charset::utf8;
+    return cdk::Charset::utf8mb3;
 
 #undef  CS
 #define COLL_TO_CS(CS) COLLATIONS_##CS(COLL_TO_CS_CASE) return cdk::Charset::CS;

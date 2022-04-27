@@ -147,35 +147,35 @@
   X(armscii8,32,general,ci)  \
   X(armscii8,64,bin,bin)  \
 
-#define COLLATIONS_utf8(X) \
-  X(utf8,33,general,ci)  \
-  X(utf8,76,tolower,ci)  \
-  X(utf8,83,bin,bin)  \
-  X(utf8,192,unicode,ci)  \
-  X(utf8,193,icelandic,ci)  \
-  X(utf8,194,latvian,ci)  \
-  X(utf8,195,romanian,ci)  \
-  X(utf8,196,slovenian,ci)  \
-  X(utf8,197,polish,ci)  \
-  X(utf8,198,estonian,ci)  \
-  X(utf8,199,spanish,ci)  \
-  X(utf8,200,swedish,ci)  \
-  X(utf8,201,turkish,ci)  \
-  X(utf8,202,czech,ci)  \
-  X(utf8,203,danish,ci)  \
-  X(utf8,204,lithuanian,ci)  \
-  X(utf8,205,slovak,ci)  \
-  X(utf8,206,spanish2,ci)  \
-  X(utf8,207,roman,ci)  \
-  X(utf8,208,persian,ci)  \
-  X(utf8,209,esperanto,ci)  \
-  X(utf8,210,hungarian,ci)  \
-  X(utf8,211,sinhala,ci)  \
-  X(utf8,212,german2,ci)  \
-  X(utf8,213,croatian,ci)  \
-  X(utf8,214,unicode_520,ci)  \
-  X(utf8,215,vietnamese,ci)  \
-  X(utf8,223,general_mysql500,ci)  \
+#define COLLATIONS_utf8mb3(X) \
+  X(utf8mb3,33,general,ci)  \
+  X(utf8mb3,76,tolower,ci)  \
+  X(utf8mb3,83,bin,bin)  \
+  X(utf8mb3,192,unicode,ci)  \
+  X(utf8mb3,193,icelandic,ci)  \
+  X(utf8mb3,194,latvian,ci)  \
+  X(utf8mb3,195,romanian,ci)  \
+  X(utf8mb3,196,slovenian,ci)  \
+  X(utf8mb3,197,polish,ci)  \
+  X(utf8mb3,198,estonian,ci)  \
+  X(utf8mb3,199,spanish,ci)  \
+  X(utf8mb3,200,swedish,ci)  \
+  X(utf8mb3,201,turkish,ci)  \
+  X(utf8mb3,202,czech,ci)  \
+  X(utf8mb3,203,danish,ci)  \
+  X(utf8mb3,204,lithuanian,ci)  \
+  X(utf8mb3,205,slovak,ci)  \
+  X(utf8mb3,206,spanish2,ci)  \
+  X(utf8mb3,207,roman,ci)  \
+  X(utf8mb3,208,persian,ci)  \
+  X(utf8mb3,209,esperanto,ci)  \
+  X(utf8mb3,210,hungarian,ci)  \
+  X(utf8mb3,211,sinhala,ci)  \
+  X(utf8mb3,212,german2,ci)  \
+  X(utf8mb3,213,croatian,ci)  \
+  X(utf8mb3,214,unicode_520,ci)  \
+  X(utf8mb3,215,vietnamese,ci)  \
+  X(utf8mb3,223,general_mysql500,ci)  \
 
 #define COLLATIONS_ucs2(X) \
   X(ucs2,35,general,ci)  \
@@ -308,6 +308,20 @@
   X(utf8mb4,307,ru_0900,as_cs) \
   X(utf8mb4,308,zh_0900,as_cs) \
   X(utf8mb4,309,uca0900,bin) \
+  X(utf8mb4,310,nb_0900,ai_ci) \
+  X(utf8mb4,311,nb_0900,as_cs) \
+  X(utf8mb4,312,nn_0900,ai_ci) \
+  X(utf8mb4,313,nn_0900,as_cs) \
+  X(utf8mb4,314,sr_latn_0900,ai_ci) \
+  X(utf8mb4,315,sr_latn_0900,as_cs) \
+  X(utf8mb4,316,bs_0900,ai_ci) \
+  X(utf8mb4,317,bs_0900,as_cs) \
+  X(utf8mb4,318,bg_0900,ai_ci) \
+  X(utf8mb4,319,bg_0900,as_cs) \
+  X(utf8mb4,320,gl_0900,ai_ci) \
+  X(utf8mb4,321,gl_0900,as_cs) \
+  X(utf8mb4,322,mn_cyrl_0900,ai_ci) \
+  X(utf8mb4,323,mn_cyrl_0900,as_cs) \
   COLLATIONS_utf8mb4_EXTRA
 
 #define COLLATIONS_utf8mb4_EXTRA
