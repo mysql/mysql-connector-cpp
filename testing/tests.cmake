@@ -127,6 +127,17 @@ function(add_abi_check)
     COMMENT "ABI checks"
   )
 
+  add_custom_target(abi_update
+    COMMAND ${CMAKE_COMMAND}
+      -D ABIDEF=${ABIMAP}
+      -D BUILD_DIR=${PROJECT_BINARY_DIR}
+      -D ABIUPDATE=1
+      -P ${PROJECT_SOURCE_DIR}/testing/abi-check.cmake
+    COMMENT "ABI update"
+  )
+
+  set_target_properties(abi_update PROPERTIES FOLDER "Misc")
+
   message(STATUS "added ABI checks to connector target")
 
 endfunction(add_abi_check)

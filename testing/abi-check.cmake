@@ -38,6 +38,8 @@
 # section of the .exp file using: dumpbin /section:.edata /symbols
 #
 
+cmake_policy(SET CMP0007 NEW)
+
 
 macro(main)
 
@@ -58,10 +60,43 @@ macro(main)
   # read symbols from the map file into given list
   # Note: For each symbol X, ${X_NAME} is set to the demangled name
 
-  read_map_file(ABI ${ABIDEF})
   read_map_file(EXPORTS ${MAP})
 
+  if(ABIUPDATE)
+
+    # Update ABI definition with symbols read from the map file.
+    # The headers with version info are read from the original ABI definition 
+    # -- this version info might need to be updated manually (e.g., connector 
+    # version)
+    
+    file(STRINGS "${ABIDEF}" HEADERS
+      LIMIT_COUNT 2
+    )
+    abi_update(${ABIDEF} ${HEADERS} ${EXPORTS})
+    return()
+  endif()
+
   message(STATUS "comparing with ABI definition in: ${ABIDEF}")
+
+  # Read ABI symbols from ABI definition file
+  file(STRINGS ${ABIDEF} SYMBOLS)
+
+  # Skip 3 header lines
+  list(REMOVE_AT SYMBOLS 0 1 2)
+
+  # Read symobls from each line, mangled name is separated from 
+  # demangled version by " __==__ " (see abi_update())
+
+  unset(ABI)
+  foreach(S IN LISTS SYMBOLS)
+    string(REPLACE " __==__ " ";" S ${S})
+    list(GET S 0 X)
+    list(GET S 1 ${X}_NAME)
+    #message(STATUS "ABI: ${X} (${${X}_NAME})")
+    list(APPEND ABI ${X})
+  endforeach()
+
+  # Compare symbols in ABI list with ones in EXPORTS
 
   foreach(SYM IN LISTS EXPORTS)
 
@@ -85,7 +120,7 @@ macro(main)
 
   if(fail)
     message(FATAL_ERROR "ABI changes detected!"
-      "If ABI symbols are missing, code needs to be fixed."
+      " If ABI symbols are missing, code needs to be fixed."
       " If only new symbols are added, the build is still ABI compatible"
       " with previous versions."
       " If the intention is to extend the ABI, the ABI definition file"
@@ -96,6 +131,14 @@ macro(main)
 endmacro(main)
 
 
+# 
+# read_map_file(LIST MAP)
+#
+# Read mangled and demangled symbol names from a .map file ${MAP}. Each mangled 
+# name is appended to the list variable named by LIST argument. For each 
+# mangled name ${X} added to the output list, variable ${X}_NAME is set to its 
+# demangled name.
+#
 # Example contents of a .map file
 #
 # 2AC 00000000 UNDEF  notype       External     | ?$TSS0@?1??get@Settings_impl@mysqlx_2_0@@QEBAAEBVValue@3@H@Z@4HA (int `public: class mysqlx_2_0::Value const & __cdecl mysqlx_2_0::Settings_impl::get(int)const '::`2'::$TSS0)
@@ -154,6 +197,43 @@ function(read_map_file LIST MAP)
   set(${LIST} ${exports} PARENT_SCOPE)
 
 endfunction(read_map_file)
+
+
+#
+# abi_update(ABIDEF HDR1 HDR2 X1 X2 ... XN)
+#
+# Update ABI definition file ABIDEF with ABI symbols X1,.., XN
+# (read from a .map file). Each Xi is a mangled symbol name and ${Xi_NAME} 
+# should be the corresponding demangled name.  HDR1 and HDR2 are two header
+# lines from the .map file that contain information about ABI and connector
+# versions.
+#
+# The format of ABI definition file: 3 header lines followed by lines defining 
+# ABI symbols, each line containing mangled and demangled name separated
+# by " __==__ " (separator is choosen so that it should not appear either in 
+# mangled or demangled name)
+#
+# Example:
+#
+# ABI version: 2.0 (64bit)
+# Note: Generated at connector version 2.0.28
+#
+# ?$TSS0@?1??get@Settings_impl@common@r0@abi2@mysqlx@@QEBAAEBVValue@3456@H@Z@4HA __==__ int `public: class mysqlx::abi2::r0::common::Value const & __cdecl mysqlx::abi2::r0::common::Settings_impl::get(int)const '::`2'::$TSS0
+#
+
+function(abi_update ABIDEF HDR1 HDR2)
+
+  message(STATUS "updating ABI definition in: ${ABIDEF}")
+
+  file(WRITE ${ABIDEF} "${HDR1}\n${HDR2}\n\n")
+
+  foreach(X IN LISTS ARGN)
+    #message(STATUS "${X}; ${${X}_NAME}")
+    file(APPEND ${ABIDEF} "${X} __==__ ${${X}_NAME}\n")
+  endforeach()
+
+endfunction(abi_update)
+
 
 main()
 message(STATUS "No ABI changes detected")
