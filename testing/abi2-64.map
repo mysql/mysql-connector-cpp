@@ -1,5 +1,5 @@
 ABI version: 2.0 (64bit)
-Note: Generated at connector version 2.0.28
+Note: Generated at connector version 2.0.30
 
 ?$TSS0@?1??get@Settings_impl@common@r0@abi2@mysqlx@@QEBAAEBVValue@3456@H@Z@4HA __==__ int `public: class mysqlx::abi2::r0::common::Value const & __cdecl mysqlx::abi2::r0::common::Settings_impl::get(int)const '::`2'::$TSS0
 ??0?$Row_result_detail@VColumns@r0@abi2@mysqlx@@@internal@r0@abi2@mysqlx@@IEAA@AEAVResult_init@common@234@@Z __==__ protected: __cdecl mysqlx::abi2::r0::internal::Row_result_detail<class mysqlx::abi2::r0::Columns>::Row_result_detail<class mysqlx::abi2::r0::Columns>(class mysqlx::abi2::r0::common::Result_init &)
@@ -161,6 +161,8 @@ Note: Generated at connector version 2.0.28
 ?begin@DbDoc@r0@abi2@mysqlx@@UEAA?AVIterator@1234@XZ __==__ public: virtual class mysqlx::abi2::r0::DbDoc::Iterator __cdecl mysqlx::abi2::r0::DbDoc::begin(void)
 ?begin@Doc_result_detail@internal@r0@abi2@mysqlx@@QEAA?AU?$Iterator@VDoc_result_detail@internal@r0@abi2@mysqlx@@VDbDoc@345@_JPEAV6345@AEAV6345@@2345@XZ __==__ public: struct mysqlx::abi2::r0::internal::Iterator<class mysqlx::abi2::r0::internal::Doc_result_detail,class mysqlx::abi2::r0::DbDoc,__int64,class mysqlx::abi2::r0::DbDoc *,class mysqlx::abi2::r0::DbDoc &> __cdecl mysqlx::abi2::r0::internal::Doc_result_detail::begin(void)
 ?begin@Settings_impl@common@r0@abi2@mysqlx@@QEBA?AV?$_Vector_const_iterator@V?$_Vector_val@U?$_Simple_types@U?$pair@HVValue@common@r0@abi2@mysqlx@@@std@@@std@@@std@@@std@@XZ __==__ public: class std::_Vector_const_iterator<class std::_Vector_val<struct std::_Simple_types<struct std::pair<int,class mysqlx::abi2::r0::common::Value> > > > __cdecl mysqlx::abi2::r0::common::Settings_impl::begin(void)const 
+?bg_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::bg_0900_ai_ci
+?bg_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::bg_0900_as_cs
 ?bin@?$Collation@$00@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<1>::bin
 ?bin@?$Collation@$01@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<2>::bin
 ?bin@?$Collation@$02@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<3>::bin
@@ -202,6 +204,8 @@ Note: Generated at connector version 2.0.28
 ?bin@?$Collation@$0N@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<13>::bin
 ?bin@?$Collation@$0O@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<14>::bin
 ?bin@?$Collation@$0P@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<15>::bin
+?bs_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::bs_0900_ai_ci
+?bs_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::bs_0900_as_cs
 ?bulgarian_ci@?$Collation@$0BO@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<30>::bulgarian_ci
 ?check_result@Result_detail@internal@r0@abi2@mysqlx@@IEBAXXZ __==__ protected: void __cdecl mysqlx::abi2::r0::internal::Result_detail::check_result(void)const 
 ?chinese_ci@?$Collation@$0A@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<0>::chinese_ci
@@ -363,6 +367,8 @@ Note: Generated at connector version 2.0.28
 ?get_warning@Result_detail@internal@r0@abi2@mysqlx@@IEAA?AVWarning@345@_K@Z __==__ protected: class mysqlx::abi2::r0::Warning __cdecl mysqlx::abi2::r0::internal::Result_detail::get_warning(unsigned __int64)
 ?get_warning_count@Result_detail@internal@r0@abi2@mysqlx@@IEBAIXZ __==__ protected: unsigned int __cdecl mysqlx::abi2::r0::internal::Result_detail::get_warning_count(void)const 
 ?get_warnings@Result_detail@internal@r0@abi2@mysqlx@@IEAA?AV?$List_initializer@V?$Array_source@UWarning_src@Result_detail@internal@r0@abi2@mysqlx@@VWarning@456@_JPEAV7456@AEAV7456@@internal@r0@abi2@mysqlx@@@2345@XZ __==__ protected: class mysqlx::abi2::r0::internal::List_initializer<class mysqlx::abi2::r0::internal::Array_source<struct mysqlx::abi2::r0::internal::Result_detail::Warning_src,class mysqlx::abi2::r0::Warning,__int64,class mysqlx::abi2::r0::Warning *,class mysqlx::abi2::r0::Warning &> > __cdecl mysqlx::abi2::r0::internal::Result_detail::get_warnings(void)
+?gl_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::gl_0900_ai_ci
+?gl_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::gl_0900_as_cs
 ?hasField@DbDoc@r0@abi2@mysqlx@@UEBA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z __==__ public: virtual bool __cdecl mysqlx::abi2::r0::DbDoc::hasField(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)const 
 ?has_data@Result_detail@internal@r0@abi2@mysqlx@@IEBA_NXZ __==__ protected: bool __cdecl mysqlx::abi2::r0::internal::Result_detail::has_data(void)const 
 ?has_option@Settings_impl@common@r0@abi2@mysqlx@@QEBA_NH@Z __==__ public: bool __cdecl mysqlx::abi2::r0::common::Settings_impl::has_option(int)const 
@@ -435,8 +441,14 @@ Note: Generated at connector version 2.0.28
 ?mk_select@Crud_factory@internal@r0@abi2@mysqlx@@SAPEAUExecutable_if@common@345@AEAVTable@345@@Z __==__ public: static struct mysqlx::abi2::r0::common::Executable_if * __cdecl mysqlx::abi2::r0::internal::Crud_factory::mk_select(class mysqlx::abi2::r0::Table &)
 ?mk_sql@Crud_factory@internal@r0@abi2@mysqlx@@SAPEAUExecutable_if@common@345@AEAVSession@345@AEBVstring@345@@Z __==__ public: static struct mysqlx::abi2::r0::common::Executable_if * __cdecl mysqlx::abi2::r0::internal::Crud_factory::mk_sql(class mysqlx::abi2::r0::Session &,class mysqlx::abi2::r0::string const &)
 ?mk_update@Crud_factory@internal@r0@abi2@mysqlx@@SAPEAUExecutable_if@common@345@AEAVTable@345@@Z __==__ public: static struct mysqlx::abi2::r0::common::Executable_if * __cdecl mysqlx::abi2::r0::internal::Crud_factory::mk_update(class mysqlx::abi2::r0::Table &)
+?mn_cyrl_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::mn_cyrl_0900_ai_ci
+?mn_cyrl_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::mn_cyrl_0900_as_cs
 ?modify_collection@Schema_detail@internal@r0@abi2@mysqlx@@IEAAXAEBVstring@345@VCollectionOptions@345@@Z __==__ protected: void __cdecl mysqlx::abi2::r0::internal::Schema_detail::modify_collection(class mysqlx::abi2::r0::string const &,class mysqlx::abi2::r0::CollectionOptions)
+?nb_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::nb_0900_ai_ci
+?nb_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::nb_0900_as_cs
 ?next_result@Result_detail@internal@r0@abi2@mysqlx@@IEAA_NXZ __==__ protected: bool __cdecl mysqlx::abi2::r0::internal::Result_detail::next_result(void)
+?nn_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::nn_0900_ai_ci
+?nn_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::nn_0900_as_cs
 ?null_value@?1??get@Settings_impl@common@r0@abi2@mysqlx@@QEBAAEBVValue@3456@H@Z@4V73456@A __==__ class mysqlx::abi2::r0::common::Value `public: class mysqlx::abi2::r0::common::Value const & __cdecl mysqlx::abi2::r0::common::Settings_impl::get(int)const '::`2'::null_value
 ?option_name@Settings_impl@common@r0@abi2@mysqlx@@SAPEBDH@Z __==__ public: static char const * __cdecl mysqlx::abi2::r0::common::Settings_impl::option_name(int)
 ?persian_ci@?$Collation@$0BF@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<21>::persian_ci
@@ -515,6 +527,8 @@ Note: Generated at connector version 2.0.28
 ?spanish_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::spanish_ci
 ?spanish_ci@?$Collation@$0BP@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<31>::spanish_ci
 ?spanish_ci@?$Collation@$0CD@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<35>::spanish_ci
+?sr_latn_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::sr_latn_0900_ai_ci
+?sr_latn_0900_as_cs@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::sr_latn_0900_as_cs
 ?ssl_mode_name@Settings_impl@common@r0@abi2@mysqlx@@SAPEBDW4SSL_mode@12345@@Z __==__ public: static char const * __cdecl mysqlx::abi2::r0::common::Settings_impl::ssl_mode_name(enum mysqlx::abi2::r0::common::Settings_impl::SSL_mode)
 ?start_transaction@Session_detail@internal@r0@abi2@mysqlx@@IEAAXXZ __==__ protected: void __cdecl mysqlx::abi2::r0::internal::Session_detail::start_transaction(void)
 ?sv_0900_ai_ci@?$Collation@$0BN@@r0@abi2@mysqlx@@2UCollationInfo@234@B __==__ public: static struct mysqlx::abi2::r0::CollationInfo const mysqlx::abi2::r0::Collation<29>::sv_0900_ai_ci
