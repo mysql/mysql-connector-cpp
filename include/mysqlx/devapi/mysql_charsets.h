@@ -60,7 +60,7 @@
   X(gbk)  \
   X(latin5)  \
   X(armscii8)  \
-  X(utf8)  \
+  X(utf8mb3)  \
   X(ucs2)  \
   X(cp866)  \
   X(keybcs2)  \

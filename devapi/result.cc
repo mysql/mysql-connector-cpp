@@ -265,7 +265,7 @@ const CollationInfo& Column_detail::get_collation() const
       return Collation<CharacterSet::binary>::bin;
 
     case cdk::TYPE_DOCUMENT:
-      return Collation<CharacterSet::utf8>::general_ci;
+      return Collation<CharacterSet::utf8mb3>::general_ci;
 
     case cdk::TYPE_STRING:
     {

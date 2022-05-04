@@ -117,7 +117,7 @@ foundation::api::String_codec* Format<TYPE_STRING>::codec() const
 
   switch (charset())
   {
-  case Charset::utf8:
+  case Charset::utf8mb3:
   case Charset::utf8mb4:
     return (foundation::api::String_codec*)&utf8;
   case Charset::ucs2:
