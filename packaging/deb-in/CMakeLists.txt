@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -98,10 +98,8 @@ ELSEIF(DEB_CODENAME STREQUAL "groovy")
   SET (DEB_PLATFORMRELEASE "ubuntu20.10")
 ELSEIF(DEB_CODENAME STREQUAL "focal")
   SET (DEB_PLATFORMRELEASE "ubuntu20.04")
-ELSEIF(DEB_CODENAME STREQUAL "hirsute")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.04")
-ELSEIF(DEB_CODENAME STREQUAL "impish")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.10")
+ELSEIF(DEB_CODENAME STREQUAL "jammy")
+  SET (DEB_PLATFORMRELEASE "ubuntu22.04")
 ELSE()
   MESSAGE(STATUS
     "Skipping deb packaging on unsupported platform ${DEB_CODENAME}.")
