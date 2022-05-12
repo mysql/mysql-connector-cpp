@@ -257,15 +257,20 @@ MySQL_ArtResultSet::isBeforeFirstOrAfterLast() const
 }
 /* }}} */
 
+/* {{{ MySQL_ArtResultSet::absolute() -I-
+  _new_pos: Seek the passed position on the ResultSet. If _new_pos is negative,
+            it will count from last to beginning.
 
-/* {{{ MySQL_ArtResultSet::absolute() -I- */
+  return: true if position is a valid row, false if it pasted last or beginnin
+*/
 bool
-MySQL_ArtResultSet::absolute(const int row)
+MySQL_ArtResultSet::absolute(const int _row)
 {
   CPP_ENTER("MySQL_ArtResultSet::absolute");
   checkValid();
+  const int64_t row = _row;
   if (row > 0) {
-    if (row > (int) num_rows) {
+    if (row > num_rows) {
       afterLast();
     } else {
       row_position = row;
@@ -273,10 +278,10 @@ MySQL_ArtResultSet::absolute(const int row)
       return true;
     }
   } else if (row < 0) {
-    if ((-row) > (int) num_rows) {
+    if (-row > num_rows) {
       beforeFirst();
     } else {
-      row_position = num_rows - (-row)  + 1;
+      row_position = num_rows + row + 1;
       seek();
       return true;
     }

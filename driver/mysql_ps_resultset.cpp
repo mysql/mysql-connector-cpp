@@ -126,16 +126,22 @@ MySQL_Prepared_ResultSet::~MySQL_Prepared_ResultSet()
 }
 /* }}} */
 
+/* {{{ MySQL_Prepared_ResultSet::absolute() -I-
+  _new_pos: Seek the passed position on the ResultSet. If _new_pos is negative,
+            it will count from last to beginning.
 
-/* {{{ MySQL_Prepared_ResultSet::absolute() -I- */
+  return: true if position is a valid row, false if it pasted last or beginnin
+*/
 bool
-MySQL_Prepared_ResultSet::absolute(const int new_pos)
+MySQL_Prepared_ResultSet::absolute(const int _new_pos)
 {
     CPP_ENTER("MySQL_Prepared_ResultSet::absolute");
     checkValid();
     checkScrollable();
-    if (new_pos > 0) {
-        if (new_pos > (int) num_rows) {
+    const int64_t new_pos = _new_pos;
+    if (new_pos > 0)
+    {
+        if (new_pos > num_rows) {
             row_position = num_rows + 1; /* after last row */
         } else {
             row_position = new_pos;
@@ -143,10 +149,10 @@ MySQL_Prepared_ResultSet::absolute(const int new_pos)
             return true;
         }
     } else if (new_pos < 0) {
-        if ((-new_pos) > (int) num_rows || (new_pos == std::numeric_limits<int>::min())) {
+        if (-new_pos > num_rows) {
             row_position = 0; /* before first new_pos */
         } else {
-            row_position = num_rows - (-new_pos) + 1;
+            row_position = num_rows + new_pos + 1;
             seek();
             return true;
         }
