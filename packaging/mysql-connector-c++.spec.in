@@ -146,15 +146,15 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %postun jdbc -p /sbin/ldconfig
 
 %files
-%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
+%doc README.txt LICENSE.txt build-dynamic/INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn8.so.@ABI_VERSION_MAJOR@*
 
 %files jdbc
-%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
+%doc README.txt LICENSE.txt build-dynamic/INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so.@JDBC_ABI_VERSION_MAJOR@*
 
 %files devel
-%doc README.txt LICENSE.txt INFO_SRC build-dynamic/INFO_BIN
+%doc README.txt LICENSE.txt build-dynamic/INFO_SRC build-dynamic/INFO_BIN
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconn8.so
