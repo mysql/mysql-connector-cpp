@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -31,6 +31,45 @@ IF (NOT DEFINED DEB_CODENAME)
   )
   SET (DEB_CODENAME ${DEB_CODENAME} CACHE STRING "")
 ENDIF()
+
+# debian, ubuntu
+IF (NOT DEFINED DEB_ID)
+  execute_process(
+    COMMAND lsb_release -is
+    OUTPUT_VARIABLE DEB_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  SET (DEB_ID ${DEB_ID} CACHE STRING "")
+ENDIF()
+
+# 22.04, 11.x, etc
+IF (NOT DEFINED DEB_RELEASE)
+  execute_process(
+    COMMAND lsb_release -rs
+    OUTPUT_VARIABLE DEB_RELEASE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  SET (DEB_RELEASE ${DEB_RELEASE} CACHE STRING "")
+ENDIF()
+
+# Change uppercase first letter of Ubuntu/Debian
+string(TOLOWER "${DEB_ID}" DEB_ID)
+
+# lsb_release on Debian reports the full version number, e.g. 9.9, and we just want the major version
+IF(DEB_ID STREQUAL "debian")
+  string(REGEX REPLACE "\\..*" "" DEB_RELEASE "${DEB_RELEASE}")
+ENDIF()
+
+# ubuntu22.04, debian11, etc
+SET (DEB_PLATFORMRELEASE "${DEB_ID}${DEB_RELEASE}")
+
+IF(DEB_CODENAME STREQUAL "sid")
+  IF (DEFINED DEB_GCC_SNAPSHOT)
+    SET (DEB_CMAKE_EXTRAS "${DEB_CMAKE_EXTRAS} -DCMAKE_C_COMPILER=/usr/lib/gcc-snapshot/bin/gcc -DCMAKE_CXX_COMPILER=/usr/lib/gcc-snapshot/bin/g++ -DMYSQL_MAINTAINER_MODE=0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
+  ENDIF()
+  SET (DEB_PLATFORMRELEASE "debianunstable")
+ENDIF()
+
 # Timestamp for use in debian/changelog
 IF (NOT DEFINED DEB_CHANGELOG_TIMESTAMP)
   execute_process(
@@ -54,60 +93,6 @@ ELSE()
   SET (DEB_LICENSENAME "GPL")
   SET (DEB_VERSION "-1")
   SET (DEB_SERVERPRODUCT "community")
-ENDIF()
-
-
-# Platform specifics. The differences are generally only distro name used in version string
-IF(DEB_CODENAME STREQUAL "stretch")
-  SET (DEB_PLATFORMRELEASE "debian9")
-ELSEIF(DEB_CODENAME STREQUAL "buster")
-  SET (DEB_PLATFORMRELEASE "debian10")
-ELSEIF(DEB_CODENAME STREQUAL "bullseye")
-  SET (DEB_PLATFORMRELEASE "debian11")
-ELSEIF(DEB_CODENAME STREQUAL "sid")
-  IF (DEFINED DEB_GCC_SNAPSHOT)
-    SET (DEB_CMAKE_EXTRAS "${DEB_CMAKE_EXTRAS} -DCMAKE_C_COMPILER=/usr/lib/gcc-snapshot/bin/gcc -DCMAKE_CXX_COMPILER=/usr/lib/gcc-snapshot/bin/g++ -DMYSQL_MAINTAINER_MODE=0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
-  ENDIF()
-  SET (DEB_PLATFORMRELEASE "debianunstable")
-ELSEIF(DEB_CODENAME STREQUAL "xenial")
-  SET (DEB_PLATFORMRELEASE "ubuntu16.04")
-  # Generate debug symbol packages (this is done automatically in Debian9+)
-  SET (DEB_RULES_STRIP
-"
-override_dh_strip:
-	dh_strip -plibmysqlcppconn9 --dbg-package=libmysqlcppconn9-dbgsym
-	dh_strip -plibmysqlcppconn8-2 --dbg-package=libmysqlcppconn8-2-dbgsym
-")
-  SET (DEB_CONTROL_DBGSYM
-"
-Package: libmysqlcppconn9-dbgsym
-Architecture: any
-Section: debug
-Depends: libmysqlcppconn9 (=\${binary:Version}), \${misc:Depends}
-Description: Debugging symbols for compat library
-
-Package: libmysqlcppconn8-2-dbgsym
-Architecture: any
-Section: debug
-Depends: libmysqlcppconn8-2 (= \${binary:Version}), \${misc:Depends}
-Description: Debugging symbols for main library
-")
-ELSEIF(DEB_CODENAME STREQUAL "bionic")
-  SET (DEB_PLATFORMRELEASE "ubuntu18.04")
-ELSEIF(DEB_CODENAME STREQUAL "groovy")
-  SET (DEB_PLATFORMRELEASE "ubuntu20.10")
-ELSEIF(DEB_CODENAME STREQUAL "focal")
-  SET (DEB_PLATFORMRELEASE "ubuntu20.04")
-ELSEIF(DEB_CODENAME STREQUAL "hirsute")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.04")
-ELSEIF(DEB_CODENAME STREQUAL "impish")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.10")
-ELSEIF(DEB_CODENAME STREQUAL "jammy")
-  SET (DEB_PLATFORMRELEASE "ubuntu22.04")
-ELSE()
-  MESSAGE(STATUS
-    "Skipping deb packaging on unsupported platform ${DEB_CODENAME}.")
-  RETURN()
 ENDIF()
 
 # All files are configured and copied to the debian/ directory, which is used 
