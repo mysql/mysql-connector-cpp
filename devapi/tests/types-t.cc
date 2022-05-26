@@ -551,6 +551,8 @@ TEST_F(Types, collations)
 {
   SKIP_IF_NO_XPLUGIN;
 
+  SKIP_IF_SERVER_VERSION_LESS(8, 0, 30);
+
   using col_data = std::pair<unsigned, string>;
   std::vector<col_data> unknown;
 
