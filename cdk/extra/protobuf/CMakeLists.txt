@@ -89,7 +89,7 @@ endif()
 
 set_visibility(hidden)
 
-if(NOT MSVC)
+if(NOT MSVC AND NOT APPLE)
   add_compile_options(-Wno-stringop-overflow)
 endif()
 
