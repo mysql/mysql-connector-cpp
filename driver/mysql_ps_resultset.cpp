@@ -956,6 +956,10 @@ MySQL_Prepared_ResultSet::getStatement() const
 }
 /* }}} */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
 
 /* {{{ MySQL_Prepared_ResultSet::getString() -I- */
 SQLString
@@ -1062,6 +1066,9 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
 }
 /* }}} */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 /* {{{ MySQL_Prepared_ResultSet::getString() -I- */
 SQLString

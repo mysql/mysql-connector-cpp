@@ -294,7 +294,7 @@ static void test_connection_0(boost::scoped_ptr<sql::Connection> & conn)
 
     ensure("connection is closed", !conn->isClosed());
 
-    sprintf(buff, "KILL %d", rset1->getInt(1));
+    snprintf(buff, sizeof(buff)-1, "KILL %d", rset1->getInt(1));
 
     try {
       stmt1->execute(buff);
@@ -602,7 +602,6 @@ static void test_statement_5(boost::scoped_ptr<sql::Connection> & conn, boost::s
     try {
       boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery("INSERT INTO test_function VALUES(2,200)"));
       ensure("NULL returned for result set", rset.get() == NULL);
-      ensure_equal_int("Non-empty result set", false, rset->next());
     } catch (sql::SQLException &) {
     } catch (...) {
       printf("\n# ERR: Caught unknown exception at %s::%d\n", CPPCONN_FUNC, __LINE__);
