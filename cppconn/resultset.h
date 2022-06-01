@@ -33,7 +33,7 @@
 #ifndef _SQL_RESULTSET_H_
 #define _SQL_RESULTSET_H_
 
-#include "cppconn/config.h"
+#include "config.h"
 
 #include <list>
 #include <map>
