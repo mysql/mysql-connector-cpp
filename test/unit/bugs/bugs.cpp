@@ -1270,6 +1270,39 @@ void bugs::bug23235968()
 
 }
 
+void bugs::bug19192707()
+{
+  logMsg("bugs::bug19192707");
+
+  sql::SQLString direct, ps;
+
+  stmt->executeUpdate("drop table if exists bug19192707");
+  stmt->executeUpdate("create table bug19192707 (i1 point)");
+
+  pstmt.reset(con->prepareStatement("insert into bug19192707 (i1) values(ST_PointFromText('POINT(1 2)',4326))"));
+  pstmt->executeUpdate();
+
+  logMsg("Select with Direct execute : ");
+
+  res.reset(stmt->executeQuery("select i1 from bug19192707"));
+
+  res->next();
+  direct = res->getString(1);
+
+  logMsg("Select with Prepare/execute : ");
+
+  pstmt.reset(con->prepareStatement("select i1 from bug19192707"));
+
+  res.reset(pstmt->executeQuery());
+
+  res->next();
+  ps = res->getString(1);
+
+  ASSERT_EQUALS(direct, ps);
+
+  stmt->executeUpdate("drop table if exists bug19192707");
+
+}
 
 } /* namespace regression */
 } /* namespace testsuite */

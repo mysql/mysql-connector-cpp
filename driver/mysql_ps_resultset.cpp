@@ -1053,11 +1053,11 @@ MySQL_Prepared_ResultSet::getString(const uint32_t columnIndex) const
         case sql::DataType::SET:
         case sql::DataType::ENUM:
         case sql::DataType::JSON:
+        case sql::DataType::GEOMETRY:
             CPP_INFO("It's a string");
             return  sql::SQLString(static_cast<char *>(result_bind->rbind[columnIndex - 1].buffer), *result_bind->rbind[columnIndex - 1].length);
         default:
             break;
-        // ToDo : Geometry? default ?
     }
 
     CPP_ERR("MySQL_Prepared_ResultSet::getString: unhandled type. Please, report");

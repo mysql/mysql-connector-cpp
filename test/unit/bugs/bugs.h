@@ -80,6 +80,7 @@ public:
     TEST_CASE(bug30126457);
     TEST_CASE(bug32695580);
     TEST_CASE(bug23235968);
+    TEST_CASE(bug19192707);
   }
 
   /**
@@ -151,6 +152,7 @@ public:
 
   void bug23235968();
 
+  void bug19192707();
 };
 
 REGISTER_FIXTURE(bugs);

@@ -113,6 +113,7 @@ static struct st_buffer_size_type
     case MYSQL_TYPE_BIT:
       return st_buffer_size_type(new char[8], 8, MYSQL_TYPE_BIT);
     case MYSQL_TYPE_GEOMETRY:
+      return st_buffer_size_type(new char[field->max_length], field->max_length, MYSQL_TYPE_BIT);
     default:
       // TODO: Andrey, there can be crashes when we go through this. Please fix.
       throw sql::InvalidArgumentException("allocate_buffer_for_field: invalid rbind data type");
