@@ -342,9 +342,10 @@ if(WITH_JDBC)
   # we use a copy of them placed inside the build tree.
 
   target_include_directories(connector-jdbc
-    PUBLIC "${PROJECT_BINARY_DIR}/jdbc/cppconn"
+    PUBLIC "${PROJECT_BINARY_DIR}/include/jdbc"
+    PUBLIC "${PROJECT_BINARY_DIR}/include/jdbc/cppconn"
     PUBLIC "${PROJECT_SOURCE_DIR}/include"
-    PUBLIC "${PROJECT_BINARY_DIR}/jdbc/include/jdbc"
+
   )
 
 endif()
