@@ -87,6 +87,6 @@ SET_TARGET_PROPERTIES(test_framework PROPERTIES
   FOLDER "Tests/jdbc"
 )
 
-target_link_libraries(test_framework PUBLIC Boost::boost)
+target_link_libraries(test_framework PUBLIC connector-jdbc)
 
 MESSAGE(STATUS "Configuring tests framework lib")
