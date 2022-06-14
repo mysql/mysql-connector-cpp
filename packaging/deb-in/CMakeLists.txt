@@ -94,19 +94,8 @@ ELSE()
   SET (DEB_VERSION "-1")
   SET (DEB_SERVERPRODUCT "community")
 ENDIF()
-ELSEIF(DEB_CODENAME STREQUAL "hirsute")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.04")
-ELSEIF(DEB_CODENAME STREQUAL "impish")
-  SET (DEB_PLATFORMRELEASE "ubuntu21.10")
-ELSEIF(DEB_CODENAME STREQUAL "jammy")
-  SET (DEB_PLATFORMRELEASE "ubuntu22.04")
-ELSE()
-  MESSAGE(STATUS
-    "Skipping deb packaging on unsupported platform ${DEB_CODENAME}.")
-  RETURN()
-ENDIF()
 
-# All files are configured and copied to the debian/ directory, which is used 
+# All files are configured and copied to the debian/ directory, which is used
 # by debuild to make the packages
 SET (DEB_ROOT ${CMAKE_SOURCE_DIR}/packaging/deb-in)
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/debian)
