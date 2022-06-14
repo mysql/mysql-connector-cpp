@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 of the License.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+  <Fragment>
+    <!-- Custom version of WelcomeDialog.  Original source WelcomeDialog.wxs from wixui -->
+    <UI>
+      <Dialog Id="MySQL_WelcomeDlg" Width="370" Height="270" Title="$(loc.WelcomeDlg_Title)">
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="$(loc.WixUINext)">
+          <Publish Event="NewDialog" Value="[WixUI_WelcomeDlg_Next]">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="$(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+        <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="$(loc.WelcomeDlgBitmap)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUIBack)" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Description" Type="Text" X="135" Y="55" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.WelcomeDlgDescription)" />
+        <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.WelcomeDlgTitle)" />
+        <!--Control Id="TextLine2" Type="Text" X="135" Y="55" Width="228" Height="45" Transparent="yes">
+          <Text>The Setup Wizard will install [ProductName] release [ProductVersion] on your computer. To continue, click Next.</Text>
+        </Control-->
+        <Control Id="PrevVersion" Type="Text" X="135" Y="95" Width="228" Height="73" Transparent="yes" TabSkip="no" Hidden="yes">
+          <Text>Setup has detected a previous version of [ProductName]. It will be removed during this installation.</Text>
+          <Condition Action="show">PREVIOUSVERSIONINSTALLED</Condition>
+        </Control>
+      </Dialog>
+
+      <InstallUISequence>
+        <Show Dialog="MySQL_WelcomeDlg" Before="ProgressDlg">NOT Installed</Show>
+      </InstallUISequence>
+    </UI>
+
+    <!-- Custom version of ExitDialog.  Original source ExitDialog.wxs from wixui -->
+    <UI>
+      <Dialog Id="MySQL_ExitDialog" Width="370" Height="270" Title="$(loc.ExitDialog_Title)">
+        <Control Id="Finish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="$(loc.WixUIFinish)">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUICancel)" />
+        <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="$(loc.ExitDialogBitmap)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="$(loc.WixUIBack)" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Description" Type="Text" X="135" Y="70" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogDescription)" />
+        <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="$(loc.ExitDialogTitle)" />
+        <!-- Default Above. Custom Below -->
+      </Dialog>
+
+      <InstallUISequence>
+        <Show Dialog="MySQL_ExitDialog" OnExit="success" />
+      </InstallUISequence>
+
+      <AdminUISequence>
+        <Show Dialog="MySQL_ExitDialog" OnExit="success" />
+      </AdminUISequence>
+    </UI>
+
+    <!-- Custom version of WiXUI_Mondo.  Original source WixUI_Mondo.wxs from wixui -->
+    <UI Id="MySQL_Connector_UI">
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+      <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+      <Property Id="WixUI_Mode" Value="Mondo" />
+
+      <DialogRef Id="CustomizeDlg" />
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="MySQL_ExitDialog" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="LicenseAgreementDlg" />
+      <DialogRef Id="MaintenanceTypeDlg" />
+      <DialogRef Id="MaintenanceWelcomeDlg" />
+      <DialogRef Id="MsiRMFilesInUse" />
+      <DialogRef Id="PrepareDlg" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ResumeDlg" />
+      <DialogRef Id="SetupTypeDlg" />
+      <DialogRef Id="UserExit" />
+      <DialogRef Id="VerifyReadyDlg" />
+      <DialogRef Id="MySQL_WelcomeDlg" />
+
+      <Property Id="WixUI_WelcomeDlg_Next" Value="LicenseAgreementDlg" />
+
+      <Property Id="WixUI_LicenseAgreementDlg_Back" Value="MySQL_WelcomeDlg" />
+      <Property Id="WixUI_LicenseAgreementDlg_Next" Value="SetupTypeDlg" />
+
+      <Property Id="WixUI_SetupTypeDlg_NextTypical" Value="VerifyReadyDlg" />
+      <Property Id="WixUI_SetupTypeDlg_NextCustom" Value="CustomizeDlg" />
+      <Property Id="WixUI_SetupTypeDlg_NextComplete" Value="VerifyReadyDlg" />
+      <Property Id="WixUI_SetupTypeDlg_Back" Value="LicenseAgreementDlg" />
+
+      <Property Id="WixUI_CustomizeDlg_BackChange" Value="MaintenanceTypeDlg" />
+      <Property Id="WixUI_CustomizeDlg_BackCustom" Value="SetupTypeDlg" />
+      <Property Id="WixUI_CustomizeDlg_BackFeatureTree" Value="**shouldnt_happen**" />
+      <Property Id="WixUI_CustomizeDlg_Next" Value="VerifyReadyDlg" />
+
+      <Property Id="WixUI_VerifyReadyDlg_BackCustom" Value="CustomizeDlg" />
+      <Property Id="WixUI_VerifyReadyDlg_BackChange" Value="CustomizeDlg" />
+      <Property Id="WixUI_VerifyReadyDlg_BackRepair" Value="MaintenanceTypeDlg" />
+      <Property Id="WixUI_VerifyReadyDlg_BackRemove" Value="MaintenanceTypeDlg" />
+      <Property Id="WixUI_VerifyReadyDlg_BackTypical" Value="SetupTypeDlg" />
+      <Property Id="WixUI_VerifyReadyDlg_BackComplete" Value="SetupTypeDlg" />
+
+      <Property Id="WixUI_MaintenanceWelcomeDlg_Next" Value="MaintenanceTypeDlg" />
+
+      <Property Id="WixUI_MaintenanceTypeDlg_Change" Value="CustomizeDlg" />
+      <Property Id="WixUI_MaintenanceTypeDlg_Repair" Value="VerifyReadyDlg" />
+      <Property Id="WixUI_MaintenanceTypeDlg_Remove" Value="VerifyReadyDlg" />
+      <Property Id="WixUI_MaintenanceTypeDlg_Back" Value="MaintenanceWelcomeDlg" />
+    </UI>
+
+    <UIRef Id="WixUI_Common" />
+  </Fragment>
+</Wix>

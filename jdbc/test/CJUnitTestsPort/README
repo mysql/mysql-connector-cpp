@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
+This directory contains JDBC compliance tests and other tests ported from
+our JDBC test suite. All tests are build as part of a reqular build of the
+driver. The tests are compiled into one single binary "CJUnitTestsPort" located
+in the directory of this README file.
+
+Before running the tests you need to load a SQL dump into your test database.
+The dump is located in the directory of this README file:
+
+# mysql < cts.sql
+
+Now you can invoke the test binary:
+
+# CJUnitTestsPort
+
+The test will try to connect to the MySQL server on the host "127.0.0.1" on port
+3306 using TCP/IP and try to select the database "test" using the database user
+"root" and the password "root"
+
+You can pass other connection parameters to the test binary just like you can
+with the examples from the examples/ directory. The syntax is like:
+
+# CJUnitTestsPort tcp://<host>[:<port>] [username] [password] [database]
+
+For example, to connect to 192.168.2.22 on port 3307, try:
+
+# CJUnitTestsPort tcp://192.168.2.22:3307 user password database
+
+Other possible start options are:
+
+--verbose - to output contents of messages/errors log
+--timer   - to automatically time all tests runs. --verbose is needed for custom timers.
+
+The 1.0.2alpha release should pass about 95% of the tests.

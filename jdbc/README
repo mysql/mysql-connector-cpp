@@ -1,0 +1,14 @@
+Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+
+This is a clone of MySQL Connector/C++ 1.1 sources which is used as a git
+sub-module in the trunk branch. This source code is not intended to
+be used on its own. If you want to build Connector/C++ 1.1 please use the code
+from "1.1" branch. If you want to build the latest version, use code from
+the trunk branch -- it will include this branch as a sub-module if requested.
+For license and attribution notices for these materials, please refer to the LICENSE file.
+
+License information can be found in the LICENSE file.
+
+This distribution may include materials developed by third parties.
+For license and attribution notices for these materials, please refer to the LICENSE file.
+

@@ -1,0 +1,10 @@
+The directory examples/ contains basic usage examples of the MySQL Connector/C++.
+
+In order to compile and run them you must have a MySQL server installed. 
+By default the examples will try to connect to a MySQL server on the host 
+"127.0.0.1" at port "3306" using the username "root" and the password "root" 
+to access the database "test". You can change the connection properties 
+in example.h
+
+Its possible to specify alternative connection parameters using command line
+parameters: example_program tcp://<host>[:<port>] [username] [password] [database]

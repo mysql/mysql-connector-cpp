@@ -1,0 +1,181 @@
+/*
+ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2.0, as
+ * published by the Free Software Foundation.
+ *
+ * This program is also distributed with certain software (including
+ * but not limited to OpenSSL) that is licensed under separate terms,
+ * as designated in a particular file or component or in included license
+ * documentation.  The authors of MySQL hereby grant you an
+ * additional permission to link the program and your derivative works
+ * with the separately licensed software that they have included with
+ * MySQL.
+ *
+ * Without limiting anything contained in the foregoing, this file,
+ * which is part of MySQL Connector/C++, is also subject to the
+ * Universal FOSS Exception, version 1.0, a copy of which can be found at
+ * http://oss.oracle.com/licenses/universal-foss-exception.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License, version 2.0, for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
+INTRODUCTION
+
+This is the best place for regression tests. This is where you should
+add a test when you fix a bug in the Connector. For historical reason
+there are three distinct sets of tests for the driver:
+
+tests/CJUnitTests/ <-- ported JDBC compliance/conformance tests
+tests/unit/        <-- primarily regression testing
+tests/static_test* <-- unclassified API tests, don't add code any more!
+
+The first two sets of test are using the same unit testing framework.
+All new tests of any kind (compliance, conformance, regression, ...),
+shall be written using the unit testing framework contained in the source
+of the MySQL Connector/C++.
+
+If you work for MySQL Support or you would like to help us with a
+full-featured bug report including a test case, here is what you need to
+do.
+
+HOW TO RUN A REGRESSION TEST
+
+1) Compile the driver which compiles the tests as well
+
+  See the README in the root directory of the source distribution for help.
+  Tests are build together with the driver.
+
+2) Invoke a test
+
+  When running a test binary you must pass connection parameters
+  to it. There are no defaults currently. The syntax is:
+
+  example_program tcp://<host>[:<port>] [username] [password] [database]
+
+  For example, use:
+
+    > test/unit/example/example tcp://127.0.0.1 root root test
+
+    # example_test_class
+    1..5
+    ok 1 - test_hello_world1
+    not ok 2 - test_hello_world2
+    ok 3 - test_assert_equals
+    not ok 4 - test_assert_equals_fail
+    ok 5 - test_assert_message
+
+    FAILED tests 2, 4
+    Failed 2/5, 60.00% okay
+
+  (Connects to MySQL using TCP/IP on  127.0.0.1:3306 using user "root"
+   with the password "root" and selects the database "test")
+
+3) Verbose?
+
+   Yes, its there. Try something like:
+
+     > test/unit/example/example --verbose tcp://127.0.0.1 root root test
+
+
+HOW TO WRITE A REGRESSION TEST
+
+1) Identify a proper group, a proper directory for your test
+
+  If there is a suitable directory for adding a new test proceed
+  with step 2)!
+
+  If there is no suitable directory, you need to create one by copying
+  the directory template_bug_group/. For example, use:
+
+   [# cd test/unit/ - this is where this README is :-)]
+    # cp -R template_bug_group/ mygroup/
+
+  Go to the newly create directory mygroup/. It should reside in
+  test/unit. The directory mygroup/ contains a CMake build
+  file (a) and two *.cpp and two *.h files (b, c):
+
+    a) A CMakeLists.txt build file
+    b) bug123.cpp + bug123.h -> compiled into binary bug123
+    c) bug456.cpp + bug456.h -> compiled into binary bug456
+
+  A pair of one *.cpp and the corresponding *.h file (b, c) holds
+  the code for one bug test and is compiled into one binary.
+
+  Modify the template code as needed. Make sure you keep the
+  CMakeLists.txt (a) in sync with the code in the directory. Have a look,
+  its Cut&Paste and Search&Replace that needs to be done.
+
+  In order to build the test whenever the driver is build, you must
+  "register" the new directory at the CMakeLists.txt found in the parent
+  directory of your newly create mygroup/ directory.
+
+  Open the CMakeLists.txt file from test/unit/). At its end you will find:
+
+    # Copy&Paste template: change directory name and uncomment
+    # ADD_SUBDIRECTORY(template_bug_group)
+    ADD_SUBDIRECTORY(template_bug_group)
+
+  Modify the CMakeLists.txt by adding: "ADD_SUBDIRECTORY(mygroup)" to its end.
+
+2) Adding a test to a group of tests
+
+  Go to the directory where you want to add your test.
+  Write the test code.
+
+  You can either copy a pair of one *.h and one *.cpp file which makes a test
+  for another bug and modify it, or you copy example files from the directory
+  template_bug_group for a starting point. For example, copy the template
+  files bug123.cpp and bug123.h:
+
+    > cd mygroup/
+    > cp ../template_bug_group/bug123.cpp bug_mynumber.cpp
+    > cp ../template_bug_group/bug123.h bug_mynumber.h
+
+  Use Cut&Past and Search&Replace to fix class and methods names in the newly
+  created files bug_mynumber.cpp and bug_mynumber.h .
+
+  Have a look at the examples/ directory for basic syntax snippets!
+  (Yes, we should add more, but as we will proceed this is likely to grow...)
+
+3) Add the new test to the CMakeLists.txt in its directory
+
+  In order compile your new test from mygroup/bug_mynumber.cpp|h into a
+  binary mygroup/bug_mynumber you need to modify mygroup/CMakeLists.txt .
+  It should be easy going. Look out for a block like this:
+
+    #
+    # Instructions for compiling bug123.cpp|h into the binary bug123
+    # Use Copy&Paste and Search&Replace to add new tests to the build
+    #
+    [...]
+    #
+    # End of the instructions for building binary bug123 from bug123.cpp|h
+    #
+
+  Use Cut&Paste and Search&Replace to make it compile your test code
+  contained in bug_mynumber.cpp|h instead of bug123.c|h.
+
+4) Compile the new code
+
+  In the root directory of the driver do:
+
+  > cmake . && make
+
+  If all goes well, it does an incemental build and builds only
+  you latest additions. You will find the binary of you new test in
+  test/unit/mygroup. It will have the name bug_mynumber. Of course,
+  replace "mygroup" and "bug_mynumber" with whatever you used in steps 1-3 :-).
+
+5) Questions?
+
+  Andrey Hristov, Lawrin Novitsky and Ulf Wendel have worked on
+  Connector/C++. Georg Richter has some good CMake skills.

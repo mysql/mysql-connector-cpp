@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 of the License.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+  <Product Id="@CONNECTOR_PKG_ID1@" Name="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" Language="1033" Version="@CONNECTOR_PRODUCT_VERSION@" Manufacturer="Oracle and/or its affiliates" UpgradeCode="fe990d78-8bb1-4880-930a-0430e707f3ca">
+    <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" Description="MySQL C++ Connector @CONNECTOR_PRODUCT_VERSION@" InstallerVersion="200" Platforms="@CONNECTOR_PLATFORM@" Compressed="yes" SummaryCodepage="1252" />
+    <?include mysql-conncpp-msi-arpprops.xml ?>
+
+<!-- Check for installed applications -->
+    <CustomAction Id="NewerVersionInstalled" Error="A newer version of this product is
+already installed." />
+
+
+    <Upgrade Id="fe990d78-8bb1-4880-930a-0430e707f3ca">
+        <UpgradeVersion Property="PREVIOUSLYINSTALLED" Minimum="0.0.0.0" Maximum="@CONNECTOR_PRODUCT_VERSION@" IncludeMaximum="yes" IncludeMinimum="yes" />
+        <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="@CONNECTOR_PRODUCT_VERSION@" Maximum="1.9.9.9" IncludeMinimum="no" OnlyDetect="yes" />
+    </Upgrade>
+
+    <InstallExecuteSequence>
+      <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom>
+      <RemoveExistingProducts After="InstallInitialize"/>
+    </InstallExecuteSequence>
+    <?if "@CONNECTOR_PLATFORM_SUFFIX@"="winx64"?>
+      <Property Id="VS14REDISTX64">
+        <RegistrySearch Id="FindRedistVS14"
+          Win64="no"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+          Name="Version"
+          Type="raw" />
+      </Property>
+      <Condition Message="This application requires Visual Studio 2015 x64 Redistributable. Please install the Redistributable then run this installer again.">
+        Installed OR VS14REDISTX64
+      </Condition>
+    <?elseif "@CONNECTOR_PLATFORM_SUFFIX@"="win32" ?>
+      <Property Id="VS12REDISTX86">
+        <RegistrySearch Id="FindRedistVS14"
+          Win64="no"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86"
+          Name="Version"
+          Type="raw" />
+      </Property>
+      <Condition Message="This application requires Visual Studio 2015 x86 Redistributable. Please install the Redistributable then run this installer again.">
+        Installed OR VS14REDISTX86
+      </Condition>
+    <?endif?>
+
+<!-- File definitions -->
+    <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="@CONNECTOR_DEFAULT_DEST@">
+        <Directory Id="MYSQL" Name="MySQL">
+          <Directory Id="MysqlLibraryDir" Name="MYSQLCPP.CON" LongName="@CONNECTOR_PRODUCT_DEST@">
+            <Directory Id="INSTALLDIR" Name=".">
+              <Directory Id="DesktopFolder" Name=".">
+                <Directory Id="ProgramMenuFolder" Name=".">
+                  <Directory Id="MySQLProgramMenuFolder" Name="MySQL">
+                    <Directory Id="MySQLProductMenuFolder" Name="MySQLPMF" LongName="MySQL Connector C++ @CONNECTOR_PRODUCT_VERSION@" />
+                  </Directory>
+                </Directory>
+              </Directory>
+
+                <Component Id="AdditionalFiles" Guid="85f15863-ccbb-40b6-8610-5afedc9fa44f" DiskId="1">
+                  <File Id="file0031" Name="README.TXT" LongName="README.txt" Source="..\README" />
+                  <File Id="file0032" Name="@LIC_SHORT_NAME@" LongName="@LIC_NAME@" Source="@LICENSE_FILE@" />
+                  <File Id="file0033" Name="BUILDIN~.txt" LongName="BUILDINFO.txt" Source="..\BUILDINFO" />
+                </Component>
+
+              <!-- *****************************************************************************************
+                   include directory
+                -->
+
+              <Directory Id="include" Name="include">
+                <Component Id="IncludeFiles" Guid="dfc7126d-b5b0-4ffb-b509-749523297faa" DiskId="1">
+                  <File Id="file0021" Name="mydrv.h" LongName="mysql_driver.h" Source="..\driver\mysql_driver.h" />
+                  <File Id="file0022" Name="myconn.h" LongName="mysql_connection.h" Source="..\driver\mysql_connection.h" />
+                  <File Id="file0023" Name="myerror.h" LongName="mysql_error.h" Source="..\driver\mysql_error.h" />
+                </Component>
+
+                <Directory Id="cppconn" Name="cppconn">
+                  <Component Id="CppconnIncludes" Guid="3b8df956-dc82-48ac-8101-0784368dcd83" DiskId="1">
+                    <File Id="file0001" Name="connect~.h" LongName="connection.h" Source="..\cppconn\connection.h" />
+                    <File Id="file0002" Name="datatype.h" Source="..\cppconn\datatype.h" />
+                    <File Id="file0003" Name="driver.h" Source="..\cppconn\driver.h" />
+                    <File Id="file0004" Name="excepti~.h" LongName="exception.h" Source="..\cppconn\exception.h" />
+                    <File Id="file0005" Name="metadata.h" Source="..\cppconn\metadata.h" />
+                    <File Id="file0006" Name="paramet~.h" LongName="parameter_metadata.h" Source="..\cppconn\parameter_metadata.h" />
+                    <File Id="file0007" Name="prepare~.h" LongName="prepared_statement.h" Source="..\cppconn\prepared_statement.h" />
+                    <File Id="file0008" Name="results.h" LongName="resultset.h" Source="..\cppconn\resultset.h" />
+                    <File Id="file0009" Name="resultme.h" LongName="resultset_metadata.h" Source="..\cppconn\resultset_metadata.h" />
+                    <File Id="file0010" Name="statem~.h" LongName="statement.h" Source="..\cppconn\statement.h" />
+                    <File Id="file0012" Name="warning.h" Source="..\cppconn\warning.h" />
+                    <File Id="file0013" Name="config.h" Source="$(var.BuildDir)\..\cppconn\config.h" />
+                    <File Id="file0014" Name="build_c~.h" LongName="build_config.h" Source="..\cppconn\build_config.h" />
+                    <File Id="file0015" Name="sqlstri~.h" LongName="sqlstring.h" Source="..\cppconn\sqlstring.h" />
+                    <File Id="file0016" Name="variant.h" LongName="variant.h" Source="..\cppconn\variant.h" />
+                    <File Id="file0017" Name="version~.h" LongName="version_info.h" Source="$(var.BuildDir)\..\cppconn\version_info.h" />
+                  </Component>
+                </Directory>
+
+              </Directory>
+              <!-- *****************************************************************************************
+                   lib directory
+                -->
+              <Directory Id="lib" Name="lib">
+<!--
+                <Directory Id="debug" Name="debug">
+                  <Component Id="ClientLibraryDebug" Guid="9cdd3e41-c4fb-4a47-88a2-6f0c82a4834d" DiskId="1">
+                    <File Id="file0100" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.dll" />
+                    <File Id="file0101" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.lib" />
+                    <File Id="file0102" Name="mycppcon.pdb" LongName="mysqlcppconn.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn.pdb" />
+                    <File Id="file0103" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.lib" />
+                    <File Id="file0104" Name="mycpstat.pdb" LongName="mysqlcppconn-static.pdb" Source="$(var.BuildDir)\..\driver\debug\mysqlcppconn-static.pdb" />
+              </Component>
+                </Directory>
+-->
+                <Directory Id="opt" Name="opt">
+                  <Component Id="ClientLibraryRelease" Guid="00328709-7f5e-4a3c-a189-e79f92243377" DiskId="1">
+                    <File Id="file0150" Name="mycppcon.dll" LongName="mysqlcppconn.dll" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn.dll" />
+                    <File Id="file0151" Name="mycppcon.lib" LongName="mysqlcppconn.lib" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn.lib" />
+                    <File Id="file0152" Name="mycpstat.lib" LongName="mysqlcppconn-static.lib" Source="$(var.BuildDir)\..\driver\relwithdebinfo\mysqlcppconn-static.lib" />
+                  </Component>
+                </Directory>
+              </Directory>
+
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Feature Id="Complete" Title="MySQL Connector C++" Description="The MySQL Connector C++ client library." Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
+        <Feature Id="ConnectorCPP" Title="Library" Description="The release library and headers." Level="1" Display="expand">
+          <ComponentRef Id="AdditionalFiles" />
+          <ComponentRef Id="IncludeFiles" />
+          <ComponentRef Id="CppconnIncludes" />
+          <ComponentRef Id="ClientLibraryRelease" />
+<!--
+          <Feature Id="DebugLibraries" Title="Debug Libary" Description="Debug library and symbols." Level="1000">
+            <ComponentRef Id="ClientLibraryDebug" />
+          </Feature>
+-->
+        </Feature>
+    </Feature>
+
+    <UIRef Id="MySQL_Connector_UI" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+  </Product>
+</Wix>
+
+
