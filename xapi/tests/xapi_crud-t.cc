@@ -64,7 +64,7 @@ TEST_F(xapi, test_count)
   const char *coll_name = "coll_test";
   const char *tab_name = "tab_test";
   char buf[512];
-  int i, j;
+  unsigned i, j;
   size_t count = 0;
   uint64_t rec_count = 0;
 
@@ -78,7 +78,7 @@ TEST_F(xapi, test_count)
   collection = mysqlx_get_collection(schema, coll_name, 0);
 
   ERR_CHECK(mysqlx_collection_count(collection, &rec_count), collection);
-  EXPECT_EQ(0, rec_count);
+  EXPECT_EQ(0U, rec_count);
 
   stmt = mysqlx_collection_add_new(collection);
   for (i = 0; i < 100; ++i)
@@ -89,7 +89,7 @@ TEST_F(xapi, test_count)
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   rec_count = 0;
   ERR_CHECK(mysqlx_collection_count(collection, &rec_count), collection);
-  EXPECT_EQ(100, rec_count);
+  EXPECT_EQ(100U, rec_count);
 
   sprintf(buf, "CREATE TABLE %s.%s (id int)",
             schema_name, tab_name);
@@ -97,7 +97,7 @@ TEST_F(xapi, test_count)
              get_session());
   table = mysqlx_get_table(schema, tab_name, 0);
   ERR_CHECK(mysqlx_table_count(table, &rec_count), table);
-  EXPECT_EQ(0, rec_count);
+  EXPECT_EQ(0U, rec_count);
 
   stmt = mysqlx_table_insert_new(table);
   for (i = 0; i < 100; ++i)
@@ -106,7 +106,7 @@ TEST_F(xapi, test_count)
   }
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   ERR_CHECK(mysqlx_table_count(table, &rec_count), table);
-  EXPECT_EQ(100, rec_count);
+  EXPECT_EQ(100U, rec_count);
 
   stmt = mysqlx_table_select_new(table);
   ERR_CHECK(mysqlx_set_select_where(stmt, "id < 10"), stmt);
@@ -114,10 +114,10 @@ TEST_F(xapi, test_count)
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   ERR_CHECK(mysqlx_get_count(res, &count), res);
-  EXPECT_EQ(10, count);
+  EXPECT_EQ(10U, count);
 
   ERR_CHECK(mysqlx_get_count(res, &count), res);
-  EXPECT_EQ(10, count);
+  EXPECT_EQ(10U, count);
 
   j = 0;
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
@@ -131,12 +131,12 @@ TEST_F(xapi, test_count)
     EXPECT_EQ(j, id);
     ++j;
   }
-  EXPECT_EQ(10, j);
+  EXPECT_EQ(10U, j);
 
   // Check how mysqlx_get_count() handles next result
   EXPECT_EQ(RESULT_NULL, mysqlx_next_result(res));
   ERR_CHECK(mysqlx_get_count(res, &count), res);
-  EXPECT_EQ(0, count);
+  EXPECT_EQ(0U, count);
 }
 
 TEST_F(xapi, test_merge_patch)
@@ -425,7 +425,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_DEFAULT);
   res = mysqlx_execute(stmt);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(1, res_num);
+  EXPECT_EQ(1U, res_num);
   mysqlx_free(res);
 //  mysqlx_free(stmt);
 
@@ -433,7 +433,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_SKIP_LOCKED);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(9, res_num);
+  EXPECT_EQ(9U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -441,7 +441,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_EXCLUSIVE, LOCK_CONTENTION_SKIP_LOCKED);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(9, res_num);
+  EXPECT_EQ(9U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -478,7 +478,7 @@ TEST_F(xapi, lock_contention)
   res = mysqlx_execute(stmt);
   EXPECT_TRUE(NULL != res);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(1, res_num);
+  EXPECT_EQ(1U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt);
 
@@ -486,7 +486,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_SKIP_LOCKED);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(10, res_num);
+  EXPECT_EQ(10U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -494,7 +494,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_SKIP_LOCKED);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(10, res_num);
+  EXPECT_EQ(10U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -502,7 +502,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_NOWAIT);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(10, res_num);
+  EXPECT_EQ(10U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -510,7 +510,7 @@ TEST_F(xapi, lock_contention)
   mysqlx_set_row_locking(stmt2, ROW_LOCK_SHARED, LOCK_CONTENTION_NOWAIT);
   res = mysqlx_execute(stmt2);
   EXPECT_EQ(RESULT_OK,mysqlx_store_result(res, &res_num));
-  EXPECT_EQ(10, res_num);
+  EXPECT_EQ(10U, res_num);
   mysqlx_free(res);
   mysqlx_free(stmt2);
 
@@ -616,12 +616,12 @@ TEST_F(xapi, test_having_group_by)
     {
       case 1:
         EXPECT_EQ(cnt, 3);
-        EXPECT_EQ(buflen, 5);
+        EXPECT_EQ(buflen, 5U);
         EXPECT_STREQ(buf, "Anna");
       break;
       case 2:
         EXPECT_EQ(cnt, 2);
-        EXPECT_EQ(buflen, 6);
+        EXPECT_EQ(buflen, 6U);
         EXPECT_STREQ(buf, "Peter");
         break;
       default:
@@ -828,7 +828,7 @@ TEST_F(xapi, deleting)
   RESULT_CHECK(stmt = mysqlx_table_delete_new(table));
   EXPECT_EQ(RESULT_OK, mysqlx_set_delete_where(stmt, "(id = 10) OR (id = 20) OR (id = 30)"));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
-  EXPECT_EQ(mysqlx_get_affected_count(res), 3);
+  EXPECT_EQ(mysqlx_get_affected_count(res), 3U);
 
   RESULT_CHECK(stmt = mysqlx_table_select_new(table));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
@@ -845,7 +845,7 @@ TEST_F(xapi, deleting)
     EXPECT_EQ(id, 2);
     printf("\n Row # %d: ", row_num);
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
-    EXPECT_EQ(buflen, 7);
+    EXPECT_EQ(buflen, 7U);
 
     printf ("[ %d ] [ %s ]", (int)id, buf);
     EXPECT_STREQ(buf, "012345");
@@ -899,7 +899,7 @@ TEST_F(xapi, order_by_test)
     EXPECT_EQ(id, desc_ids[row_num]);
     printf("\n Row # %d: ", row_num);
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, buf, &buflen));
-    EXPECT_EQ(buflen, 7);
+    EXPECT_EQ(buflen, 7U);
     printf ("[ %d ] [ %s ]", (int)id, buf);
     EXPECT_STREQ(buf, str_data[row_num]);
     ++row_num;
@@ -1534,7 +1534,7 @@ TEST_F(xapi, long_data_test)
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   col_num = mysqlx_column_get_count(res);
-  EXPECT_EQ(col_num, 1);
+  EXPECT_EQ(col_num, 1U);
   col_name = mysqlx_column_get_name(res, 0);
   EXPECT_STREQ(col_name, "longdata");
   col_type = (mysqlx_data_type_t)mysqlx_column_get_type(res, 0);
@@ -1551,7 +1551,7 @@ TEST_F(xapi, long_data_test)
       Take into account that data was converted from string with the trailing
       '\0' byte at the end
     */
-    EXPECT_EQ(1000001, buf_len);
+    EXPECT_EQ(1000001U, buf_len);
 
     // All bytes of the result must be set to the same value 'z'
     for(i = 0; i < 1000000; ++i)
@@ -1623,7 +1623,7 @@ TEST_F(xapi, projections_tab)
     EXPECT_EQ(800, int800);
 
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 3, 0, buf, &buflen));
-    EXPECT_EQ(6 + 1, buflen);
+    EXPECT_EQ(6U + 1U, buflen);
     printf ("[ %d ] [ %d ] [ %d ] [ %s ]\n", (int)id, (int)id2 , (int)int800, buf);
     EXPECT_STREQ("abcdef", buf);
     ++row_num;
@@ -2400,7 +2400,7 @@ TEST_F(xapi_bugs, update_collection_test)
   EXPECT_EQ(RESULT_OK, mysqlx_set_select_items(stmt, "doc->$.my_key as my_key", "doc->$.my_key2 as my_key2", PARAM_END));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  EXPECT_EQ(2, mysqlx_column_get_count(res));
+  EXPECT_EQ(2U, mysqlx_column_get_count(res));
 
   EXPECT_EQ(MYSQLX_TYPE_JSON, mysqlx_column_get_type(res, 0));
   EXPECT_EQ(MYSQLX_TYPE_JSON, mysqlx_column_get_type(res, 1));
@@ -2413,12 +2413,12 @@ TEST_F(xapi_bugs, update_collection_test)
       buflen = sizeof(json_buf);
       EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 0, json_buf, &buflen));
       EXPECT_STREQ("222", json_buf);
-      EXPECT_EQ(4, buflen);
+      EXPECT_EQ(4U, buflen);
 
       buflen = sizeof(json_buf);
       EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 1, 0, json_buf, &buflen));
       EXPECT_STREQ("\"qwertyui\"", json_buf);
-      EXPECT_EQ(11, buflen);
+      EXPECT_EQ(11U, buflen);
   }
 }
 
@@ -2436,7 +2436,7 @@ TEST_F(xapi_bugs, one_call_functions_test)
   size_t buflen;
   char buf[1024];
   const char *str_val[4] = { "sample text", "another sample", "foo", "bar" };
-  uint64_t uval[4] = { 18, 88, 40, 99 };
+  int64_t uval[4] = { 18, 88, 40, 99 };
 
 
   AUTHENTICATE();
@@ -2940,13 +2940,13 @@ TEST_F(xapi, more_data_test)
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
     EXPECT_EQ(RESULT_MORE_DATA, mysqlx_get_bytes(row, 0, 0, data_buf, &buf_len));
-    EXPECT_EQ(1200, buf_len);
+    EXPECT_EQ(1200U, buf_len);
 
     EXPECT_EQ(RESULT_MORE_DATA, mysqlx_get_bytes(row, 0, 1200, data_buf, &buf_len));
-    EXPECT_EQ(1200, buf_len);
+    EXPECT_EQ(1200U, buf_len);
 
     EXPECT_EQ(RESULT_OK, mysqlx_get_bytes(row, 0, 2400, data_buf, &buf_len));
-    EXPECT_EQ(601, buf_len);
+    EXPECT_EQ(601U, buf_len);
   }
 }
 

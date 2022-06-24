@@ -44,5 +44,13 @@ target_link_libraries(devapi PUBLIC common)
 
 add_coverage(devapi)
 
+#TODO: Remove -Wno-delete-non-abstract-non-virtual-dtor when bumping ABI and
+  #      adding virtual destructor for DbDoc, Value and Column_detail
+if((CMAKE_C_COMPILER_ID MATCHES "Clang") OR(CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  target_compile_options(devapi PRIVATE
+    -Wno-delete-non-abstract-non-virtual-dtor
+  )
+endif()
+
 
 add_subdirectory(tests)

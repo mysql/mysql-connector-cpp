@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 
   // Note: argv[2] is the compiler/linker command
 
-  for(unsigned pos=3; pos < argc; pos++)
+  for(int pos=3; pos < argc; pos++)
   {
     if(string(argv[pos]) == "-o")
     {

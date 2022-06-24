@@ -81,7 +81,7 @@ TEST_F(Crud, basic)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(0, cnt);
+    EXPECT_EQ(0u, cnt);
   }
 
   cout << "Inserting documents..." << endl;
@@ -110,7 +110,7 @@ TEST_F(Crud, basic)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(6, cnt);
+    EXPECT_EQ(6U, cnt);
   }
 
   cout << "Fetching documents..." << endl;
@@ -149,7 +149,7 @@ TEST_F(Crud, basic)
     cout << endl;
   }
 
-  EXPECT_EQ(2, i);
+  EXPECT_EQ(2U, i);
 
   cout << "querying collection with SQL ..." << endl;
 
@@ -161,7 +161,7 @@ TEST_F(Crud, basic)
 
     //From server 8.0.19, 3 columns are expected
     //have 2 columns
-    EXPECT_GE(res.getColumnCount(), 2);
+    EXPECT_GE(res.getColumnCount(), 2U);
 
     Row row;
     unsigned row_count = 0;
@@ -175,7 +175,7 @@ TEST_F(Crud, basic)
       }
     }
 
-    EXPECT_EQ(6, row_count);
+    EXPECT_EQ(6U, row_count);
   }
 
   cout << "Done!" << endl;
@@ -231,7 +231,7 @@ TEST_F(Crud, life_time)
     cout << "document: " << doc << endl;
 
     string name = doc["name"];
-    EXPECT_EQ(2, (unsigned)doc["age"]);
+    EXPECT_EQ(2U, (unsigned)doc["age"]);
     EXPECT_EQ(string("bar"), (string)doc["name"]);
   }
 
@@ -279,7 +279,7 @@ TEST_F(Crud, arrays)
 
   cout << "arr: " << arr << endl;
 
-  EXPECT_EQ(4, arr.elementCount());
+  EXPECT_EQ(4U, arr.elementCount());
 
   unsigned pos = 0;
   for (Value val : doc["arr"])
@@ -308,7 +308,7 @@ void Crud::add_data(Collection &coll)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(0, cnt);
+    EXPECT_EQ(0U, cnt);
   }
 
   cout << "Inserting documents..." << endl;
@@ -336,7 +336,7 @@ void Crud::add_data(Collection &coll)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(6, cnt);
+    EXPECT_EQ(6U, cnt);
   }
 
 
@@ -360,22 +360,22 @@ TEST_F(Crud, bind)
   auto find = coll.find("name like :name and age < :age");
   auto find2 = find;
 
-  EXPECT_EQ(6,
+  EXPECT_EQ(6U,
             find.bind("name", "%")
             .bind("age", 1000)
             .execute().count());
 
-  EXPECT_EQ(6,
+  EXPECT_EQ(6U,
             find2.bind("name", "%")
             .bind("age", 1000)
             .execute().count());
 
-  EXPECT_EQ(5,
+  EXPECT_EQ(5U,
             find.bind("name", "%")
             .bind("age", 17)
             .execute().count());
 
-  EXPECT_EQ(3,
+  EXPECT_EQ(3U,
             find2.bind("name", "%")
             .bind("age", 3)
             .execute().count());
@@ -422,7 +422,7 @@ TEST_F(Crud, bind)
     cout << endl;
   }
 
-  EXPECT_EQ(1, i);
+  EXPECT_EQ(1U, i);
 
 
   EXPECT_EQ(static_cast<uint64_t>(0),
@@ -495,7 +495,7 @@ TEST_F(Crud, bind)
     }
 
 
-    EXPECT_EQ(1, i);
+    EXPECT_EQ(1U, i);
 
   }
 
@@ -539,7 +539,7 @@ TEST_F(Crud, bind)
       cout << endl;
     }
 
-    EXPECT_EQ(1, i);
+    EXPECT_EQ(1U, i);
 
   }
 
@@ -608,7 +608,7 @@ TEST_F(Crud, modify)
     cout << endl;
   }
 
-  EXPECT_EQ(1, i);
+  EXPECT_EQ(1U, i);
 
   cout << "Modify documents..." << endl;
 
@@ -750,7 +750,7 @@ TEST_F(Crud, order_limit)
 
   // Modify the first line (ordered by age) incrementing 1 to the age.
 
-  EXPECT_EQ(1,
+  EXPECT_EQ(1U,
   coll.modify("true")
       .set("age",expr("age+1"))
       .sort("age ASC")
@@ -1076,11 +1076,11 @@ TEST_F(Crud, table)
     EXPECT_EQ(2, static_cast<int>(r[1]));
 
     res = tbl.select("c0->$.foo", "c1").where("c0->$.bar > 1 AND c1 < 3").execute();
-    EXPECT_NE(1, res.count());
+    EXPECT_NE(1U, res.count());
 
     res = tbl.select("c0->>$.bar", "c1").where("c0->>$.bar > 1 AND c1 < 3").execute();
 
-    EXPECT_EQ(1, res.count());
+    EXPECT_EQ(1U, res.count());
 
     r = res.fetchOne();
 
@@ -1243,7 +1243,7 @@ TEST_F(Crud, table_projections)
 
   for (Row r = result.fetchOne(); !r.isNull(); r = result.fetchOne())
   {
-    EXPECT_EQ(3, r.colCount());
+    EXPECT_EQ(3U, r.colCount());
     EXPECT_EQ(2016-static_cast<int>(r[0]), static_cast<int>(r[1]));
   }
 
@@ -1464,7 +1464,7 @@ TEST_F(Crud, row_error)
     {
       cout << "Expected error " << e << endl;
     }
-    EXPECT_EQ(1, rows.size());
+    EXPECT_EQ(1U, rows.size());
     std::cout << rows[0][0] << std::endl;
   }
 
@@ -1567,17 +1567,17 @@ TEST_F(Crud, get_ids)
   res = coll.add(doc1).execute();
 
   std::vector<std::string> ids= res.getGeneratedIds();
-  ASSERT_EQ(1, ids.size());
+  ASSERT_EQ(1U, ids.size());
 
   res = coll.remove("true").execute();
 
   // This functions can only be used on add() operations
   ids= res.getGeneratedIds();
-  EXPECT_EQ(0, ids.size());
+  EXPECT_EQ(0U, ids.size());
 
   res = coll.add(doc1).add(doc2).execute();
   ids= res.getGeneratedIds();
-  EXPECT_EQ(1, ids.size());
+  EXPECT_EQ(1U, ids.size());
 
 }
 
@@ -1608,13 +1608,13 @@ TEST_F(Crud, count)
     add.execute();
   }
 
-  EXPECT_EQ(1000, coll.count());
+  EXPECT_EQ(1000U, coll.count());
 
   coll.remove("true").limit(500).execute();
 
   Table tbl = sch.getCollectionAsTable("coll");
 
-  EXPECT_EQ(500, tbl.count());
+  EXPECT_EQ(500U, tbl.count());
 
 }
 
@@ -1654,7 +1654,7 @@ TEST_F(Crud, buffered)
     DbDoc r = res.fetchOne();
     EXPECT_EQ(0, static_cast<int>(r["age"]));
 
-    EXPECT_EQ(9999, res.count());
+    EXPECT_EQ(9999U, res.count());
 
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()["age"]));
@@ -1666,7 +1666,7 @@ TEST_F(Crud, buffered)
 
     cout << " done" << endl;
 
-    EXPECT_EQ(9998, rows.size());
+    EXPECT_EQ(9998U, rows.size());
 
     cout << "Examining documents";
     std::flush(cout);
@@ -1684,11 +1684,11 @@ TEST_F(Crud, buffered)
 
     cout << " done" << endl;
 
-    EXPECT_EQ(0, res.count());
+    EXPECT_EQ(0U, res.count());
 
     std::vector<DbDoc> rows_empty = res.fetchAll();
 
-    EXPECT_EQ(0, rows_empty.size());
+    EXPECT_EQ(0U, rows_empty.size());
 
   }
 
@@ -1704,7 +1704,7 @@ TEST_F(Crud, buffered)
 
     EXPECT_EQ(0, static_cast<int>(r[0]));
 
-    EXPECT_EQ(9999, res.count());
+    EXPECT_EQ(9999U, res.count());
 
     //Get second from cache, after count()
     EXPECT_EQ(1, static_cast<int>(res.fetchOne()[0]));
@@ -1716,7 +1716,7 @@ TEST_F(Crud, buffered)
 
     cout << " done" << endl;
 
-    EXPECT_EQ(9998, rows.size());
+    EXPECT_EQ(9998U, rows.size());
 
     cout << "Examining rows";
     std::flush(cout);
@@ -1734,11 +1734,11 @@ TEST_F(Crud, buffered)
 
     cout << " done" << endl;
 
-    EXPECT_EQ(0, res.count());
+    EXPECT_EQ(0U, res.count());
 
     std::vector<Row> rows_empty = res.fetchAll();
 
-    EXPECT_EQ(0, rows_empty.size());
+    EXPECT_EQ(0U, rows_empty.size());
 
   }
 
@@ -1982,8 +1982,8 @@ TEST_F(Crud, group_by_having)
          coll_row = coll_res.fetchOne(),
          tbl_row = tbl_res.fetchOne())
     {
-      EXPECT_EQ(1,cset.erase(coll_row["user"].get<string>()));
-      EXPECT_EQ(1, tset.erase(tbl_row[0].get<string>()));
+      EXPECT_EQ(1U,cset.erase(coll_row["user"].get<string>()));
+      EXPECT_EQ(1U, tset.erase(tbl_row[0].get<string>()));
     }
 
     EXPECT_TRUE(cset.empty());
@@ -2095,7 +2095,7 @@ TEST_F(Crud, copy_semantics)
     cout << endl;
   }
 
-  EXPECT_EQ(1, i);
+  EXPECT_EQ(1U, i);
 
   std::map<string, Value> args;
 
@@ -2351,15 +2351,15 @@ TEST_F(Crud, lock_contention)
   auto res_id2 =tbl.select().where("_id like '2'").lockExclusive()
       .execute();
 
-  EXPECT_EQ(1, res_id2.count());
+  EXPECT_EQ(1U, res_id2.count());
 
-  EXPECT_EQ(9,
+  EXPECT_EQ(9U,
             tbl_nolock.select()
             .lockExclusive(mysqlx::LockContention::SKIP_LOCKED)
             .execute()
             .count());
 
-  EXPECT_EQ(9,
+  EXPECT_EQ(9U,
             coll_nolock.find()
             .lockExclusive(mysqlx::LockContention::SKIP_LOCKED)
             .execute()
@@ -2400,7 +2400,7 @@ TEST_F(Crud, lock_contention)
     }
     FAIL() << "Should throw error";
   }
-  catch(mysqlx::Error)
+  catch(mysqlx::Error&)
   {}
 
   auto coll_res_error = find_error.execute();
@@ -2412,7 +2412,7 @@ TEST_F(Crud, lock_contention)
     }
     FAIL() << "Should throw error";
   }
-  catch(mysqlx::Error)
+  catch(mysqlx::Error&)
   {}
 
   sess.rollback();
@@ -2430,19 +2430,19 @@ TEST_F(Crud, lock_contention)
       .execute();
 
 
-  EXPECT_EQ(10,
+  EXPECT_EQ(10U,
             tbl_nolock.select().lockShared(mysqlx::LockContention::SKIP_LOCKED)
             .execute().count());
 
-  EXPECT_EQ(10,
+  EXPECT_EQ(10U,
             coll_nolock.find().lockShared(mysqlx::LockContention::SKIP_LOCKED)
             .execute().count());
 
-  EXPECT_EQ(10,
+  EXPECT_EQ(10U,
             tbl_nolock.select().lockShared(mysqlx::LockContention::NOWAIT)
             .execute().count());
 
-  EXPECT_EQ(10,
+  EXPECT_EQ(10U,
             coll_nolock.find().lockShared(mysqlx::LockContention::NOWAIT)
             .execute().count());
 
@@ -2498,15 +2498,15 @@ TEST_F(Crud, single_document)
 
   cout << "removeOne()" << endl;
 
-  EXPECT_EQ(1, coll.removeOne("id1").getAffectedItemsCount());
-  EXPECT_EQ(0, coll.removeOne("id1").getAffectedItemsCount());
+  EXPECT_EQ(1U, coll.removeOne("id1").getAffectedItemsCount());
+  EXPECT_EQ(0U, coll.removeOne("id1").getAffectedItemsCount());
 
   EXPECT_TRUE(coll.getOne("id1").isNull());
 
   cout << "replaceOne()" << endl;
 
   // Replace existing document
-  EXPECT_EQ(1, coll.replaceOne(
+  EXPECT_EQ(1U, coll.replaceOne(
               "id3",
               expr(R"({"name": "qux", "age": cast(age+1 AS UNSIGNED INT) })"))
             .getAffectedItemsCount());
@@ -2539,7 +2539,7 @@ TEST_F(Crud, single_document)
   cout << "replaceOne(): non-existing" << endl;
 
   // should affect none
-  EXPECT_EQ(0,
+  EXPECT_EQ(0U,
     coll.replaceOne("id4", expr(R"({"name": "baz" })"))
         .getAffectedItemsCount());
 
@@ -2566,7 +2566,7 @@ TEST_F(Crud, add_or_replace)
 
   cout << "Initial documents added to the collection, adding id4..." << endl;
 
-  EXPECT_EQ(1, coll.addOrReplaceOne("id4", "{\"name\":\"zaz\"}")
+  EXPECT_EQ(1U, coll.addOrReplaceOne("id4", "{\"name\":\"zaz\"}")
                    .getAffectedItemsCount());
   // Check that the document was added
   EXPECT_EQ(string("zaz"), coll.getOne("id4")["name"].get<string>());
@@ -2579,7 +2579,7 @@ TEST_F(Crud, add_or_replace)
     as separate.
   */
 
-  EXPECT_LT(0, coll.addOrReplaceOne("id4", "{\"name\":\"zzz\"}")
+  EXPECT_LT(0U, coll.addOrReplaceOne("id4", "{\"name\":\"zzz\"}")
                    .getAffectedItemsCount());
   // Check that the document was replaced
   EXPECT_EQ(string("zzz"), coll.getOne("id4")["name"].get<string>());
@@ -2657,7 +2657,7 @@ TEST_F(Crud, PS)
   };
 
   //-1 means not set
-  auto execute_find = [](std::vector<CollectionFind> &finds,int limit, int offset, int expected, bool bind = true)
+  auto execute_find = [](std::vector<CollectionFind> &finds,int limit, int offset, unsigned expected, bool bind = true)
   {
     for (auto &find : finds)
     {
@@ -2677,7 +2677,7 @@ TEST_F(Crud, PS)
   auto execute_find_sort = [](
                            std::vector<CollectionFind> &finds,
                            bool set_sort,
-                           int expected)
+                           unsigned expected)
   {
     for (auto &find : finds)
     {
@@ -2878,7 +2878,7 @@ TEST_F(Crud, PS_find)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3152,7 +3152,7 @@ TEST_F(Crud, PS_modify)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3357,7 +3357,7 @@ TEST_F(Crud, PS_remove)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3474,7 +3474,7 @@ TEST_F(Crud, PS_table_insert)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3533,7 +3533,7 @@ TEST_F(Crud, PS_table_select)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3705,7 +3705,7 @@ TEST_F(Crud, PS_table_update)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3923,7 +3923,7 @@ TEST_F(Crud, PS_table_delete)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -3986,7 +3986,7 @@ TEST_F(Crud, PS_max)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -4064,7 +4064,7 @@ TEST_F(Crud, PS_SQL)
   {
     ps_status.bind(std::string("%")+query+("%"));
     auto res = ps_status.execute();
-    EXPECT_EQ(count != 0 ? 1 : 0, res.count());
+    EXPECT_EQ(count != 0 ? 1U : 0U, res.count());
     for(auto row : res)
     {
       std::cout  << row[1] << std::endl;
@@ -4139,46 +4139,46 @@ TEST_F(Crud, overlaps)
       .execute();
 
   auto res = coll.find(R"(food overlaps ["Soup"])").execute();
-  EXPECT_EQ(2, res.count());
+  EXPECT_EQ(2U, res.count());
 
   res = coll.find(R"(food overlaps ["Milk", "Soup"])").execute();
-  EXPECT_EQ(2, res.count());
+  EXPECT_EQ(2U, res.count());
 
   res = coll.find(R"(food overlaps ["Milk"])").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
   EXPECT_EQ(string("foo"),res.fetchOne()["name"]);
 
   res = coll.find(R"(food overlaps ["Beer"])").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
   EXPECT_EQ(string("baz"),res.fetchOne()["name"]);
 
   res = coll.find(R"(food overlaps ["Meat"])").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find(R"(food overlaps "Meat")").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   // Not Overlaps tests
 
   res = coll.find(R"(food not overlaps ["Soup"])").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find(R"(food not overlaps ["Milk", "Soup"])").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find(R"(food not overlaps ["Milk"])").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
   EXPECT_EQ(string("baz"),res.fetchOne()["name"]);
 
   res = coll.find(R"(food not overlaps ["Beer"])").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
   EXPECT_EQ(string("foo"),res.fetchOne()["name"]);
 
   res = coll.find(R"(food not overlaps ["Meat"])").execute();
-  EXPECT_EQ(2, res.count());
+  EXPECT_EQ(2U, res.count());
 
   res = coll.find(R"(food not overlaps "Meat")").execute();
-  EXPECT_EQ(2, res.count());
+  EXPECT_EQ(2U, res.count());
 
   try {
     coll.find(R"(food not overlaps and "Meat")").execute();

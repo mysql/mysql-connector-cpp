@@ -270,7 +270,7 @@ MySQL_ArtResultSet::absolute(const int _row)
   checkValid();
   const int64_t row = _row;
   if (row > 0) {
-    if (row > num_rows) {
+    if (static_cast<uint64_t>(row) > num_rows) {
       afterLast();
     } else {
       row_position = row;
@@ -278,7 +278,7 @@ MySQL_ArtResultSet::absolute(const int _row)
       return true;
     }
   } else if (row < 0) {
-    if (-row > num_rows) {
+    if (static_cast<uint64_t>(-row) > num_rows) {
       beforeFirst();
     } else {
       row_position = num_rows + row + 1;

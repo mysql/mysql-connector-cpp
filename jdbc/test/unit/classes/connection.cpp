@@ -2606,7 +2606,7 @@ void connection::connectAttrAdd()
   {
     testsuite::Connection conn1;
     sql::ConnectOptionsMap opts;
-    int max_count;
+    int max_count = 1;
 
     opts["hostName"]=url;
     opts["userName"]=user;

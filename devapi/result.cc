@@ -316,7 +316,7 @@ struct CollationInfo::Access
     ci.m_id = _id;
     ci.m_case = CollationInfo::coll_case(_case);
     ci.m_name = _name;
-    return std::move(ci);
+    return ci;
   }
 };
 

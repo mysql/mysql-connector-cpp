@@ -93,7 +93,7 @@ protected:
   static Value opt_val(int opt, Value &&val)
   {
     OPT_VAL_TYPE(CHECK_OPT)
-    return val;
+    return std::move(val);
   }
 
   /*

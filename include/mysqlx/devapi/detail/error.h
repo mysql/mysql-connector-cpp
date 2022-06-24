@@ -64,7 +64,7 @@ protected:
     : m_level(level), m_code(code), m_msg(msg)
   {}
 
-  void print(std::ostream&) const;
+  void print(std::ostream &) const override;
 
   friend Result_detail;
 };

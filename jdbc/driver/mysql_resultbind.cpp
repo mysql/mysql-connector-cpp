@@ -128,7 +128,7 @@ MySQL_Bind::MySQL_Bind()
   // Since this structure will be used as an array of MYSQL_BIND, its size
   // should be the same. This only encapsulates to enable safe alloc/free
   assert(sizeof(MySQL_Bind) == sizeof(MYSQL_BIND));
-  memset(this, 0, sizeof (MySQL_Bind));
+  memset(static_cast<MYSQL_BIND *>(this), 0, sizeof(MYSQL_BIND));
 }
 /* }}} */
 
@@ -136,8 +136,8 @@ MySQL_Bind::MySQL_Bind()
 /* {{{ MySQL_Bind::MySQL_Bind() -I- */
 MySQL_Bind::MySQL_Bind(MySQL_Bind && other)
 {
-  memcpy(this, &other, sizeof(MySQL_Bind));
-  memset(&other, 0, sizeof (MySQL_Bind));
+  memcpy(static_cast<MYSQL_BIND *>(this), static_cast<MYSQL_BIND *>(&other), sizeof(MYSQL_BIND));
+  memset(static_cast<MYSQL_BIND *>(&other), 0, sizeof(MYSQL_BIND));
 }
 /* }}} */
 

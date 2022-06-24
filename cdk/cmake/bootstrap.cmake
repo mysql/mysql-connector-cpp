@@ -81,6 +81,16 @@ function(bootstrap)
     list(APPEND cmake_opts "-D" "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
   endif()
 
+  if(CMAKE_C_COMPILER)
+    message("-- C compiler: ${CMAKE_C_COMPILER}")
+    list(APPEND cmake_opts "-D" "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+  endif()
+
+  if(CMAKE_CXX_COMPILER)
+    message("-- C++ compiler: ${CMAKE_CXX_COMPILER}")
+    list(APPEND cmake_opts "-D" "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+  endif()
+
   message("-- ----")
 
   execute_process(

@@ -35,6 +35,14 @@ add_library(common STATIC
 
 target_link_libraries(common cdk)
 
+#TODO: Remove -Wno-delete-non-abstract-non-virtual-dtor when bumping ABI and
+  #      adding virtual destructor for DbDoc, Value and Column_detail
+if(CLANG)
+  target_compile_options(common PRIVATE
+    -Wno-delete-non-abstract-non-virtual-dtor
+  )
+endif()
+
 #
 #  Generate version info
 #

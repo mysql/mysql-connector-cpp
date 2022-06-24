@@ -1419,7 +1419,7 @@ TEST(Parser, doc_path)
     Doc_field_parser doc_path(test);
     doc_path.process(path);
 
-    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(3U, path.length());
     EXPECT_EQ(path.DOUBLE_ASTERISK, path.get_el(0).m_type);
     EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);
     EXPECT_EQ(cdk::string("date"), path.get_el(1).m_name);
@@ -1435,7 +1435,7 @@ TEST(Parser, doc_path)
     Doc_field_parser doc_path(test);
     doc_path.process(path);
 
-    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(3U, path.length());
     EXPECT_EQ(path.DOUBLE_ASTERISK, path.get_el(0).m_type);
     EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);
     EXPECT_EQ(cdk::string("date"), path.get_el(1).m_name);
@@ -1451,7 +1451,7 @@ TEST(Parser, doc_path)
     Doc_field_parser doc_path(test);
     doc_path.process(path);
 
-    EXPECT_EQ(3, path.length());
+    EXPECT_EQ(3U, path.length());
     EXPECT_EQ(path.MEMBER, path.get_el(0).m_type);
     EXPECT_EQ(cdk::string("date"), path.get_el(0).m_name);
     EXPECT_EQ(path.MEMBER, path.get_el(1).m_type);

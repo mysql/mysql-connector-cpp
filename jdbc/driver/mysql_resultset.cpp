@@ -109,7 +109,7 @@ MySQL_ResultSet::absolute(const int _new_pos)
     checkScrollable();
     const int64_t new_pos = _new_pos;
     if (new_pos > 0) {
-        if (new_pos > num_rows) {
+        if (static_cast<uint64_t>(new_pos) > num_rows) {
             row_position = num_rows + 1; /* after last row */
         } else {
             row_position = new_pos;
@@ -117,7 +117,7 @@ MySQL_ResultSet::absolute(const int _new_pos)
             return true;
         }
     } else if (new_pos < 0) {
-        if ((-new_pos) > num_rows) {
+        if ((static_cast<uint64_t>(-new_pos)) > num_rows) {
             row_position = 0; /* before first new_pos */
         } else {
             row_position = num_rows + new_pos + 1;

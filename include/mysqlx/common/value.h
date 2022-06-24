@@ -94,7 +94,7 @@ protected:
   DLL_WARNINGS_POP
 
   union {
-    double   v_double;
+    double   v_double = 0.0;
     float    v_float;
     int64_t  v_sint;
     uint64_t v_uint;
@@ -176,6 +176,7 @@ public:
   Value(T val)
     : Value(int64_t(val))
   {}
+
 
   bool is_null() const
   {

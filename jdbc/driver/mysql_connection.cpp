@@ -515,7 +515,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   const int * p_i;
   const bool * p_b;
-  const sql::SQLString * p_s;
+  const sql::SQLString * p_s = nullptr;
   bool opt_reconnect = false;
   int  client_exp_pwd = false;
   bool opt_dns_srv = false;
@@ -1172,8 +1172,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw e;
     }
   };
-
-  uint16_t total_weight = 0;
 
   if(opt_dns_srv)
   {

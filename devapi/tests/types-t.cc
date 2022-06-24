@@ -55,23 +55,23 @@ TEST_F(Types, numeric)
     Value val = 7U;
     EXPECT_EQ(Value::UINT64, val.getType());
 
-    int v0;
+    int v0 = 0;
     EXPECT_NO_THROW(v0 = val);
     EXPECT_EQ(7, v0);
 
-    unsigned v1;
+    unsigned v1 = 0U;
     EXPECT_NO_THROW(v1 = val);
-    EXPECT_EQ(7, v1);
+    EXPECT_EQ(7U, v1);
 
-    float v2;
+    float v2 = 0.0;
     EXPECT_NO_THROW(v2 = val);
     EXPECT_EQ(7, v2);
 
-    double v3;
+    double v3 = 0.0;
     EXPECT_NO_THROW(v3 = val);
     EXPECT_EQ(7, v3);
 
-    bool v4;
+    bool v4 = false;
     EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
@@ -80,22 +80,22 @@ TEST_F(Types, numeric)
     Value val = -7;
     EXPECT_EQ(Value::INT64, val.getType());
 
-    int v0;
+    int v0=0;
     EXPECT_NO_THROW(v0 = val);
     EXPECT_EQ(-7, v0);
 
     unsigned v1;
     EXPECT_THROW(v1 = val, Error);
 
-    float v2;
+    float v2=0.0;
     EXPECT_NO_THROW(v2 = val);
     EXPECT_EQ(-7, v2);
 
-    double v3;
+    double v3=0.0;
     EXPECT_NO_THROW(v3 = val);
     EXPECT_EQ(-7, v3);
 
-    bool v4;
+    bool v4=false;
     EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
@@ -108,20 +108,20 @@ TEST_F(Types, numeric)
     int v0;
     EXPECT_THROW(v0 = val, Error);
 
-    unsigned v1;
+    unsigned v1=0;
     EXPECT_NO_THROW(v1 = val);
     EXPECT_EQ(max_uint, v1);
 
-    float v2;
+    float v2=0.0;
     EXPECT_NO_THROW(v2 = val);
     // Note: allow small rounding errors
     EXPECT_LE(fabs(v2/max_uint - 1), 1e-7);
 
-    double v3;
+    double v3=0.0;
     EXPECT_NO_THROW(v3 = val);
     EXPECT_EQ(max_uint, v3);
 
-    bool v4;
+    bool v4=false;
     EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
@@ -177,9 +177,9 @@ TEST_F(Types, numeric)
     EXPECT_NO_THROW(v0 = val);
     EXPECT_EQ(1, v0);
 
-    unsigned v1;
+    unsigned v1=0;
     EXPECT_NO_THROW(v1 = val);
-    EXPECT_EQ(1, v1);
+    EXPECT_EQ(1U, v1);
 
     float v2;
     EXPECT_THROW(v2 = val, Error);
@@ -187,7 +187,7 @@ TEST_F(Types, numeric)
     double v3;
     EXPECT_THROW(v3 = val, Error);
 
-    bool v4;
+    bool v4=false;
     EXPECT_NO_THROW(v4 = (bool)val);
     EXPECT_TRUE(v4);
   }
@@ -286,7 +286,7 @@ TEST_F(Types, basic)
   EXPECT_EQ(Type::BIT, c5.getType());
   cout << "column " << res.getColumn(5) << " length: "
     << c5.getLength();
-  EXPECT_EQ(64, c5.getLength());
+  EXPECT_EQ(64U, c5.getLength());
 
   for (unsigned i = 0; (row = res.fetchOne()); ++i)
   {
@@ -312,7 +312,7 @@ TEST_F(Types, basic)
     EXPECT_EQ(data_string[i], (string)row[4]);
     EXPECT_EQ(data_bit[i], (uint64_t)row[5]);
 
-    EXPECT_GT(row[1].getRawBytes().size(), 1);
+    EXPECT_GT(row[1].getRawBytes().size(), 1U);
     EXPECT_EQ(data_string[i].length(), string(row[4]).length());
 
   }
@@ -389,15 +389,15 @@ TEST_F(Types, integer)
   {
     Value v1(7U);
     EXPECT_EQ(Value::UINT64, v1.getType());
-    EXPECT_EQ(7, (uint64_t)v1);
+    EXPECT_EQ(7U, (uint64_t)v1);
 
     Value v2(7UL);
     EXPECT_EQ(Value::UINT64, v1.getType());
-    EXPECT_EQ(7, (uint64_t)v1);
+    EXPECT_EQ(7U, (uint64_t)v1);
 
     Value v3(7ULL);
     EXPECT_EQ(Value::UINT64, v1.getType());
-    EXPECT_EQ(7, (uint64_t)v1);
+    EXPECT_EQ(7U, (uint64_t)v1);
   }
 
   SKIP_IF_NO_XPLUGIN;
@@ -471,7 +471,7 @@ TEST_F(Types, string)
   cout << "column #0 charset: " << c0.getCharacterSetName() << endl;
   cout << "column #0 collation: " << c0.getCollationName() << endl;
 
-  EXPECT_EQ(10, c0.getLength());
+  EXPECT_EQ(10U, c0.getLength());
   //EXPECT_EQ(CharacterSet::latin2, c0.getCharacterSet());
   //EXPECT_EQ(Collation<CharacterSet::latin2>::general_ci, c0.getCollation());
 
@@ -778,7 +778,7 @@ TEST_F(Types, json)
     EXPECT_EQ(Value::DOCUMENT, doc["sub"].getType());
 
     EXPECT_EQ(7, (int)doc["foo"]);
-    EXPECT_EQ(3, doc["arr"].elementCount());
+    EXPECT_EQ(3U, doc["arr"].elementCount());
     EXPECT_TRUE(doc["sub"].hasField("day"));
     EXPECT_TRUE(doc["sub"].hasField("month"));
   }
@@ -828,8 +828,10 @@ TEST_F(Types, json)
       EXPECT_EQ(1, (int)row[0][0]);
       EXPECT_EQ(string("a"), (string)row[0][1]);
 
-      if (0 == i)
+      if (0U == i)
+      {
         EXPECT_EQ(Value::DOCUMENT, row[0][2].getType());
+      }
     }
   }
 
@@ -967,11 +969,11 @@ TEST_F(Types, datetime)
     {
     case Type::DATE:
     case Type::TIME:
-      EXPECT_EQ(4, row[j].getRawBytes().size());
+      EXPECT_EQ(4U, row[j].getRawBytes().size());
       break;
     case Type::DATETIME:
     case Type::TIMESTAMP:
-      EXPECT_EQ(6, row[j].getRawBytes().size());
+      EXPECT_EQ(6U, row[j].getRawBytes().size());
       break;
     default:
       FAIL() << "Unexpected type! Update UT";

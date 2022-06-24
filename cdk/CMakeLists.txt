@@ -187,7 +187,7 @@ IF(MSVC)
   # Note: 4520 only present on Visual Studio 12
 
   if (MSVC_VERSION LESS 1800)
-    add_compile_options(
+    add_flags(
       /wd4127 # conditional expression is constant (needed for do {...} while(false))
       /wd4512 # assignment operator could not be generated
       /wd4100 # unreferenced formal parameter
@@ -208,9 +208,10 @@ ELSE()
 
   if(SUNPRO)
     # TODO: Enable -Wall after fixing warnings
-    add_compile_options(-errtags=yes -erroff=hidevf)
+    add_flags(-errtags=yes -erroff=hidevf)
   else()
     add_compile_options(-Wall)
+    add_flags(CXX -Wall)
   endif()
 
 ENDIF()

@@ -46,8 +46,6 @@ POP_SYS_WARNINGS
 
 
 
-const unsigned max_priority = 100;
-
 using namespace ::mysqlx::impl::common;
 using namespace ::mysqlx::internal;
 using namespace ::mysqlx;

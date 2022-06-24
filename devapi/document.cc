@@ -428,7 +428,7 @@ Value Value::Access::mk_from_json(const std::string &json)
 
   parser.process(builder);
 
-  return std::move(val);
+  return val;
 }
 
 
@@ -461,7 +461,7 @@ DbDoc::Iterator DbDoc::begin()
     m_impl->reset();
     it.m_impl = m_impl;
     it.m_end = false;
-    return std::move(it);
+    return it;
   }
   CATCH_AND_WRAP
 }
@@ -475,7 +475,7 @@ DbDoc::Iterator DbDoc::end()
     */
     Iterator it;
     it.m_end = true;
-    return std::move(it);
+    return it;
   }
   CATCH_AND_WRAP
 }

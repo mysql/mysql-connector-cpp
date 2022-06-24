@@ -121,10 +121,7 @@ inline static MySQL_Driver * get_driver_instance()
   return sql::mysql::get_driver_instance_by_name("");
 }
 
-static MySQL_Driver * get_mysql_driver_instance() { return get_driver_instance(); }
-
-
-
+inline static MySQL_Driver *get_mysql_driver_instance() { return get_driver_instance(); }
 
 } /* namespace mysql */
 } /* namespace sql */

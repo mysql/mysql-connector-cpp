@@ -217,7 +217,7 @@ TEST_F(Sess, compression)
 
   }
 
-  catch (Error e) {
+  catch (Error &e) {
     FAIL() << "Unexpected throw!" << e;
   }
 }
@@ -1666,7 +1666,7 @@ TEST_F(Sess, sha256_memory)
   try {
     mysqlx::Session s(mysqldefault_cleartext);
     FAIL() << "Should have thrown!";
-  } catch (Error) {
+  } catch (Error&) {
     SUCCEED() << "Expected throw!";
   }
 
@@ -2083,10 +2083,10 @@ TEST_F(Sess, pool_use)
 
       mysqlx::Client client(settings_local);
 
-      auto get_sessions = [&client, &max_connections] ()
+      auto get_sessions = [&client](int connections)
       {
         std::list<mysqlx::Session> m_sessions;
-        for(int i = 0; i < max_connections; ++i)
+        for (int i = 0; i < connections; ++i)
         {
           m_sessions.emplace_back(client);
         }
@@ -2097,7 +2097,7 @@ TEST_F(Sess, pool_use)
       std::chrono::time_point<std::chrono::system_clock> start_time
           = std::chrono::system_clock::now();
 
-      get_sessions();
+      get_sessions(max_connections);
 
       auto clean_pool_duration = std::chrono::system_clock::now() - start_time;
 
@@ -2106,7 +2106,8 @@ TEST_F(Sess, pool_use)
       //Second round, pool full
       start_time = std::chrono::system_clock::now();
 
-      get_sessions();
+      get_sessions(max_connections
+      );
 
       auto full_pool_duration = std::chrono::system_clock::now() - start_time;
 
@@ -2172,7 +2173,7 @@ TEST_F(Sess, pool_ttl)
 
   sql("set global mysqlx_wait_timeout=28800");
 
-  const int max_connections = 10;
+  const unsigned max_connections = 10;
 
   std::chrono::seconds queue_timeout(50);
   std::chrono::milliseconds pool_ttl(500);
@@ -2204,9 +2205,9 @@ TEST_F(Sess, pool_ttl)
   // If expect_errors is true, then expect that all sessions will be
   // invalid.
 
-  auto test_sessions = [&session_list, max_connections, &print_mtx](bool expect_errors)
+  auto test_sessions = [&](bool expect_errors)
   {
-    int errors_found = 0;
+    unsigned errors_found = 0;
     while (session_list.size() > 0)
     {
       auto el = session_list.begin();
@@ -2248,7 +2249,7 @@ TEST_F(Sess, pool_ttl)
     }
     else
     {
-      EXPECT_EQ(0, errors_found);
+      EXPECT_EQ(0U, errors_found);
     }
   };
 
@@ -2284,7 +2285,7 @@ TEST_F(Sess, pool_ttl)
 
     std::cout << "- creating sessions... " << std::endl;
 
-    for (int i=0; i < max_connections*4; ++i)
+    for (unsigned i=0; i < max_connections*4; ++i)
     {
       // note: compiler chokes on async(..., mk_session, client);
       session_list.emplace_back(
@@ -2320,7 +2321,7 @@ TEST_F(Sess, pool_ttl)
 
     session_list.clear();
 
-    for (int i=0; i < max_connections*4; ++i)
+    for (unsigned i=0; i < max_connections*4; ++i)
     {
       session_list.emplace_back(
         std::async(std::launch::async, [&client,mk_session](){
@@ -2354,19 +2355,19 @@ TEST_F(Sess, pool_ttl)
       sessions.
     */
 
-    auto get_sessions = [&client, max_connections]() -> std::set<unsigned>
+    auto get_sessions = [&]() -> std::set<unsigned>
     {
       std::list<mysqlx::Session> sessions;
       std::set<unsigned>      sess_ids;
 
-      for (int i = 0; i < max_connections; ++i)
+      for (unsigned i = 0; i < max_connections; ++i)
       {
         sessions.emplace_back(client);
         auto row = sessions.back().sql("SELECT CONNECTION_ID()").execute().fetchOne();
         sess_ids.insert(row[0]);
       }
 
-      return std::move(sess_ids);
+      return sess_ids;
     };
 
     auto ids = get_sessions();
@@ -2670,7 +2671,7 @@ TEST_F(Sess, pool_block_list)
     auto pooled_id_list_3 =
       test_helper::pool_close_all_on_port(m_sessions, ep_port[2]);
 
-    EXPECT_EQ(0, m_sessions.size());
+    EXPECT_EQ(0U, m_sessions.size());
 
     int N2_N3_count = ep_count[1] + ep_count[2];
 
@@ -2796,7 +2797,7 @@ TEST_F(Sess, pool_block_list)
       Block list expiration (new sessions)
     */
     cout << endl << "Test #6" << endl;
-    EXPECT_EQ(0, m_sessions.size());
+    EXPECT_EQ(0U, m_sessions.size());
 
     test_helper::create_sessions(client, m_sessions, con_number);
 
@@ -2873,7 +2874,7 @@ TEST_F(Sess, pool_block_list)
       pooled_list[i] =
         test_helper::pool_close_all_on_port(m_sessions, ep_port[i]);
 
-    EXPECT_EQ(0, m_sessions.size());
+    EXPECT_EQ(0U, m_sessions.size());
 
     cout << endl << "Wait 30 sec ..." << endl;
     std::this_thread::sleep_for(std::chrono::seconds(30));
@@ -2928,7 +2929,7 @@ TEST_F(Sess, pool_block_list)
 
     // Make sure all sessions are re-used
     EXPECT_TRUE(std::all_of(m_sessions.begin(), m_sessions.end(),
-      [&ep_port, &pooled_list]
+      [&pooled_list]
     (MySession& elem)
       {
         return pooled_list[0].find(elem.m_id) != pooled_list[0].end() ||
@@ -2979,7 +2980,7 @@ TEST_F(Sess, pool_block_list)
     auto pooled_list =
       test_helper::pool_close_all_on_port(m_sessions, ep_port[0]);
 
-    EXPECT_EQ(0, m_sessions.size());
+    EXPECT_EQ(0U, m_sessions.size());
 
     /*
       Since there is no room in the pool for new connections, the
@@ -2988,7 +2989,7 @@ TEST_F(Sess, pool_block_list)
     */
     test_helper::create_sessions(client, m_sessions, con_number);
 
-    EXPECT_EQ(3, m_sessions.size());
+    EXPECT_EQ(3U, m_sessions.size());
 
     EXPECT_TRUE(std::all_of(m_sessions.begin(), m_sessions.end(),
                 [&pooled_list](MySession &elem)
@@ -3064,7 +3065,7 @@ TEST_F(Sess, pool_block_list)
     test_helper::close_and_kill(m_sessions, ep_port[0], ctrl_session[0],
                                 false);
 
-    EXPECT_EQ(1, m_sessions.size());
+    EXPECT_EQ(1U, m_sessions.size());
 
     // Drop the user used for the sessions to prevent successful connects
     ctrl_session[0].sql("DROP USER `trypooluser`@`%`").execute();
@@ -3101,7 +3102,7 @@ TEST_F(Sess, pool_block_list)
       There should be still one session in use. No sessions should be
       re-used and no new sessions should be established.
     */
-    EXPECT_EQ(1, m_sessions.size());
+    EXPECT_EQ(1U, m_sessions.size());
 
   }
   catch(...) {};
@@ -3160,11 +3161,11 @@ TEST_F(Sess, settings_iterator)
       }
 
       if(set.first == ClientOption::POOL_MAX_SIZE)
-        EXPECT_EQ(1, set.second.get<unsigned int>());
+        EXPECT_EQ(1u, set.second.get<unsigned int>());
       else if(set.first == ClientOption::POOL_QUEUE_TIMEOUT)
-        EXPECT_EQ(2, set.second.get<unsigned int>());
+        EXPECT_EQ(2u, set.second.get<unsigned int>());
       else if(set.first == ClientOption::POOL_MAX_IDLE_TIME)
-        EXPECT_EQ(3, set.second.get<unsigned int>());
+        EXPECT_EQ(3u, set.second.get<unsigned int>());
       else if(set.first == SessionOption::PRIORITY)
         EXPECT_EQ(prio_count++, set.second.get<unsigned int>());
       else if(set.first == SessionOption::AUTH)
@@ -3181,7 +3182,9 @@ TEST_F(Sess, settings_iterator)
           EXPECT_TRUE(set.second.get<std::string>().empty());
       }
       else if(set.first == SessionOption::DB)
+      {
         EXPECT_EQ(std::string("test"), set.second.get<std::string>());
+      }
 
     }
   }
@@ -3233,10 +3236,14 @@ TEST_F(Sess, settings_iterator)
         if (get_password())
           EXPECT_EQ(std::string(get_password()), set.second.get<std::string>());
         else
+        {
           EXPECT_TRUE(set.second.get<string>().empty());
+        }
       }
       else if(set.first == SessionOption::DB)
+      {
         EXPECT_EQ(std::string("test"), set.second.get<std::string>());
+      }
 
     }
   }
@@ -3298,7 +3305,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(10, attr_res.size());
+    EXPECT_EQ(10U, attr_res.size());
 
     check_attr(attr_res);
   }
@@ -3308,7 +3315,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(7, attr_res.size());
+    EXPECT_EQ(7U, attr_res.size());
 
     check_attr(attr_res);
   }
@@ -3318,7 +3325,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(7, attr_res.size());
+    EXPECT_EQ(7U, attr_res.size());
 
     check_attr(attr_res);
   }
@@ -3328,7 +3335,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(0, attr_res.size());
+    EXPECT_EQ(0U, attr_res.size());
 
   }
 
@@ -3337,7 +3344,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(7, attr_res.size());
+    EXPECT_EQ(7U, attr_res.size());
 
   }
 
@@ -3373,7 +3380,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(10, attr_res.size());
+    EXPECT_EQ(10U, attr_res.size());
 
     check_attr(attr_res);
   }
@@ -3389,7 +3396,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(10, attr_res.size());
+    EXPECT_EQ(10U, attr_res.size());
 
     check_attr(attr_res);
   }
@@ -3406,7 +3413,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res = get_attr(sess);
 
-    EXPECT_EQ(0, attr_res.size());
+    EXPECT_EQ(0U, attr_res.size());
 
     opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
 
@@ -3414,7 +3421,7 @@ TEST_F(Sess, connection_attributes)
 
     std::list<Row> attr_res2 = get_attr(sess2);
 
-    EXPECT_EQ(7, attr_res2.size());
+    EXPECT_EQ(7U, attr_res2.size());
 
   }
 
@@ -3458,7 +3465,7 @@ TEST_F(Sess, connection_attributes)
 
       std::list<Row> attr_res = get_attr(sess);
 
-      EXPECT_EQ(0, attr_res.size());
+      EXPECT_EQ(0U, attr_res.size());
 
       opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
 
@@ -3466,7 +3473,7 @@ TEST_F(Sess, connection_attributes)
 
       std::list<Row> attr_res2 = get_attr(sess2);
 
-      EXPECT_EQ(7, attr_res2.size());
+      EXPECT_EQ(7U, attr_res2.size());
     }
 
     {
@@ -3474,7 +3481,7 @@ TEST_F(Sess, connection_attributes)
 
       std::list<Row> attr_res = get_attr(sess);
 
-      EXPECT_EQ(0, attr_res.size());
+      EXPECT_EQ(0U, attr_res.size());
 
       opt.set(SessionOption::CONNECTION_ATTRIBUTES, true);
 
@@ -3482,7 +3489,7 @@ TEST_F(Sess, connection_attributes)
 
       std::list<Row> attr_res2 = get_attr(sess2);
 
-      EXPECT_EQ(7, attr_res2.size());
+      EXPECT_EQ(7U, attr_res2.size());
     }
 
   }
@@ -3665,7 +3672,7 @@ TEST_F(Sess, compression_algorithms)
     member, compiler (msvc) generated warning without the capture.
   */
 
-  auto check_compress_alg = [this](mysqlx::Session s,string expected, int line)
+  auto check_compress_alg = [=](mysqlx::Session s,string expected, int line)
   {
     std::string result = Sess::get_var(s, "Mysqlx_compression_algorithm");
     if (expected != result)
@@ -4084,7 +4091,9 @@ TEST_F(Sess, tls_ver_deprecate)
 
       }  catch (const std::exception& e) {
         if (has_tlsv1_3)
+        {
           EXPECT_EQ(std::string(e.what()), "No valid TLS version was given, valid versions are: TLSv1.2, TLSv1.3");
+        }
       }
     }
   }

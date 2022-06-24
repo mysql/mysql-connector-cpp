@@ -844,7 +844,7 @@ public:
     return m_order.empty() ? nullptr : this;
   }
 
-private:
+protected:
 
   // cdk::Order_by interface
 
@@ -881,8 +881,10 @@ private:
 
     prc.list_end();
   }
-};
 
+  using Base::process;
+
+};
 
 /*
   This template adds to the given Base class implementations of Having_if
@@ -931,7 +933,7 @@ public:
     return m_having.empty() ? nullptr : this;
   }
 
-private:
+protected:
 
   // cdk::Expression processor
 
@@ -940,6 +942,8 @@ private:
     parser::Expression_parser expr_parser(PM, m_having);
     expr_parser.process(prc);
   }
+
+  using Base::process;
 };
 
 
@@ -987,7 +991,7 @@ public:
     return m_group_by.empty() ? nullptr : this;
   }
 
-private:
+protected:
 
   // Expr_list
 
@@ -1003,8 +1007,9 @@ private:
 
     prc.list_end();
   }
-};
 
+  using Base::process;
+};
 
 /*
   This template adds to the given Base class implementations of Proj_if
@@ -1132,6 +1137,8 @@ private:
     prc.doc_end();
 
   }
+
+  using Base::process;
 
   // cdk::Projection
 
@@ -2413,6 +2420,12 @@ class Op_collection_modify
 {
   using string = std::string;
   using Impl = common::Collection_modify_if;
+  using Base = Op_select<doc_mode,
+               Op_sort<doc_mode,
+               Op_limit<
+               Op_bind<
+               Op_base<
+                 common::Collection_modify_if>>>>>;
 
   Object_ref m_coll;
 
@@ -2574,6 +2587,7 @@ public:
     }
   }
 
+  using Base::process;
 };
 
 
@@ -2998,6 +3012,7 @@ protected:
       );
   }
 
+  using Base::process;
 
   //  cdk::api::Column_ref
 

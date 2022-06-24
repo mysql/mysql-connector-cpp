@@ -477,10 +477,10 @@ TEST_F(xapi, store_result_select)
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   col_num = mysqlx_column_get_count(res);
-  EXPECT_EQ(3, col_num);
+  EXPECT_EQ(3U, col_num);
 
   EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, &row_num));
-  EXPECT_EQ(3, row_num);
+  EXPECT_EQ(3U, row_num);
 
   while ((row = mysqlx_row_fetch_one(res)) != NULL)
   {
@@ -547,7 +547,7 @@ TEST_F(xapi, store_result_find)
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
   EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, &row_num));
-  EXPECT_EQ(3, row_num);
+  EXPECT_EQ(3U, row_num);
 
   i = 0;
   while ((c = mysqlx_json_fetch_one(res, &json_len)) != NULL)
@@ -605,9 +605,9 @@ TEST_F(xapi, next_result)
   do
   {
     col_num = mysqlx_column_get_count(res);
-    EXPECT_EQ(3, col_num);
+    EXPECT_EQ(3U, col_num);
     EXPECT_EQ(RESULT_OK, mysqlx_store_result(res, &row_num));
-    EXPECT_EQ(1, row_num);
+    EXPECT_EQ(1U, row_num);
 
     while ((row = mysqlx_row_fetch_one(res)) != NULL)
     {
@@ -662,7 +662,7 @@ TEST_F(xapi, warnings_test)
 
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  EXPECT_EQ(3, mysqlx_result_warning_count(res));
+  EXPECT_EQ(3U, mysqlx_result_warning_count(res));
 
   while((warn = mysqlx_result_next_warning(res)) != NULL)
   {
@@ -686,7 +686,7 @@ TEST_F(xapi, warnings_test)
   /* All rows have to be read before getting warnings */
   mysqlx_store_result(res, NULL);
 
-  EXPECT_EQ(7, mysqlx_result_warning_count(res));
+  EXPECT_EQ(7U, mysqlx_result_warning_count(res));
   warn_count = 0;
   while ((warn = mysqlx_result_next_warning(res)) != NULL)
   {
@@ -724,7 +724,7 @@ TEST_F(xapi, auto_increment_test)
   EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "id", "vchar", PARAM_END));
   EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_SINT(100), PARAM_STRING("mysql"), PARAM_END));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
-  EXPECT_EQ(100, mysqlx_get_auto_increment_value(res));
+  EXPECT_EQ(100U, mysqlx_get_auto_increment_value(res));
 
   EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "vchar", PARAM_END));
   // Prepare 15 rows to insert
@@ -733,13 +733,13 @@ TEST_F(xapi, auto_increment_test)
 
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  EXPECT_EQ(101, mysqlx_get_auto_increment_value(res));
+  EXPECT_EQ(101U, mysqlx_get_auto_increment_value(res));
 
   EXPECT_EQ(RESULT_OK, mysqlx_set_insert_columns(stmt, "vchar", PARAM_END));
   EXPECT_EQ(RESULT_OK, mysqlx_set_insert_row(stmt, PARAM_STRING("mysql"), PARAM_END));
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
 
-  EXPECT_EQ(116, mysqlx_get_auto_increment_value(res));
+  EXPECT_EQ(116U, mysqlx_get_auto_increment_value(res));
 }
 
 
@@ -1654,9 +1654,9 @@ TEST_F(xapi, no_cursor_test)
   authenticate();
 
   SESS_CHECK(res = mysqlx_sql(get_session(), "set @any_var=1", MYSQLX_NULL_TERMINATED));
-  EXPECT_EQ(0, mysqlx_column_get_count(res));
+  EXPECT_EQ(0U, mysqlx_column_get_count(res));
   EXPECT_EQ(NULL, mysqlx_column_get_catalog(res, 0));
-  EXPECT_EQ(0, mysqlx_column_get_type(res, 0));
+  EXPECT_EQ(0U, mysqlx_column_get_type(res, 0));
 }
 
 
@@ -2342,7 +2342,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(10, rows);
+    EXPECT_EQ(10U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2357,7 +2357,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(7, rows);
+    EXPECT_EQ(7U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2372,7 +2372,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(7, rows);
+    EXPECT_EQ(7U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2387,7 +2387,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(0, rows);
+    EXPECT_EQ(0U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2403,7 +2403,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(7, rows);
+    EXPECT_EQ(7U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2451,7 +2451,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(10, rows);
+    EXPECT_EQ(10U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);
@@ -2478,7 +2478,7 @@ TEST_F(xapi, connection_attrs)
 
     mysqlx_store_result(res, &rows);
 
-    EXPECT_EQ(0, rows);
+    EXPECT_EQ(0U, rows);
 
     check_attr(res);
     mysqlx_session_close(sess);

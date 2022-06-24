@@ -66,7 +66,7 @@ TEST_F(Bugs,bug30989042_cdk_reply_error)
   // res.count() will consume the first row set, but another
   // one is pending.
 
-  EXPECT_EQ(1,res.count());
+  EXPECT_EQ(1U,res.count());
 
   // As we execute new statement, all remaining rows from the previous
   // reply should be cached. It was not the case before bug was fixed,
@@ -79,14 +79,14 @@ TEST_F(Bugs,bug30989042_cdk_reply_error)
   // and still available.
 
   EXPECT_TRUE(res.nextResult());
-  EXPECT_EQ(1,res.count());
+  EXPECT_EQ(1U,res.count());
 
   // Check that in case of error, it is reported only when moving to
   // the next result in the reply (should not be reported while accessing
   // the first result).
 
   res = sql("CALL test.p(1)");
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
   EXPECT_THROW(res.nextResult(), Error);
 }
 
@@ -212,7 +212,7 @@ TEST_F(Bugs, bug_26962725_double_bind)
         .add(R"({"name":"johannes", "age":28})")
         .execute();
 
-  EXPECT_EQ(2, myColl.find().execute().count());
+  EXPECT_EQ(2U, myColl.find().execute().count());
 
   // Create Collection.remove() operation, but do not run it yet
   auto myRemove = myColl.remove("name = :param1 AND age = :param2");
@@ -221,7 +221,7 @@ TEST_F(Bugs, bug_26962725_double_bind)
   myRemove.bind("param1", "mike").bind("param2", 39).execute();
   myRemove.bind("param1", "johannes").bind("param2", 28).execute();
 
-  EXPECT_EQ(0, myColl.find().execute().count());
+  EXPECT_EQ(0U, myColl.find().execute().count());
 }
 
 TEST_F(Bugs, bug_27727505_multiple_results)
@@ -361,13 +361,13 @@ TEST_F(Bugs, bug_27727505_multiple_results)
     SqlResult res2 = sess.sql("call test").execute();
 
     //All resultsets are now cached
-    EXPECT_EQ(100, res.count());
+    EXPECT_EQ(100U, res.count());
     EXPECT_EQ(string("f0"), res.getColumn(0).getColumnName());
     EXPECT_TRUE(res.nextResult());
     EXPECT_EQ(static_cast<unsigned long>(0), res.count());
     EXPECT_EQ(string("f1"), res.getColumn(0).getColumnName());
     EXPECT_TRUE(res.nextResult());
-    EXPECT_EQ(11, res.count());
+    EXPECT_EQ(11U, res.count());
     EXPECT_EQ(string("new_f0"), res.getColumn(0).getColumnLabel());
     EXPECT_FALSE(res.nextResult());
   }
@@ -382,15 +382,15 @@ TEST_F(Bugs, bug_27727505_multiple_results)
 
   {
     SqlResult res = sess.sql("call test").execute();
-    EXPECT_EQ(100, res.count());
+    EXPECT_EQ(100U, res.count());
     EXPECT_EQ(string("f0"), res.getColumn(0).getColumnName());
     std::vector<Row> rowAll = res.fetchAll();
-    EXPECT_EQ(100, rowAll.size());
+    EXPECT_EQ(100U, rowAll.size());
     EXPECT_TRUE(res.nextResult());
-    EXPECT_EQ(static_cast<unsigned long>(0), res.count());
+    EXPECT_EQ(0U, res.count());
     EXPECT_EQ(string("f1"), res.getColumn(0).getColumnName());
     rowAll = res.fetchAll();
-    EXPECT_EQ(0, rowAll.size());
+    EXPECT_EQ(0U, rowAll.size());
     EXPECT_THROW(res.nextResult(), mysqlx::Error);
     EXPECT_THROW(rowAll = res.fetchAll(), mysqlx::Error);
   }
@@ -466,7 +466,7 @@ TEST_F(Bugs, list_initializer)
                  ).execute();
 
   int count = 0;
-  for(const string& id : add_res.getGeneratedIds())
+  for(const std::string& id : add_res.getGeneratedIds())
   {
     std::cout << id << std::endl;
     ++count;
@@ -702,19 +702,19 @@ TEST_F(Bugs, not_accumulate)
   select.groupBy("doc->$.age");
 
   select.lockExclusive();
-  EXPECT_EQ(2, select.execute().count());
+  EXPECT_EQ(2U, select.execute().count());
 
   auto update = tbl.update();
   update.set("doc->$.age",1);
   update.where("doc->$.age > 7");
   update.orderBy("notfound ASC");
   update.orderBy("doc->$.age ASC");
-  EXPECT_EQ(1, update.execute().getAffectedItemsCount());
+  EXPECT_EQ(1U, update.execute().getAffectedItemsCount());
 
   auto tbl_remove = tbl.remove();
   tbl_remove.orderBy("notfound ASC");
   tbl_remove.orderBy("doc->$.age ASC");
-  EXPECT_EQ(2, tbl_remove.execute().getAffectedItemsCount());
+  EXPECT_EQ(2U, tbl_remove.execute().getAffectedItemsCount());
 }
 
 
@@ -744,7 +744,7 @@ TEST_F(Bugs, bug29525077)
   auto res = tab.select().execute();
   auto columns = &res.getColumns();
   col_count_t num_columns = res.getColumnCount();
-  EXPECT_EQ(10, num_columns);
+  EXPECT_EQ(10U, num_columns);
   while (Row r = res.fetchOne())
   {
     for (col_count_t i = 0; i < num_columns; ++i)
@@ -793,9 +793,9 @@ TEST_F(Bugs, is_false)
   // Had a segmentation fault issue
   EXPECT_THROW(coll.find("cast(val as boolean) is false").execute(),
                mysqlx::Error);
-  EXPECT_EQ(1, coll.find("val is false").execute().count());
+  EXPECT_EQ(1U, coll.find("val is false").execute().count());
   auto tbl = schema.getCollectionAsTable("is_false");
-  EXPECT_EQ(1, tbl.select().where("doc->$.val is false").execute().count());
+  EXPECT_EQ(1U, tbl.select().where("doc->$.val is false").execute().count());
 }
 
 TEST_F(Bugs, bug29394723)
@@ -876,10 +876,10 @@ TEST_F(Bugs, Bug31686958)
   auto find = coll.find("value = :value").bind("value", "1");
 
   //Succeeds, since its direct execute
-  EXPECT_EQ(1, find.execute().count());
+  EXPECT_EQ(1U, find.execute().count());
   //Should not fail do to being prepared+executed
-  EXPECT_EQ(1, find.execute().count());
-  EXPECT_EQ(1, find.execute().count());
+  EXPECT_EQ(1U, find.execute().count());
+  EXPECT_EQ(1U, find.execute().count());
 
 
 }
@@ -895,37 +895,37 @@ TEST_F(Bugs, Bug29788255)
   auto coll = sch.createCollection("Bug29788255");
 
   auto res = coll.find("1 overlaps (1,2)").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
 
   res = coll.find("null overlaps [1]").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("null overlaps [1, null]").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
 
   res = coll.find("$.food overlaps [\"\"]").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("$.food overlaps null").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("$.food OVERLAPS \"@#$%^\"").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("[\"@#$%^\"] OVERLAPS $.list").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("(1+6) OVERLAPS [2,3,5]").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("cast((1+6) AS JSON) OVERLAPS [2,3,7]").execute();
-  EXPECT_EQ(0, res.count());
+  EXPECT_EQ(0U, res.count());
 
   res = coll.find("[(1+6)] OVERLAPS [2,3,7]").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
 
   res = coll.find("(1+6) in [2,3,7]").execute();
-  EXPECT_EQ(1, res.count());
+  EXPECT_EQ(1U, res.count());
 }
 
 TEST_F(Bugs, Bug33352469)
@@ -940,11 +940,11 @@ TEST_F(Bugs, Bug33352469)
   auto res = coll.add(R"({"_id":"1", "name": "user1"})")
                  .add(R"({"_id":"2", "name": "user2"})")
                  .execute();
-  EXPECT_EQ(2, coll.find().execute().count());
+  EXPECT_EQ(2U, coll.find().execute().count());
 
   auto remove = coll.remove(R"(_id=:id)");
   remove.bind("id", "1").execute();
-  EXPECT_EQ(1, coll.find().execute().count());
+  EXPECT_EQ(1U, coll.find().execute().count());
   remove.bind("id", "2").execute();
-  EXPECT_EQ(0, coll.find().execute().count());
+  EXPECT_EQ(0U, coll.find().execute().count());
 }

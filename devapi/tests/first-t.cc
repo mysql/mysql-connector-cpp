@@ -563,8 +563,6 @@ TEST_F(First, warnings_multi_rset)
 
   SKIP_IF_NO_XPLUGIN;
 
-  mysqlx::Session &sess = get_sess();
-
   get_sess().createSchema("test", true);
 
   sql("DROP PROCEDURE IF EXISTS test.p");
@@ -588,10 +586,10 @@ TEST_F(First, warnings_multi_rset)
       1st rset has been consumed).
     */
 
-    EXPECT_EQ(2, res.getWarningsCount());
+    EXPECT_EQ(2U, res.getWarningsCount());
 
     std::vector<Warning> warnings = res.getWarnings();
-    EXPECT_EQ(2, warnings.size());
+    EXPECT_EQ(2U, warnings.size());
 
     for(auto warn : warnings)
     {
@@ -610,7 +608,7 @@ TEST_F(First, warnings_multi_rset)
       std::cout << warn << std::endl;
       cnt++;
     }
-    EXPECT_EQ(2, cnt);
+    EXPECT_EQ(2U, cnt);
 
     // Check that results are still available.
 
@@ -622,7 +620,7 @@ TEST_F(First, warnings_multi_rset)
 
     SqlResult res = sql("call test.p()");
 
-    EXPECT_NE(0, res.getWarning(0).getCode());
+    EXPECT_NE(0U, res.getWarning(0).getCode());
   }
 }
 
@@ -658,30 +656,30 @@ TEST_F(First, parser_xplugin)
   {
     RowResult res = tbl.select("2^~c0").execute();
 
-    EXPECT_EQ(2^~1, static_cast<uint64_t>(res.fetchOne()[0]) );
+    EXPECT_EQ(static_cast<uint64_t>(2^~1), static_cast<uint64_t>(res.fetchOne()[0]) );
   }
 
   {
     RowResult res = tbl.select("~c0").execute();
-    EXPECT_EQ(~1, static_cast<uint64_t>(res.fetchOne()[0]) );
+    EXPECT_EQ(static_cast<uint64_t>(~1), static_cast<uint64_t>(res.fetchOne()[0]) );
   }
 
   {
     RowResult res = tbl.select("c0").where("c0 < cast(11 as signed Integer)").execute();
 
-    EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
+    EXPECT_EQ(1U, static_cast<uint64_t>(res.fetchOne()[0]));
   }
 
   {
     RowResult res = tbl.select("c0").where("c0 < cast(14.01 as decimal(3, 2))").execute();
 
-    EXPECT_EQ(1, static_cast<uint64_t>(res.fetchOne()[0]));
+    EXPECT_EQ(1U, static_cast<uint64_t>(res.fetchOne()[0]));
   }
 
   {
     RowResult res = tbl.select("X'65'").execute();
 
-    EXPECT_EQ(0x65, static_cast<uint64_t>(res.fetchOne()[0]));
+    EXPECT_EQ(0x65U, static_cast<uint64_t>(res.fetchOne()[0]));
   }
 
   //TODO: ADD this test when possible on xplugin
@@ -695,7 +693,7 @@ TEST_F(First, parser_xplugin)
   {
     RowResult res = tbl.select("0x65").where("c0 < cast(14.01 as decimal(3, 2))").execute();
 
-    EXPECT_EQ(0x65, static_cast<uint64_t>(res.fetchOne()[0]));
+    EXPECT_EQ(0x65U, static_cast<uint64_t>(res.fetchOne()[0]));
   }
 
   //TODO: ADD this test when possible on xplugin
@@ -751,8 +749,8 @@ TEST_F(First, sqlresult)
                                     .bind(L"baz")
                                     .execute();
 
-    EXPECT_EQ(3, res.getAffectedItemsCount());
-    EXPECT_EQ(1, res.getAutoIncrementValue());
+    EXPECT_EQ(3U, res.getAffectedItemsCount());
+    EXPECT_EQ(1U, res.getAutoIncrementValue());
   }
 
   {
@@ -765,8 +763,8 @@ TEST_F(First, sqlresult)
                                     .bind(L"baz")
                                     .execute();
 
-    EXPECT_EQ(3, res.getAffectedItemsCount());
-    EXPECT_EQ(4, res.getAutoIncrementValue());
+    EXPECT_EQ(3U, res.getAffectedItemsCount());
+    EXPECT_EQ(4U, res.getAutoIncrementValue());
   }
 
   {
@@ -779,8 +777,8 @@ TEST_F(First, sqlresult)
     res.nextResult();
     EXPECT_FALSE(res.nextResult());
 
-    EXPECT_EQ(0, res.getAffectedItemsCount());
-    EXPECT_EQ(0, res.getAutoIncrementValue());
+    EXPECT_EQ(0U, res.getAffectedItemsCount());
+    EXPECT_EQ(0U, res.getAutoIncrementValue());
   }
 
 }

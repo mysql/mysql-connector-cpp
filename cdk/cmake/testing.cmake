@@ -182,8 +182,10 @@ IF(WITH_TESTS)
 
   elseif((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
 
+  #TODO: Remove -Wno-delete-non-abstract-non-virtual-dtor when bumping ABI and
+  #      adding virtual destructor for DbDoc, Value and Column_detail
     target_compile_options(${TEST} PRIVATE
-      -Wno-unused-value
+      -Wno-unused-value -Wno-delete-non-abstract-non-virtual-dtor
     )
 
   else()
@@ -318,10 +320,9 @@ IF(WITH_TESTS)
     )
 
   elseif((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-
-    target_compile_options(${target_run_unit_tests} PRIVATE
-      -Wno-unused-value
-    )
+      target_compile_options(${target_run_unit_tests} PRIVATE
+        -Wno-unused-value -Wno-delete-non-abstract-non-virtual-dtor
+      )
 
   else()
     #target_compile_options(${target_run_unit_tests} PRIVATE -Wno-unused-result)

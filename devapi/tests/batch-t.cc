@@ -83,7 +83,7 @@ TEST_F(Batch, crud)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(0, cnt);
+    EXPECT_EQ(0U, cnt);
   }
 
   cout << "Inserting documents..." << endl;
@@ -112,7 +112,7 @@ TEST_F(Batch, crud)
   {
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(5, cnt);
+    EXPECT_EQ(5U, cnt);
     cout << "Documents added" << endl;
   }
 
@@ -149,7 +149,7 @@ TEST_F(Batch, crud)
     EXPECT_FALSE(find.fetchOne());
     RowResult res = sql("select count(*) from test.c1");
     unsigned  cnt = res.fetchOne()[0];
-    EXPECT_EQ(5, cnt);
+    EXPECT_EQ(5U, cnt);
   }
 
   cout << "Modifying documents..." << endl;
@@ -178,7 +178,7 @@ TEST_F(Batch, crud)
       EXPECT_NO_THROW(doc["food"]);
       EXPECT_THROW(doc["date"], std::out_of_range);
     }
-    EXPECT_EQ(5, pos);
+    EXPECT_EQ(5U, pos);
   }
 
   cout << "Done!" << endl;
@@ -203,13 +203,13 @@ TEST_F(Batch, multi_add)
 
   coll.remove("true").execute();
   coll.add(docs).execute();
-  EXPECT_EQ(5, show_docs(coll));
+  EXPECT_EQ(5U, show_docs(coll));
 
   cout << endl << "2. Add range of documents from 1 to 3" << endl;
 
   coll.remove("true").execute();
   coll.add(docs.begin(), docs.begin() + 3).execute();
-  EXPECT_EQ(3, show_docs(coll));
+  EXPECT_EQ(3U, show_docs(coll));
 
   cout << endl << "3. Mixed inserts" << endl;
 
@@ -219,7 +219,7 @@ TEST_F(Batch, multi_add)
     .add(docs.begin(), docs.begin() + 3)
     .add(docs[4])
     .add(docs).execute();
-  EXPECT_EQ(15, show_docs(coll));
+  EXPECT_EQ(15U, show_docs(coll));
 
   cout << endl << "4. Add documents in a loop" << endl;
 
@@ -231,7 +231,7 @@ TEST_F(Batch, multi_add)
       add_op.add(json);
     }
     add_op.execute();
-    EXPECT_EQ(5, show_docs(coll));
+    EXPECT_EQ(5U, show_docs(coll));
   }
 
   cout << endl << "5. Using custom iterator" << endl;
@@ -269,7 +269,7 @@ TEST_F(Batch, multi_add)
 
   coll.remove("true").execute();
   coll.add(It(5), It()).execute();
-  EXPECT_EQ(5, show_docs(coll));
+  EXPECT_EQ(5U, show_docs(coll));
 
 }
 
@@ -310,7 +310,7 @@ TEST_F(Batch, table_insert)
       cout << "row#" << count << ": " << row[0] << ", " << row[1] << endl;
     }
 
-    EXPECT_EQ(8, count);
+    EXPECT_EQ(8U, count);
   }
 
   tbl.insert().rows(rows.begin(), rows.end()).values(6, "new").execute();
@@ -328,7 +328,7 @@ TEST_F(Batch, table_insert)
       cout << "row#" << count << ": " << row[0] << ", " << row[1] << endl;
     }
 
-    EXPECT_EQ(14, count);
+    EXPECT_EQ(14U, count);
   }
 }
 

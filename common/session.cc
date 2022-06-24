@@ -505,9 +505,6 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     If DNS+SRV is not used, get list of hosts from the settings.
   */
 
-  // if priorities were not set explicitly, assign decreasing starting from 100
-  int prio = m_data.m_user_priorities ? -1 : 100;
-
   /*
     Look for a priority after host/socket setting. If explicit priorities
     are used, then we expect the priority setting to be present and we throw
@@ -603,7 +600,7 @@ void Settings_impl::get_data_source(cdk::ds::Multi_source &src)
     throw_error("Unix socket connections not supported on Windows platform.");
   };
 #else
-  auto add_socket = [this, &src, &opts, check_prio](iterator &it, int prio) {
+  auto add_socket = [&src, &opts, check_prio](iterator &it, int prio) {
 
     assert(Session_option_impl::SOCKET == it->first);
 
@@ -955,8 +952,6 @@ std::shared_ptr<cdk::Session>
 Session_pool::get_session(Session_cleanup *cleanup)
 {
   lock_guard guard(m_pool_mutex);
-
-  bool use_blocklist = true;
 
   if (!m_pool_enable)
   {

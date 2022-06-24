@@ -84,7 +84,7 @@ TEST_F(Ddl, create_drop)
 
     std::list<Table> tables_list = schema.getTables();
 
-    EXPECT_EQ(3, tables_list.size());
+    EXPECT_EQ(3u, tables_list.size());
 
     for (auto tb : tables_list)
     {
@@ -117,7 +117,7 @@ TEST_F(Ddl, create_drop)
 
     std::list<Collection> list_coll = schema.getCollections();
 
-    EXPECT_EQ(2, list_coll.size());
+    EXPECT_EQ(2u, list_coll.size());
 
     for (Collection col : list_coll)
     {
@@ -164,7 +164,9 @@ TEST_F(Ddl, create_drop)
   {
     if (schema_.getName() == schema_name_1 ||
         schema_.getName() == schema_name_2)
+    {
       EXPECT_NO_THROW(get_sess().dropSchema(schema_.getName()));
+    }
   }
 
   EXPECT_THROW(get_sess().getSchema(schema_name_1, true), mysqlx::Error);
