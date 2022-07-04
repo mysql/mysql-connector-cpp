@@ -42,7 +42,7 @@
 PUSH_SYS_WARNINGS_CDK
 #include <memory.h> // for memcpy
 POP_SYS_WARNINGS_CDK
-
+#include <sstream>
 
 
 using namespace cdk::foundation;
@@ -158,11 +158,11 @@ void Compression_lz4::init()
     return;
 
   if (m_dctx == nullptr &&
-    LZ4F_isError(LZ4F_createDecompressionContext(&m_dctx, LZ4F_VERSION)))
+      LZ4F_isError(LZ4F_createDecompressionContext(&m_dctx, LZ4F_getVersion())))
     throw_error("Error creating LZ4 decompression context");
 
   if (m_cctx == nullptr &&
-    LZ4F_isError(LZ4F_createCompressionContext(&m_cctx, LZ4F_VERSION)))
+      LZ4F_isError(LZ4F_createCompressionContext(&m_cctx, LZ4F_getVersion())))
     throw_error("Error creating LZ4 compression context");
 
   m_lz4f_pref.autoFlush = 1;
@@ -178,14 +178,15 @@ size_t Compression_lz4::compress(byte *src, size_t len)
     {
       LZ4F_freeCompressionContext(m_cctx);
       m_cctx = nullptr;
-      throw_error("LZ4 compression error");
+      throw_error(string{"LZ4: "} + LZ4F_getErrorName(result));
     }
   };
 
   if (len > LZ4_MAX_INPUT_SIZE)
     throw_error("Data for compression is too long");
 
-  size_t wbuf_size = LZ4F_compressBound(len, &m_lz4f_pref);
+  // Header size + The worst case compressed data
+  size_t wbuf_size = LZ4F_HEADER_SIZE_MAX + LZ4F_compressBound(len, &m_lz4f_pref);
   // Allocate wr buf and adjust the offset for writing data
   byte *dest_buf_adjusted = m_protocol_compression.get_out_buf(wbuf_size);
 

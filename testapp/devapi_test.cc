@@ -69,7 +69,7 @@ try {
 
   cout <<"Session accepted, creating collection..." <<endl;
 
-  Schema sch= sess.getSchema("test");
+  Schema sch = sess.createSchema("test", true);
   Collection coll= sch.createCollection("c1", true);
 
   cout <<"Inserting documents..." <<endl;
