@@ -177,7 +177,7 @@ set(LIB_NAME_BASE "mysqlcppconn${CONCPP_VERSION_MAJOR}")
 set(LIB_NAME_STATIC "${LIB_NAME_BASE}-static")
 
 if(WIN32 AND STATIC_MSVCRT)
-  set(LIB_NAME_STATIC "${LIB_NAME}-mt")
+  set(LIB_NAME_STATIC "${LIB_NAME_BASE}-mt")
 endif()
 
 if(BUILD_STATIC)
