@@ -708,7 +708,10 @@ Pooled_session::Pooled_session(cdk::ds::Multi_source &ds)
 
 Pooled_session::~Pooled_session()
 {
-  release();
+  //Let's catch any errors when releasing the session
+  try {
+    release();
+  } catch (...) {}
 }
 
 void Pooled_session::release()

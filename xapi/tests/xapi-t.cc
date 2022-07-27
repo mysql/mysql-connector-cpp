@@ -3608,3 +3608,40 @@ TEST_F(xapi, normalize_ssl_options)
   }
 
 }
+
+TEST_F(xapi, bug34338950)
+{
+  SKIP_IF_NO_XPLUGIN;
+  AUTHENTICATE();
+
+  mysqlx_error_t *error;
+  mysqlx_session_t *sess;
+
+  sess = mysqlx_get_session_from_url(get_uri().c_str(), &error);
+
+  if (sess == NULL) {
+    std::stringstream str;
+    str << "Unexpected error: " << mysqlx_error_message(error) << endl;
+    mysqlx_free(error);
+    FAIL() << str.str();
+  }
+
+  mysqlx_result_t *res = exec_sql(sess, "SELECT CONNECTION_ID() as _pid");
+
+  if (!res) throw "Failed to query CONNECTION_ID() ";
+
+  mysqlx_row_t *row = mysqlx_row_fetch_one(res);
+
+  if (!row) throw "Failed to get value of CONNECTION_ID()";
+
+  uint64_t pid;
+  if (RESULT_OK != mysqlx_get_uint(row, 0, &pid))
+    throw "Failed to get value of CONNECTION_ID()";
+
+  std::string kill_connection = "KILL ";
+  kill_connection += std::to_string(pid);
+
+  exec_sql(kill_connection.c_str());
+
+  mysqlx_session_close(sess);
+}
