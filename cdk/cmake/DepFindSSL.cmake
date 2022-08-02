@@ -1,4 +1,4 @@
-# Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -305,16 +305,21 @@ function(bundle_ssl_libs)
   endif()
 
   foreach(lib ${glob1} ${glob2})
+    # Copy SSL libs to binary dir as below we will modify them (change the path to
+    # libcrypto dependency).
+    file(COPY ${lib} DESTINATION ${CMAKE_BINARY_DIR}/SSL)
 
     message("-- bundling OpenSSL library: ${lib}")
 
+    get_filename_component(lib_filename ${lib} NAME)
+
     if(WIN32 OR APPLE)
-      install(FILES ${lib}
+      install(FILES ${CMAKE_BINARY_DIR}/SSL/${lib_filename}
         DESTINATION "${INSTALL_LIB_DIR}"
         COMPONENT OpenSSLDll
         )
     else()
-      install(FILES ${lib}
+      install(FILES ${CMAKE_BINARY_DIR}/SSL/${lib_filename}
         DESTINATION "${INSTALL_LIB_DIR}/private"
         COMPONENT OpenSSLDll
         )
@@ -342,6 +347,41 @@ function(bundle_ssl_libs)
 
     endforeach()
 
+  endif()
+
+  if(APPLE)
+    # Replace libcrypto local path of libssl
+    EXECUTE_PROCESS(
+      COMMAND otool -L "${OPENSSL_LIBRARY}"
+      OUTPUT_VARIABLE OTOOL_OPENSSL_DEPS)
+    STRING(REPLACE "\n" ";" DEPS_LIST ${OTOOL_OPENSSL_DEPS})
+
+    foreach(LINE ${DEPS_LIST})
+      if(${LINE} MATCHES "ssl")
+        STRING(REGEX MATCH "(/.*libssl.*${CMAKE_SHARED_LIBRARY_SUFFIX})" XXXXX ${LINE})
+
+        if(CMAKE_MATCH_1)
+          get_filename_component(OPENSSL_LIBRARY_VERSION ${CMAKE_MATCH_1} NAME)
+        endif()
+      elseif(${LINE} MATCHES "crypto")
+        STRING(REGEX MATCH "(/.*libcrypto.*${CMAKE_SHARED_LIBRARY_SUFFIX})" XXXXX ${LINE})
+
+        if(CMAKE_MATCH_1)
+          SET(LIBSSL_DEPS "${CMAKE_MATCH_1}")
+          get_filename_component(CRYPTO_LIBRARY_VERSION ${CMAKE_MATCH_1} NAME)
+        endif()
+      endif()
+
+    endforeach()
+
+    if(LIBSSL_DEPS)
+      # install_name_tool -change old new file
+      EXECUTE_PROCESS(
+        COMMAND chmod +w "${CRYPTO_LIBRARY_VERSION} ${OPENSSL_LIBRARY_VERSION}"
+        COMMAND install_name_tool -change "${LIBSSL_DEPS}" "@loader_path/${CRYPTO_LIBRARY_VERSION}" "${OPENSSL_LIBRARY_VERSION}"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/SSL"
+      )
+    endif()
   endif()
 
 endfunction(bundle_ssl_libs)

@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2008, 2022, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -375,13 +375,13 @@ endif()
 # Bundle 3rd party dependencies if needed
 # =======================================
 
-# List client-side plugins, their dependencies and dependencies of the client 
-# library that are bundled with the server and should be bundled with 
-# connector. Also list plugins and libraries that can be found with the server 
+# List client-side plugins, their dependencies and dependencies of the client
+# library that are bundled with the server and should be bundled with
+# connector. Also list plugins and libraries that can be found with the server
 # but which should be ignored.
 #
-# When building in MAINTAINER_MODE cmake will report error if it finds 
-# a plugin or 3rd party librariy which is not listed here. When that happens 
+# When building in MAINTAINER_MODE cmake will report error if it finds
+# a plugin or 3rd party librariy which is not listed here. When that happens
 # the lists should be updated.
 
 set(AUTH_PLUGINS
@@ -395,12 +395,12 @@ set(AUTH_PLUGINS
 # Plugin dependencies.
 #
 # Warning: If one library name is a prefix of the other, the longer name
-# should be listed first, otherwise the logic detecting missing dependencies 
+# should be listed first, otherwise the logic detecting missing dependencies
 # will break... For example: `krb5support` must go before `krb5`
 
 set(AUTH_DEPS_fido fido2)
 
-# Note: Windows implementation does not depend on MIT Kerberos library, it uses 
+# Note: Windows implementation does not depend on MIT Kerberos library, it uses
 # native Win APIs
 
 if(NOT WIN32)
@@ -416,11 +416,10 @@ endif()
 
 set(PLUGINS)
 
-# additional bundled dependencies of the client library
+# additional bundled dependencies of the client library other than the openssl
+# libraries that are handled separately (in DepFindSSL.cmake)
 
-set(BUNDLED_LIBS
-  libssl libcrypto ssleay libeay
-)
+set(BUNDLED_LIBS)
 
 set(IGNORED_PLUGINS qa_auth_client)
 
@@ -429,6 +428,7 @@ set(IGNORED_LIBS
   ldap  # note: this is needed only by server-side plugin
   libcurl libmecab zlib
   jemalloc
+  libssl libcrypto
 )
 
 
@@ -451,21 +451,29 @@ function(bundle_lib lib)
       COMPONENT JDBCDll
     )
   else()
+    if(APPLE)
+    # On Apple, its on the lib dir
     install(FILES ${lib}
-      DESTINATION "${INSTALL_LIB_DIR}/private"
+      DESTINATION "${INSTALL_LIB_DIR}"
       COMPONENT JDBCDll
     )
+    else()
+      install(FILES ${lib}
+        DESTINATION "${INSTALL_LIB_DIR}/private"
+        COMPONENT JDBCDll
+      )
+    endif()
   endif()
 
 endfunction(bundle_lib)
 
 
 # Bundle libraries listed in a list variable ${to_bundle}.
-# Libraries that were found and bundled are removed from ${to_bundle} list. 
-# Other libraries found but not listed in ${to_bundle} are returned 
+# Libraries that were found and bundled are removed from ${to_bundle} list.
+# Other libraries found but not listed in ${to_bundle} are returned
 # in ${ignored} variable.
-# If additional arguments are given, they are used as glob expressions to find 
-# the libraries to be bundled, otherwise 3rd parties bundled in with the server 
+# If additional arguments are given, they are used as glob expressions to find
+# the libraries to be bundled, otherwise 3rd parties bundled in with the server
 # are searched in ${MYSQL_LIB_DIR} locations.
 
 macro(bundle_libs to_bundle ignored)
@@ -478,13 +486,20 @@ macro(bundle_libs to_bundle ignored)
   if(${ARGC} GREATER 2)
 
     file(GLOB _bundled ${ARGN})
-  
+
   else()
 
-    file(GLOB _bundled
-      "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
-      "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"  
-    )
+    # On Apple, libs are only on the lib dir, not on private
+    if(APPLE)
+      file(GLOB _bundled
+        "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+      )
+    else()
+      file(GLOB _bundled
+        "${MYSQL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+        "${MYSQL_LIB_DIR}/private/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+      )
+    endif()
 
     # On windows, libs are in bin directory
 
@@ -532,9 +547,9 @@ macro(bundle_libs to_bundle ignored)
 endmacro(bundle_libs)
 
 
-# Bundle plugins listed in PLUGINS list. Each bundled plugin P is removed from 
-# the list and its dependedencies listed in DEPS_${P} are also bundled. Client 
-# side plugins found with the server and not listed in PLUGINS are returned 
+# Bundle plugins listed in PLUGINS list. Each bundled plugin P is removed from
+# the list and its dependedencies listed in DEPS_${P} are also bundled. Client
+# side plugins found with the server and not listed in PLUGINS are returned
 # in ${ignored} list.
 
 macro(bundle_plugins ignored)
@@ -555,7 +570,7 @@ macro(bundle_plugins ignored)
 
     #message("== looking at client-side plugin: ${lib_name}")
 
-    # Match plugin name against names in PLUGINS list and in case of match 
+    # Match plugin name against names in PLUGINS list and in case of match
     # remove that name from the list
 
     unset(plugin)
@@ -651,7 +666,7 @@ if(BUNDLE_DEPENDENCIES)
   endforeach()
 
   # Bundle the plugins and their dependencies.
- 
+
   unset(ingored)
   bundle_plugins(ignored)
 
@@ -678,32 +693,18 @@ if(BUNDLE_DEPENDENCIES)
 
   message(STATUS "Looking for bundled client lib dependencies")
 
-  # Bundle additional libraries listed in BUNDLED_LIBS 
-  # For OpenSSL libs, first look in the location of the library that 
-  # is actually being used in the build (for the win case, look also in ../bin/ 
-  # because this is where the DLLs can be found, as opposed to the 
-  # corresponding link libraries).
+  # Bundle additional libraries listed in BUNDLED_LIBS
 
-  #message("== BUNDLED_LIBS: ${BUNDLED_LIBS}")
-  #message("== IGNORED_LIBS: ${IGNORED_LIBS}")
-
-  get_filename_component(OPENSSL_DIR ${OPENSSL_LIBRARY} DIRECTORY)
-
-  #message(STATUS "bundle openssl libs")
-  bundle_libs(BUNDLED_LIBS extra_libs
-   "${OPENSSL_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
-   "${OPENSSL_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
-  )
   #message(STATUS "bundle other libs")
   unset(extra_libs)
   bundle_libs(BUNDLED_LIBS extra_libs)
 
-  # In MAINTAINER_MODE check whether all 3rd party libs found but not bundled 
+  # In MAINTAINER_MODE check whether all 3rd party libs found but not bundled
   # are listed in IGNORED_LIBS
 
   if(MAINTAINER_MODE)
 
-    # Extend ignore list with libraries that are dependencies of known plugins 
+    # Extend ignore list with libraries that are dependencies of known plugins
     # and are not listed in BUNDLED_LIBS. Otherwise we would get false errors
     # below.
 
@@ -711,12 +712,10 @@ if(BUNDLE_DEPENDENCIES)
       list(APPEND IGNORED_LIBS ${DEPS_${plugin}})
     endforeach()
 
-    # Remove from ${extra_libs} the libraries that we know we should ignore. 
-    # Also the openssl libs that might end up in ${extra_libs} bacause of two 
-    # stage search logic above.
+    # Remove from ${extra_libs} the libraries that we know we should ignore.
 
     #message("== extra_libs: ${extra_libs}")
-    foreach(lib ${IGNORED_LIBS} libssl libcrypto ssleay libeay)
+    foreach(lib ${IGNORED_LIBS})
       #message(STATUS "removing: ${lib}")
       list(FILTER extra_libs EXCLUDE REGEX "^${lib}")
       list(FILTER extra_libs EXCLUDE REGEX "^lib${lib}")
