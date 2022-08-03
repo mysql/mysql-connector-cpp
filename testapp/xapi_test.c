@@ -126,6 +126,12 @@ int main(int argc, const char* argv[])
 
   }
 
+  /* Create schema test if not exists */
+
+  res = mysqlx_sql(sess,
+                   "CREATE SCHEMA IF NOT EXISTS test",
+                   MYSQLX_NULL_TERMINATED);
+  RESULT_CHECK(res, sess);
 
   /* Drop test table if exists */
 

@@ -130,13 +130,13 @@ target_include_directories(cdk_proto_mysqlx PRIVATE
 )
 
 if(use_full_protobuf)
-  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::pb-full)
+  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::protobuf)
 else()
-  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::pb-lite)
+  target_link_libraries(cdk_proto_mysqlx PRIVATE ext::protobuf-lite)
 endif()
 
 target_link_libraries(cdk_proto_mysqlx
-  PRIVATE cdk_foundation ext::zlib ext::lz4 ext::zstd
+  PRIVATE cdk_foundation ext::z ext::lz4 ext::zstd
 )
 
 ADD_COVERAGE(cdk_proto_mysqlx)

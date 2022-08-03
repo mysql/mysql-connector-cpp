@@ -26,7 +26,7 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-##############################################################################
+# #############################################################################
 #
 # Targets:
 #
@@ -34,27 +34,42 @@
 #
 # Imported/alias targets:
 #
-# ext::zlib
+# ext::z
 # ext::lz4
 # ext::zstd
 #
-# TODO:
-#  - allow use of external, dynamic libraries instead of static linking
-#
 
-if(TARGET ext::zlib)
+if(TARGET ext::z)
   return()
 endif()
 
 message(STATUS "Setting up compression libraries.")
 
-# Use external builds from the bundled sources
+#######
+# ZLIB
+#
+add_ext(zlib zlib.h z ext_zlib)
+if(NOT ZLIB_FOUND)
+  message(FATAL_ERROR "Can't build without zlib support")
+endif()
 
-add_ext(zlib)
-add_ext_targets(zlib zlib ext_zlib)
 
-add_ext(lz4)
-add_ext_targets(lz4 lz4 ext_lz4)
+#######
+# LZ4
+#
+add_ext(lz4 lz4frame.h lz4 ext_lz4)
 
-add_ext(zstd)
-add_ext_targets(zstd zstd ext_zstd)
+if(NOT LZ4_FOUND)
+  message(FATAL_ERROR "Can't build without lz4 support")
+endif()
+
+
+#######
+# ZSTD
+#
+add_ext(zstd zstd.h zstd ext_zstd)
+
+if(NOT LZ4_FOUND)
+  message(FATAL_ERROR "Can't build without zstd support")
+endif()
+
