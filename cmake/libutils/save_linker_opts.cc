@@ -30,7 +30,14 @@
 
 #include <iostream>
 #include <fstream>
+
+#ifdef WIN32
+#include <direct.h>
+#define GETCWD _getcwd
+#else
 #include <unistd.h>
+#define GETCWD getcwd
+#endif
 
 using namespace std;
 
@@ -38,7 +45,7 @@ int main(int argc, char* argv[])
 {
   char pwd[1024];
 
-  if (!getcwd(pwd, sizeof(pwd)))
+  if (!GETCWD(pwd, sizeof(pwd)))
     return 1;
 
   //cout << "Got " << argc << " arguments" << endl;
