@@ -314,7 +314,7 @@ function(merge_libraries TARGET)
         --target ${TARGET}-deps
         --config $<CONFIG>
         --
-          /nologo /v:q /filelogger /flp:Verbosity=q /flp:ShowCommandLine
+          /nologo /v:q /filelogger /flp:Verbosity=m /flp:ShowCommandLine
           /flp:LogFile=\"${log_file}.STATIC\"
 
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
