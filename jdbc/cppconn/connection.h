@@ -135,8 +135,11 @@
   Auth plugin options
 */
 #define OPT_OCI_CONFIG_FILE "OPT_OCI_CONFIG_FILE"
+#define OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE \
+  "OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE"
 
-namespace sql {
+namespace sql
+{
 
 typedef sql::Variant ConnectPropertyVal;
 

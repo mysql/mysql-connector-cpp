@@ -1013,8 +1013,30 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         );
       }
 
-    }
-    else if (!it->first.compare(OPT_PLUGIN_DIR)) {
+    } else if (!it->first.compare(OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE)) {
+#if defined(_WIN32)
+      try {
+        p_s = (it->second).get<sql::SQLString>();
+      } catch (sql::InvalidArgumentException &) {
+        throw sql::InvalidArgumentException(
+            "Wrong type passed for OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE. "
+            "Expected sql::SQLString.");
+      }
+
+      try {
+        proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                             "authentication_kerberos_client",
+                             "plugin_authentication_kerberos_client_mode",
+                             *p_s);
+      } catch (sql::InvalidArgumentException &e) {
+        throw ::sql::SQLUnsupportedOptionException(
+            "Failed to set config file for authentication_kerberos_client "
+            "plugin",
+            OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE);
+      }
+#endif  // defined(_WIN32)
+
+    } else if (!it->first.compare(OPT_PLUGIN_DIR)) {
       // Nothing to do here: this option was handeld before the loop
 
     /* If you need to add new integer connection option that should result in
