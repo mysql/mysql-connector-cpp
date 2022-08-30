@@ -409,13 +409,18 @@ set(AUTH_DEPS_fido fido2)
 # Note: Windows implementation does not depend on MIT Kerberos library, it uses
 # native Win APIs
 
-if(NOT WIN32)
+if(WIN32)
+  set(AUTH_DEPS_kerberos 
+    comerr gssapi k5sprt krbcc xpprof krb5
+  )
+else()
   set(AUTH_DEPS_kerberos gssapi_krb5 k5crypto krb5support krb5 com_err)
 endif()
 
-set(AUTH_DEPS_ldap_sasl libsasl ${AUTH_DEPS_kerberos})
 if(WIN32)
-  list(APPEND AUTH_DEPS_ldap_sasl saslSCRAM)
+  set(AUTH_DEPS_ldap_sasl libsasl saslSCRAM)
+else()
+  set(AUTH_DEPS_ldap_sasl libsasl ${AUTH_DEPS_kerberos})
 endif()
 
 # additional client-side plugins (if any)
@@ -627,6 +632,21 @@ macro(bundle_plugins ignored)
     # See if libsasl is bundled to also bundle sasl plugins
     if("${DEPS_${plugin}}" MATCHES "sasl")
       set(sasl_bundled 1)
+    endif()
+
+    # On Windows the MIT Kerberos library uses ccapiserver.exe application 
+    # in some scenarios - we need to bundle it as well.
+
+    if(WIN32 AND "${DEPS_${plugin}}" MATCHES "krb5")
+      file(GLOB ccapiserver "${MYSQL_LIB_DIR}/../bin/ccapiserver.exe")
+      if(ccapiserver)
+        bundle_lib("${ccapiserver}")
+      elseif(MAINTAINER_MODE)
+        message(SEND_ERROR
+          "Missing ccapiserver executable required by Kerberos"
+          " authentication plugin"
+        )
+      endif()
     endif()
 
     # Bundle plugin dependencies
