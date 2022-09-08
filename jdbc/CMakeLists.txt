@@ -429,6 +429,22 @@ set(IGNORED_LIBS
   libcurl libmecab zlib
   jemalloc
   libssl libcrypto
+  # New DLLs added in .32
+  connection_pool
+  http_auth_backend http_auth_realm http_server
+  io keepalive metadata_cache
+  rest_api rest_connection_pool rest_metadata_cache rest_router rest_routing
+  harness-library  mysqlharness_stdx mysqlharness_tls
+  router_openssl router_protobuf routing
+  mysqlrouter_mysqlxmessages
+  mysqlrouter_connection_pool
+  mysqlrouter_http
+  mysqlrouter_http_auth_backend
+  mysqlrouter_http_auth_realm
+  mysqlrouter_io_component
+  mysqlrouter_lib
+  mysqlrouter_metadata_cache
+  mysqlrouter_routing
 )
 
 
