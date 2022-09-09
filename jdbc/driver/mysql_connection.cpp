@@ -1436,27 +1436,40 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
               "fido_messages_callback",
               (const void*)fido_callback_func
             );
+        } catch (sql::MethodNotImplementedException &) {
+          // If failed, authentication_fido_client is no longer present... skip
+        } catch (sql::InvalidArgumentException &e) {
+          throw ::sql::SQLException(
+              "Failed to set fido message callback for "
+              "authentication_fido_client plugin");
+        }
+
+        try
+        {
+          fido_callback_instance = callback;
+          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                               "authentication_webauthn_client",
+                               "webauthn_messages_callback",
+                               (const void *)fido_callback_func);
 
           }
           catch (sql::InvalidArgumentException& e) {
-            throw ::sql::SQLUnsupportedOptionException(
-              "Failed to set fido message callback for authentication_fido_client plugin",
-              OPT_OCI_CONFIG_FILE
-            );
+          throw ::sql::SQLException(
+              "Failed to set webauthn message callback for "
+              "authentication_webauthn_client plugin");
           }
         }
       }
 
-      ~Fido_Callback_Setter()
+    ~Fido_Callback_Setter()
+    {
+      if(fido_callback_instance && proxy)
       {
-        if(fido_callback_instance && proxy)
+        try
         {
-          try
-          {
-            proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
-              "authentication_fido_client",
-              "fido_messages_callback",
-              nullptr);
+          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                               "authentication_webauthn_client",
+                               "webauthn_messages_callback", nullptr);
           }
           catch(...) {}
           fido_callback_instance = nullptr;
