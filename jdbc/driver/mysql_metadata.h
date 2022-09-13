@@ -65,8 +65,6 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
 
   sql::SQLString lower_case_table_names;
 
-  bool use_info_schema;
-
 public:
   MySQL_ConnectionMetaData(sql::Statement * const service, std::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
               boost::shared_ptr< MySQL_DebugLogger > & l);

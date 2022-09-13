@@ -1223,13 +1223,11 @@ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const servic
   : stmt(service),
     connection(dynamic_cast< MySQL_Connection * >(service->getConnection())),
     logger(l),
-    proxy(_proxy),
-    use_info_schema(true)
+    proxy(_proxy)
 {
   CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
   server_version = proxy->get_server_version();
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 }
 /* }}} */
 
@@ -1806,11 +1804,10 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
 
   boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
-
   /* I_S seems currently (20080220) not to work */
+
 #if A0
-  if (use_info_schema && server_version > 69999) {
+  if (server_version > 69999) {
     sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
                          "COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE\n"
                          "FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
@@ -1929,180 +1926,100 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
   rs_field_data.push_back("SOURCE_DATA_TYPE");
   rs_field_data.push_back("IS_AUTOINCREMENT");
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
-
-  if (use_info_schema && server_version > 50020) {
-    char buf[5];
-    sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
-      "CASE "
-      "WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN "
-      "  CASE"
-      "    WHEN LOCATE('zerofill', COLUMN_TYPE) != 0 AND LOCATE('zerofill', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED ZEROFILL')"
-      "    ELSE CONCAT(UCASE(DATA_TYPE), ' UNSIGNED')"
-      "  END "
-//			"ELSE"
-//			"  CASE"
-//			"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
-//			"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
-//			"    WHEN LCASE(DATA_TYPE)='year' THEN 'YEAR'"
-      "    ELSE UCASE(DATA_TYPE)"
-//			"  END "
-      "END AS TYPE_NAME,"
-      "CASE "
-        "WHEN LCASE(DATA_TYPE)='year' THEN SUBSTRING(COLUMN_TYPE, 6, 1) -- 'year('=5\n"
-        "WHEN LCASE(DATA_TYPE)='date' THEN 10 "
-        "WHEN LCASE(DATA_TYPE)='time' THEN 8 "
-        "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
-        "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
-        "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION "
-        "ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
-      "'' AS BUFFER_LENGTH,"
-      "NUMERIC_SCALE AS DECIMAL_DIGITS,"
-      "10 AS NUM_PREC_RADIX,"
-      "CASE WHEN IS_NULLABLE='NO' THEN ");
-    query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNoNulls));
-    query.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ");
-    query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullable));
-    query.append(" ELSE ");
-    query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullableUnknown));
-    query.append(" END END AS NULLABLE,"
-      "COLUMN_COMMENT AS REMARKS,"
-      "COLUMN_DEFAULT AS COLUMN_DEF,"
-      "0 AS SQL_DATA_TYPE,"
-      "0 AS SQL_DATETIME_SUB,"
-      "CHARACTER_OCTET_LENGTH,"
-      "ORDINAL_POSITION,"
-      "IS_NULLABLE,"
-      "NULL AS SCOPE_CATALOG,"
-      "NULL AS SCOPE_SCHEMA,"
-      "NULL AS SCOPE_TABLE,"
-      "NULL AS SOURCE_DATA_TYPE,"
-      "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
-      "FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
-    if (schemaPattern.length()) {
-      query.append(" TABLE_SCHEMA LIKE ? ");
-    } else {
-      query.append(" TABLE_SCHEMA = DATABASE() ");
-    }
-    query.append("AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
-      "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
-
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-
-    if (schemaPattern.length()) {
-      pStmt->setString(1, escapedSchemaPattern);
-      pStmt->setString(2, escapedTableNamePattern);
-      pStmt->setString(3, escapedColumnNamePattern);
-    } else {
-      pStmt->setString(1, escapedTableNamePattern);
-      pStmt->setString(2, escapedColumnNamePattern);
-    }
-
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-      rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
-      rs_data_row.push_back((int64_t) sql::mysql::util::mysql_string_type_to_datatype(rs->getString(5)));	// DATA_TYPE
-      rs_data_row.push_back(rs->getString(6));	// TYPE_NAME
-      rs_data_row.push_back(rs->getInt64(7));		// COLUMN_SIZE
-      rs_data_row.push_back(rs->getInt64(8));		// BUFFER_LENGTH
-      rs_data_row.push_back(rs->getInt64(9));		// DECIMAL_DIGITS
-      rs_data_row.push_back(rs->getInt64(10));	// NUM_PREC_RADIX
-      rs_data_row.push_back(rs->getString(11));	// NULLABLE
-      rs_data_row.push_back(rs->getString(12));	// REMARKS
-      rs_data_row.push_back(rs->getString(13));	// COLUMN_DEFAULT
-      rs_data_row.push_back(rs->getString(14));	// SQL_DATA_TYPE
-      rs_data_row.push_back(rs->getString(15));	// SQL_DATETIME_SUB
-      rs_data_row.push_back(rs->getString(16));	// CHAR_OCTET_LENGTH
-      rs_data_row.push_back(rs->getString(17));	// ORDINAL_POSITION
-      rs_data_row.push_back(rs->getString(18));	// IS_NULLABLE
-      /* The following are not currently used by C/OOO*/
-      rs_data_row.push_back(rs->getString(19));	// SCOPE_CATALOG
-      rs_data_row.push_back(rs->getString(20));	// SCOPE_SCHEMA
-      rs_data_row.push_back(rs->getString(21));	// SCOPE_TABLE
-      rs_data_row.push_back(rs->getString(22));	// SOURCE_DATA_TYPE
-      rs_data_row.push_back(rs->getString(23));	// IS_AUTOINCREMENT
-
-      rs_data->push_back(rs_data_row);
-    }
+  char buf[5];
+  sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, DATA_TYPE,"
+    "CASE "
+    "WHEN LOCATE('unsigned', COLUMN_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN "
+    "  CASE"
+    "    WHEN LOCATE('zerofill', COLUMN_TYPE) != 0 AND LOCATE('zerofill', DATA_TYPE) = 0 THEN CONCAT(UCASE(DATA_TYPE), ' UNSIGNED ZEROFILL')"
+    "    ELSE CONCAT(UCASE(DATA_TYPE), ' UNSIGNED')"
+    "  END "
+//	"ELSE"
+//	"  CASE"
+//	"    WHEN LCASE(DATA_TYPE)='set' THEN 'VARCHAR'"
+//	"    WHEN LCASE(DATA_TYPE)='enum' THEN 'VARCHAR'"
+//	"    WHEN LCASE(DATA_TYPE)='year' THEN 'YEAR'"
+    "    ELSE UCASE(DATA_TYPE)"
+//	"  END "
+    "END AS TYPE_NAME,"
+    "CASE "
+      "WHEN LCASE(DATA_TYPE)='year' THEN SUBSTRING(COLUMN_TYPE, 6, 1) -- 'year('=5\n"
+      "WHEN LCASE(DATA_TYPE)='date' THEN 10 "
+      "WHEN LCASE(DATA_TYPE)='time' THEN 8 "
+      "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 "
+      "WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
+      "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION "
+      "ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, "
+    "'' AS BUFFER_LENGTH,"
+    "NUMERIC_SCALE AS DECIMAL_DIGITS,"
+    "10 AS NUM_PREC_RADIX,"
+    "CASE WHEN IS_NULLABLE='NO' THEN ");
+  query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNoNulls));
+  query.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ");
+  query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullable));
+  query.append(" ELSE ");
+  query.append(my_i_to_a(buf, sizeof(buf) - 1, columnNullableUnknown));
+  query.append(" END END AS NULLABLE,"
+    "COLUMN_COMMENT AS REMARKS,"
+    "COLUMN_DEFAULT AS COLUMN_DEF,"
+    "0 AS SQL_DATA_TYPE,"
+    "0 AS SQL_DATETIME_SUB,"
+    "CHARACTER_OCTET_LENGTH,"
+    "ORDINAL_POSITION,"
+    "IS_NULLABLE,"
+    "NULL AS SCOPE_CATALOG,"
+    "NULL AS SCOPE_SCHEMA,"
+    "NULL AS SCOPE_TABLE,"
+    "NULL AS SOURCE_DATA_TYPE,"
+    "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
+    "FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
+  if (schemaPattern.length()) {
+    query.append(" TABLE_SCHEMA LIKE ? ");
   } else {
-    /* get schemata */
-    sql::SQLString query1("SHOW DATABASES LIKE '%");
-    query1.append(escapedSchemaPattern).append("'");
-
-    boost::scoped_ptr< sql::ResultSet > rs1(stmt->executeQuery(query1));
-
-    while (rs1->next()) {
-      sql::SQLString current_schema(rs1->getString(1));
-      sql::SQLString query2("SHOW TABLES FROM `");
-      query2.append(current_schema).append("` LIKE '").append(escapedTableNamePattern).append("'");
-
-      /* stmt is storing results. otherwise this won't work anyway */
-      boost::scoped_ptr< sql::ResultSet > rs2(stmt->executeQuery(query2));
-
-      while (rs2->next()) {
-        sql::SQLString current_table(rs2->getString(1));
-        sql::SQLString query3("SELECT * FROM `");
-        query3.append(current_schema).append("`.`").append(current_table).append("` WHERE 0=1");
-
-        boost::scoped_ptr< sql::ResultSet > rs3(stmt->executeQuery(query3));
-        sql::ResultSetMetaData * rs3_meta = rs3->getMetaData();
-
-        sql::SQLString query4("SHOW FULL COLUMNS FROM `");
-        query4.append(current_schema).append("`.`").append(current_table).append("` LIKE '").append(escapedColumnNamePattern).append("'");
-        boost::scoped_ptr< sql::ResultSet > rs4(stmt->executeQuery(query4));
-
-        while (rs4->next()) {
-          for (unsigned int i = 1; i <= rs3_meta->getColumnCount(); ++i) {
-            /*
-              `SELECT * FROM XYZ WHERE 0=1` will return metadata about all
-              columns but `columnNamePattern` could be set. So, we can have different
-              number of rows/columns in the result sets which doesn't correspond.
-            */
-            if (rs3_meta->getColumnName(i) == rs4->getString(1)) {
-              MySQL_ArtResultSet::row_t rs_data_row;
-
-              rs_data_row.push_back("def");				// TABLE_CAT
-              rs_data_row.push_back(current_schema);		// TABLE_SCHEM
-              rs_data_row.push_back(current_table);		// TABLE_NAME
-              rs_data_row.push_back(rs4->getString(1));	// COLUMN_NAME
-              rs_data_row.push_back((int64_t) rs3_meta->getColumnType(i)); 		// DATA_TYPE
-              rs_data_row.push_back(rs3_meta->getColumnTypeName(i));											// TYPE_NAME
-              rs_data_row.push_back((int64_t) rs3_meta->getColumnDisplaySize(i));	// COLUMN_SIZE
-              rs_data_row.push_back("");					// BUFFER_LENGTH
-              rs_data_row.push_back((int64_t) rs3_meta->getScale(i)); // DECIMAL_DIGITS
-              rs_data_row.push_back("10");							// NUM_PREC_RADIX
-              rs_data_row.push_back((int64_t) rs3_meta->isNullable(i)); // Is_nullable
-              rs_data_row.push_back(rs4->getString(9));		// REMARKS
-              rs_data_row.push_back(rs4->getString(6));		// COLUMN_DEFAULT
-              rs_data_row.push_back("");						// SQL_DATA_TYPE - unused
-              rs_data_row.push_back("");						// SQL_DATETIME_SUB - unused
-              rs_data_row.push_back((int64_t) rs3_meta->getColumnDisplaySize(i)); // CHAR_OCTET_LENGTH
-              rs_data_row.push_back((int64_t) i); // ORDINAL_POSITION
-              rs_data_row.push_back(rs3_meta->isNullable(i)? "YES":"NO");		// IS_NULLABLE
-
-              rs_data_row.push_back("");	// SCOPE_CATALOG - unused
-              rs_data_row.push_back("");	// SCOPE_SCHEMA - unused
-              rs_data_row.push_back("");	// SCOPE_TABLE - unused
-              rs_data_row.push_back("");	// SOURCE_DATA_TYPE - unused
-              rs_data_row.push_back("");	// IS_AUTOINCREMENT - unused
-
-              rs_data->push_back(rs_data_row);
-
-              /* don't iterate any more, we have found our column */
-              break;
-            }
-          }
-        }
-      }
-    }
-
+    query.append(" TABLE_SCHEMA = DATABASE() ");
   }
+  query.append("AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
+    "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
+  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  if (schemaPattern.length()) {
+    pStmt->setString(1, escapedSchemaPattern);
+    pStmt->setString(2, escapedTableNamePattern);
+    pStmt->setString(3, escapedColumnNamePattern);
+  } else {
+    pStmt->setString(1, escapedTableNamePattern);
+    pStmt->setString(2, escapedColumnNamePattern);
+  }
+
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+    rs_data_row.push_back((int64_t) sql::mysql::util::mysql_string_type_to_datatype(rs->getString(5)));	// DATA_TYPE
+    rs_data_row.push_back(rs->getString(6));	// TYPE_NAME
+    rs_data_row.push_back(rs->getInt64(7));		// COLUMN_SIZE
+    rs_data_row.push_back(rs->getInt64(8));		// BUFFER_LENGTH
+    rs_data_row.push_back(rs->getInt64(9));		// DECIMAL_DIGITS
+    rs_data_row.push_back(rs->getInt64(10));	// NUM_PREC_RADIX
+    rs_data_row.push_back(rs->getString(11));	// NULLABLE
+    rs_data_row.push_back(rs->getString(12));	// REMARKS
+    rs_data_row.push_back(rs->getString(13));	// COLUMN_DEFAULT
+    rs_data_row.push_back(rs->getString(14));	// SQL_DATA_TYPE
+    rs_data_row.push_back(rs->getString(15));	// SQL_DATETIME_SUB
+    rs_data_row.push_back(rs->getString(16));	// CHAR_OCTET_LENGTH
+    rs_data_row.push_back(rs->getString(17));	// ORDINAL_POSITION
+    rs_data_row.push_back(rs->getString(18));	// IS_NULLABLE
+    /* The following are not currently used by C/OOO*/
+    rs_data_row.push_back(rs->getString(19));	// SCOPE_CATALOG
+    rs_data_row.push_back(rs->getString(20));	// SCOPE_SCHEMA
+    rs_data_row.push_back(rs->getString(21));	// SCOPE_TABLE
+    rs_data_row.push_back(rs->getString(22));	// SOURCE_DATA_TYPE
+    rs_data_row.push_back(rs->getString(23));	// IS_AUTOINCREMENT
+    rs_data->push_back(rs_data_row);
+  }
+
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
 }
@@ -2148,10 +2065,7 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
   rs_field_data.push_back("PK_NAME");
   rs_field_data.push_back("DEFERRABILITY");
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
-  /* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
-  if (use_info_schema && server_version >= 50110) {
     /* This just doesn't work */
     /* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
     char buf[10];
@@ -2213,7 +2127,7 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
     pStmt->setString(3, foreignSchema);
     pStmt->setString(4, foreignTable);
 
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
+    boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
 
     while (rs->next()) {
       MySQL_ArtResultSet::row_t rs_data_row;
@@ -2237,9 +2151,7 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
     }
     MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
     return ret;
-  } else {
-    throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getCrossReference");
-  }
+
   return NULL; // This will shut up compilers
 }
 /* }}} */
@@ -2384,95 +2296,79 @@ MySQL_ConnectionMetaData::getExportedKeys(const sql::SQLString& catalog, const s
   rs_field_data.push_back("PK_NAME");
   rs_field_data.push_back("DEFERRABILITY");
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+  /* This just doesn't work */
+  /* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
+  char buf[10];
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
+  sql::SQLString importedKeyCascadeStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
+  sql::SQLString importedKeySetNullStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
+  sql::SQLString importedKeySetDefaultStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
+  sql::SQLString importedKeyRestrictStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
+  sql::SQLString importedKeyNoActionStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
+  sql::SQLString importedKeyNotDeferrableStr(buf);
+ sql::SQLString UpdateRuleClause;
+  UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+          append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+          append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+          append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+          append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+          append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+ sql::SQLString DeleteRuleClause;
+ DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+          append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+          append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+          append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+          append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+          append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+ sql::SQLString OptionalRefConstraintJoinStr(
+        "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
+        "(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+ sql::SQLString query("SELECT \n");
+  query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+         "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+         "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
+  query.append(UpdateRuleClause);
+  query.append(" AS UPDATE_RULE,");
+  query.append(DeleteRuleClause);
+  query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
+         "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+         " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
+  query.append(importedKeyNotDeferrableStr);
+  query.append(" AS DEFERRABILITY  FROM\nINFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
+               "ON (A.TABLE_SCHEMA = B.TABLE_SCHEMA AND A.TABLE_NAME = B.TABLE_NAME AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND\n"
+               "B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?)\n");
+  query.append(OptionalRefConstraintJoinStr);
+  query.append("ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION\n");
+ boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  pStmt->setString(1, schema);
+  pStmt->setString(2, table);
 
-  /* Not sure which version, let it not be 5.1.0, just something above which is anyway not used anymore */
-  if (use_info_schema && server_version >= 50110) {
-    /* This just doesn't work */
-    /* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
-    char buf[10];
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
-    sql::SQLString importedKeyCascadeStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
-    sql::SQLString importedKeySetNullStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
-    sql::SQLString importedKeySetDefaultStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
-    sql::SQLString importedKeyRestrictStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
-    sql::SQLString importedKeyNoActionStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
-    sql::SQLString importedKeyNotDeferrableStr(buf);
-
-    sql::SQLString UpdateRuleClause;
-    UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
-            append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
-            append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
-            append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
-            append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
-            append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
-
-    sql::SQLString DeleteRuleClause;
-
-    DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
-            append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
-            append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
-            append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
-            append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
-            append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
-
-    sql::SQLString OptionalRefConstraintJoinStr(
-          "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
-          "(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
-
-    sql::SQLString query("SELECT \n");
-    query.append("A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
-           "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
-           "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,");
-    query.append(UpdateRuleClause);
-    query.append(" AS UPDATE_RULE,");
-    query.append(DeleteRuleClause);
-    query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,"
-           "(SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-           " TABLE_NAME = A.REFERENCED_TABLE_NAME AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,");
-    query.append(importedKeyNotDeferrableStr);
-    query.append(" AS DEFERRABILITY  FROM\nINFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B\n"
-                 "ON (A.TABLE_SCHEMA = B.TABLE_SCHEMA AND A.TABLE_NAME = B.TABLE_NAME AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND\n"
-                 "B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?)\n");
-    query.append(OptionalRefConstraintJoinStr);
-    query.append("ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION\n");
-
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, schema);
-    pStmt->setString(2, table);
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
-      rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
-      rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
-      rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
-      rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
-      rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
-      rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
-      rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
-      rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
-      rs_data_row.push_back(rs->getString(12));	// FK_NAME
-      rs_data_row.push_back(rs->getString(13));	// PK_NAME
-      rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
-
-      rs_data->push_back(rs_data_row);
-    }
-    MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
-    return ret;
-  } else {
-    throw sql::MethodNotImplementedException("MySQL_ConnectionMetaData::getExportedKeys");
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
+    rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
+    rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
+    rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
+    rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
+    rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
+    rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
+    rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
+    rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
+    rs_data_row.push_back(rs->getString(12));	// FK_NAME
+    rs_data_row.push_back(rs->getString(13));	// PK_NAME
+    rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
+   rs_data->push_back(rs_data_row);
   }
-  return NULL; // This will shut up compilers
+  MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
+  return ret;
 }
 /* }}} */
 
@@ -2671,157 +2567,82 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
   rs_field_data.push_back("PK_NAME");
   rs_field_data.push_back("DEFERRABILITY");
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
-  if (use_info_schema && server_version >= 50116) {
-    /* This just doesn't work */
-    /* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
-    char buf[10];
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
-    sql::SQLString importedKeyCascadeStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
-    sql::SQLString importedKeySetNullStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
-    sql::SQLString importedKeySetDefaultStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
-    sql::SQLString importedKeyRestrictStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
-    sql::SQLString importedKeyNoActionStr(buf);
-    my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
-    sql::SQLString importedKeyNotDeferrableStr(buf);
+  /* This just doesn't work */
+  /* currently this doesn't work - we have to wait for implementation of REFERENTIAL_CONSTRAINTS */
+  char buf[10];
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyCascade);
+  sql::SQLString importedKeyCascadeStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeySetNull);
+  sql::SQLString importedKeySetNullStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeySetDefault);
+  sql::SQLString importedKeySetDefaultStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyRestrict);
+  sql::SQLString importedKeyRestrictStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyNoAction);
+  sql::SQLString importedKeyNoActionStr(buf);
+  my_i_to_a(buf, sizeof(buf) - 1, importedKeyNotDeferrable);
+  sql::SQLString importedKeyNotDeferrableStr(buf);
+ sql::SQLString UpdateRuleClause;
+  UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+          append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+          append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+          append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+          append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+          append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+ sql::SQLString DeleteRuleClause;
+ DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
+          append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
+          append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
+          append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
+          append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
+          append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
+ sql::SQLString OptionalRefConstraintJoinStr(
+        "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
+        "(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+ sql::SQLString query("SELECT \n"
+        "A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
+        "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
+        "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
+  query.append(UpdateRuleClause);
+  query.append(" AS UPDATE_RULE,\n");
+  query.append(DeleteRuleClause);
+  query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,\n"
+        "(SELECT TC.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC\n"
+        "WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND TABLE_NAME = A.REFERENCED_TABLE_NAME \n"
+        "AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,\n");
+  query.append(importedKeyNotDeferrableStr);
+  query.append(" AS DEFERRABILITY FROM "
+               "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B \n"
+               "ON(A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND A.TABLE_NAME = B.TABLE_NAME AND \n"
+               "B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.TABLE_SCHEMA LIKE ?  AND A.TABLE_NAME=?  AND\n"
+               "A.REFERENCED_TABLE_SCHEMA IS NOT NULL) \n");
+  query.append(OptionalRefConstraintJoinStr);
+  query.append("\nORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION");
+ boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  pStmt->setString(1, schema);
+  pStmt->setString(2, table);
 
-    sql::SQLString UpdateRuleClause;
-    UpdateRuleClause.append("CASE WHEN R.UPDATE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
-            append(" WHEN R.UPDATE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
-            append(" WHEN R.UPDATE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
-            append(" WHEN R.UPDATE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
-            append(" WHEN R.UPDATE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
-            append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
-
-    sql::SQLString DeleteRuleClause;
-
-    DeleteRuleClause.append("CASE WHEN R.DELETE_RULE='CASCADE' THEN ").append(importedKeyCascadeStr).
-            append(" WHEN R.DELETE_RULE='SET NULL' THEN ").append(importedKeySetNullStr).
-            append(" WHEN R.DELETE_RULE='SET DEFAULT' THEN ").append(importedKeySetDefaultStr).
-            append(" WHEN R.DELETE_RULE='RESTRICT' THEN ").append(importedKeyRestrictStr).
-            append(" WHEN R.DELETE_RULE='NO ACTION' THEN ").append(importedKeyNoActionStr).
-            append(" ELSE ").append(importedKeyNoActionStr).append(" END ");
-
-    sql::SQLString OptionalRefConstraintJoinStr(
-          "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON "
-          "(R.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
-
-    sql::SQLString query("SELECT \n"
-          "A.TABLE_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM, A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,\n"
-          "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME, A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,\n"
-          "A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,\n");
-    query.append(UpdateRuleClause);
-    query.append(" AS UPDATE_RULE,\n");
-    query.append(DeleteRuleClause);
-    query.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME,\n"
-          "(SELECT TC.CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC\n"
-          "WHERE TABLE_SCHEMA = A.REFERENCED_TABLE_SCHEMA AND TABLE_NAME = A.REFERENCED_TABLE_NAME \n"
-          "AND CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1) AS PK_NAME,\n");
-    query.append(importedKeyNotDeferrableStr);
-    query.append(" AS DEFERRABILITY FROM "
-                 "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B \n"
-                 "ON(A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND A.TABLE_NAME = B.TABLE_NAME AND \n"
-                 "B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.TABLE_SCHEMA LIKE ?  AND A.TABLE_NAME=?  AND\n"
-                 "A.REFERENCED_TABLE_SCHEMA IS NOT NULL) \n");
-    query.append(OptionalRefConstraintJoinStr);
-    query.append("\nORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION");
-
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, schema);
-    pStmt->setString(2, table);
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
-      rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
-      rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
-      rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
-      rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
-      rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
-      rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
-      rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
-      rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
-      rs_data_row.push_back(rs->getString(12));	// FK_NAME
-      rs_data_row.push_back(rs->getString(13));	// PK_NAME
-      rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
-
-      rs_data->push_back(rs_data_row);
-    }
-  } else {
-    sql::SQLString query("SHOW CREATE TABLE `");
-    query.append(schema).append("`.`").append(table).append("`");
-
-    boost::scoped_ptr< sql::ResultSet > rs(NULL);
-    try {
-      rs.reset(stmt->executeQuery(query));
-    } catch (SQLException &) {
-      // schema and/or table don't exist, return empty set
-      // just do nothing and the `if` will be skipped
-    }
-    if (rs.get() && rs->next()) {
-      sql::SQLString create_query(rs->getString(2));
-      unsigned int kSequence = 0;
-
-      sql::SQLString constraint_name;
-      std::map< sql::SQLString, sql::SQLString > keywords_names;
-      std::map< sql::SQLString, std::list< sql::SQLString > > referenced_fields;
-      std::map< sql::SQLString, int > update_delete_action;
-
-      if (parseImportedKeys(create_query, constraint_name, keywords_names, referenced_fields, update_delete_action)) {
-        std::list< sql::SQLString >::const_iterator it_references = referenced_fields["REFERENCES"].begin();
-        std::list< sql::SQLString >::const_iterator it_references_end = referenced_fields["REFERENCES"].end();
-        std::list< sql::SQLString >::const_iterator it_foreignkey = referenced_fields["FOREIGN KEY"].begin();
-        std::list< sql::SQLString >::const_iterator it_foreignkey_end = referenced_fields["FOREIGN KEY"].end();
-        for (
-            ;
-            it_references != it_references_end && it_foreignkey != it_foreignkey_end;
-            ++it_references, ++it_foreignkey
-          )
-        {
-          MySQL_ArtResultSet::row_t rs_data_row;
-
-          rs_data_row.push_back("def");						// PK_TABLE_CAT
-          rs_data_row.push_back(schema);						// PKTABLE_SCHEM
-          rs_data_row.push_back(keywords_names["REFERENCES"]);// PKTABLE_NAME
-
-          // ToDo: Extracting just the first column
-          rs_data_row.push_back(*it_references);				// PK_COLUMN_NAME
-
-          rs_data_row.push_back("");							// FKTABLE_CAT
-
-          // ToDo: Is this correct? referencing the same schema. Maybe fully referenced name can appear, need to parse it too
-          rs_data_row.push_back(schema);						// FKTABLE_SCHEM
-          rs_data_row.push_back(table);						// FKTABLE_NAME
-
-          // ToDo: Extracting just the first column
-          rs_data_row.push_back(*it_foreignkey);			// FKCOLUMN_NAME
-          rs_data_row.push_back((int64_t) ++kSequence);	// KEY_SEQ
-
-
-          rs_data_row.push_back((int64_t) update_delete_action["ON UPDATE"]);	// UPDATE_RULE
-
-          rs_data_row.push_back((int64_t) update_delete_action["ON DELETE"]);	// DELETE_RULE
-
-          rs_data_row.push_back(constraint_name);		// FK_NAME
-          // ToDo: Should it really be PRIMARY?
-          rs_data_row.push_back("PRIMARY");					// PK_NAME
-          rs_data_row.push_back((int64_t) importedKeyNotDeferrable);	// DEFERRABILITY
-
-          rs_data->push_back(rs_data_row);
-        }
-      }
-    }
-    rs_data.get()->sort(compareImportedKeys);
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// PKTABLE_SCHEMA
+    rs_data_row.push_back(rs->getString(3));	// PKTABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// PKCOLUMN_NAME
+    rs_data_row.push_back(rs->getString(5));	// FKTABLE_CAT
+    rs_data_row.push_back(rs->getString(6));	// FKTABLE_SCHEMA
+    rs_data_row.push_back(rs->getString(7));	// FKTABLE_NAME
+    rs_data_row.push_back(rs->getString(8));	// FKCOLUMN_NAME
+    rs_data_row.push_back(rs->getString(9));	// KEY_SEQ
+    rs_data_row.push_back(rs->getString(10));	// UPDATE_RULE
+    rs_data_row.push_back(rs->getString(11));	// DELETE_RULE
+    rs_data_row.push_back(rs->getString(12));	// FK_NAME
+    rs_data_row.push_back(rs->getString(13));	// PK_NAME
+    rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
+   rs_data->push_back(rs_data_row);
   }
+
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -2872,90 +2693,38 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
   snprintf(indexOther, sizeof(indexOther), "%d", DatabaseMetaData::tableIndexOther);
   snprintf(indexHash, sizeof(indexHash), "%d", DatabaseMetaData::tableIndexHashed);
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
-  if (use_info_schema && server_version > 50020) {
-    sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
-             "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME, CASE WHEN INDEX_TYPE='HASH' THEN ");
-    query.append(indexHash).append(" ELSE ").append(indexOther);
-    query.append(" END AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
-          "NULL AS PAGES, NULL AS FILTER_CONDITION "
-          "FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?\n");
+  sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, NON_UNIQUE, "
+           "TABLE_SCHEMA AS INDEX_QUALIFIER, INDEX_NAME, CASE WHEN INDEX_TYPE='HASH' THEN ");
+  query.append(indexHash).append(" ELSE ").append(indexOther);
+  query.append(" END AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME, COLLATION AS ASC_OR_DESC, CARDINALITY,"
+        "NULL AS PAGES, NULL AS FILTER_CONDITION "
+        "FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?\n");
+  if (unique) {
+    query.append(" AND NON_UNIQUE=0");
+  }
+  query.append(" ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
+  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  pStmt->setString(1, schema);
+  pStmt->setString(2, table);
 
-    if (unique) {
-      query.append(" AND NON_UNIQUE=0");
-    }
-    query.append(" ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
-
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, schema);
-    pStmt->setString(2, table);
-
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-      rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// NON_UNIQUE
-      rs_data_row.push_back(rs->getString(5));	// INDEX_QUALIFIER
-      rs_data_row.push_back(rs->getString(6));	// INDEX_NAME
-      rs_data_row.push_back(rs->getString(7));	// TYPE
-      rs_data_row.push_back(rs->getString(8));	// ORDINAL_POSITION
-      rs_data_row.push_back(rs->getString(9));	// COLUMN_NAME
-      rs_data_row.push_back(rs->getString(10));	// ASC_OR_DESC
-      rs_data_row.push_back(rs->getString(11));	// CARDINALITY
-      rs_data_row.push_back(rs->getString(12));	// PAGES
-      rs_data_row.push_back(rs->getString(13));	// FILTER_CONDITION
-
-      rs_data->push_back(rs_data_row);
-    }
-  } else {
-    sql::SQLString query("SHOW INDEX FROM `");
-    query.append(schema).append("`.`").append(table).append("`");
-
-    boost::scoped_ptr< sql::ResultSet > rs(NULL);
-    try {
-      rs.reset(stmt->executeQuery(query));
-    } catch (SQLException &) {
-      // schema and/or table doesn't exist. return empty set
-      // do nothing here
-    }
-
-    while (rs.get() && rs->next()) {
-    unsigned int row_unique;
-    std::istringstream buffer(rs->getString("Non_unique"));
-    buffer >> row_unique;
-    if (!(buffer.rdstate() & std::istringstream::failbit)
-        && unique && row_unique != 0){
-      continue;
-    }
-
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back("def");							// TABLE_CAT
-      rs_data_row.push_back(schema);							// TABLE_SCHEM
-      rs_data_row.push_back(rs->getString("Table"));			// TABLE_NAME
-      rs_data_row.push_back(atoi(rs->getString("Non_unique").c_str())? true:false);	// NON_UNIQUE
-      rs_data_row.push_back(schema);							// INDEX_QUALIFIER
-      rs_data_row.push_back(rs->getString("Key_name"));		// INDEX_NAME
-      if (!rs->getString("Index_type").compare("HASH")) {
-        rs_data_row.push_back((const char *) indexHash);	// TYPE
-      } else {
-        rs_data_row.push_back((const char *) indexOther);	// TYPE
-      }
-      rs_data_row.push_back(rs->getString("Seq_in_index"));	// ORDINAL_POSITION
-      rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
-      rs_data_row.push_back(rs->getString("Collation"));		// ASC_OR_DESC
-      rs_data_row.push_back(rs->getString("Cardinality"));	// CARDINALITY
-      rs_data_row.push_back("0");								// PAGES
-      rs_data_row.push_back("");								// FILTER_CONDITION
-
-      rs_data->push_back(rs_data_row);
-    }
-    rs_data.get()->sort(compareIndexInfo);
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// NON_UNIQUE
+    rs_data_row.push_back(rs->getString(5));	// INDEX_QUALIFIER
+    rs_data_row.push_back(rs->getString(6));	// INDEX_NAME
+    rs_data_row.push_back(rs->getString(7));	// TYPE
+    rs_data_row.push_back(rs->getString(8));	// ORDINAL_POSITION
+    rs_data_row.push_back(rs->getString(9));	// COLUMN_NAME
+    rs_data_row.push_back(rs->getString(10));	// ASC_OR_DESC
+    rs_data_row.push_back(rs->getString(11));	// CARDINALITY
+    rs_data_row.push_back(rs->getString(12));	// PAGES
+    rs_data_row.push_back(rs->getString(13));	// FILTER_CONDITION
+   rs_data->push_back(rs_data_row);
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
@@ -3215,60 +2984,25 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const sql::SQLString& catalog, const sq
 
   boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
-
   /* Bind Problems with 49999, check later why */
-  if (use_info_schema && server_version > 49999) {
-    const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
-          "COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
-          "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
-          "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+  const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
+        "COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
+        "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
+        "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  pStmt->setString(1, schema);
+  pStmt->setString(2, table);
 
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, schema);
-    pStmt->setString(2, table);
-
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-      rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
-      rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
-      rs_data_row.push_back(rs->getString(6));	// PK_NAME
-
-      rs_data->push_back(rs_data_row);
-    }
-  } else {
-    sql::SQLString query("SHOW KEYS FROM `");
-    query.append(schema).append("`.`").append(table).append("`");
-
-    boost::scoped_ptr< sql::ResultSet > rs(NULL);
-    try {
-      rs.reset(stmt->executeQuery(query));
-    } catch (SQLException &) {
-      // probably schema and/or table doesn't exist. return empty set
-      // do nothing here
-    }
-
-    while (rs.get() && rs->next()) {
-      sql::SQLString key_name = rs->getString("Key_name");
-      if (!key_name.compare("PRIMARY") || !key_name.compare("PRI")) {
-        MySQL_ArtResultSet::row_t rs_data_row;
-
-        rs_data_row.push_back("def");							// TABLE_CAT
-        rs_data_row.push_back(schema);							// TABLE_SCHEM
-        rs_data_row.push_back(rs->getString(1));				// TABLE_NAME
-        rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
-        rs_data_row.push_back(rs->getString("Seq_in_index"));	// KEY_SEQ
-        rs_data_row.push_back(key_name);						// PK_NAME
-
-        rs_data->push_back(rs_data_row);
-      }
-    }
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+    rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
+    rs_data_row.push_back(rs->getString(6));	// PK_NAME
+   rs_data->push_back(rs_data_row);
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
@@ -3294,67 +3028,29 @@ MySQL_ConnectionMetaData::getUniqueNonNullableKeys(const sql::SQLString& catalog
 
   boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
-
   /* Bind Problems with 49999, check later why */
-  if (use_info_schema && server_version > 50002) {
-    const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
-                               "  COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME "
-                               "FROM INFORMATION_SCHEMA.STATISTICS "
-                               "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME <> 'PRIMARY'"
-                               "  AND NON_UNIQUE = 0 AND NULLABLE <> 'YES'"
-                               "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+  const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
+                             "  COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME "
+                             "FROM INFORMATION_SCHEMA.STATISTICS "
+                             "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME <> 'PRIMARY'"
+                             "  AND NON_UNIQUE = 0 AND NULLABLE <> 'YES'"
+                             "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
+  boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
+  stmt->setString(1, schema);
+  stmt->setString(2, table);
 
-    boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
-    stmt->setString(1, schema);
-    stmt->setString(2, table);
+  return stmt->executeQuery();
 
-    boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery());
-
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-      rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-      rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-      rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
-      rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
-      rs_data_row.push_back(rs->getString(6));	// PK_NAME
-
-      rs_data->push_back(rs_data_row);
-    }
-  } else {
-    sql::SQLString query("SHOW KEYS FROM `");
-    query.append(schema).append("`.`").append(table).append("`");
-
-    boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-    boost::scoped_ptr< sql::ResultSet > rs(NULL);
-    try {
-      rs.reset(stmt->executeQuery(query));
-    } catch (SQLException &) {
-      // probably schema and/or table doesn't exist. return empty set
-      // do nothing here
-    }
-
-    if (rs.get()) {
-      while (rs->next()) {
-        int non_unique = rs->getInt("Non_unique");
-        sql::SQLString nullable = rs->getString("Null");
-        if (non_unique == 0 && nullable.compare("YES")) {
-          sql::SQLString key_name = rs->getString("Key_name");
-          MySQL_ArtResultSet::row_t rs_data_row;
-
-          rs_data_row.push_back("def");							// TABLE_CAT
-          rs_data_row.push_back(schema);							// TABLE_SCHEM
-          rs_data_row.push_back(rs->getString(1));				// TABLE_NAME
-          rs_data_row.push_back(rs->getString("Column_name"));	// COLUMN_NAME
-          rs_data_row.push_back(rs->getString("Seq_in_index"));	// KEY_SEQ
-          rs_data_row.push_back(key_name);						// PK_NAME
-
-          rs_data->push_back(rs_data_row);
-        }
-      }
-    }
+  boost::scoped_ptr<sql::ResultSet> rs(stmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
+    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
+    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
+    rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
+    rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
+    rs_data_row.push_back(rs->getString(6));	// PK_NAME
+   rs_data->push_back(rs_data_row);
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
@@ -3425,69 +3121,35 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
   char procRetUnknown[5];
   my_i_to_a(procRetUnknown, sizeof(procRetUnknown) - 1, procedureResultUnknown);
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
-  if (use_info_schema && server_version > 49999) {
-    sql::SQLString query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
-            "ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
-            "ROUTINE_COMMENT AS REMARKS, "
-            "CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
-    query.append(procRetNoRes);
-    query.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ");
-    query.append(procRetRes);
-    query.append(" ELSE ");
-    query.append(procRetUnknown);
-    query.append(" END AS PROCEDURE_TYPE\nFROM INFORMATION_SCHEMA.ROUTINES\n"
-          "WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
-          "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
+  sql::SQLString query("SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM, "
+          "ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVERD_2, NULL as RESERVED_3,"
+          "ROUTINE_COMMENT AS REMARKS, "
+          "CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN ");
+  query.append(procRetNoRes);
+  query.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ");
+  query.append(procRetRes);
+  query.append(" ELSE ");
+  query.append(procRetUnknown);
+  query.append(" END AS PROCEDURE_TYPE\nFROM INFORMATION_SCHEMA.ROUTINES\n"
+        "WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
+        "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
+  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  pStmt->setString(1, escapedSchemaPattern);
+  pStmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
 
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, escapedSchemaPattern);
-    pStmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
-
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-    while (rs->next()) {
-      MySQL_ArtResultSet::row_t rs_data_row;
-
-      rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
-      rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
-      rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
-      rs_data_row.push_back(rs->getString(4));	// reserved1
-      rs_data_row.push_back(rs->getString(5));	// reserved2
-      rs_data_row.push_back(rs->getString(6));	// reserved3
-      rs_data_row.push_back(rs->getString(7));	// REMARKS
-      rs_data_row.push_back(rs->getString(8));	// PROCEDURE_TYPE
-
-      rs_data->push_back(rs_data_row);
-    }
-  } else if (server_version > 49999) {
-    for(int i=0; i < 2; ++i)
-    {
-      sql::SQLString query("SHOW ");
-      query.append(i== 0 ? "PROCEDURE" : "FUNCTION" );
-      query.append(" STATUS WHERE Db LIKE ? AND Name LIKE ? ");
-      boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-
-      pStmt->setString(1, escapedSchemaPattern.length() ? escapedSchemaPattern : "%");
-      pStmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
-
-      boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
-
-      while (rs->next()) {
-        MySQL_ArtResultSet::row_t rs_data_row;
-
-        rs_data_row.push_back("def");				// PROCEDURE_CAT
-        rs_data_row.push_back(rs->getString("Db"));	// PROCEDURE_SCHEM
-        rs_data_row.push_back(rs->getString("Name"));	// PROCEDURE_NAME
-        rs_data_row.push_back("");					// reserved1
-        rs_data_row.push_back("");					// reserved2
-        rs_data_row.push_back("");					// reserved3
-        rs_data_row.push_back(rs->getString("Comment"));	// REMARKS
-        rs_data_row.push_back(sql::SQLString(!rs->getString("Type").compare("PROCEDURE")? procRetNoRes:procRetRes));	// PROCEDURE_TYPE
-
-        rs_data->push_back(rs_data_row);
-      }
-    }
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  while (rs->next()) {
+    MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
+    rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
+    rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
+    rs_data_row.push_back(rs->getString(4));	// reserved1
+    rs_data_row.push_back(rs->getString(5));	// reserved2
+    rs_data_row.push_back(rs->getString(6));	// reserved3
+    rs_data_row.push_back(rs->getString(7));	// REMARKS
+    rs_data_row.push_back(rs->getString(8));	// PROCEDURE_TYPE
+   rs_data->push_back(rs_data_row);
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
@@ -3528,27 +3190,21 @@ MySQL_ConnectionMetaData::getSchemas()
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_SCHEM");
   rs_field_data.push_back("TABLE_CATALOG");
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
 
-  boost::scoped_ptr< sql::ResultSet > rs(
-    stmt->executeQuery(use_info_schema && server_version > 49999?
-        "SELECT SCHEMA_NAME AS TABLE_SCHEM, CATALOG_NAME AS TABLE_CATALOG FROM INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME":
-        "SHOW DATABASES"));
+  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(
+      "SELECT SCHEMA_NAME AS TABLE_SCHEM, CATALOG_NAME AS TABLE_CATALOG FROM "
+      "INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME"));
 
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
 
     rs_data_row.push_back(rs->getString(1));
-    if (use_info_schema && server_version > 49999) {
-      rs_data_row.push_back(rs->getString(2));
-    } else {
-      rs_data_row.push_back("");
-    }
+    rs_data_row.push_back(rs->getString(2));
 
     rs_data->push_back(rs_data_row);
   }
-
-  MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
+  MySQL_ArtResultSet* ret =
+   new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
 }
 /* }}} */
@@ -3995,85 +3651,40 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
   rs_field_data.push_back("TABLE_TYPE");
   rs_field_data.push_back("REMARKS");
 
-  connection->getClientOption("metadataUseInfoSchema", (void *) &use_info_schema);
+  const sql::SQLString query(
+      "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, "
+      "TABLE_NAME,"
+      "IF(STRCMP(TABLE_TYPE,'BASE TABLE'), "
+      "IF(STRCMP(TABLE_TYPE,'SYSTEM VIEW'), TABLE_TYPE, 'VIEW'),"
+      " 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
+      "FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND "
+      "TABLE_NAME LIKE ?\n"
+      "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-  /* Bind Problems with 49999, check later why */
-  if (use_info_schema && server_version > 49999) {
-    const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
-              "IF(STRCMP(TABLE_TYPE,'BASE TABLE'), "
-              "IF(STRCMP(TABLE_TYPE,'SYSTEM VIEW'), TABLE_TYPE, 'VIEW'),"
-              " 'TABLE') AS TABLE_TYPE, TABLE_COMMENT AS REMARKS\n"
-              "FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_SCHEMA  LIKE ? AND TABLE_NAME LIKE ?\n"
-              "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
+  boost::scoped_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
+  pStmt->setString(1, escapedSchemaPattern);
+  pStmt->setString(2, escapedTableNamePattern);
 
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
-    pStmt->setString(1, escapedSchemaPattern);
-    pStmt->setString(2, escapedTableNamePattern);
+  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
 
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
+  while (rs->next()) {
+    std::list<sql::SQLString>::const_iterator it = types.begin();
+    for (; it != types.end(); ++it) {
+      if (*it == rs->getString(4)) {
+        MySQL_ArtResultSet::row_t rs_data_row;
 
-    while (rs->next()) {
-      std::list<sql::SQLString>::const_iterator it = types.begin();
-      for (; it != types.end(); ++it) {
-        if (*it == rs->getString(4)) {
-          MySQL_ArtResultSet::row_t rs_data_row;
+        rs_data_row.push_back(rs->getString(1));  // TABLE_CAT
+        rs_data_row.push_back(rs->getString(2));  // TABLE_SCHEM
+        rs_data_row.push_back(rs->getString(3));  // TABLE_NAME
+        rs_data_row.push_back(rs->getString(4));  // TABLE_TYPE
+        rs_data_row.push_back(rs->getString(5));  // REMARKS
 
-          rs_data_row.push_back(rs->getString(1)); // TABLE_CAT
-          rs_data_row.push_back(rs->getString(2)); // TABLE_SCHEM
-          rs_data_row.push_back(rs->getString(3)); // TABLE_NAME
-          rs_data_row.push_back(rs->getString(4)); // TABLE_TYPE
-          rs_data_row.push_back(rs->getString(5)); // REMARKS
-
-          rs_data->push_back(rs_data_row);
-          break;
-        }
+        rs_data->push_back(rs_data_row);
+        break;
       }
     }
-  } else {
-    sql::SQLString query1("SHOW DATABASES LIKE '%");
-    query1.append(escapedSchemaPattern).append("'");
 
-    boost::scoped_ptr< sql::ResultSet > rs1(stmt->executeQuery(query1));
-    while (rs1->next()) {
-      sql::SQLString current_schema(rs1->getString(1));
-      sql::SQLString query2("SHOW FULL TABLES FROM `");
-      query2.append(current_schema).append("` LIKE '").append(escapedTableNamePattern).append("'");
-
-      boost::scoped_ptr< sql::ResultSet > rs2(stmt->executeQuery(query2));
-
-      while (rs2->next()) {
-        std::list< sql::SQLString >::const_iterator it = types.begin();
-        for (; it != types.end(); ++it) {
-          /* < 49999 knows only TABLE, no VIEWS */
-          /* TODO: Optimize this everytime checking, put it outside of the loop */
-          if (!it->compare("TABLE") && !(rs2->getString(2)).compare("BASE TABLE")) {
-            MySQL_ArtResultSet::row_t rs_data_row;
-
-            CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
-            rs_data_row.push_back("def");				// TABLE_CAT
-            rs_data_row.push_back(current_schema);		// TABLE_SCHEM
-            rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
-            rs_data_row.push_back("TABLE");				// TABLE_TYPE
-            rs_data_row.push_back("");					// REMARKS
-
-            rs_data->push_back(rs_data_row);
-            break;
-          } else if (!it->compare(rs2->getString(2)) && server_version > 49999) {
-            MySQL_ArtResultSet::row_t rs_data_row;
-
-            CPP_INFO_FMT("[][%s][%s][TABLE][]", current_schema.c_str(), rs2->getString(1).c_str());
-            rs_data_row.push_back("def");				// TABLE_CAT
-            rs_data_row.push_back(current_schema);		// TABLE_SCHEM
-            rs_data_row.push_back(rs2->getString(1));	// TABLE_NAME
-            rs_data_row.push_back("VIEW");				// TABLE_TYPE
-            rs_data_row.push_back("");					// REMARKS
-
-            rs_data->push_back(rs_data_row);
-            break;
-          }
-        }
-      }
-    }
   }
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);

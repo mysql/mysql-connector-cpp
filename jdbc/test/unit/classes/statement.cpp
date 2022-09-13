@@ -200,9 +200,6 @@ void statement::callSP()
     connection_properties["userName"]=user;
     connection_properties["password"]=passwd;
 
-    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=bval;
-
     connection_properties.erase("CLIENT_MULTI_RESULTS");
     connection_properties["CLIENT_MULTI_RESULTS"]=true;
 
@@ -343,9 +340,6 @@ void statement::unbufferedFetch()
     /* user comes from the unit testing framework */
     connection_properties["userName"]=user;
     connection_properties["password"]=passwd;
-
-    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=bval;
 
     logMsg("... setting TYPE_FORWARD_ONLY through connection map");
     connection_properties.erase("defaultStatementResultType");

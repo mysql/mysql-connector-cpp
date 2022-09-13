@@ -82,31 +82,6 @@ void connection::getClientOption()
   logMsg("connection::getClientOption() - MySQL_Connection::get|setClientOption()");
   try
   {
-    const std::string option("metadataUseInfoSchema");
-
-    {
-      bool input_value=true;
-      bool output_value=false;
-      void * input;
-      void * output;
-
-      input=(static_cast<bool *> (&input_value));
-      output=(static_cast<bool *> (&output_value));
-
-      con->setClientOption("metadataUseInfoSchema", input);
-      con->getClientOption("metadataUseInfoSchema", output);
-      ASSERT_EQUALS(input_value, output_value);
-
-      con->setClientOption("metadataUseInfoSchema", input);
-      con->getClientOption("metadataUseInfoSchema", output);
-      ASSERT_EQUALS(input_value, output_value);
-
-      input_value=false;
-      output_value=true;
-      con->setClientOption("metadataUseInfoSchema", input);
-      con->getClientOption("metadataUseInfoSchema", output);
-      ASSERT_EQUALS(input_value, output_value);
-    }
 
     {
       int input_value=sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
@@ -823,19 +798,6 @@ void connection::connectUsingMapWrongTypes()
 
     try
     {
-      connection_properties["metadataUseInfoSchema"]=(strval);
-      created_objects.clear();
-      con.reset(driver->connect(connection_properties));
-      FAIL("No exception XVI");
-    }
-    catch (sql::InvalidArgumentException&)
-    {
-      /* expected */
-    }
-    connection_properties.erase("metadataUseInfoSchema");
-
-    try
-    {
       connection_properties["CLIENT_COMPRESS"]=(strval);
       created_objects.clear();
       con.reset(driver->connect(connection_properties));
@@ -1090,9 +1052,6 @@ void connection::connectUsingMap()
     connection_properties["hostName"]=url;
     connection_properties["userName"]=user;
     connection_properties["password"]=passwd;
-
-    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=(bval);
 
     created_objects.clear();
     con.reset(driver->connect(connection_properties));
@@ -1793,36 +1752,7 @@ void connection::connectUsingMap()
     connection_properties.erase("REPORT_DATA_TRUNCATION");
 
 
-    /* 19) metadataUseInfoSchema */
-    connection_properties.erase("metadataUseInfoSchema");
-    {
-      logMsg("... testing metadataUseInfoSchema");
-      connection_properties["metadataUseInfoSchema"]=(true);
-      try
-      {
-        created_objects.clear();
-        con.reset(driver->connect(connection_properties));
-      }
-      catch (sql::SQLException &e)
-      {
-        fail(e.what(), __FILE__, __LINE__);
-      }
-
-      connection_properties.erase("metadataUseInfoSchema");
-      connection_properties["metadataUseInfoSchema"]=(false);
-      try
-      {
-        created_objects.clear();
-        con.reset(driver->connect(connection_properties));
-      }
-      catch (sql::SQLException &e)
-      {
-        fail(e.what(), __FILE__, __LINE__);
-      }
-    }
-    connection_properties.erase("metadataUseInfoSchema");
-
-    /* 20) defaultStatementResultType */
+    /* 19) defaultStatementResultType */
     connection_properties.erase("defaultStatementResultType");
     {
       logMsg("... testing defaultStatementResultType");
@@ -1874,7 +1804,7 @@ void connection::connectUsingMap()
     connection_properties.erase("defaultStatementResultType");
 
 #ifdef CPPWIN_WIN2
-    /* 21) OPT_NAMED_PIPE - handled but ignored! */
+    /* 20) OPT_NAMED_PIPE - handled but ignored! */
     connection_properties.erase("OPT_NAMED_PIPE");
     {
       logMsg("... testing OPT_NAMED_PIPE");
@@ -1893,7 +1823,7 @@ void connection::connectUsingMap()
     connection_properties.erase("OPT_NAMED_PIPE");
 #endif
 
-    /* 22) OPT_CHARSET_NAME = MYSQL_SET_CHARSET_NAME */
+    /* 21) OPT_CHARSET_NAME = MYSQL_SET_CHARSET_NAME */
     connection_properties.erase("OPT_CHARSET_NAME");
     {
       logMsg("... testing OPT_CHARSET_NAME");
@@ -1912,7 +1842,7 @@ void connection::connectUsingMap()
     connection_properties.erase("OPT_CHARSET_NAME");
 
 
-    /* 23) OPT_REPORT_DATA_TRUNCATION */
+    /* 22) OPT_REPORT_DATA_TRUNCATION */
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
     {
       logMsg("... testing OPT_REPORT_DATA_TRUNCATION");
@@ -1941,7 +1871,7 @@ void connection::connectUsingMap()
     }
     connection_properties.erase("OPT_REPORT_DATA_TRUNCATION");
 
-    /* 24) defaultPreparedStatementResultType */
+    /* 23) defaultPreparedStatementResultType */
     connection_properties.erase("defaultPreparedStatementResultType");
     {
       logMsg("... testing defaultPreparedStatementResultType");
@@ -1980,9 +1910,6 @@ void connection::connectOptReconnect()
     connection_properties["hostName"]=url;
     connection_properties["userName"]=user;
     connection_properties["password"]=passwd;
-
-    bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-    connection_properties["metadataUseInfoSchema"]=(bval);
 
     logMsg("... OPT_RECONNECT disabled");
 

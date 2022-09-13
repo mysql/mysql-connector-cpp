@@ -858,17 +858,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       throw SQLException("defaultPreparedStatementResultType parameter still not implemented");
 
   #endif
-    } else if (!it->first.compare(OPT_METADATA_INFO_SCHEMA)) {
-      try {
-        p_b = (it->second).get<bool>();
-      } catch (sql::InvalidArgumentException&) {
-        throw sql::InvalidArgumentException("Wrong type passed for metadataUseInfoSchema expected bool");
-      }
-      if (p_b) {
-        intern->metadata_use_info_schema = *p_b;
-      } else {
-        throw sql::InvalidArgumentException("No bool value passed for metadataUseInfoSchema");
-      }
     } else if (!it->first.compare(OPT_RECONNECT)) {
       try {
         p_b = (it->second).get<bool>();
@@ -1503,9 +1492,7 @@ void
 MySQL_Connection::getClientOption(const sql::SQLString & optionName, void * optionValue)
 {
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::getClientOption");
-  if (!optionName.compare("metadataUseInfoSchema")) {
-    *(static_cast<bool *>(optionValue)) = intern->metadata_use_info_schema;
-  } else if (!optionName.compare("defaultStatementResultType")) {
+  if (!optionName.compare("defaultStatementResultType")) {
     *(static_cast<int *>(optionValue)) = intern->defaultStatementResultType;
   } else if (!optionName.compare("defaultPreparedStatementResultType")) {
     *(static_cast<int *>(optionValue)) = intern->defaultPreparedStatementResultType;
@@ -1812,8 +1799,6 @@ MySQL_Connection::setClientOption(const sql::SQLString & optionName, const void 
       intern->logger->disableTracing();
       CPP_INFO("Tracing disabled");
     }
-  } else if (!optionName.compare("metadataUseInfoSchema")) {
-    intern->metadata_use_info_schema = *(static_cast<const bool *>(optionValue));
   } else if (!optionName.compare("defaultStatementResultType")) {
     int int_value =  *static_cast<const int *>(optionValue);
     do {

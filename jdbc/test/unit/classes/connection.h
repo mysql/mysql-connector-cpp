@@ -111,7 +111,7 @@ public:
    /**
    * Test getClientOption, setClientOption
    *
-   * Not part of the JDBC specs? Only supports metadataUseInfoSchema
+   * Not part of the JDBC specs?
    */
   void getClientOption();
 

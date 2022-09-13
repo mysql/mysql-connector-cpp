@@ -372,10 +372,7 @@ unit_fixture::getConnection(sql::ConnectOptionsMap *additional_options)
   connection_properties["userName"]=user;
   connection_properties["password"]=passwd;
 
-  bool bval= !TestsRunner::getStartOptions()->getBool("dont-use-is");
-  connection_properties["metadataUseInfoSchema"]=bval;
-
-  bval=TestsRunner::getStartOptions()->getBool("use-dynamic-load");
+  bool bval=TestsRunner::getStartOptions()->getBool("use-dynamic-load");
   if (bval)
   {
     sql::SQLString clientlib(DYNLOAD_MYSQL_LIB);

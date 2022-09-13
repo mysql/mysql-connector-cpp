@@ -537,30 +537,11 @@ void connectionmetadata::getColumns()
     }
 
     try {
-      bool input_value=true;
-      bool output_value=false;
-      void * input;
-      void * output;
-
       stmt->execute("CREATE TABLE test(id INT,val VARCHAR(20))");
-
-      input=(static_cast<bool *> (&input_value));
-      output=(static_cast<bool *> (&output_value));
-
-      con->setClientOption("metadataUseInfoSchema", input);
-      con->getClientOption("metadataUseInfoSchema", output);
-      ASSERT_EQUALS(input_value, output_value);
 
       dbmeta=con->getMetaData();
       res.reset(dbmeta->getColumns(con->getCatalog(), "", "test", "%"));
       ASSERT(res->rowsCount() == 2);
-
-      input_value=false;
-      output_value=true;
-
-      con->setClientOption("metadataUseInfoSchema", input);
-      con->getClientOption("metadataUseInfoSchema", output);
-      ASSERT_EQUALS(input_value, output_value);
 
       dbmeta=con->getMetaData();
       res.reset(dbmeta->getColumns(con->getCatalog(), "", "test", "%"));
@@ -568,7 +549,7 @@ void connectionmetadata::getColumns()
     }
     catch (sql::SQLException &)
     {
-      FAIL("getColumns() does not work properly for metadataUseInfoSchema");
+      FAIL("getColumns() does not work properly");
     }
 
     stmt->execute("DROP TABLE IF EXISTS test");
@@ -1487,117 +1468,96 @@ void connectionmetadata::getProcedures()
 
   sql::ConnectOptionsMap options;
 
-  for(int i=0; i < 2; ++i)
+  con.reset(unit_fixture::getConnection(&options));
+  con->setSchema(db);
+  bool got_warning=false;
+  std::stringstream msg;
+  try
   {
-    options[OPT_METADATA_INFO_SCHEMA] = i == 0;
-
-    con.reset(unit_fixture::getConnection(&options));
-    con->setSchema(db);
-
-
-    bool got_warning=false;
-    std::stringstream msg;
+    DatabaseMetaData * dbmeta=con->getMetaData();
+    stmt.reset(con->createStatement());
     try
     {
-      DatabaseMetaData * dbmeta=con->getMetaData();
-      stmt.reset(con->createStatement());
-      try
-      {
-        stmt->execute("DROP PROCEDURE IF EXISTS p1");
-        stmt->execute("CREATE PROCEDURE p1(OUT param1 INT) COMMENT 'Sample Procedure' BEGIN SELECT 1 INTO param1; END");
-        stmt->execute("DROP FUNCTION IF EXISTS f1");
-        stmt->execute("CREATE FUNCTION f1(s CHAR(20)) RETURNS CHAR(50) COMMENT 'Sample Function'  DETERMINISTIC RETURN CONCAT('Hello, ',s,'!')");
-      }
-      catch (sql::SQLException &)
-      {
-        SKIP("Cannot create procedure");
-      }
-
-      // Verify if the procedure creally has been created...
-      stmt->execute("SET @myvar = -1");
-      stmt->execute("CALL p1(@myvar)");
-
-      res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
-      ASSERT(res->next());
-      ASSERT_EQUALS(1, res->getInt("_myvar"));
-      logMsg("...who is the bad guy?");
-
-      res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "p1"));
-      checkResultSetScrolling(res);
-      logMsg("...is it you, getProcedures()?");
-      ASSERT(res->next());
-
-      if (con->getCatalog() != "" && res->getString("PROCEDURE_CAT") != "" && con->getCatalog() != res->getString("PROCEDURE_CAT"))
-      {
-        got_warning=true;
-        msg.str("");
-        msg << "\t\tWARNING expecting PROCEDURE_CAT = '" << con->getCatalog() << "'";
-        msg << " got '" << res->getString("PROCEDURE_CAT") << "'";
-        logMsg(msg.str());
-      }
-
-      ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
-      ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
-      ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
-      ASSERT_EQUALS("p1", res->getString(3));
-      ASSERT_EQUALS(res->getString(3), res->getString("PROCEDURE_NAME"));
-      ASSERT_EQUALS("", res->getString(4));
-      ASSERT_EQUALS("", res->getString(5));
-      ASSERT_EQUALS("", res->getString(6));
-      ASSERT_EQUALS("Sample Procedure", res->getString(7));
-      ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
-      ASSERT_EQUALS(DatabaseMetaData::procedureNoResult, res->getInt("PROCEDURE_TYPE"));
-      ASSERT(DatabaseMetaData::procedureReturnsResult != res->getInt(8));
-      ASSERT(DatabaseMetaData::procedureResultUnknown != res->getInt(8));
-      ASSERT(!res->next());
-
-      res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "f1"));
-      checkResultSetScrolling(res);
-
-      ASSERT(res->next());
-
-      if (con->getCatalog() != "" && res->getString("PROCEDURE_CAT") != "" && con->getCatalog() != res->getString("PROCEDURE_CAT"))
-      {
-        got_warning=true;
-        msg.str("");
-        msg << "\t\tWARNING expecting PROCEDURE_CAT = '" << con->getCatalog() << "'";
-        msg << " got '" << res->getString("PROCEDURE_CAT") << "'";
-        logMsg(msg.str());
-      }
-
-      ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
-      ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
-      ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
-      ASSERT_EQUALS("f1", res->getString(3));
-      ASSERT_EQUALS(res->getString(3), res->getString("PROCEDURE_NAME"));
-      ASSERT_EQUALS("", res->getString(4));
-      ASSERT_EQUALS("", res->getString(5));
-      ASSERT_EQUALS("", res->getString(6));
-      ASSERT_EQUALS("Sample Function", res->getString(7));
-      ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
-      ASSERT_EQUALS(DatabaseMetaData::procedureReturnsResult, res->getInt("PROCEDURE_TYPE"));
-      ASSERT(DatabaseMetaData::procedureNoResult != res->getInt(8));
-      ASSERT(DatabaseMetaData::procedureResultUnknown != res->getInt(8));
-      ASSERT(!res->next());
+      stmt->execute("DROP PROCEDURE IF EXISTS p1");
+      stmt->execute("CREATE PROCEDURE p1(OUT param1 INT) COMMENT 'Sample Procedure' BEGIN SELECT 1 INTO param1; END");
+      stmt->execute("DROP FUNCTION IF EXISTS f1");
+      stmt->execute("CREATE FUNCTION f1(s CHAR(20)) RETURNS CHAR(50) COMMENT 'Sample Function'  DETERMINISTIC RETURN CONCAT('Hello, ',s,'!')");
     }
-    catch (sql::SQLException &e)
+    catch (sql::SQLException &)
     {
-      logErr(e.what());
-      logErr("SQLState: " + std::string(e.getSQLState()));
-      fail(e.what(), __FILE__, __LINE__);
+      SKIP("Cannot create procedure");
     }
-
-    if (got_warning)
+    // Verify if the procedure creally has been created...
+    stmt->execute("SET @myvar = -1");
+    stmt->execute("CALL p1(@myvar)");
+    res.reset(stmt->executeQuery("SELECT @myvar AS _myvar"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(1, res->getInt("_myvar"));
+    logMsg("...who is the bad guy?");
+    res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "p1"));
+    checkResultSetScrolling(res);
+    logMsg("...is it you, getProcedures()?");
+    ASSERT(res->next());
+    if (con->getCatalog() != "" && res->getString("PROCEDURE_CAT") != "" && con->getCatalog() != res->getString("PROCEDURE_CAT"))
     {
-      if(i==0){
-        TODO("Using Information Schema")
-      } else {
-        TODO("Not Using Information Schema");
-      }
-      TODO("See --verbose warnings!");
-      FAIL("TODO - see --verbose warnings!");
+      got_warning=true;
+      msg.str("");
+      msg << "\t\tWARNING expecting PROCEDURE_CAT = '" << con->getCatalog() << "'";
+      msg << " got '" << res->getString("PROCEDURE_CAT") << "'";
+      logMsg(msg.str());
     }
+    ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
+    ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS("p1", res->getString(3));
+    ASSERT_EQUALS(res->getString(3), res->getString("PROCEDURE_NAME"));
+    ASSERT_EQUALS("", res->getString(4));
+    ASSERT_EQUALS("", res->getString(5));
+    ASSERT_EQUALS("", res->getString(6));
+    ASSERT_EQUALS("Sample Procedure", res->getString(7));
+    ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
+    ASSERT_EQUALS(DatabaseMetaData::procedureNoResult, res->getInt("PROCEDURE_TYPE"));
+    ASSERT(DatabaseMetaData::procedureReturnsResult != res->getInt(8));
+    ASSERT(DatabaseMetaData::procedureResultUnknown != res->getInt(8));
+    ASSERT(!res->next());
+    res.reset(dbmeta->getProcedures(con->getCatalog(), con->getSchema(), "f1"));
+    checkResultSetScrolling(res);
+    ASSERT(res->next());
+    if (con->getCatalog() != "" && res->getString("PROCEDURE_CAT") != "" && con->getCatalog() != res->getString("PROCEDURE_CAT"))
+    {
+      got_warning=true;
+      msg.str("");
+      msg << "\t\tWARNING expecting PROCEDURE_CAT = '" << con->getCatalog() << "'";
+      msg << " got '" << res->getString("PROCEDURE_CAT") << "'";
+      logMsg(msg.str());
+    }
+    ASSERT_EQUALS(res->getString(1), res->getString("PROCEDURE_CAT"));
+    ASSERT_EQUALS(con->getSchema(), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS(res->getString(2), res->getString("PROCEDURE_SCHEM"));
+    ASSERT_EQUALS("f1", res->getString(3));
+    ASSERT_EQUALS(res->getString(3), res->getString("PROCEDURE_NAME"));
+    ASSERT_EQUALS("", res->getString(4));
+    ASSERT_EQUALS("", res->getString(5));
+    ASSERT_EQUALS("", res->getString(6));
+    ASSERT_EQUALS("Sample Function", res->getString(7));
+    ASSERT_EQUALS(res->getString("REMARKS"), res->getString(7));
+    ASSERT_EQUALS(DatabaseMetaData::procedureReturnsResult, res->getInt("PROCEDURE_TYPE"));
+    ASSERT(DatabaseMetaData::procedureNoResult != res->getInt(8));
+    ASSERT(DatabaseMetaData::procedureResultUnknown != res->getInt(8));
+    ASSERT(!res->next());
   }
+  catch (sql::SQLException &e)
+  {
+    logErr(e.what());
+    logErr("SQLState: " + std::string(e.getSQLState()));
+    fail(e.what(), __FILE__, __LINE__);
+  }
+  if (got_warning)
+  {
+    TODO("See --verbose warnings!");
+    FAIL("TODO - see --verbose warnings!");
+  }
+
   con.reset(unit_fixture::getConnection());
   con->setSchema(db);
 }

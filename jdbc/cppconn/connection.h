@@ -110,7 +110,6 @@
  Charracter set results and Metadata
 */
 #define OPT_CHARACTER_SET_RESULTS       "characterSetResults"
-#define OPT_METADATA_INFO_SCHEMA        "metadataUseInfoSchema"
 #define OPT_OPTIONAL_RESULTSET_METADATA "OPT_OPTIONAL_RESULTSET_METADATA"
 #define OPT_REPORT_DATA_TRUNCATION      "OPT_REPORT_DATA_TRUNCATION"
 #define OPT_CHARSET_NAME                "OPT_CHARSET_NAME"
@@ -137,9 +136,7 @@
 */
 #define OPT_OCI_CONFIG_FILE "OPT_OCI_CONFIG_FILE"
 
-
-namespace sql
-{
+namespace sql {
 
 typedef sql::Variant ConnectPropertyVal;
 
