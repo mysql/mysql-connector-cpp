@@ -20,35 +20,35 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-# The files in protobuf-3.19.4/ are almost unmodified versions of google
+# The files in protobuf-3.19.6/ are almost unmodified versions of google
 # source files taken from protobuf-cpp-3.11.4.tar.gz archive.
 # Changes:
 # - remove directories and files
-#    protobuf-3.19.4/benchmarks/
-#    protobuf-3.19.4/conformance/
-#    protobuf-3.19.4/editors/
-#    protobuf-3.19.4/examples/
-#    protobuf-3.19.4/m4/
-#    protobuf-3.19.4/objectivec/
-#    protobuf-3.19.4/python/
-#    protobuf-3.19.4/third_party/
-#    protobuf-3.19.4/util/
-#    protobuf-3.19.4/ar-lib
-#    protobuf-3.19.4/compile
-#    protobuf-3.19.4/config.guess
-#    protobuf-3.19.4/config.h.in
-#    protobuf-3.19.4/config.sub
-#    protobuf-3.19.4/configure
-#    protobuf-3.19.4/depcomp
-#    protobuf-3.19.4/install-sh
-#    protobuf-3.19.4/ltmain.sh
-#    protobuf-3.19.4/missing
-#    protobuf-3.19.4/test-driver
-#    protobuf-3.19.4/update_file_lists.sh
-#    protobuf-3.19.4/autogen.sh
-#    protobuf-3.19.4/build_files_updated_unittest.sh
-#    protobuf-3.19.4/generate_descriptor_proto.sh
-#    protobuf-3.19.4/maven_install.json
+#    protobuf-3.19.6/benchmarks/
+#    protobuf-3.19.6/conformance/
+#    protobuf-3.19.6/editors/
+#    protobuf-3.19.6/examples/
+#    protobuf-3.19.6/m4/
+#    protobuf-3.19.6/objectivec/
+#    protobuf-3.19.6/python/
+#    protobuf-3.19.6/third_party/
+#    protobuf-3.19.6/util/
+#    protobuf-3.19.6/ar-lib
+#    protobuf-3.19.6/compile
+#    protobuf-3.19.6/config.guess
+#    protobuf-3.19.6/config.h.in
+#    protobuf-3.19.6/config.sub
+#    protobuf-3.19.6/configure
+#    protobuf-3.19.6/depcomp
+#    protobuf-3.19.6/install-sh
+#    protobuf-3.19.6/ltmain.sh
+#    protobuf-3.19.6/missing
+#    protobuf-3.19.6/test-driver
+#    protobuf-3.19.6/update_file_lists.sh
+#    protobuf-3.19.6/autogen.sh
+#    protobuf-3.19.6/build_files_updated_unittest.sh
+#    protobuf-3.19.6/generate_descriptor_proto.sh
+#    protobuf-3.19.6/maven_install.json
 
 # - disable configuration check of cmake's mimimum version
 # - disable configuration zlib check
@@ -62,7 +62,7 @@ PROJECT(Protobuf)
 include(../setup.cmake)
 include(platform)
 
-SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.19.4")
+SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.19.6")
 
 #
 # Produce position independent code.
@@ -90,7 +90,7 @@ endif()
 set_visibility(hidden)
 
 if(NOT MSVC AND NOT APPLE)
-  add_compile_options(-Wno-stringop-overflow)
+  add_compile_options(-Wno-stringop-overflow -Wno-stringop-overread)
 endif()
 
 #
