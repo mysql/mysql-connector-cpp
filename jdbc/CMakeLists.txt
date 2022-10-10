@@ -689,7 +689,7 @@ if(BUNDLE_DEPENDENCIES)
   if(MAINTAINER_MODE)
 
     foreach(plugin ${PLUGINS})
-      message(STATUS "known client-side plugin not found and not bundled: ${plugin}")
+      message(SEND_ERROR "known client-side plugin not found and not bundled: ${plugin}")
     endforeach()
 
     foreach(plugin ${IGNORED_PLUGINS})
