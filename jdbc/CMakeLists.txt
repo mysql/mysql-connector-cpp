@@ -385,11 +385,17 @@ endif()
 # the lists should be updated.
 
 set(AUTH_PLUGINS
-  fido
-  kerberos
   ldap_sasl
   oci
 )
+
+if(NOT CMAKE_SYSTEM_NAME MATCHES "SunOS")
+  list(APPEND AUTH_PLUGINS fido)
+  # TODO: Missing kerberos authentication plugin on macOS could be a bug
+  if(NOT APPLE)
+    list(APPEND AUTH_PLUGINS kerberos)
+  endif()
+endif()
 
 
 # Plugin dependencies.
@@ -572,7 +578,7 @@ macro(bundle_plugins ignored)
 
   #message("== PLUGINS: ${PLUGINS}")
 
-  file(GLOB _bundled "${MYSQL_PLUGIN_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+  file(GLOB _bundled "${MYSQL_PLUGIN_DIR}/*${CMAKE_SHARED_MODULE_SUFFIX}*")
 
   set(plugins ${PLUGINS})
 
