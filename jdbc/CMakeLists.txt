@@ -391,7 +391,7 @@ set(AUTH_PLUGINS
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "SunOS")
   list(APPEND AUTH_PLUGINS fido)
-  # TODO: Missing kerberos authentication plugin on macOS could be a bug
+  # Note: Kerberos authentication plugin is not supported on macOS
   if(NOT APPLE)
     list(APPEND AUTH_PLUGINS kerberos)
   endif()
@@ -406,8 +406,6 @@ endif()
 
 set(AUTH_DEPS_fido fido2)
 
-# Note: Windows implementation does not depend on MIT Kerberos library, it uses
-# native Win APIs
 
 if(WIN32)
   set(AUTH_DEPS_kerberos 
@@ -417,9 +415,12 @@ else()
   set(AUTH_DEPS_kerberos gssapi_krb5 k5crypto krb5support krb5 com_err)
 endif()
 
+# Note: On Solaris and macOS all dependencies of ldap_sasl plugin are assumed 
+# to be part of the OS.
+
 if(WIN32)
   set(AUTH_DEPS_ldap_sasl libsasl saslSCRAM)
-else()
+elseif(NOT MACOS AND NOT SUNOS)
   set(AUTH_DEPS_ldap_sasl libsasl ${AUTH_DEPS_kerberos})
 endif()
 
