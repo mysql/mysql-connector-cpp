@@ -141,12 +141,19 @@ public:
 
   virtual ~Op_base() override
   {
+    // Let's aquire lock so that any remaingin replies are consumed on ~Reply
+    // and this way avoid race conditions with Client::close()
+    auto lock = m_sess->lock();
     release_stmt_id();
+    m_reply.reset();
   }
 
   cdk::Session& get_cdk_session()
   {
     assert(m_sess);
+    if (!m_sess->m_sess->is_valid()){
+      THROW("Session is no longer valid");
+    }
     return *(m_sess->m_sess);
   }
 
@@ -335,8 +342,11 @@ public:
 
   Result_init& execute() override
   {
+    auto lock = m_sess->lock();
     // Can not execute operation that is already completed.
     assert(!m_completed);
+
+
 
     execute_prepare();
     wait();
