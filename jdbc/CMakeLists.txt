@@ -457,6 +457,9 @@ set(IGNORED_LIBS
   mysqlrouter_lib
   mysqlrouter_metadata_cache
   mysqlrouter_routing
+  # New DLLs added in .33
+  destination_status
+  mysqlrouter_destination_status
 )
 
 
