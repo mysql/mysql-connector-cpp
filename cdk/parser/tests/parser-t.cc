@@ -206,12 +206,12 @@ public:
   struct Scalar_sink : public Any_prc::Scalar_prc
   {
     void null() {}
-    void str(const cdk::string &val) {}
-    void num(uint64_t val) {}
-    void num(int64_t val) {}
-    void num(float val) {}
-    void num(double val) {}
-    void yesno(bool val) {}
+    void str(const cdk::string &) {}
+    void num(uint64_t) {}
+    void num(int64_t) {}
+    void num(float) {}
+    void num(double) {}
+    void yesno(bool) {}
   };
 
   struct Any_sink
@@ -259,7 +259,7 @@ public:
     {
     }
 
-    Any_prc* key_val(const string &key)
+    Any_prc* key_val(const string &)
     {
       return this;
     }
@@ -276,7 +276,7 @@ public:
   {
   }
 
-  Any_prc* key_val(const cdk::string &key)
+  Any_prc* key_val(const cdk::string &)
   {
     return &m_any_sink;
   }
@@ -359,12 +359,12 @@ TEST(Parser, json)
     // Scalar processor
 
     void null() { assert(false && "unexpected null value"); }
-    void str(const cdk::string &val) { assert(false && "unexpected string value"); }
-    void num(uint64_t val) { assert(false && "unexpected uint value"); }
-    void num(int64_t val) { assert(false && "unexpeted int value"); }
+    void str(const cdk::string &) { assert(false && "unexpected string value"); }
+    void num(uint64_t) { assert(false && "unexpected uint value"); }
+    void num(int64_t) { assert(false && "unexpeted int value"); }
     void num(float val) { m_val = val; }
     void num(double val) { m_val = val; }
-    void yesno(bool val) { assert(false && "unexpected bool value"); }
+    void yesno(bool) { assert(false && "unexpected bool value"); }
 
     // Any processor
 
@@ -389,7 +389,7 @@ TEST(Parser, json)
 
     void doc_begin() {}
     void doc_end() { cout <<"- value: " << m_val << endl; }
-    Any_prc* key_val(const cdk::string &key)
+    Any_prc* key_val(const cdk::string &)
     {
       return this;
     }
@@ -463,8 +463,8 @@ public:
       m_pb.out_ind() <<(val ? "TRUE" : "FALSE" ) <<endl;
     }
 
-    void value(cdk::Type_info ti,const cdk::Format_info &fi,
-               cdk::foundation::bytes data)
+    void value(cdk::Type_info ti,const cdk::Format_info &,
+               cdk::foundation::bytes)
     {
       m_pb.out_ind() <<"<value of type " <<(unsigned)ti <<">" <<endl;
     }
@@ -689,32 +689,32 @@ public:
     {
     }
 
-    virtual void str(const cdk::string &val)
+    virtual void str(const cdk::string &)
     {
     }
 
-    virtual void num(int64_t val)
+    virtual void num(int64_t)
     {
     }
 
-    virtual void num(uint64_t val)
+    virtual void num(uint64_t)
     {
     }
 
-    virtual void num(float val)
+    virtual void num(float)
     {
     }
 
-    virtual void num(double val)
+    virtual void num(double)
     {
     }
 
-    virtual void yesno(bool val)
+    virtual void yesno(bool)
     {
     }
 
-    void value(cdk::Type_info ti,const cdk::Format_info &fi,
-               cdk::foundation::bytes data)
+    void value(cdk::Type_info,const cdk::Format_info &,
+               cdk::foundation::bytes)
     {
     }
 
@@ -736,7 +736,7 @@ public:
       return this;
     }
 
-    void member(const string &name)
+    void member(const string &)
     {
     }
 
@@ -744,7 +744,7 @@ public:
     {
     }
 
-    void index(index_t pos)
+    void index(index_t)
     {
     }
 
@@ -795,7 +795,7 @@ public:
       return call(*this);
     }
 
-    Args_prc* call(const cdk::api::Table_ref &db_obj)
+    Args_prc* call(const cdk::api::Table_ref &)
     {
       return this;
     }
@@ -813,7 +813,7 @@ public:
       return &m_parent;
     }
 
-    virtual void var(const cdk::string &var_name)
+    virtual void var(const cdk::string &)
     {
     }
 
@@ -822,7 +822,7 @@ public:
       path.process(m_path_sink);
     }
 
-    virtual void ref(const cdk::api::Column_ref &col, const cdk::Doc_path *path)
+    virtual void ref(const cdk::api::Column_ref &, const cdk::Doc_path *path)
     {
       if (path)
       {
@@ -834,11 +834,11 @@ public:
     {
     }
 
-    virtual void param(const cdk::string &pname)
+    virtual void param(const cdk::string &)
     {
     }
 
-    virtual void param(uint16_t pos)
+    virtual void param(uint16_t )
     {
     }
   }

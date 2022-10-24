@@ -152,7 +152,7 @@ protected:
     typename std::enable_if<!std::is_convertible<C,Value>::value>::type*
       = nullptr
   >
-  static Value opt_val(int opt, const C &container)
+  static Value opt_val(int , const C &container)
   {
     return Value(std::begin(container), std::end(container));
   }
