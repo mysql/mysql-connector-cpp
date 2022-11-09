@@ -518,12 +518,14 @@ TEST_F(xapi, lock_contention)
   stmt2 = mysqlx_collection_modify_new(coll_nolock);
   mysqlx_set_modify_set(stmt2, "name",PARAM_STRING("Bogdan"),PARAM_END);
   EXPECT_EQ(NULL, mysqlx_execute(stmt2));
+  mysqlx_free(stmt2);
 
   std::thread thread_modify([&] {
    stmt2 = mysqlx_collection_modify_new(coll_nolock);
    mysqlx_set_modify_set(stmt2, "name",PARAM_STRING("Bogdan"),PARAM_END);
    res = mysqlx_execute(stmt2);
    EXPECT_TRUE(NULL != res);
+   mysqlx_free(stmt2);
   });
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -531,8 +533,6 @@ TEST_F(xapi, lock_contention)
   mysqlx_transaction_rollback(get_session());
 
   thread_modify.join();
-
-  mysqlx_free(stmt2);
 
   mysqlx_transaction_rollback(s_nolock);
 

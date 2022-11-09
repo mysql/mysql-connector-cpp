@@ -173,7 +173,8 @@ convert(cdk::foundation::bytes data, Format_descr<cdk::TYPE_DATETIME> &)
 Result_impl::Result_impl(Result_init &init)
   : m_sess(init.get_session()), m_reply(init.get_reply())
 {
-  // Note: init.get_reply() can be NULL in the case of ignored server error
+  auto lock = m_sess->lock();
+
   m_sess->register_result(this);
   init.init_result(*this);
 }
@@ -181,24 +182,21 @@ Result_impl::Result_impl(Result_init &init)
 
 Result_impl::~Result_impl()
 {
+  auto lock = m_sess->lock();
   try {
-    if (m_sess)
-      m_sess->deregister_result(this);
+    if (m_sess) m_sess->deregister_result(this);
+  } catch (...) {
   }
-  catch (...)
-  {}
 
   // Note: Cursor must be deleted before reply.
   delete m_cursor;
   delete m_reply;
 }
 
-
-bool Result_impl::next_result()
-{
+bool Result_impl::next_result() {
+  auto lock = m_sess->lock();
   pop_row_cache();
-  if(!m_result_cache.empty())
-    return true;
+  if (!m_result_cache.empty()) return true;
 
   // Nothing in cache... jump to next resultset and read it
   return read_next_result();
@@ -210,6 +208,8 @@ bool Result_impl::read_next_result()
     Note: closing cursor discards previous rset. Only then
     we can move to the next rset (if any).
   */
+
+  auto lock = m_sess->lock();
 
   if (m_pending_rows)
   {
@@ -227,8 +227,7 @@ bool Result_impl::read_next_result()
   if (!m_reply)
     return false;
 
-  if (!m_reply->has_results())
-  {
+  if (!m_reply->has_results()) {
     if (0 < m_reply->entry_count())
       m_reply->get_error().rethrow();
     m_sess->deregister_result(this);
@@ -250,9 +249,9 @@ bool Result_impl::read_next_result()
   return true;
 }
 
-void Result_impl::push_row_cache()
-{
-  m_result_mdata.push(Shared_meta_data(new Meta_data(*m_cursor)));
+void Result_impl::push_row_cache() {
+  auto lock = m_sess->lock();
+  m_result_mdata.push(Shared_meta_data(new Meta_data(*m_cursor )));
   m_result_cache.push(Row_cache());
   m_result_cache_size.push(0);
 }
@@ -260,6 +259,7 @@ void Result_impl::push_row_cache()
 
 const Row_data* Result_impl::get_row()
 {
+  auto lock = m_sess->lock();
   // TODO: Session parameter for cache prefetch size
 
   load_cache(16);
@@ -290,6 +290,7 @@ const Row_data* Result_impl::get_row()
 
 bool Result_impl::load_cache(row_count_t prefetch_size)
 {
+  auto lock = m_sess->lock();
   if (!m_inited)
     next_result();
 

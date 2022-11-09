@@ -806,32 +806,49 @@ try {
 catch (...)
 {}
 
-
-void Session_pool::close()
-{
+void Session_pool::close() {
   lock_guard guard(m_pool_mutex);
-  //First, close all sessions
-  for(auto &el : m_pool)
-  {
-    try{
-      // If there is a cleanup handler, call it before closing a session.
-      if (el.second.m_cleanup)
-        el.second.m_cleanup->cleanup();
-      el.first->close();
-    } catch(...)
-    {}
+  // First, close all sessions
+  bool first_iteration = true;
+  while (!m_pool.empty()) {
+    auto next_it = m_pool.begin();
+    for (auto it = next_it; it != m_pool.end(); it = next_it) {
+      ++next_it;
+      auto &el = *it;
+      if (el.second.m_cleanup) {  // It is use, needs to be cleanup before close
+        auto lock = el.second.m_cleanup->try_lock();
+        // On first iteration, will just try to lock, but on second iteration, it
+        // will wait untill lock is free
+        if (!first_iteration && !lock.owns_lock()) {
+        lock.lock();
+        }
+        if (lock.owns_lock()) {
+          try {
+            // call cleanup before closing a session.
+            el.second.m_cleanup->cleanup();
+            el.first->close();
+          } catch (...) {}
+          m_pool.erase(it);
+        }
+      } else {
+        try {
+          // unused sessions don't have the cleanup so, just close them.
+          el.first->close();
+        } catch (...) {}
+        m_pool.erase(it);
+      }
+    }
+    first_iteration = false;
   }
-  m_pool.clear();
 
-  //prevent changing m_pool_closed before getting release condition signal
+  // prevent changing m_pool_closed before getting release condition signal
   std::unique_lock<std::mutex> lock(m_reelase_mutex);
   m_pool_closed = true;
 
-  //Will notify all because, since pool is now closed, waiting pooled sessions
-  //will throw error!
+  // Will notify all because, since pool is now closed, waiting pooled sessions
+  // will throw error!
   m_release_cond.notify_all();
 }
-
 
 void Session_pool::release_session(cdk::shared_ptr<cdk::Session> &sess)
 {
