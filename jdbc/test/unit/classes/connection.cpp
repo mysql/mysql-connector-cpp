@@ -3855,20 +3855,18 @@ void connection::tls_deprecation()
   struct TEST_CASES
   {
     const std::string& tls_versions;
-    bool succeed;
+    bool client_supports;
+    bool server_supports;
   };
 
-  TEST_CASES test_cases[] =
-  {
-    {"TLSv1.1,TLSv1.2" ,true },
-    //Not all platforms support TLSv1.3
-    {"foo,TLSv1.3"     ,check_tls_ver("TLSv1.3")},
-    {"foo,TLSv1.2"     ,true },
-    {"TLSv1.0,TLSv1.1" ,false},
-    {"foo,TLSv1.1"     ,false},
-    {"foo,bar"         ,false},
-    {""                ,false}
-  };
+  TEST_CASES test_cases[] = {
+      {"TLSv1.1,TLSv1.2", true, check_tls_ver("TLSv1.2")},
+      {"foo,TLSv1.3", true, check_tls_ver("TLSv1.3")},
+      {"foo,TLSv1.2", true, check_tls_ver("TLSv1.2")},
+      {"TLSv1.0,TLSv1.1", false, false},
+      {"foo,TLSv1.1", false, false},
+      {"foo,bar", false, false},
+      {"", false, false}};
 
   for(auto test : test_cases)
   {
@@ -3876,7 +3874,7 @@ void connection::tls_deprecation()
     opt[OPT_TLS_VERSION] = test.tls_versions;
     try {
       Connection test_connection(driver->connect(opt));
-      if(!test.succeed)
+      if(!test.client_supports)
       {
         std::stringstream err;
         err << "TLS versions (" << test.tls_versions << ") SHOULD THROW EXCEPTION";
@@ -3892,9 +3890,10 @@ void connection::tls_deprecation()
 
     }  catch (sql::SQLException &e) {
       logMsg(e.what());
-      ASSERT_EQUALS(false, test.succeed);
+      ASSERT_EQUALS(false, test.client_supports&& test.server_supports);
       ASSERT_EQUALS(2026, e.getErrorCode());
-      ASSERT_EQUALS("SSL connection error: TLS version is invalid, valid versions are: TLSv1.2, TLSv1.3", e.what());
+      if(test.server_supports)
+        ASSERT_EQUALS("SSL connection error: TLS version is invalid, valid versions are: TLSv1.2, TLSv1.3", e.what());
     }
   }
 
