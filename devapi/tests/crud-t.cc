@@ -2348,10 +2348,10 @@ TEST_F(Crud, lock_contention)
   sess.startTransaction();
   s_nolock.startTransaction();
 
-  auto res_id2 =tbl.select().where("_id like '2'").lockExclusive()
-      .execute();
+  auto res_id2 = std::make_shared<RowResult>(
+      tbl.select().where("_id like '2'").lockExclusive().execute());
 
-  EXPECT_EQ(1U, res_id2.count());
+  EXPECT_EQ(1U, res_id2->count());
 
   EXPECT_EQ(9U,
             tbl_nolock.select()
@@ -2391,10 +2391,10 @@ TEST_F(Crud, lock_contention)
     cout << "Expected: " << e << endl;
   }
 
-  auto res_error = select_error.execute();
+  auto res_error = std::make_shared<RowResult>(select_error.execute());
 
   try{
-    for (Row row : res_error)
+    for (Row row : *res_error)
     {
       std::cout << row << std::endl;
     }
@@ -2403,10 +2403,10 @@ TEST_F(Crud, lock_contention)
   catch(mysqlx::Error&)
   {}
 
-  auto coll_res_error = find_error.execute();
+  auto coll_res_error = std::make_shared<DocResult>(find_error.execute());
 
   try{
-    for (auto doc : coll_res_error)
+    for (auto doc : *coll_res_error)
     {
       std::cout << doc << std::endl;
     }
@@ -2426,9 +2426,8 @@ TEST_F(Crud, lock_contention)
   sess.startTransaction();
   s_nolock.startTransaction();
 
-  auto res_id3 =tbl.select().where("_id like '3'").lockShared()
-      .execute();
-
+  auto res_id3 = std::make_shared<RowResult>(
+      tbl.select().where("_id like '3'").lockShared().execute());
 
   EXPECT_EQ(10U,
             tbl_nolock.select().lockShared(mysqlx::LockContention::SKIP_LOCKED)
@@ -2456,6 +2455,12 @@ TEST_F(Crud, lock_contention)
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   sess.rollback();
+
+  // Let's free all locks
+  res_id2.reset();
+  res_error.reset();
+  coll_res_error.reset();
+  res_id3.reset();
 
   thread_modify.join();
 

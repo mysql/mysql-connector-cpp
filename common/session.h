@@ -44,6 +44,7 @@ PUSH_SYS_WARNINGS
 #include <list>
 #include <mutex>
 #include <condition_variable>
+#include <mutex>
 POP_SYS_WARNINGS
 
 namespace mysqlx {
@@ -62,11 +63,15 @@ using time_point = std::chrono::time_point<system_clock>;
 
 /*
   Abstract interface used to clean up a session before it is closed.
+  Also has methods to aquire lock and try_lock, so that Session pool can clean
+  on multi thread environment.
 */
 
 struct Session_cleanup
 {
   virtual void cleanup() = 0;
+  virtual std::unique_lock<std::recursive_mutex> lock() const = 0;
+  virtual std::unique_lock<std::recursive_mutex> try_lock() const = 0;
 };
 
 
@@ -300,6 +305,7 @@ public:
   std::set<uint32_t>  m_stmt_id;
   std::set<uint32_t>  m_stmt_id_cleanup;
   size_t              m_max_pstmt = std::numeric_limits<size_t>::max();
+  std::recursive_mutex m_mutex;
 
   Session_impl(Session_pool_shared &pool)
     : m_sess(pool, this)
@@ -454,9 +460,21 @@ public:
 
   void release();
 
+  /*
+    Implement Session_cleanup
+  */
   void cleanup() override
   {
     prepare_for_cmd();
+  }
+  std::unique_lock<std::recursive_mutex> lock() const override {
+    return std::unique_lock<std::recursive_mutex>(
+        const_cast<Session_impl *>(this)->m_mutex);
+  }
+
+  std::unique_lock<std::recursive_mutex> try_lock() const override {
+    return std::unique_lock<std::recursive_mutex>(
+        const_cast<Session_impl *>(this)->m_mutex, std::try_to_lock);
   }
 };
 

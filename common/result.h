@@ -1016,6 +1016,7 @@ protected:
 
   void pop_row_cache()
   {
+    auto lock = m_sess->lock();
     if(!m_result_mdata.empty())
       m_result_mdata.pop();
     if (!m_result_cache.empty())
@@ -1054,6 +1055,7 @@ public:
   // Return number of diagnostic entries with given error level (defaults to ERROR).
   unsigned int entry_count(Severity::value level = Severity::ERROR) override
   {
+    auto lock = m_sess->lock();
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
 
@@ -1066,9 +1068,9 @@ public:
   // Iterator interface with single Error_iterator::error() method that returns the current error entry from the sequence.
   Iterator& get_entries(Severity::value level = Severity::ERROR) override
   {
+    auto lock = m_sess->lock();
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
-
     return m_reply->get_entries(level);
   }
 
@@ -1076,9 +1078,9 @@ public:
   // Equivalent to get_erros().error(). Note that this method can throw exception if there is no error available.
   const cdk::Error& get_error() override
   {
+    auto lock = m_sess->lock();
     if (!m_reply)
       THROW("Attempt to get warning count for empty result");
-
     return m_reply->get_error();
   }
 
@@ -1108,6 +1110,7 @@ private:
 inline
 col_count_t Result_impl::get_col_count() const
 {
+  auto lock = m_sess->lock();
   if (m_result_mdata.empty())
     THROW("No result set");
   return m_result_mdata.front()->col_count();
@@ -1116,6 +1119,7 @@ col_count_t Result_impl::get_col_count() const
 inline
 cdk::row_count_t Result_impl::get_affected_rows() const
 {
+  auto lock = m_sess->lock();
   if (!m_reply)
     THROW("Attempt to get affected rows count on empty result");
   return m_reply->affected_rows();
@@ -1124,6 +1128,7 @@ cdk::row_count_t Result_impl::get_affected_rows() const
 inline
 cdk::row_count_t Result_impl::get_auto_increment() const
 {
+  auto lock = m_sess->lock();
   if (!m_reply)
     THROW("Attempt to get auto increment value on empty result");
   return m_reply->last_insert_id();
@@ -1132,6 +1137,7 @@ cdk::row_count_t Result_impl::get_auto_increment() const
 inline
 unsigned Result_impl::get_warning_count() const
 {
+  auto lock = m_sess->lock();
   auto self = const_cast<Result_impl*>(this);
   self->store_all_results();
   return self->entry_count(cdk::api::Severity::WARNING);
@@ -1140,6 +1146,7 @@ unsigned Result_impl::get_warning_count() const
 inline
 const std::vector<std::string>& Result_impl::get_generated_ids() const
 {
+  auto lock = m_sess->lock();
   if (!m_reply)
     THROW("Attempt to get generated ids for empty result");
   return m_reply->generated_ids();
@@ -1148,6 +1155,7 @@ const std::vector<std::string>& Result_impl::get_generated_ids() const
 inline
 bool Result_impl::has_data() const
 {
+  auto lock = m_sess->lock();
   return (!m_result_cache.empty() && !m_result_cache.front().empty()) || m_pending_rows;
 }
 
@@ -1155,6 +1163,7 @@ bool Result_impl::has_data() const
 inline
 const Shared_meta_data& Result_impl::get_mdata() const
 {
+  auto lock = m_sess->lock();
   return m_result_mdata.front();
 }
 
@@ -1162,12 +1171,14 @@ const Shared_meta_data& Result_impl::get_mdata() const
 inline
 void Result_impl::store()
 {
+  auto lock = m_sess->lock();
   load_cache();
 }
 
 inline
 void Result_impl::store_all_results()
 {
+  auto lock = m_sess->lock();
   do{
   store();
   }while(read_next_result());
@@ -1176,6 +1187,7 @@ void Result_impl::store_all_results()
 inline
 row_count_t Result_impl::count()
 {
+  auto lock = m_sess->lock();
   store();
   if (entry_count() > 0)
     get_error().rethrow();

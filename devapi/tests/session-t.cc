@@ -2184,17 +2184,34 @@ TEST_F(Sess, pool_ttl)
 
   auto mk_session = [&print_mtx](mysqlx::Client &cli) -> mysqlx::Session* {
     try {
-      return new mysqlx::Session(cli);
-    }
-    catch (const Error &e)
-    {
+      auto sess= new mysqlx::Session(cli);
+      //Lets add more stuff to properly test the thread safety code
+      auto sch = sess->getSchema("test");
+      auto coll = sch.createCollection("pool_ttl", true);
+      coll.getSession().startTransaction();
+      coll.add("{\"foo\": 1}").execute();
+      coll.add("{\"foo\": 2}").execute();
+      coll.getSession().commit();
+
+      coll.getSession().startTransaction();
+      coll.add("{\"bar\": 3}").execute();
+      coll.add("{\"bar\": 4}").execute();
+      coll.getSession().rollback();
+
+
+      auto res = coll.find().execute();
+      for (int i = 0; i < 100; ++i) {
+        auto res2 = coll.find().execute();
+        auto res3 = coll.find().execute();
+        auto res4 = coll.find().execute();
+      }
+      return sess;
+    } catch (const Error &e) {
       std::lock_guard<std::mutex> g(print_mtx);
       std::cout << "-- error while creating session: " << e << std::endl;
       std::flush(std::cout);
       return nullptr;
-    }
-    catch (...)
-    {
+    } catch (...) {
       return nullptr;
     }
   };
@@ -2306,6 +2323,7 @@ TEST_F(Sess, pool_ttl)
 
     std::cout << "- done." << std::endl;
   }
+
 
   {
     std::cout << "Threaded (long max idle time)" << std::endl;
