@@ -467,12 +467,12 @@ public:
   {
     prepare_for_cmd();
   }
-  std::unique_lock<std::recursive_mutex> lock() const {
+  std::unique_lock<std::recursive_mutex> lock() const override {
     return std::unique_lock<std::recursive_mutex>(
         const_cast<Session_impl *>(this)->m_mutex);
   }
 
-  std::unique_lock<std::recursive_mutex> try_lock() const {
+  std::unique_lock<std::recursive_mutex> try_lock() const override {
     return std::unique_lock<std::recursive_mutex>(
         const_cast<Session_impl *>(this)->m_mutex, std::try_to_lock);
   }
