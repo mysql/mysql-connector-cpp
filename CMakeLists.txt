@@ -250,11 +250,10 @@ else()
   )
   #add_compile_options($<$<NOT:$<CONFIG:Static>>:-DCONCPP_BUILD_SHARED>)
 
-  # Hide all symbols that are not explicitly exported.
+  endif()
 
-  set_visibility(hidden)
-
-endif()
+# Hide all symbols that are not explicitly exported.
+set_visibility(hidden)
 
 
 add_config_option(THROW_AS_ASSERT BOOL ADVANCED DEFAULT OFF
