@@ -2182,10 +2182,11 @@ TEST_F(Sess, pool_ttl)
 
   std::mutex print_mtx;
 
-  auto mk_session = [&print_mtx](mysqlx::Client &cli) -> mysqlx::Session* {
+  auto mk_session =
+      [&print_mtx](mysqlx::Client &cli) -> std::unique_ptr<mysqlx::Session> {
     try {
-      auto sess= new mysqlx::Session(cli);
-      //Lets add more stuff to properly test the thread safety code
+      std::unique_ptr<mysqlx::Session> sess(new mysqlx::Session(cli));
+      // Lets add more stuff to properly test the thread safety code
       auto sch = sess->getSchema("test");
       auto coll = sch.createCollection("pool_ttl", true);
       coll.getSession().startTransaction();
@@ -2216,7 +2217,7 @@ TEST_F(Sess, pool_ttl)
     }
   };
 
-  std::list<std::future<mysqlx::Session*>> session_list;
+  std::list<std::future<std::unique_ptr<mysqlx::Session>>> session_list;
 
   // Wait for sessions in session_list and test if they work.
   // If expect_errors is true, then expect that all sessions will be
@@ -2230,7 +2231,7 @@ TEST_F(Sess, pool_ttl)
       auto el = session_list.begin();
       for (; el != session_list.end();)
       {
-        mysqlx::Session *s = nullptr;
+        std::unique_ptr<mysqlx::Session> s;
         if (el->wait_for(std::chrono::milliseconds(100)) ==
             std::future_status::ready)
         {
@@ -2251,7 +2252,6 @@ TEST_F(Sess, pool_ttl)
             errors_found++;
           }
           session_list.erase(el++);
-          delete s;
         }
         else
         {
