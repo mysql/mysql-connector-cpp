@@ -84,8 +84,7 @@ TEST_F(Types, numeric)
     EXPECT_NO_THROW(v0 = val);
     EXPECT_EQ(-7, v0);
 
-    unsigned v1;
-    EXPECT_THROW(v1 = val, Error);
+    EXPECT_THROW((unsigned)val, Error);
 
     float v2=0.0;
     EXPECT_NO_THROW(v2 = val);
@@ -105,8 +104,7 @@ TEST_F(Types, numeric)
     Value val = max_uint;
     EXPECT_EQ(Value::UINT64, val.getType());
 
-    int v0;
-    EXPECT_THROW(v0 = val, Error);
+    EXPECT_THROW((int)val, Error);
 
     unsigned v1=0;
     EXPECT_NO_THROW(v1 = val);
@@ -130,11 +128,9 @@ TEST_F(Types, numeric)
     Value val = 7.0F;
     EXPECT_EQ(Value::FLOAT, val.getType());
 
-    int v0;
-    EXPECT_THROW(v0 = val, Error);
+    EXPECT_THROW(static_cast<int>(val), Error);
 
-    unsigned v1;
-    EXPECT_THROW(v1 = val, Error);
+    EXPECT_THROW(static_cast<unsigned>(val), Error);
 
     float v2;
     EXPECT_NO_THROW(v2 = val);
@@ -144,29 +140,24 @@ TEST_F(Types, numeric)
     EXPECT_NO_THROW(v3 = val);
     EXPECT_EQ(7.0, v3);
 
-    bool v4;
-    EXPECT_THROW(v4 = (bool)val, Error);
+    EXPECT_THROW(static_cast<bool>(val), Error);
   }
 
   {
     Value val = 7.0;
     EXPECT_EQ(Value::DOUBLE, val.getType());
 
-    int v0;
-    EXPECT_THROW(v0 = val, Error);
+    EXPECT_THROW(static_cast<int>(val), Error);
 
-    unsigned v1;
-    EXPECT_THROW(v1 = val, Error);
+    EXPECT_THROW(static_cast<unsigned>(val), Error);
 
-    float v2;
-    EXPECT_THROW(v2 = val, Error);
+    EXPECT_THROW(static_cast<float>(val), Error);
 
     double v3;
     EXPECT_NO_THROW(v3 = val);
     EXPECT_EQ(7.0, v3);
 
-    bool v4;
-    EXPECT_THROW(v4 = (bool)val, Error);
+    EXPECT_THROW(static_cast<bool>(val), Error);
   }
 
   {
@@ -181,11 +172,9 @@ TEST_F(Types, numeric)
     EXPECT_NO_THROW(v1 = val);
     EXPECT_EQ(1U, v1);
 
-    float v2;
-    EXPECT_THROW(v2 = val, Error);
+    EXPECT_THROW(static_cast<float>(val), Error);
 
-    double v3;
-    EXPECT_THROW(v3 = val, Error);
+    EXPECT_THROW(static_cast<double>(val), Error);
 
     bool v4=false;
     EXPECT_NO_THROW(v4 = (bool)val);
@@ -762,7 +751,7 @@ TEST_F(Types, json)
   EXPECT_EQ(Type::JSON, c0.getType());
 
   Row row;
-  for (unsigned i = 0; (row = res.fetchOne()); ++i)
+  while((row = res.fetchOne()))
   {
     EXPECT_EQ(Value::DOCUMENT, row[0].getType());
 
@@ -1103,8 +1092,7 @@ TEST_F(Types, int64_conversion)
   EXPECT_EQ(std::numeric_limits<int64_t>::max(), int64_v);
 
   //should overflow
-  int int_v;
-  EXPECT_ANY_THROW(int_v = value);
+  EXPECT_ANY_THROW(static_cast<int>(value));
 
   //now with min value
   value = std::numeric_limits<int64_t>::min();
@@ -1113,7 +1101,7 @@ TEST_F(Types, int64_conversion)
 
   EXPECT_EQ(std::numeric_limits<int64_t>::min(), int64_v);
 
-  EXPECT_ANY_THROW(int_v = value);
+  EXPECT_ANY_THROW(static_cast<int>(value));
 
   //Now using the uint64_t max.
   value = std::numeric_limits<uint64_t>::max();
@@ -1124,6 +1112,5 @@ TEST_F(Types, int64_conversion)
 
   EXPECT_ANY_THROW(int64_v = value);
 
-  EXPECT_ANY_THROW(int_v = value);
-
+  EXPECT_ANY_THROW(static_cast<int>(value));
 }

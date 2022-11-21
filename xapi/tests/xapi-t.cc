@@ -107,7 +107,6 @@ void check_compress(mysqlx_session_t *sess)
 
 int check_compress2(mysqlx_session_t* m_sess)
 {
-  mysqlx_result_t* res = NULL;
   mysqlx_schema_t* schema;
   mysqlx_collection_t* collection;
   mysqlx_stmt_t* crud = NULL;
@@ -130,7 +129,7 @@ int check_compress2(mysqlx_session_t* m_sess)
     mysqlx_set_add_document(crud, json_buf);
   }
 
-  res = mysqlx_execute(crud);
+  mysqlx_execute(crud);
   printf("\nInsert Success\n");
 
   return retVal;

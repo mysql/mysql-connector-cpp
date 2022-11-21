@@ -3277,7 +3277,6 @@ TEST_F(xapi_bugs, crash_empty_reply)
 {
   SKIP_IF_NO_XPLUGIN
 
-  mysqlx_result_t *res;
   mysqlx_schema_t *schema;
   mysqlx_collection_t *collection;
   mysqlx_stmt_t *stmt;
@@ -3297,9 +3296,9 @@ TEST_F(xapi_bugs, crash_empty_reply)
   EXPECT_TRUE((collection = mysqlx_get_collection(schema, "c1", 1)) != NULL);
 
   stmt = mysqlx_collection_find_new(collection);
-  res = mysqlx_execute(stmt);
+  mysqlx_execute(stmt);
 
   stmt = mysqlx_collection_modify_new(collection);
-  res = mysqlx_execute(stmt);
+  mysqlx_execute(stmt);
 }
 
