@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -561,10 +561,6 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port)
   addrinfo* result = NULL;
   addrinfo hints = {};
   in6_addr addr = {};
-  char str_port[6];
-
-  if (std::sprintf(str_port, "%hu", port) < 0)
-    throw_error("Invalid port.");
 
   hints.ai_flags = AI_NUMERICSERV;
   hints.ai_family = AF_INET;
@@ -584,7 +580,11 @@ addrinfo* addrinfo_from_string(const char* host_name, unsigned short port)
     }
   }
 
-  int rc = getaddrinfo(host_name, str_port, &hints, &result);
+  // cast to unsigned because, unsigned short would use
+  // std::to_string(int)
+  int rc = getaddrinfo(host_name,
+                       std::to_string(static_cast<unsigned>(port)).c_str(),
+                       &hints, &result);
 
 #ifdef EAI_SYSTEM
   if (EAI_SYSTEM == rc && errno)

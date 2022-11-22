@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -295,10 +295,8 @@ namespace parser {
       return get_name(m_type);
     }
 
-    Token() = default;
-    Token(const Token&) = default;
 
-  protected:
+   protected:
 
     Type m_type = EMPTY;
     const char *m_begin = nullptr;
@@ -420,8 +418,6 @@ namespace parser {
   public:
 
     iterator() = default;
-
-    iterator(const iterator &other) = default;
 
     const Token& operator*() const noexcept
     {
