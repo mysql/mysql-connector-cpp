@@ -93,6 +93,11 @@ if(NOT MSVC AND NOT APPLE)
   add_compile_options(-Wno-stringop-overflow -Wno-stringop-overread)
 endif()
 
+if(APPLE)
+  add_compile_options(-Wno-deprecated-declarations)
+endif()
+
+
 #
 # Configure static runtime library on Windows if requested
 #
