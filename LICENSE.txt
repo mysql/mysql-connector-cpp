@@ -10,7 +10,7 @@ Introduction
    third-party software which may be included in this distribution of
    MySQL Connector/C++ 8.0.
 
-   Last updated: August 2022
+   Last updated: November 2022
 
 Licensing Information
 
@@ -480,45 +480,87 @@ Licenses for Third-Party Components
 
 Cyrus SASL
 
-   Cyrus SASL
-
-* Copyright (c) 1994-2012 Carnegie Mellon University.  All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-*
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in
-*    the documentation and/or other materials provided with the
-*    distribution.
-*
-* 3. The name "Carnegie Mellon University" must not be used to
-*    endorse or promote products derived from this software without
-*    prior written permission. For permission or any legal
-*    details, please contact
-*      Office of Technology Transfer
-*      Carnegie Mellon University
-*      5000 Forbes Avenue
-*      Pittsburgh, PA  15213-3890
-*      (412) 268-4387, fax: (412) 268-7395
+ * Copyright (c) 1998-2003 Carnegie Mellon University.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The name "Carnegie Mellon University" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For permission or any other legal
+ *    details, please contact
+ *      Office of Technology Transfer
+ *      Carnegie Mellon University
+ *      5000 Forbes Avenue
+ *      Pittsburgh, PA  15213-3890
+ *      (412) 268-4387, fax: (412) 268-7395
 *      tech-transfer@andrew.cmu.edu
-*
-* 4. Redistributions of any form whatsoever must retain the following
-*    acknowledgment:
-*    "This product includes software developed by Computing Services
-*     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
-*
-* CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
-* THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-* AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
-* FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-* AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
-* OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * 4. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by Computing Services
+ *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
+ *
+ * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
+ * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
+ * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+The following files
+
+./lib
+     saslint.h auxprop.c canonusr.c checkpw.c client.c common.c config.c
+     external.c saslutil.c server.c seterror.c dlopen.c
+./plugins
+    scram.c gssapi.c
+./common
+   plugin_common.c
+
+have a license header similar to the above with the following copyright:
+/*
+ * Copyright (c) 1998-2016 Carnegie Mellon University.  All rights reserved.
+ *
+
+./lib/md5.c includes the following license header:
+/* MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
+*/
+
+/* Function names changed to avoid namespace collisions: Rob Siemborski */
+
+/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
+rights reserved.
+
+License to copy and use this software is granted provided that it
+is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+Algorithm" in all material mentioning or referencing this software
+or this function.
+
+License is also granted to make and use derivative works provided
+that such works are identified as "derived from the RSA Data
+Security, Inc. MD5 Message-Digest Algorithm" in all material
+mentioning or referencing the derived work.
+
+RSA Data Security, Inc. makes no representations concerning either
+the merchantability of this software or the suitability of this
+software for any particular purpose. It is provided "as is"
+without express or implied warranty of any kind.
+
+These notices must be retained in any copies of any part of this
+documentation and/or software.
+*/
 
    ======================================================================
    ======================================================================
@@ -2016,12 +2058,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 OpenSSL 1.x
 
-   You are receiving a copy of OpenSSL as part of this product in object
-   code form. The terms of the Oracle license do NOT apply to OpenSSL.
-   OpenSSL is licensed under a double license, of the OpenSSL License and
-   the original SSLeay license, separate from the Oracle product. If you
-   do not wish to install this library, you may remove it, but the Oracle
-   program might not operate properly or at all without it.
+You are receiving a copy of OpenSSL as part of this product in
+object code form. The terms of the Oracle license do NOT apply to
+OpenSSL. OpenSSL is licensed under a double license, of the OpenSSL
+License and the original SSLeay license, separate from the Oracle
+product. If you do not wish to install this library, you may remove
+it, but the Oracle program might not operate properly or at all
+without it.
+
+---------------------------------------------------------------------
 
   LICENSE ISSUES
   ==============
@@ -2169,7 +2214,7 @@ the Oracle program might not operate properly or at all without it.
  * https://www.openssl.org/source/license.html
 */
 
-See Apache License Version 2.0, January 2004 in the
+See Apache License v2.0, January 2004 in the
 'Standard Licenses' section.
 
    ======================================================================
@@ -2285,9 +2330,7 @@ SOFTWARE.
    ======================================================================
    ======================================================================
 
-ZSTD
-
-   Zstandard
+ZSTD (Zstandard)
 
 Zstandard is dual-licensed under [BSD](LICENSE) and [GPLv2](COPYING).
 
@@ -2684,7 +2727,7 @@ Public License instead of this License.
 
 Standard Licenses
 
-Apache License Version 2.0, January 2004
+Apache License v2.0, January 2004
 
 The following applies to all products licensed under the Apache 2.0
 License: You may not use the identified files except in compliance
