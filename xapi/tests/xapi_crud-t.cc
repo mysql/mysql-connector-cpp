@@ -83,7 +83,7 @@ TEST_F(xapi, test_count)
   stmt = mysqlx_collection_add_new(collection);
   for (i = 0; i < 100; ++i)
   {
-    sprintf(buf, "{\"name\" : \"name %02d\"}", i);
+    snprintf(buf, sizeof(buf), "{\"name\" : \"name %02d\"}", i);
     ERR_CHECK(mysqlx_set_add_document(stmt, buf), stmt);
   }
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
@@ -91,8 +91,8 @@ TEST_F(xapi, test_count)
   ERR_CHECK(mysqlx_collection_count(collection, &rec_count), collection);
   EXPECT_EQ(100U, rec_count);
 
-  sprintf(buf, "CREATE TABLE %s.%s (id int)",
-            schema_name, tab_name);
+  snprintf(buf, sizeof(buf), "CREATE TABLE %s.%s (id int)", schema_name,
+           tab_name);
   CRUD_CHECK(res = mysqlx_sql(get_session(), buf, MYSQLX_NULL_TERMINATED),
              get_session());
   table = mysqlx_get_table(schema, tab_name, 0);
@@ -1227,8 +1227,10 @@ TEST_F(xapi, json_test)
 
   for (i = 0; i < 5; i++)
   {
-    sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
-                        "('%s')", json_row[i]);
+    snprintf(insert_buf, sizeof(insert_buf),
+             "INSERT INTO cc_crud_test.crud_collection (doc) VALUES "
+             "('%s')",
+             json_row[i]);
     RESULT_CHECK(stmt = mysqlx_sql_new(get_session(), insert_buf, strlen(insert_buf)));
     CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
   }
@@ -1686,8 +1688,10 @@ TEST_F(xapi, projections_doc)
 
   for (i = 0; i < 5; i++)
   {
-    sprintf(insert_buf, "INSERT INTO cc_crud_test.crud_collection (doc) VALUES " \
-                        "('%s')", json_row[i]);
+    snprintf(insert_buf, sizeof(insert_buf),
+             "INSERT INTO cc_crud_test.crud_collection (doc) VALUES "
+             "('%s')",
+             json_row[i]);
     exec_sql(insert_buf);
   }
 
@@ -1746,8 +1750,8 @@ TEST_F(xapi, add_test)
   RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
   for (i = 0; i < 2; ++i)
   {
-    sprintf(json_buf, "{\"%s\": \"%s\", \"%s\": \"%s\"}", json_add[i][0], json_add[i][1],
-                                          json_add[i][2], json_add[i][3]);
+    snprintf(json_buf, sizeof(json_buf), "{\"%s\": \"%s\", \"%s\": \"%s\"}",
+             json_add[i][0], json_add[i][1], json_add[i][2], json_add[i][3]);
     EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_buf));
     printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
   }
@@ -1804,8 +1808,8 @@ TEST_F(xapi, collection_param_test)
   RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
   for (i = 0; i < 2; ++i)
   {
-    sprintf(json_buf, "{\"%s\": \"%s\", \"%s\": \"%s\"}", json_add[i][0], json_add[i][1],
-                                          json_add[i][2], json_add[i][3]);
+    snprintf(json_buf, sizeof(json_buf), "{\"%s\": \"%s\", \"%s\": \"%s\"}",
+             json_add[i][0], json_add[i][1], json_add[i][2], json_add[i][3]);
     EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_buf));
     printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
   }
@@ -1999,9 +2003,10 @@ TEST_F(xapi, modify_test)
   RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
   for (i = 0; i < 2; ++i)
   {
-    sprintf(json_buf, "{\"%s\": %s, \"%s\": \"%s\", \"%s\": %s}",
-                        json_add[i][0], json_add[i][1], json_add[i][2],
-                        json_add[i][3], json_add[i][4], json_add[i][5]);
+    snprintf(json_buf, sizeof(json_buf),
+             "{\"%s\": %s, \"%s\": \"%s\", \"%s\": %s}", json_add[i][0],
+             json_add[i][1], json_add[i][2], json_add[i][3], json_add[i][4],
+             json_add[i][5]);
     EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_buf));
     printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
   }
@@ -2103,7 +2108,8 @@ TEST_F(xapi, remove_test)
   RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
   for (i = 0; i < 5; ++i)
   {
-    sprintf(json_buf, "{\"%s\": %s}", json_add[i][0], json_add[i][1]);
+    snprintf(json_buf, sizeof(json_buf), "{\"%s\": %s}", json_add[i][0],
+             json_add[i][1]);
     EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_buf));
     printf("\nJSON FOR ADD %d [ %s ]", i + 1, json_buf);
   }
@@ -2380,8 +2386,8 @@ TEST_F(xapi_bugs, update_collection_test)
   EXPECT_TRUE((collection = mysqlx_get_collection(schema, "crud_collection", 1)) != NULL);
   RESULT_CHECK(stmt = mysqlx_collection_add_new(collection));
 
-  sprintf(json_buf, "{\"%s\": %s, \"%s\": %s}",
-    json_add[0], json_add[1], json_add[2], json_add[3]);
+  snprintf(json_buf, sizeof(json_buf), "{\"%s\": %s, \"%s\": %s}", json_add[0],
+           json_add[1], json_add[2], json_add[3]);
   EXPECT_EQ(RESULT_OK, mysqlx_set_add_document(stmt, json_buf));
   printf("\nJSON FOR ADD [ %s ]", json_buf);
   CRUD_CHECK(res = mysqlx_execute(stmt), stmt);
@@ -2689,8 +2695,8 @@ TEST_F(xapi_bugs, one_call_collection_test)
   EXPECT_EQ(RESULT_OK, mysqlx_collection_create(schema, "collection_exec"));
 
   for (i = 0; i < 2; ++i)
-    sprintf(json_buf[i], "{\"%s\": %s, \"%s\": \"%s\"}", json_add[i][0],
-            json_add[i][1], json_add[i][2], json_add[i][3]);
+    snprintf(json_buf[i], sizeof(json_buf[i]), "{\"%s\": %s, \"%s\": \"%s\"}",
+             json_add[i][0], json_add[i][1], json_add[i][2], json_add[i][3]);
 
   EXPECT_TRUE((collection = mysqlx_get_collection(schema, "collection_exec", 1)) != NULL);
 

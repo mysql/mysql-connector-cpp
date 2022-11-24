@@ -125,7 +125,8 @@ int check_compress2(mysqlx_session_t* m_sess)
   /*Inserting large data*/
   for (i = 0; i < 5000; ++i)
   {
-    sprintf(json_buf, "{\"K1\":\"%d\", \"K2\": \"%d\",\"id\": \"%d\"}", i, i, i);
+    snprintf(json_buf, sizeof(json_buf),
+             "{\"K1\":\"%d\", \"K2\": \"%d\",\"id\": \"%d\"}", i, i, i);
     mysqlx_set_add_document(crud, json_buf);
   }
 
@@ -315,8 +316,8 @@ TEST_F(xapi, free_test)
     FAIL() << "Wrong operation succeeded";
   }
 
-  sprintf(buf, "CREATE TABLE %s.%s (id int)",
-          schema_name, tab_name);
+  snprintf(buf, sizeof(buf), "CREATE TABLE %s.%s (id int)", schema_name,
+           tab_name);
   CRUD_CHECK(res = mysqlx_sql(sess, buf, MYSQLX_NULL_TERMINATED),
              sess);
   mysqlx_free(res);
@@ -1083,39 +1084,35 @@ TEST_F(xapi, failover_test_url)
 
   if (get_password())
   {
-    sprintf(conn_str, "%s:%s@[(address=%s:%d,priority=100),"\
-                      "(address=%s:%d,priority=90)," \
-                      "(address=%s:%d,priority=80)]/%s",
-                      get_user(), get_password(),
-                      get_host(), get_port() + 1,
-                      get_host(), get_port() + 2,
-                      get_host(), get_port(), db_name );
+    snprintf(conn_str, sizeof(conn_str),
+             "%s:%s@[(address=%s:%d,priority=100),"
+             "(address=%s:%d,priority=90),"
+             "(address=%s:%d,priority=80)]/%s",
+             get_user(), get_password(), get_host(), get_port() + 1, get_host(),
+             get_port() + 2, get_host(), get_port(), db_name);
 
-    sprintf(conn_str2, "%s:%s@[(address=%s:%d,priority=100),"\
-                       "address=%s:%d," \
-                       "(address=%s:%d,priority=80)]/%s",
-                       get_user(), get_password(),
-                       get_host(), get_port() + 1,
-                       get_host(), get_port() + 2,
-                       get_host(), get_port(), db_name);
+    snprintf(conn_str2, sizeof(conn_str2),
+             "%s:%s@[(address=%s:%d,priority=100),"
+             "address=%s:%d,"
+             "(address=%s:%d,priority=80)]/%s",
+             get_user(), get_password(), get_host(), get_port() + 1, get_host(),
+             get_port() + 2, get_host(), get_port(), db_name);
   }
   else
   {
-    sprintf(conn_str, "%s@[(address=%s:%d,priority=100),"\
-                      "(address=%s:%d,priority=90)," \
-                      "(address=%s:%d,priority=80)]/%s",
-                      get_user(),
-                      get_host(), get_port() + 1,
-                      get_host(), get_port() + 2,
-                      get_host(), get_port(), db_name );
+    snprintf(conn_str, sizeof(conn_str),
+             "%s@[(address=%s:%d,priority=100),"
+             "(address=%s:%d,priority=90),"
+             "(address=%s:%d,priority=80)]/%s",
+             get_user(), get_host(), get_port() + 1, get_host(), get_port() + 2,
+             get_host(), get_port(), db_name);
 
-    sprintf(conn_str2, "%s@[(address=%s:%d,priority=100),"\
-                       "address=%s:%d," \
-                       "(address=%s:%d,priority=80)]/%s",
-                       get_user(),
-                       get_host(), get_port() + 1,
-                       get_host(), get_port() + 2,
-                       get_host(), get_port(), db_name);
+    snprintf(conn_str2, sizeof(conn_str2),
+             "%s@[(address=%s:%d,priority=100),"
+             "address=%s:%d,"
+             "(address=%s:%d,priority=80)]/%s",
+             get_user(), get_host(), get_port() + 1, get_host(), get_port() + 2,
+             get_host(), get_port(), db_name);
   }
 
   mysqlx_session_t *local_sess;
