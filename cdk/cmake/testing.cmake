@@ -339,7 +339,7 @@ IF(WITH_TESTS)
   #  Add ctest definitions for each gtest group
   #
 
-  SET(test_group_defs ${CMAKE_CURRENT_BINARY_DIR}/TestGroups.cmake)
+  SET(test_group_defs ${PROJECT_BINARY_DIR}/TestGroups.cmake)
 
   set(TEST_ENV ${test_environment})
 
@@ -355,6 +355,15 @@ IF(WITH_TESTS)
   )
 
   set_target_properties(${cdk_target_prefix}update_test_groups PROPERTIES FOLDER "Tests")
+
+  file(TO_NATIVE_PATH "${test_group_defs}" test_group_defs_native)
+
+  add_custom_command(TARGET ${target_run_unit_tests} POST_BUILD
+    COMMAND $<TARGET_FILE:${target_run_unit_tests}>
+      "--generate_test_groups=${test_group_defs_native}"
+    # BYPRODUCTS ${test_group_defs}
+    COMMENT "# Generating test group definitons."
+  )
 
 ENDIF()
 ENDMACRO(ADD_TEST_TARGET)
