@@ -524,6 +524,18 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   bool secure_auth= true;
 #endif
 
+  /*
+    Add default connector connection attributes
+  */
+  std::map<sql::SQLString, sql::SQLString> default_attr = {
+      {"_connector_name", "mysql-connector-cpp"},
+      {"_connector_version", MYCPPCONN_DM_VERSION},
+      {"_connector_license", MYSQL_CONCPP_LICENSE}};
+
+  for (auto &el : default_attr) {
+    proxy->options(sql::mysql::MYSQL_OPT_CONNECT_ATTR_ADD, el.first, el.second);
+  }
+
   sql::ConnectOptionsMap::const_iterator it;
 
   /* Port from options must be set as default for all hosts where port
@@ -953,7 +965,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       std::map< sql::SQLString, sql::SQLString >::const_iterator conn_attr_it;
       for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
         try {
-          proxy->options(sql::mysql::MYSQL_OPT_CONNECT_ATTR_ADD, conn_attr_it->first, conn_attr_it->second);
+          //Skip default values
+          if (default_attr.find(conn_attr_it->first) != default_attr.end())
+            continue;
+          proxy->options(sql::mysql::MYSQL_OPT_CONNECT_ATTR_ADD,
+                         conn_attr_it->first, conn_attr_it->second);
         } catch (sql::InvalidArgumentException& e) {
           std::string errorOption("MYSQL_OPT_CONNECT_ATTR_ADD");
           throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
@@ -968,12 +984,15 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       }
       std::list< sql::SQLString >::const_iterator conn_attr_it;
       for (conn_attr_it = conVal->begin(); conn_attr_it != conVal->end(); conn_attr_it++) {
+        // Skip default values
+        if (default_attr.find(*conn_attr_it) != default_attr.end())
+          continue;
         try {
           proxy->options(MYSQL_OPT_CONNECT_ATTR_DELETE, *conn_attr_it);
-        } catch (sql::InvalidArgumentException& e) {
-          std::string errorOption("MYSQL_OPT_CONNECT_ATTR_DELETE");
-          throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
-        }
+          } catch (sql::InvalidArgumentException &e) {
+            std::string errorOption("MYSQL_OPT_CONNECT_ATTR_DELETE");
+            throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+          }
       }
     } else if (!it->first.compare(OPT_CONNECT_ATTR_RESET)) {
       proxy->options(MYSQL_OPT_CONNECT_ATTR_RESET, 0);
