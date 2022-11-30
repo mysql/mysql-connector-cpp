@@ -62,9 +62,8 @@ set(VS     "vs${VS}" CACHE INTERNAL "")
 function(enable_pic)
 endfunction()
 
-# C++11 is enabled by default for compilers that we support.
-
 function(enable_cxx17)
+  add_flags(CXX /std:c++17)
 endfunction()
 
 # Note: Needs to be implemented if we ever want to change the default

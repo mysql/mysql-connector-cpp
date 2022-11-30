@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -39,8 +39,6 @@
 #ifndef _WIN32
 #include <inttypes.h>
 #endif
-
-#include <boost/scoped_ptr.hpp>
 
 /*
   __FUNCTION__/__func__ is not portable. We do not promise
@@ -116,9 +114,9 @@ static int silent = 1;
 
 
 /* {{{ */
-static bool populate_blob_table(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+static bool populate_blob_table(std::unique_ptr<sql::Connection> &conn,
+                                std::string database) {
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
   ensure("stmt is NULL", stmt.get() != NULL);
 
   stmt->execute("USE " + database);
@@ -140,9 +138,9 @@ static bool populate_insert_data(sql::Statement * stmt)
 
 
 /* {{{ */
-static bool populate_test_table(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+static bool populate_test_table(std::unique_ptr<sql::Connection> &conn,
+                                std::string database) {
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
   ensure("stmt is NULL", stmt.get() != NULL);
 
   stmt->execute("USE " + database);
@@ -169,9 +167,9 @@ static bool populate_TX_insert_data(sql::Statement * stmt)
 
 
 /* {{{ */
-static bool populate_TX_test_table(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+static bool populate_TX_test_table(std::unique_ptr<sql::Connection> &conn,
+                                   std::string database) {
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
   ensure("stmt is NULL", stmt.get() != NULL);
 
   stmt->execute("USE " + database);
@@ -191,21 +189,27 @@ static bool populate_TX_test_table(boost::scoped_ptr<sql::Connection> & conn, st
 
 
 /* {{{ */
-static bool populate_test_table_PS(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+static bool populate_test_table_PS(std::unique_ptr<sql::Connection> &conn,
+                                   std::string database) {
+  std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
   ensure("stmt1 is NULL", stmt1.get() != NULL);
   stmt1->execute("USE " + database);
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE IF EXISTS test_function"));
+  std::unique_ptr<sql::PreparedStatement> stmt2(
+      conn->prepareStatement("DROP TABLE IF EXISTS test_function"));
   ensure("stmt2 is NULL", stmt2.get() != NULL);
   stmt2->executeUpdate();
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement("CREATE TABLE test_function(a integer unsigned not null, b integer, c integer default null, d char(10), e varchar(10) character set utf8 collate utf8_bin)"));
+  std::unique_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement(
+      "CREATE TABLE test_function(a integer unsigned not null, b integer, c "
+      "integer default null, d char(10), e varchar(10) character set utf8 "
+      "collate utf8_bin)"));
   ensure("stmt3 is NULL", stmt3.get() != NULL);
   stmt3->executeUpdate();
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function (a,b,c,d,e) VALUES(1, 111, NULL, '222', 'xyz')"));
+  std::unique_ptr<sql::PreparedStatement> stmt4(
+      conn->prepareStatement("INSERT INTO test_function (a,b,c,d,e) VALUES(1, "
+                             "111, NULL, '222', 'xyz')"));
   ensure("stmt4 is NULL", stmt4.get() != NULL);
   stmt4->executeUpdate();
 
@@ -215,21 +219,27 @@ static bool populate_test_table_PS(boost::scoped_ptr<sql::Connection> & conn, st
 
 
 /* {{{ */
-static bool populate_TX_test_table_PS(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+static bool populate_TX_test_table_PS(std::unique_ptr<sql::Connection> &conn,
+                                      std::string database) {
+  std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
   ensure("stmt is NULL", stmt1.get() != NULL);
   stmt1->execute("USE " + database);
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE IF EXISTS test_function_tx"));
+  std::unique_ptr<sql::PreparedStatement> stmt2(
+      conn->prepareStatement("DROP TABLE IF EXISTS test_function_tx"));
   ensure("stmt2 is NULL", stmt2.get() != NULL);
   stmt2->executeUpdate();
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement("CREATE TABLE test_function_tx(a integer unsigned not null, b integer, c integer default null, d char(10), e varchar(10) character set utf8 collate utf8_bin) engine = innodb"));
+  std::unique_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement(
+      "CREATE TABLE test_function_tx(a integer unsigned not null, b integer, c "
+      "integer default null, d char(10), e varchar(10) character set utf8 "
+      "collate utf8_bin) engine = innodb"));
   ensure("stmt3 is NULL", stmt3.get() != NULL);
   stmt3->executeUpdate();
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("INSERT INTO test_function_tx (a,b,c,d,e) VALUES(1, 111, NULL, '222', 'xyz')"));
+  std::unique_ptr<sql::PreparedStatement> stmt4(
+      conn->prepareStatement("INSERT INTO test_function_tx (a,b,c,d,e) "
+                             "VALUES(1, 111, NULL, '222', 'xyz')"));
   ensure("stmt4 is NULL", stmt4.get() != NULL);
   stmt4->executeUpdate();
 
@@ -239,17 +249,20 @@ static bool populate_TX_test_table_PS(boost::scoped_ptr<sql::Connection> & conn,
 
 
 /* {{{ */
-static bool populate_test_table_PS_integers(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
-  boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+static bool populate_test_table_PS_integers(
+    std::unique_ptr<sql::Connection> &conn, std::string database) {
+  std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
   ensure("stmt1 is NULL", stmt1.get() != NULL);
   stmt1->execute("USE " + database);
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE IF EXISTS test_function_int"));
+  std::unique_ptr<sql::PreparedStatement> stmt2(
+      conn->prepareStatement("DROP TABLE IF EXISTS test_function_int"));
   ensure("stmt2 is NULL", stmt2.get() != NULL);
   stmt2->executeUpdate();
 
-  boost::scoped_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement("CREATE TABLE test_function_int(i integer, i_uns integer unsigned, b bigint, b_uns bigint unsigned)"));
+  std::unique_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement(
+      "CREATE TABLE test_function_int(i integer, i_uns integer unsigned, b "
+      "bigint, b_uns bigint unsigned)"));
   ensure("stmt3 is NULL", stmt3.get() != NULL);
   stmt3->executeUpdate();
 
@@ -259,8 +272,7 @@ static bool populate_test_table_PS_integers(boost::scoped_ptr<sql::Connection> &
 
 
 /* {{{ */
-static void test_autocommit(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_autocommit(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
     conn->setAutoCommit(1);
@@ -279,15 +291,15 @@ static void test_autocommit(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ */
-static void test_connection_0(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_connection_0(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
     char buff[64];
 
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT CONNECTION_ID()"));
+    std::unique_ptr<sql::ResultSet> rset1(
+        stmt1->executeQuery("SELECT CONNECTION_ID()"));
     ensure("res1 is NULL", rset1.get() != NULL);
 
     ensure("res1 is empty", rset1->next() != false);
@@ -305,7 +317,8 @@ static void test_connection_0(boost::scoped_ptr<sql::Connection> & conn)
       */
     }
     try {
-      boost::scoped_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT CONNECTION_ID()"));
+      std::unique_ptr<sql::ResultSet> rset2(
+          stmt1->executeQuery("SELECT CONNECTION_ID()"));
       ensure("no exception", false);
     } catch (sql::SQLException &) {
       ensure("Exception correctly thrown", true);
@@ -322,28 +335,31 @@ static void test_connection_0(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ */
-static void test_connection_1(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_connection_1(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
     ensure("connection is closed", !conn->isClosed());
     conn->setAutoCommit(false);
 
     ensure("Data not populated", true == populate_TX_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset1(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure("res1 is empty", rset1->next() != false);
     int count_full_before = rset1->getInt(1);
     ensure_equal_int("res1 has more rows ", rset1->next(), false);
 
     std::string savepointName("firstSavePoint");
-    boost::scoped_ptr<sql::Savepoint> savepoint(conn->setSavepoint(savepointName));
+    std::unique_ptr<sql::Savepoint> savepoint(
+        conn->setSavepoint(savepointName));
 
     populate_TX_insert_data(stmt1.get());
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset2(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res2 is NULL", rset2.get() != NULL);
     ensure_equal_int("res2 is empty", rset2->next(), true);
     int count_full_after = rset2->getInt(1);
@@ -351,7 +367,8 @@ static void test_connection_1(boost::scoped_ptr<sql::Connection> & conn, std::st
     ensure_equal_int("wrong number of rows", count_full_after, (count_full_before * 2));
 
     conn->rollback(savepoint.get());
-    boost::scoped_ptr<sql::ResultSet> rset3(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset3(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res3 is NULL", rset3.get() != NULL);
     ensure_equal_int("res3 is empty", rset3->next(), true);
     int count_full_after_rollback = rset3->getInt(1);
@@ -382,11 +399,11 @@ static void test_connection_1(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ */
-static void test_connection_2(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_connection_2(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt1 is NULL", stmt.get() != NULL);
 
     ensure("Wrong catalog", conn->getCatalog() == "def" || conn->getCatalog() == "");
@@ -416,8 +433,8 @@ static void test_connection_2(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ */
-static void test_connection_3(boost::scoped_ptr<sql::Connection> & conn, std::string user)
-{
+static void test_connection_3(std::unique_ptr<sql::Connection> &conn,
+                              std::string user) {
   ENTER_FUNCTION();
   try {
     sql::DatabaseMetaData * meta = conn->getMetaData();
@@ -433,11 +450,10 @@ static void test_connection_3(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ */
-static void test_statement_0(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_statement_0(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("AutoCommit", conn.get() == stmt->getConnection());
   } catch (sql::SQLException &e) {
     printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
@@ -450,11 +466,12 @@ static void test_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_statement_1(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_1(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
@@ -462,7 +479,7 @@ static void test_statement_1(boost::scoped_ptr<sql::Connection> & conn, boost::s
       ensure("False returned for SELECT", false);
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -481,11 +498,12 @@ static void test_statement_1(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test simple query against statement object */
-static void test_statement_2(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_2(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
@@ -493,7 +511,7 @@ static void test_statement_2(boost::scoped_ptr<sql::Connection> & conn, boost::s
       ensure("False returned for SELECT", false);
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -512,17 +530,19 @@ static void test_statement_2(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test executeQuery() - returning a result set*/
-static void test_statement_3(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_3(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
     /* Get a result set */
     try {
-      boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery("SELECT * FROM test_function"));
+      std::unique_ptr<sql::ResultSet> rset(
+          stmt->executeQuery("SELECT * FROM test_function"));
       ensure("NULL returned for result set", rset.get() != NULL);
     } catch (sql::SQLException &e) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
@@ -531,7 +551,7 @@ static void test_statement_3(boost::scoped_ptr<sql::Connection> & conn, boost::s
     }
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -550,17 +570,19 @@ static void test_statement_3(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test executeQuery() - returning empty result set */
-static void test_statement_4(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_4(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
     /* Get a result set */
     try {
-      boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery("SELECT * FROM test_function WHERE 1=2"));
+      std::unique_ptr<sql::ResultSet> rset(
+          stmt->executeQuery("SELECT * FROM test_function WHERE 1=2"));
       ensure("NULL returned for result set", rset.get() != NULL);
       ensure_equal_int("Non-empty result set", false, rset->next());
 
@@ -571,7 +593,7 @@ static void test_statement_4(boost::scoped_ptr<sql::Connection> & conn, boost::s
     }
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -590,17 +612,19 @@ static void test_statement_4(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test executeQuery() - use it for inserting, should generate an exception */
-static void test_statement_5(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_5(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
     /* Get a result set */
     try {
-      boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery("INSERT INTO test_function VALUES(2,200)"));
+      std::unique_ptr<sql::ResultSet> rset(
+          stmt->executeQuery("INSERT INTO test_function VALUES(2,200)"));
       ensure("NULL returned for result set", rset.get() == NULL);
     } catch (sql::SQLException &) {
     } catch (...) {
@@ -609,7 +633,7 @@ static void test_statement_5(boost::scoped_ptr<sql::Connection> & conn, boost::s
       ++total_errors;
     }
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -628,11 +652,12 @@ static void test_statement_5(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test executeUpdate() - check the returned value */
-static void test_statement_6(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_6(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
@@ -645,7 +670,7 @@ static void test_statement_6(boost::scoped_ptr<sql::Connection> & conn, boost::s
     }
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -664,11 +689,12 @@ static void test_statement_6(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test executeUpdate() - execute a SELECT, should get an exception */
-static void test_statement_7(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_7(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
@@ -684,7 +710,7 @@ static void test_statement_7(boost::scoped_ptr<sql::Connection> & conn, boost::s
     }
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -705,11 +731,11 @@ static void test_statement_7(boost::scoped_ptr<sql::Connection> & conn, boost::s
 #if 0
 /* {{{ Test getFetchSize() - should return int value */
 /* XXX: Test fails because getFetchSize() is not implemented*/
-static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2)
+static void test_statement_xx(std::unique_ptr<sql::Connection> & conn, std::unique_ptr<sql::Connection> & conn2)
 {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("fetchSize is negative", stmt->getFetchSize() > 0);
@@ -728,11 +754,11 @@ static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn, boost::
 
 /* {{{ Test setFetchSize() - set and get the value */
 /* XXX: Doesn't pass because setFetchSize() is unimplemented */
-static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
+static void test_statement_xx(std::unique_ptr<sql::Connection> & conn)
 {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     int setFetchSize = 50;
@@ -755,11 +781,11 @@ static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
 
 /* {{{ Test setFetchSize() - set negative value and expect an exception */
 /* XXX: Doesn't pass because setFetchSize() is unimplemented */
-static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
+static void test_statement_xx(std::unique_ptr<sql::Connection> & conn)
 {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     try {
@@ -784,11 +810,11 @@ static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
 
 /* {{{ Test setQueryTimeout() - set negative value and expect an exception */
 /* XXX: Doesn't pass because setQueryTimeout() is unimplemented */
-static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
+static void test_statement_xx(std::unique_ptr<sql::Connection> & conn)
 {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     try {
@@ -811,22 +837,23 @@ static void test_statement_xx(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ Test getResultSet() - execute() a query and get the result set */
-static void test_statement_8(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_8(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
 
     ensure("sql::Statement::execute returned false", true == stmt->execute("SELECT * FROM test_function"));
 
-    boost::scoped_ptr<sql::ResultSet> rset(stmt->getResultSet());
+    std::unique_ptr<sql::ResultSet> rset(stmt->getResultSet());
     ensure("rset is NULL", rset.get() != NULL);
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -844,22 +871,23 @@ static void test_statement_8(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test getResultSet() - execute() an update query and get the result set - should be empty */
-static void test_statement_9(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_9(std::unique_ptr<sql::Connection> &conn,
+                             std::unique_ptr<sql::Connection> &conn2,
+                             std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
 
     ensure("sql::Statement::execute returned true", false == stmt->execute("UPDATE test_function SET a = 222"));
 
-    boost::scoped_ptr<sql::ResultSet> rset(stmt->getResultSet());
+    std::unique_ptr<sql::ResultSet> rset(stmt->getResultSet());
     ensure("rset is not NULL", rset.get() == NULL);
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -878,15 +906,17 @@ static void test_statement_9(boost::scoped_ptr<sql::Connection> & conn, boost::s
 
 
 /* {{{ Test metadata usage after result set has been closed  */
-static void test_statement_10(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, std::string database)
-{
+static void test_statement_10(std::unique_ptr<sql::Connection> &conn,
+                              std::unique_ptr<sql::Connection> &conn2,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("stmt is NULL", stmt.get() != NULL);
     ensure("Data not populated", true == populate_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT * FROM test_function"));
+    std::unique_ptr<sql::ResultSet> res(
+        stmt->executeQuery("SELECT * FROM test_function"));
     ensure("ResultSet is empty", res->rowsCount() > 0);
     sql::ResultSetMetaData * meta = res->getMetaData();
     ensure("Error while reading a row ", res->next());
@@ -899,7 +929,7 @@ static void test_statement_10(boost::scoped_ptr<sql::Connection> & conn, boost::
       // exception correctly thrown
     }
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
     stmt2->execute("DROP TABLE test_function");
@@ -918,14 +948,15 @@ static void test_statement_10(boost::scoped_ptr<sql::Connection> & conn, boost::
 
 
 /* {{{ */
-static void test_result_set_0(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_result_set_0(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
     ensure("AutoCommit", conn.get() == stmt->getConnection());
 
-    boost::scoped_ptr<sql::ResultSet> result(stmt->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE)->executeQuery("SELECT 1, 2, 3"));
+    std::unique_ptr<sql::ResultSet> result(
+        stmt->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE)
+            ->executeQuery("SELECT 1, 2, 3"));
 
     ensure_equal_int("isFirst", result->isFirst(), false);
 
@@ -941,18 +972,17 @@ static void test_result_set_0(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ */
-static void test_result_set_1(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_result_set_1(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
     stmt1->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT 1"));
+    std::unique_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT 1"));
     ensure("res1 is NULL", rset1.get() != NULL);
 
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT 1"));
+    std::unique_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT 1"));
     ensure("res2 is NULL", rset2.get() != NULL);
 
     ensure("res1 is empty", rset1->next() != false);
@@ -968,16 +998,16 @@ static void test_result_set_1(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ */
-static void test_result_set_2(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_2(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT 1"));
+    std::unique_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT 1"));
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure_equal_int("res1 is empty", rset1->next(), true);
     ensure_equal_int("res1 is empty", rset1->next(), false);
@@ -996,11 +1026,11 @@ static void test_result_set_2(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ */
-static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_3(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
 
     ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
@@ -1009,7 +1039,8 @@ static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::st
 
     ensure("Data not populated", true == populate_TX_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset1(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure("res1 is empty", rset1->next() != false);
     int count_full_before = rset1->getInt(1);
@@ -1020,7 +1051,8 @@ static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::st
                   stmt1->executeUpdate("DELETE FROM test_function_tx WHERE 1"),
                   count_full_before);
 
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset2(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res2 is NULL", rset2.get() != NULL);
     ensure("res2 is empty", rset2->next() != false);
     ensure("Table not empty after delete", rset2->getInt(1) == 0);
@@ -1028,7 +1060,8 @@ static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::st
 
     stmt1->getConnection()->rollback();
 
-    boost::scoped_ptr<sql::ResultSet> rset3(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset3(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res3 is NULL", rset3.get() != NULL);
     ensure("res3 is empty", rset3->next() != false);
     int count_full_after = rset3->getInt(1);
@@ -1042,7 +1075,8 @@ static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::st
                   count_full_before);
     stmt1->getConnection()->commit();
 
-    boost::scoped_ptr<sql::ResultSet> rset4(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset4(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res4 is NULL", rset4.get() != NULL);
     ensure("res4 is empty", rset4->next() != false);
     ensure("Table not empty after delete", rset4->getInt(1) == 0);
@@ -1062,11 +1096,11 @@ static void test_result_set_3(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ Test commit and rollback (autocommit on) */
-static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_4(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
 
     ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
@@ -1075,8 +1109,8 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
     conn->setAutoCommit(true);
     ensure_equal_int("Data not populated", true, populate_TX_test_table(conn, database));
 
-
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset1(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure_equal_int("res1 is empty", rset1->next(), true);
     int count_full_before = rset1->getInt(1);
@@ -1087,7 +1121,8 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
                   stmt1->executeUpdate("DELETE FROM test_function_tx WHERE 1"),
                   count_full_before);
 
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset2(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res2 is NULL", rset2.get() != NULL);
     ensure_equal_int("res2 is empty", rset2->next(), true);
     ensure_equal_int("Table not empty after delete", rset2->getInt(1), 0);
@@ -1096,7 +1131,8 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
     /* In autocommit on, this is a no-op */
     stmt1->getConnection()->rollback();
 
-    boost::scoped_ptr<sql::ResultSet> rset3(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset3(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res3 is NULL", rset3.get() != NULL);
     ensure_equal_int("res3 is empty", rset3->next(), true);
     ensure_equal_int("Rollback didn't work", rset3->getInt(1), 0);
@@ -1111,7 +1147,8 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
     /* In autocommit on, this is a no-op */
     stmt1->getConnection()->commit();
 
-    boost::scoped_ptr<sql::ResultSet> rset4(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset4(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res4 is NULL", rset4.get() != NULL);
     ensure_equal_int("res4 is empty", rset4->next(), true);
     ensure_equal_int("Table not empty after delete", rset4->getInt(1), 0);
@@ -1124,7 +1161,8 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
                   count_full_before);
     /* In autocommit iff, this is an op */
     stmt1->getConnection()->rollback();
-    boost::scoped_ptr<sql::ResultSet> rset5(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset5(
+        stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx"));
     ensure("res5 is NULL", rset5.get() != NULL);
     ensure_equal_int("res5 is empty", rset5->next(), true);
     ensure_equal_int("Table empty after delete", rset5->getInt(1), count_full_before);
@@ -1144,15 +1182,16 @@ static void test_result_set_4(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ Test multistatement off - send two queries in one call */
-static void test_result_set_5(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_result_set_5(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
 
     try {
-      boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx; DELETE FROM test_function_tx"));
+      std::unique_ptr<sql::ResultSet> rset1(
+          stmt1->executeQuery("SELECT COUNT(*) FROM test_function_tx; DELETE "
+                              "FROM test_function_tx"));
       ensure("ERR: Exception not thrown", false);
     } catch (sql::SQLException &) {}
   } catch (sql::SQLException &e) {
@@ -1243,18 +1282,19 @@ static void test_result_set_check_out_of_bound(sql::ResultSet *rset1)
 
 
 /* {{{ Test out of bound extraction of data */
-static void test_result_set_6(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_6(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
 
     ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 
     ensure("Data not populated", true == populate_TX_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT COUNT(*) AS 'count of rows' FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset1(stmt1->executeQuery(
+        "SELECT COUNT(*) AS 'count of rows' FROM test_function_tx"));
     ensure("res1 is NULL", rset1.get() != NULL);
 
     test_result_set_check_out_of_bound(rset1.get());
@@ -1271,22 +1311,24 @@ static void test_result_set_6(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ Test out of bound extraction of data - PS version */
-static void test_result_set_7(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_7(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
     ensure("Data not populated", true == populate_TX_test_table(conn, database));
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT COUNT(*) AS 'count of rows' FROM test_function_tx"));
+    std::unique_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement(
+        "SELECT COUNT(*) AS 'count of rows' FROM test_function_tx"));
     ensure("stmt1 is NULL", stmt1.get() != NULL);
     ensure_equal("sql::Connection differs", conn.get(), stmt1->getConnection());
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery());
+    std::unique_ptr<sql::ResultSet> rset1(stmt1->executeQuery());
     ensure("res1 is NULL", rset1.get() != NULL);
 
     test_result_set_check_out_of_bound(rset1.get());
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DROP TABLE test_function_tx"));
+    std::unique_ptr<sql::PreparedStatement> stmt2(
+        conn->prepareStatement("DROP TABLE test_function_tx"));
     stmt2->execute();
   } catch (sql::SQLException &e) {
     printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
@@ -1299,12 +1341,13 @@ static void test_result_set_7(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ Test commit and rollback (autocommit on) - PS version */
-static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_8(std::unique_ptr<sql::Connection> &conn,
+                              std::string database) {
   ENTER_FUNCTION();
   try {
     int count_full_before;
-    boost::scoped_ptr<sql::PreparedStatement> stmt0(conn->prepareStatement("SELECT 1"));
+    std::unique_ptr<sql::PreparedStatement> stmt0(
+        conn->prepareStatement("SELECT 1"));
     ensure("stmt0 is NULL", stmt0.get() != NULL);
 
     ensure_equal("sql::Connection differs", conn.get(), stmt0->getConnection());
@@ -1313,19 +1356,22 @@ static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::st
     conn->setAutoCommit(true);
     ensure("Data not populated", true == populate_TX_test_table_PS(conn, database));
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery());
+    std::unique_ptr<sql::PreparedStatement> stmt1(
+        conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset1(stmt1->executeQuery());
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure_equal_int("res1 is empty", rset1->next(), true);
     count_full_before = rset1->getInt(1);
     ensure_equal_int("res1 has more rows ", rset1->next(), false);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
+    std::unique_ptr<sql::PreparedStatement> stmt2(
+        conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
     /* Let's delete and then rollback */
     ensure_equal_int("Deleted less rows", stmt2->executeUpdate(), count_full_before);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt3(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt3->executeQuery());
+    std::unique_ptr<sql::PreparedStatement> stmt3(
+        conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset2(stmt3->executeQuery());
     ensure("res2 is NULL", rset2.get() != NULL);
     ensure_equal_int("res2 is empty", rset2->next(), true);
     ensure_equal_int("Table not empty after delete", rset2->getInt(1), 0);
@@ -1334,8 +1380,9 @@ static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::st
     /* In autocommit on, this is a no-op */
     stmt1->getConnection()->rollback();
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt4(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
-    boost::scoped_ptr<sql::ResultSet> rset3(stmt4->executeQuery());
+    std::unique_ptr<sql::PreparedStatement> stmt4(
+        conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset3(stmt4->executeQuery());
     ensure("res3 is NULL", rset3.get() != NULL);
     ensure_equal_int("res3 is empty", rset3->next(), true);
     ensure_equal_int("Rollback didn't work", rset3->getInt(1), 0);
@@ -1343,15 +1390,17 @@ static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::st
 
     ensure("Data not populated", true == populate_TX_test_table_PS(conn, database));
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt5(conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
+    std::unique_ptr<sql::PreparedStatement> stmt5(
+        conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
     /* Let's delete and then rollback */
     ensure_equal_int("Deleted less rows", stmt5->executeUpdate(), count_full_before);
 
     /* In autocommit on, this is a no-op */
     stmt1->getConnection()->commit();
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt6(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
-    boost::scoped_ptr<sql::ResultSet> rset4(stmt6->executeQuery());
+    std::unique_ptr<sql::PreparedStatement> stmt6(
+        conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset4(stmt6->executeQuery());
     ensure("res4 is NULL", rset4.get() != NULL);
     ensure_equal_int("res4 is empty", rset4->next(), true);
     ensure_equal_int("Rollback didn't work", rset4->getInt(1), 0);
@@ -1359,20 +1408,23 @@ static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::st
 
     conn->setAutoCommit(false);
     ensure("Data not populated", true == populate_TX_test_table_PS(conn, database));
-    boost::scoped_ptr<sql::PreparedStatement> stmt7(conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
+    std::unique_ptr<sql::PreparedStatement> stmt7(
+        conn->prepareStatement("DELETE FROM test_function_tx WHERE 1"));
     /* Let's delete and then rollback */
     ensure("Deleted less rows", stmt7->executeUpdate() == count_full_before);
     /* In autocommit iff, this is an op */
     stmt1->getConnection()->rollback();
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt8(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
-    boost::scoped_ptr<sql::ResultSet> rset5(stmt8->executeQuery());
+    std::unique_ptr<sql::PreparedStatement> stmt8(
+        conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx"));
+    std::unique_ptr<sql::ResultSet> rset5(stmt8->executeQuery());
     ensure("res5 is NULL", rset5.get() != NULL);
     ensure_equal_int("res5 is empty", rset5->next(), true);
     ensure_equal_int("Rollback didn't work", rset5->getInt(1), 0);
     ensure_equal_int("res5 has more rows ", rset5->next(), false);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt9(conn->prepareStatement("DROP TABLE test_function_tx"));
+    std::unique_ptr<sql::PreparedStatement> stmt9(
+        conn->prepareStatement("DROP TABLE test_function_tx"));
     stmt1->execute();
 
     conn->setAutoCommit(old_commit_mode);
@@ -1387,13 +1439,14 @@ static void test_result_set_8(boost::scoped_ptr<sql::Connection> & conn, std::st
 
 
 /* {{{ Test multistatement off - send two queries in one call - PS version */
-static void test_result_set_9(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_result_set_9(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
 
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx; DELETE FROM test_function_tx"));
+      std::unique_ptr<sql::PreparedStatement> stmt1(
+          conn->prepareStatement("SELECT COUNT(*) FROM test_function_tx; "
+                                 "DELETE FROM test_function_tx"));
       ensure("ERR: Exception not thrown", false);
     } catch (sql::SQLException &) {}
   } catch (sql::SQLException &e) {
@@ -1407,11 +1460,11 @@ static void test_result_set_9(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ Test multiresults - SP with normal and prepared statement */
-static void test_result_set_10(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_10(std::unique_ptr<sql::Connection> &conn,
+                               std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt0(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt0(conn->createStatement());
     ensure("stmt0 is NULL", stmt0.get() != NULL);
     stmt0->execute("USE " + database);
 
@@ -1419,21 +1472,21 @@ static void test_result_set_10(boost::scoped_ptr<sql::Connection> & conn, std::s
   /* Doesn't work with libmysql - a limitation of the library, might work with mysqlnd if it lies under */
     {
       /* Create procedure is not supported for preparing */
-      boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+      std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
       stmt1->execute("DROP PROCEDURE IF EXISTS CPP1");
       stmt1->execute("CREATE PROCEDURE CPP1() SELECT 42");
 
-      boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("CALL CPP1()"));
+      std::unique_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("CALL CPP1()"));
       stmt2->execute();
 
-      boost::scoped_ptr<sql::ResultSet> rset1(stmt2->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset1(stmt2->getResultSet());
       ensure("res1 is NULL", rset1.get() != NULL);
       ensure_equal_int("res1 is empty", rset1->next(), true);
       eensure_equal_intsure("Wrong data", rset1->getInt(1), 42);
       ensure_equal_int("res1 has more rows ", rset1->next(), false);
 
       /* Here comes the status result set*/
-      boost::scoped_ptr<sql::ResultSet> rset2(stmt2->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset2(stmt2->getResultSet());
       ensure("res2 is not NULL", rset2.get() == NULL);
 
       /* drop procedure is not supported for preparing */
@@ -1441,19 +1494,19 @@ static void test_result_set_10(boost::scoped_ptr<sql::Connection> & conn, std::s
     }
 
     {
-      boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+      std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
       stmt1->execute("DROP PROCEDURE IF EXISTS CPP1");
       stmt1->execute("CREATE PROCEDURE CPP1() SELECT 42");
 
       stmt1->execute("CALL CPP1()");
-      boost::scoped_ptr<sql::ResultSet> rset1(stmt1->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset1(stmt1->getResultSet());
       ensure("res1 is NULL", rset1.get() != NULL);
       ensure_equal_int("res1 is empty", rset1->next(), true);
       ensure_equal_int("Wrong data", rset1->getInt(1), 42);
       ensure_equal_int("res1 has more rows ", rset1->next(), false);
 
       /* Here comes the status result set*/
-      boost::scoped_ptr<sql::ResultSet> rset2(stmt1->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset2(stmt1->getResultSet());
       ensure_equal_int("res2 is not NULL", rset2.get(), NULL);
 
       stmt1->execute("DROP PROCEDURE CPP1");
@@ -1470,17 +1523,18 @@ static void test_result_set_10(boost::scoped_ptr<sql::Connection> & conn, std::s
 
 
 /* {{{ getMetadata() */
-static void test_result_set_11(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_result_set_11(std::unique_ptr<sql::Connection> &conn,
+                               std::string database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt1(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt1(conn->createStatement());
     ensure("stmt1 is NULL", stmt1.get() != NULL);
     stmt1->setResultSetType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE);
 
     ensure("Data not populated", true == populate_test_table(conn, database));
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt1->executeQuery("SELECT * FROM test_function"));
+    std::unique_ptr<sql::ResultSet> rset1(
+        stmt1->executeQuery("SELECT * FROM test_function"));
     ensure("res1 is NULL", rset1.get() != NULL);
     ensure("res1 is empty", rset1->next() != false);
     stmt1->execute("set @old_charset_res=@@session.character_set_results");
@@ -1541,15 +1595,15 @@ static void test_result_set_11(boost::scoped_ptr<sql::Connection> & conn, std::s
 
 #if 0
 /* {{{ General test 0 */
-static void test_general_0(boost::scoped_ptr<sql::Connection> & conn)
+static void test_general_0(std::unique_ptr<sql::Connection> & conn)
 {
   ENTER_FUNCTION();
   try {
     sql::DatabaseMetaData * meta = conn->getMetaData();
-    boost::scoped_ptr<sql::ResultSet> rset(meta->getSchemata());
+    std::unique_ptr<sql::ResultSet> rset(meta->getSchemata());
 
     while (rset->next()) {
-      boost::scoped_ptr<sql::ResultSet> rset2(meta->getSchemaObjects("", rset->getString("schema_name")));
+      std::unique_ptr<sql::ResultSet> rset2(meta->getSchemaObjects("", rset->getString("schema_name")));
 
       while (rset2->next())  {
         rset2->getString("object_type").c_str();
@@ -1567,11 +1621,11 @@ static void test_general_0(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ General test 1 */
-static void test_general_1(boost::scoped_ptr<sql::Connection> & conn)
+static void test_general_1(std::unique_ptr<sql::Connection> & conn)
 {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt(conn->createStatement());
 
     stmt->execute("DROP TABLE IF EXISTS test.product");
     stmt->execute("CREATE TABLE test.product(idproduct INT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(80))");
@@ -1579,12 +1633,12 @@ static void test_general_1(boost::scoped_ptr<sql::Connection> & conn)
     conn->setAutoCommit(0);
 
 
-    boost::scoped_ptr<sql::PreparedStatement> prepStmt(conn->prepareStatement("INSERT INTO test.product (idproduct, name) VALUES(?, ?)"));
+    std::unique_ptr<sql::PreparedStatement> prepStmt(conn->prepareStatement("INSERT INTO test.product (idproduct, name) VALUES(?, ?)"));
     prepStmt->setInt(1, 1);
     prepStmt->setString(2, "The answer is 42");
     prepStmt->executeUpdate();
 
-    boost::scoped_ptr<sql::ResultSet> rset1(stmt->executeQuery("SELECT * FROM test.product"));
+    std::unique_ptr<sql::ResultSet> rset1(stmt->executeQuery("SELECT * FROM test.product"));
 
     ensure_equal_int("Empty result set", rset1->next(), true);
     ensure("Wrong data", !rset1->getString(2).compare("The answer is 42"));
@@ -1593,7 +1647,7 @@ static void test_general_1(boost::scoped_ptr<sql::Connection> & conn)
 
     conn->rollback();
 
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt->executeQuery("SELECT * FROM test.product"));
+    std::unique_ptr<sql::ResultSet> rset2(stmt->executeQuery("SELECT * FROM test.product"));
 
     ensure_equal_int("Non-Empty result set", rset1->next(), false);
 
@@ -1609,14 +1663,14 @@ static void test_general_1(boost::scoped_ptr<sql::Connection> & conn)
 #endif
 
 /* {{{ */
-static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_prep_statement_0(std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
   try {
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT 1"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT 1"));
       stmt->execute();
-      boost::scoped_ptr<sql::ResultSet> rset1(stmt->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset1(stmt->getResultSet());
     } catch (sql::SQLException &e) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
       printf("# ");
@@ -1624,7 +1678,8 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
     }
 
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?"));
     } catch (sql::SQLException &e) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
       printf("# ");
@@ -1633,7 +1688,8 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 
     /* Bind but don't execute. There should be no leak */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?, ?, ?"));
       stmt->setInt(1, 1);
     } catch (sql::SQLException &e) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
@@ -1643,7 +1699,8 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 
     /* Bind two different types for the same column. There should be no leak */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?"));
       stmt->setString(1, "Hello MySQL");
       stmt->setInt(1, 42);
       stmt->execute();
@@ -1655,7 +1712,8 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 
     /* Execute without fetching the result set. The connector should clean the wire */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?, ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?, ?, ?, ?"));
       stmt->setInt(1, 1);
       stmt->setDouble(2, 2.25);
       stmt->setString(3, "Здрасти МySQL");
@@ -1670,11 +1728,11 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 #if 0
     /* Bind one parameter less than needed - NULL should be sent to the server . Check also multibyte fetching. */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ? as \"Здравей_МySQL\" , ?, ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ? as \"Здравей_МySQL\" , ?, ?"));
       stmt->setInt(3, 42);
       stmt->setString(1, "Здравей МySQL! Как си?");
       stmt->execute();
-      boost::scoped_ptr<sql::ResultSet> rset(stmt->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset(stmt->getResultSet());
       ensure("No result set", rset.get() != NULL);
       ensure("Result set is empty", rset->next() != false);
       ensure("Incorrect value for col 1", rset->getInt(2) == 0 && true == rset->wasNull());
@@ -1692,10 +1750,11 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 #endif
     /* try double ::execute() */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?"));
       stmt->setString(1, "Hello World");
       for (int i = 0; i < 100; ++i) {
-        boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery());
+        std::unique_ptr<sql::ResultSet> rset(stmt->executeQuery());
       }
     } catch (sql::SQLException &e) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
@@ -1706,31 +1765,34 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
     /* Test clearParameters() */
     {
       try {
-        boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+        std::unique_ptr<sql::PreparedStatement> stmt(
+            conn->prepareStatement("SELECT ?"));
         stmt->setInt(1, 13);
-        boost::scoped_ptr<sql::ResultSet> rs(stmt->executeQuery());
+        std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery());
       } catch (sql::SQLException &e) {
         printf("\n# ERR: Caught sql::SQLException at %s::%d  [%s] (%d/%s)\n", CPPCONN_FUNC, __LINE__, e.what(), e.getErrorCode(), e.getSQLStateCStr());
         printf("# ");
         ++total_errors;
       }
       try {
-        boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+        std::unique_ptr<sql::PreparedStatement> stmt(
+            conn->prepareStatement("SELECT ?"));
         stmt->setInt(1, 13);
         stmt->clearParameters();
-        boost::scoped_ptr<sql::ResultSet> rs(stmt->executeQuery());
+        std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery());
         ensure("Exception not thrown", false);
       } catch (sql::SQLException &) {}
     }
 
     /* try clearParameters() call */
     {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?, ?, ?, NULL"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?, ?, ?, NULL"));
       try {
         stmt->setInt(3, 42);
         stmt->setString(1, "Hello MYSQL");
         stmt->setDouble(2, 1.25);
-        boost::scoped_ptr<sql::ResultSet> rset(stmt->executeQuery());
+        std::unique_ptr<sql::ResultSet> rset(stmt->executeQuery());
         ensure("No result set", rset.get() != NULL);
         ensure("Result set is empty", rset->next() != false);
 
@@ -1752,10 +1814,11 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
       }
     }
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT ?"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT ?"));
       stmt->setInt(1, 1);
       stmt->execute();
-      boost::scoped_ptr<sql::ResultSet> rset(stmt->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset(stmt->getResultSet());
     } catch (sql::SQLException &) {
       printf("\n# ERR: Caught sql::SQLException at %s::%d\n", CPPCONN_FUNC, __LINE__);
       printf("# ");
@@ -1773,28 +1836,32 @@ static void test_prep_statement_0(boost::scoped_ptr<sql::Connection> & conn)
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_1(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, const std::string & database)
-{
+static void test_prep_statement_1(std::unique_ptr<sql::Connection> &conn,
+                                  std::unique_ptr<sql::Connection> &conn2,
+                                  const std::string &database) {
   ENTER_FUNCTION();
   try {
-    boost::scoped_ptr<sql::PreparedStatement> stmt0(conn->prepareStatement("SELECT 1, 2, 3"));
+    std::unique_ptr<sql::PreparedStatement> stmt0(
+        conn->prepareStatement("SELECT 1, 2, 3"));
     ensure("stmt0 is NULL", stmt0.get() != NULL);
 
     ensure("Data not populated", true == populate_test_table_PS(conn, database));
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("SELECT * FROM test_function"));
+    std::unique_ptr<sql::PreparedStatement> stmt1(
+        conn->prepareStatement("SELECT * FROM test_function"));
     ensure("stmt1 is NULL", stmt1.get() != NULL);
     if (false == stmt1->execute()) {
       ensure("False returned for SELECT", false);
     }
-    boost::scoped_ptr<sql::ResultSet> rset(stmt1->getResultSet());
+    std::unique_ptr<sql::ResultSet> rset(stmt1->getResultSet());
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt2(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn2->createStatement());
     ensure("stmt2 is NULL", stmt2.get() != NULL);
     stmt2->execute("USE " + database);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt3(conn2->prepareStatement("DROP TABLE test_function"));
+    std::unique_ptr<sql::PreparedStatement> stmt3(
+        conn2->prepareStatement("DROP TABLE test_function"));
     ensure("stmt3 is NULL", stmt3.get() != NULL);
     stmt3->execute();
   } catch (sql::SQLException &e) {
@@ -1812,20 +1879,22 @@ static void test_prep_statement_1(boost::scoped_ptr<sql::Connection> & conn, boo
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_2(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_prep_statement_2(std::unique_ptr<sql::Connection> &conn,
+                                  std::string database) {
   ENTER_FUNCTION();
   try {
     populate_test_table_PS_integers(conn, database);
 
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT '1"));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("SELECT '1"));
       ensure("ERR: Exception not thrown", false);
     } catch (sql::SQLException &) {}
 
     /* USE still cannot be prepared */
     try {
-      boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("USE " + database));
+      std::unique_ptr<sql::PreparedStatement> stmt(
+          conn->prepareStatement("USE " + database));
       ensure("ERR: Exception not thrown", false);
     } catch (sql::SQLException &) {}
 
@@ -1844,8 +1913,9 @@ static void test_prep_statement_2(boost::scoped_ptr<sql::Connection> & conn, std
 
 
 /* {{{ Test simple update statement against statement object */
-static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boost::scoped_ptr<sql::Connection> & conn2, const std::string & database)
-{
+static void test_prep_statement_3(std::unique_ptr<sql::Connection> &conn,
+                                  std::unique_ptr<sql::Connection> &conn2,
+                                  const std::string &database) {
   ENTER_FUNCTION();
   try {
     int64_t	r1_c1 = L64(2147483646),
@@ -1860,7 +1930,8 @@ static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boo
 
     ensure("Data not populated", true == populate_test_table_PS_integers(conn, database));
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement("INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
+    std::unique_ptr<sql::PreparedStatement> stmt1(conn->prepareStatement(
+        "INSERT INTO test_function_int (i, i_uns, b, b_uns) VALUES(?,?,?,?)"));
     ensure("stmt0 is NULL", stmt1.get() != NULL);
     stmt1->clearParameters();
     stmt1->setInt(1, static_cast<int>(r1_c1));
@@ -1876,11 +1947,12 @@ static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boo
     ensure("True returned for INSERT", false == stmt1->execute());
 
     {
-      boost::scoped_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement("SELECT i, i_uns, b, b_uns FROM test_function_int"));
+      std::unique_ptr<sql::PreparedStatement> stmt2(conn->prepareStatement(
+          "SELECT i, i_uns, b, b_uns FROM test_function_int"));
       ensure("stmt1 is NULL", stmt2.get() != NULL);
       ensure("False returned for SELECT", stmt2->execute());
 
-      boost::scoped_ptr<sql::ResultSet> rset(stmt2->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset(stmt2->getResultSet());
 
       ensure("No first line", rset->next());
       ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
@@ -1913,11 +1985,11 @@ static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boo
     }
 
     {
-      boost::scoped_ptr<sql::Statement> stmt2(conn->createStatement());
+      std::unique_ptr<sql::Statement> stmt2(conn->createStatement());
       ensure("stmt1 is NULL", stmt2.get() != NULL);
       ensure("False returned for SELECT", stmt2->execute("SELECT i, i_uns, b, b_uns FROM test_function_int"));
 
-      boost::scoped_ptr<sql::ResultSet> rset(stmt2->getResultSet());
+      std::unique_ptr<sql::ResultSet> rset(stmt2->getResultSet());
 
       ensure("No first line", rset->next());
       ensure_equal_int64("Different data", rset->getInt("i"), r1_c1);
@@ -1950,11 +2022,12 @@ static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boo
     }
 
     /* Clean */
-    boost::scoped_ptr<sql::Statement> stmt4(conn2->createStatement());
+    std::unique_ptr<sql::Statement> stmt4(conn2->createStatement());
     ensure("stmt4 is NULL", stmt4.get() != NULL);
     stmt4->execute("USE " + database);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt5(conn2->prepareStatement("DROP TABLE test_function_int"));
+    std::unique_ptr<sql::PreparedStatement> stmt5(
+        conn2->prepareStatement("DROP TABLE test_function_int"));
     ensure("stmt5 is NULL", stmt5.get() != NULL);
     stmt5->execute();
   } catch (sql::SQLException &e) {
@@ -1972,30 +2045,30 @@ static void test_prep_statement_3(boost::scoped_ptr<sql::Connection> & conn, boo
 
 
 /* {{{ Tests blob with PS */
-static void test_prep_statement_blob(boost::scoped_ptr<sql::Connection> & conn, std::string database)
-{
+static void test_prep_statement_blob(std::unique_ptr<sql::Connection> &conn,
+                                     std::string database) {
   ENTER_FUNCTION();
   try {
     populate_blob_table(conn, database);
     /* USE still cannot be prepared */
-    boost::scoped_ptr<sql::Statement> use_stmt(conn->createStatement());
+    std::unique_ptr<sql::Statement> use_stmt(conn->createStatement());
     use_stmt->execute("USE " + database);
 
-    boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("INSERT INTO test_blob VALUES(?)"));
+    std::unique_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("INSERT INTO test_blob VALUES(?)"));
     std::string value("A\0B", sizeof("A\0B") - 1);
     std::istringstream tmp_blob(value);
     stmt->setBlob(1, &tmp_blob);
     stmt->execute();
 
 
-    boost::scoped_ptr<sql::Statement> stmt2(conn->createStatement());
+    std::unique_ptr<sql::Statement> stmt2(conn->createStatement());
     stmt2->execute("SELECT * FROM test_blob");
-    boost::scoped_ptr<sql::ResultSet> rset2(stmt2->getResultSet());
+    std::unique_ptr<sql::ResultSet> rset2(stmt2->getResultSet());
     ensure("res2 is NULL", rset2.get() != NULL);
     ensure_equal_int("res2 is empty", rset2->next(), true);
     ensure_equal_str("Wrong data", rset2->getString(1), value);
 
-    boost::scoped_ptr<std::istream> blob(rset2->getBlob(1));
+    std::unique_ptr<std::istream> blob(rset2->getBlob(1));
       std::string::iterator it;
       for (it = value.begin() ; it < value.end(); ++it) {
       if ((blob->rdstate() & std::istream::eofbit)) {
@@ -2095,8 +2168,8 @@ static void test_get_table_privileges_1(const std::string & host, const std::str
   std::list< std::list< std::string > >::const_iterator expectedPrivilegesList_it = expectedPrivilegesList.begin();
 
   try {
-    boost::scoped_ptr<sql::Connection> root_conn(get_connection(host, user, pass));
-    boost::scoped_ptr<sql::Statement> root_stmt(root_conn->createStatement());
+    std::unique_ptr<sql::Connection> root_conn(get_connection(host, user, pass));
+    std::unique_ptr<sql::Statement> root_stmt(root_conn->createStatement());
 #if DEBUG_TABLE_PRIVS
     std::cout << std::endl << plain_user_w_host << std::endl;
 #endif
@@ -2108,9 +2181,9 @@ static void test_get_table_privileges_1(const std::string & host, const std::str
        Put it in a block, so the connection will be closed before we start dropping the user and the table
       try {
 
-        boost::scoped_ptr<sql::Connection> user_conn(get_connection(host, plain_user, "pass"));
-        boost::scoped_ptr<sql::DatabaseMetaData> user_conn_meta(user_conn->getMetaData());
-        boost::scoped_ptr<sql::ResultSet> res(user_conn_meta->getTablePrivileges("", "%", "%"));
+        std::unique_ptr<sql::Connection> user_conn(get_connection(host, plain_user, "pass"));
+        std::unique_ptr<sql::DatabaseMetaData> user_conn_meta(user_conn->getMetaData());
+        std::unique_ptr<sql::ResultSet> res(user_conn_meta->getTablePrivileges("", "%", "%"));
 
 
 #if DEBUG_TABLE_PRIVS
@@ -2166,8 +2239,8 @@ static void test_get_table_privileges_1(const std::string & host, const std::str
 */
 
 /* {{{	Invoke as many "not implemented" methods as possible for better code coverage (and to make sure we keep CHANGES current) */
-static void test_not_implemented_connection(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_connection(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("bar");
@@ -2251,12 +2324,12 @@ static void test_not_implemented_connection(boost::scoped_ptr<sql::Connection> &
 }
 /* }}} */
 
-static void test_not_implemented_statement(boost::scoped_ptr<sql::Connection> & conn, const std::string & database)
-{
+static void test_not_implemented_statement(
+    std::unique_ptr<sql::Connection> &conn, const std::string &database) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
   stmt->execute("USE " + database);
 
   try {
@@ -2336,8 +2409,8 @@ static void test_not_implemented_statement(boost::scoped_ptr<sql::Connection> & 
 }
 /* }}} */
 
-static void test_not_implemented_conn_meta(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_conn_meta(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
@@ -2385,16 +2458,18 @@ static void test_not_implemented_conn_meta(boost::scoped_ptr<sql::Connection> & 
 }
 /* }}} */
 
-static void test_not_implemented_ps(boost::scoped_ptr<sql::Connection> & conn, const std::string & database)
-{
+static void test_not_implemented_ps(std::unique_ptr<sql::Connection> &conn,
+                                    const std::string &database) {
   ENTER_FUNCTION();
 
   std::string bar("jedervernunft");
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
   stmt->execute("USE " + database);
 
-  boost::scoped_ptr<sql::PreparedStatement> ps1(conn->prepareStatement("SELECT 1"));
-  boost::scoped_ptr<sql::PreparedStatement> ps2(conn->prepareStatement("SELECT ?"));
+  std::unique_ptr<sql::PreparedStatement> ps1(
+      conn->prepareStatement("SELECT 1"));
+  std::unique_ptr<sql::PreparedStatement> ps2(
+      conn->prepareStatement("SELECT ?"));
   ps2->setInt(1, 2);
 
   try {
@@ -2516,14 +2591,13 @@ static void test_not_implemented_ps(boost::scoped_ptr<sql::Connection> & conn, c
 }
 /* }}} */
 
-
-static void test_not_implemented_resultset(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_resultset(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
-  boost::scoped_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS 'a'"));
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
+  std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS 'a'"));
 
   try {
     // cancelRowUpdates()
@@ -2651,14 +2725,14 @@ static void test_not_implemented_resultset(boost::scoped_ptr<sql::Connection> & 
 }
 /* }}} */
 
-
-static void test_not_implemented_ps_resultset(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_ps_resultset(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
-  boost::scoped_ptr<sql::PreparedStatement> stmt(conn->prepareStatement("SELECT 1 AS 'a'"));
-  boost::scoped_ptr<sql::ResultSet> res(stmt->executeQuery());
+  std::unique_ptr<sql::PreparedStatement> stmt(
+      conn->prepareStatement("SELECT 1 AS 'a'"));
+  std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
 
   try {
     // cancelRowUpdates()
@@ -2786,13 +2860,13 @@ static void test_not_implemented_ps_resultset(boost::scoped_ptr<sql::Connection>
 }
 /* }}} */
 
-static void test_not_implemented_cs_resultset(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_cs_resultset(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
   sql::DatabaseMetaData * conn_meta = conn->getMetaData();
-  boost::scoped_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
+  std::unique_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
 
   try {
     // cancelRowUpdates()
@@ -2920,13 +2994,13 @@ static void test_not_implemented_cs_resultset(boost::scoped_ptr<sql::Connection>
 }
 /* }}} */
 
-static void test_not_implemented_rs_meta(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_rs_meta(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
-  boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
-  boost::scoped_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS 'a'"));
+  std::unique_ptr<sql::Statement> stmt(conn->createStatement());
+  std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT 1 AS 'a'"));
 
   try {
     try {
@@ -2948,14 +3022,13 @@ static void test_not_implemented_rs_meta(boost::scoped_ptr<sql::Connection> & co
 }
 /* }}} */
 
-
-static void test_not_implemented_cs_rs_meta(boost::scoped_ptr<sql::Connection> & conn)
-{
+static void test_not_implemented_cs_rs_meta(
+    std::unique_ptr<sql::Connection> &conn) {
   ENTER_FUNCTION();
 
   std::string bar("foo");
   sql::DatabaseMetaData * conn_meta = conn->getMetaData();
-  boost::scoped_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
+  std::unique_ptr<sql::ResultSet> res(conn_meta->getSchemaObjectTypes());
   sql::ResultSetMetaData * meta = res->getMetaData();
 
   try {
@@ -3002,7 +3075,7 @@ int run_tests(int argc, const char **argv)
 {
   printf("1..%d\n#\n", loops);
 
-  boost::scoped_ptr<sql::Connection> conn, conn2;
+  std::unique_ptr<sql::Connection> conn, conn2;
   int last_error_total = 0;
   int i;
 
@@ -3045,10 +3118,10 @@ int run_tests(int argc, const char **argv)
 //		printf("# ");
 
     try {
-      boost::scoped_ptr<sql::Statement> stmt(conn->createStatement());
+      std::unique_ptr<sql::Statement> stmt(conn->createStatement());
       stmt->execute("SHOW ENGINES");
       {
-        boost::scoped_ptr<sql::ResultSet> rset(stmt->getResultSet());
+        std::unique_ptr<sql::ResultSet> rset(stmt->getResultSet());
         int found = 0;
         while (rset->next()) {
           if (rset->getString("Engine") == "InnoDB" && (rset->getString("Support") == "YES" || rset->getString("Support") == "DEFAULT")) {

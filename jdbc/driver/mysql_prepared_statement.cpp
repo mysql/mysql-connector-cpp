@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,13 +35,13 @@
 
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include "mysql_util.h"
 #if (defined __GNUC__) && (__GNUC__ >= 8)
 DIAGNOSTIC_PUSH
 DISABLE_WARNING(-Wparentheses)
 #endif
-#include <boost/variant.hpp>
-#include <boost/scoped_array.hpp>
+#include <variant>
 #if (defined __GNUC__) && (__GNUC__ >= 8)
 DIAGNOSTIC_POP
 #endif
@@ -71,63 +71,61 @@ static const unsigned int MAX_SEND_LONGDATA_BUFFER= 1 << 18; //1<<18=256k (for i
 static const unsigned int MAX_SEND_LONGDATA_CHUNK=  1 << 18; //1<<19=512k (for string)
 
 // Visitor class to send long data contained in blob_bind
-class LongDataSender : public boost::static_visitor<bool>
+class LongDataSender
 {
   unsigned	position;
-  boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
-  boost::shared_ptr<MySQL_DebugLogger> logger;
+  std::shared_ptr<NativeAPI::NativeStatementWrapper> proxy;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
   LongDataSender()
   {}
 
 public:
+ LongDataSender(unsigned int i,
+                std::shared_ptr<NativeAPI::NativeStatementWrapper> &_proxy,
+                std::shared_ptr<MySQL_DebugLogger> _logger)
+     : position(i), proxy(_proxy), logger(_logger) {}
 
-  LongDataSender(unsigned int i, boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
-    boost::shared_ptr<MySQL_DebugLogger> _logger)
-    : position	( i			)
-    , proxy		( _proxy	)
-    , logger	( _logger	)
-  {
-  }
+ bool operator()(std::istream *my_blob) const {
+   CPP_ENTER("LongDataSender::operator()(std::istream *)");
+   if (my_blob == NULL) return false;
 
-  bool operator()(std::istream * my_blob) const
-  {
-    CPP_ENTER("LongDataSender::operator()(std::istream *)");
-    if (my_blob == NULL)
-      return false;
+   // char buf[MAX_SEND_LONGDATA_BUFFER];
+   std::unique_ptr<char[]> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
 
-    //char buf[MAX_SEND_LONGDATA_BUFFER];
-    boost::scoped_array<char> buf(new char[MAX_SEND_LONGDATA_BUFFER]);
+   do {
+     if (my_blob->eof()) {
+       break;
+     }
+     my_blob->read(buf.get(), MAX_SEND_LONGDATA_BUFFER);
 
-    do {
-      if (my_blob->eof()) {
-        break;
-      }
-      my_blob->read(buf.get(), MAX_SEND_LONGDATA_BUFFER);
+     if (my_blob->bad()) {
+       throw SQLException("Error while reading from blob (bad)");
+     } else if (my_blob->fail()) {
+       if (!my_blob->eof()) {
+         throw SQLException("Error while reading from blob (fail)");
+       }
+     }
+     if (proxy->send_long_data(position, buf.get(),
+                               static_cast<unsigned long>(my_blob->gcount()))) {
+       CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(),
+                   proxy->sqlstate().c_str(), proxy->error().c_str());
+       switch (proxy->errNo()) {
+         case CR_OUT_OF_MEMORY:
+           throw std::bad_alloc();
+         case CR_INVALID_BUFFER_USE:
+           throw InvalidArgumentException(
+               "MySQL_Prepared_Statement::setBlob: can't set blob value on "
+               "that column");
+         case CR_SERVER_GONE_ERROR:
+         case CR_COMMANDS_OUT_OF_SYNC:
+         default:
+           sql::mysql::util::throwSQLException(*proxy.get());
+       }
+     }
+   } while (1);
 
-      if (my_blob->bad()) {
-        throw SQLException("Error while reading from blob (bad)");
-      } else if (my_blob->fail()) {
-        if (!my_blob->eof()) {
-          throw SQLException("Error while reading from blob (fail)");
-        }
-      }
-      if (proxy->send_long_data(position, buf.get(), static_cast<unsigned long>(my_blob->gcount()))) {
-        CPP_ERR_FMT("Couldn't send long data : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-        switch (proxy->errNo()) {
-        case CR_OUT_OF_MEMORY:
-          throw std::bad_alloc();
-        case CR_INVALID_BUFFER_USE:
-          throw InvalidArgumentException("MySQL_Prepared_Statement::setBlob: can't set blob value on that column");
-        case CR_SERVER_GONE_ERROR:
-        case CR_COMMANDS_OUT_OF_SYNC:
-        default:
-          sql::mysql::util::throwSQLException(*proxy.get());
-        }
-      }
-    } while (1);
-
-    return true;
+   return true;
   }
 
   bool operator()(sql::SQLString * str) const
@@ -166,7 +164,7 @@ public:
 };
 
 
-class BlobBindDeleter : public boost::static_visitor<>
+class BlobBindDeleter
 {
 public:
 
@@ -187,7 +185,7 @@ public:
   }
 };
 
-class BlobIsNull : public boost::static_visitor<bool>
+class BlobIsNull
 {
 public:
 
@@ -220,15 +218,14 @@ void  resetBlobBind(MYSQL_BIND & param)
 class MySQL_ParamBind
 {
 public:
-
-  typedef boost::variant< std::istream *, sql::SQLString *> Blob_t;
+ typedef std::variant<std::istream *, sql::SQLString *> Blob_t;
 
 private:
 
   unsigned int param_count;
-  boost::scoped_array< MYSQL_BIND > bind;
-  boost::scoped_array< bool > value_set;
-  boost::scoped_array< bool > delete_blob_after_execute;
+  std::unique_ptr<MYSQL_BIND[]> bind;
+  std::unique_ptr<bool[]> value_set;
+  std::unique_ptr<bool[]> delete_blob_after_execute;
 
   typedef std::map<unsigned int, Blob_t > Blobs;
 
@@ -262,7 +259,7 @@ public:
       it != blob_bind.end(); ++it) {
       if (delete_blob_after_execute[it->first]) {
         delete_blob_after_execute[it->first] = false;
-        boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
+        std::visit(::sql::mysql::BlobBindDeleter(), it->second);
       }
     }
   }
@@ -277,7 +274,7 @@ public:
     value_set[position] = false;
     if (delete_blob_after_execute[position]) {
       delete_blob_after_execute[position] = false;
-      boost::apply_visitor(::sql::mysql::BlobBindDeleter(),blob_bind[position]);
+      std::visit(::sql::mysql::BlobBindDeleter(),blob_bind[position]);
       blob_bind.erase(position);
     }
   }
@@ -291,20 +288,16 @@ public:
 
     Blobs::iterator it = blob_bind.find(position);
     if (it != blob_bind.end() && delete_blob_after_execute[position]) {
-        boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
-      }
+      std::visit(::sql::mysql::BlobBindDeleter(), it->second);
+    }
 
-    if (boost::apply_visitor(::sql::mysql::BlobIsNull(), blob))
-    {
-      if (it != blob_bind.end())
-      blob_bind.erase(it);
+    if (std::visit(::sql::mysql::BlobIsNull(), blob)) {
+      if (it != blob_bind.end()) blob_bind.erase(it);
 
       delete_blob_after_execute[position] = false;
-    }
-    else
-    {
-        blob_bind[position] = blob;
-        delete_blob_after_execute[position] = delete_after_execute;
+    } else {
+      blob_bind[position] = blob;
+      delete_blob_after_execute[position] = delete_after_execute;
     }
   }
 
@@ -325,12 +318,12 @@ public:
     for (unsigned int i = 0; i < param_count; ++i) {
       delete bind[i].length;
       bind[i].length = NULL;
-      delete[] (char*) bind[i].buffer;
+      delete[] (char *)bind[i].buffer;
       bind[i].buffer = NULL;
       if (value_set[i]) {
-        Blobs::iterator it= blob_bind.find(i);
+        Blobs::iterator it = blob_bind.find(i);
         if (it != blob_bind.end() && delete_blob_after_execute[i]) {
-          boost::apply_visitor(::sql::mysql::BlobBindDeleter(), it->second);
+          std::visit(::sql::mysql::BlobBindDeleter(), it->second);
           blob_bind.erase(it);
         }
         blob_bind[i] = Blob_t();
@@ -339,7 +332,6 @@ public:
     }
   }
 
-
   // Name get() was too confusing, since class objects are used with smart pointers
   MYSQL_BIND * getBindObject()
   {
@@ -347,7 +339,7 @@ public:
   }
 
 
-  boost::variant< std::istream *, SQLString *> getBlobObject(unsigned int position)
+  std::variant< std::istream *, SQLString *> getBlobObject(unsigned int position)
   {
     Blobs::iterator it= blob_bind.find( position );
 
@@ -362,12 +354,17 @@ public:
 
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-      boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s, MySQL_Connection *conn,
-      sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & log
-    )
-  :connection(conn), proxy(s), isClosed(false), warningsHaveBeenLoaded(true), logger(log),
-    resultset_type(rset_type), result_bind(new MySQL_ResultBind(proxy, logger)),
-    warningsCount(0)
+    std::shared_ptr<NativeAPI::NativeStatementWrapper> &s,
+    MySQL_Connection *conn, sql::ResultSet::enum_type rset_type,
+    std::shared_ptr<MySQL_DebugLogger> &log)
+    : connection(conn),
+      proxy(s),
+      isClosed(false),
+      warningsHaveBeenLoaded(true),
+      logger(log),
+      resultset_type(rset_type),
+      result_bind(new MySQL_ResultBind(proxy, logger)),
+      warningsCount(0)
 
 {
   CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
@@ -408,7 +405,7 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
     if (bind[i].buffer_type == MYSQL_TYPE_LONG_BLOB) {
       ::sql::mysql::LongDataSender lv(i, proxy, logger);
       MySQL_ParamBind::Blob_t dummy(param_bind->getBlobObject(i));
-      boost::apply_visitor(lv, dummy);
+      std::visit(lv, dummy);
     }
 
   }

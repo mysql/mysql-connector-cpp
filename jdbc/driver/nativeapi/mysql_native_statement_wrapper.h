@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,8 +33,7 @@
 #ifndef _MYSQL_NativeStatementWrapper_H_
 #define _MYSQL_NativeStatementWrapper_H_
 
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "native_statement_wrapper.h"
 
@@ -61,62 +60,63 @@ class NativeConnectionWrapper;
  */
 class MySQL_NativeStatementWrapper : public NativeStatementWrapper
 {
-
-  boost::shared_ptr<IMySQLCAPI>	api;
+  std::shared_ptr<IMySQLCAPI> api;
   ::MYSQL_STMT *				stmt;
   NativeConnectionWrapper *		conn;
 
   MySQL_NativeStatementWrapper(){}
 
 public:
-  MySQL_NativeStatementWrapper(::MYSQL_STMT *, boost::shared_ptr<IMySQLCAPI>, NativeConnectionWrapper * connProxy);
-  ~MySQL_NativeStatementWrapper();
+ MySQL_NativeStatementWrapper(::MYSQL_STMT *, std::shared_ptr<IMySQLCAPI>,
+                              NativeConnectionWrapper *connProxy);
+ ~MySQL_NativeStatementWrapper();
 
-  unsigned long server_version() override;
+ unsigned long server_version() override;
 
-  uint64_t affected_rows() override;
+ uint64_t affected_rows() override;
 
-  bool attr_set(MySQL_Statement_Options option, const void *arg) override;
+ bool attr_set(MySQL_Statement_Options option, const void *arg) override;
 
-  bool bind_param(::MYSQL_BIND *) override;
+ bool bind_param(::MYSQL_BIND *) override;
 
-  bool bind_result(::MYSQL_BIND *) override;
+ bool bind_result(::MYSQL_BIND *) override;
 
-  void data_seek(uint64_t ) override;
+ void data_seek(uint64_t) override;
 
-  unsigned int errNo() override;
+ unsigned int errNo() override;
 
-  sql::SQLString error() override;
+ sql::SQLString error() override;
 
-  int execute () override;
+ int execute() override;
 
-  int fetch() override;
+ int fetch() override;
 
-  unsigned int field_count() override;
+ unsigned int field_count() override;
 
-  bool more_results() override;
+ bool more_results() override;
 
-  int next_result() override;
+ int next_result() override;
 
-  uint64_t num_rows() override;
+ uint64_t num_rows() override;
 
-  unsigned long param_count() override;
+ unsigned long param_count() override;
 
-  int prepare (const ::sql::SQLString &) override;
+ int prepare(const ::sql::SQLString &) override;
 
-  NativeResultsetWrapper * result_metadata() override;
+ NativeResultsetWrapper *result_metadata() override;
 
-  bool send_long_data(unsigned int par_number, const char * data, unsigned long len) override;
+ bool send_long_data(unsigned int par_number, const char *data,
+                     unsigned long len) override;
 
-  ::sql::SQLString sqlstate() override;
+ ::sql::SQLString sqlstate() override;
 
-  int store_result() override;
+ int store_result() override;
 
-  int stmt_next_result() override;
+ int stmt_next_result() override;
 
-  bool stmt_free_result() override;
+ bool stmt_free_result() override;
 
-  unsigned int warning_count() override;
+ unsigned int warning_count() override;
 };
 
 

@@ -187,8 +187,6 @@ ENDIF(WIN32)
 
 add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 
-target_link_libraries(jdbc PUBLIC Boost::boost)
-
 IF(WIN32)
   target_link_libraries(jdbc PRIVATE Dnsapi)
 ELSEIF(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")

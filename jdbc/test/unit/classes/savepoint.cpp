@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -38,7 +38,7 @@
 #include "savepoint.h"
 #include <stdlib.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 namespace testsuite
 {
@@ -52,7 +52,7 @@ void savepoint::getSavepointId()
   try
   {
     con->setAutoCommit(true);
-    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    std::unique_ptr<sql::Savepoint> sp(con->setSavepoint("mysavepoint"));
     FAIL("You should not be able to set a savepoint in autoCommit mode");
   }
   catch (sql::SQLException &)
@@ -62,7 +62,7 @@ void savepoint::getSavepointId()
   try
   {
     con->setAutoCommit(false);
-    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    std::unique_ptr<sql::Savepoint> sp(con->setSavepoint("mysavepoint"));
     try
     {
       sp->getSavepointId();
@@ -87,7 +87,7 @@ void savepoint::getSavepointName()
   try
   {
     con->setAutoCommit(false);
-    boost::scoped_ptr< sql::Savepoint > sp(con->setSavepoint("mysavepoint"));
+    std::unique_ptr<sql::Savepoint> sp(con->setSavepoint("mysavepoint"));
     ASSERT_EQUALS("mysavepoint", sp->getSavepointName());
     con->releaseSavepoint(sp.get());
   }

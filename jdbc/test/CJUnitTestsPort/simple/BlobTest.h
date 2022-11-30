@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -31,7 +31,7 @@
 
 
 #include <fstream>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "../../common/file.h"
 
@@ -53,7 +53,7 @@ namespace simple
   private:
     typedef BaseTestFixture super;
 
-    boost::scoped_ptr<FileUtils::ccppFile> testBlobFile;
+    std::unique_ptr<FileUtils::ccppFile> testBlobFile;
 
     bool realFrameworkTiming;
 

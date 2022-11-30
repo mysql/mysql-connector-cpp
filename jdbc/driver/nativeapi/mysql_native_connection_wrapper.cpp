@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #include <cppconn/sqlstring.h>
 #include <cppconn/exception.h>
 
-#include <boost/scoped_array.hpp>
+#include <memory>
 
 #include "../mysql_util.h"
 #include "../mysql_connection_options.h"
@@ -131,9 +131,9 @@ get_mysql_option(sql::mysql::MySQL_Connection_Options opt)
 }
 
 /* {{{ MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper() */
-MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api)
-  : api(_api), mysql(api->init(NULL))
-{
+MySQL_NativeConnectionWrapper::MySQL_NativeConnectionWrapper(
+    std::shared_ptr<IMySQLCAPI> _api)
+    : api(_api), mysql(api->init(NULL)) {
   if (mysql == NULL) {
     throw sql::SQLException("Insufficient memory: cannot create MySQL handle using mysql_init()");
   }
@@ -231,7 +231,7 @@ MySQL_NativeConnectionWrapper::errNo()
 SQLString
 MySQL_NativeConnectionWrapper::escapeString(const SQLString & s)
 {
-  boost::scoped_array< char > buffer(new char[s.length() * 2 + 1]);
+  std::unique_ptr<char[]> buffer(new char[s.length() * 2 + 1]);
   if (!buffer.get()) {
     return "";
   }

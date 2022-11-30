@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -37,8 +37,7 @@
 #include <cppconn/resultset_metadata.h>
 #include "nativeapi/mysql_private_iface.h"
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace sql
 {
@@ -55,69 +54,70 @@ class MySQL_DebugLogger;
 
 class MySQL_PreparedResultSetMetaData : public sql::ResultSetMetaData
 {
-  boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+  std::shared_ptr<NativeAPI::NativeStatementWrapper> proxy;
 
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
-  boost::scoped_ptr< NativeAPI::NativeResultsetWrapper > result_meta;
+  std::unique_ptr<NativeAPI::NativeResultsetWrapper> result_meta;
 
   unsigned int num_fields;
 
   unsigned long server_version;
 
 public:
-  MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
-                    boost::shared_ptr< MySQL_DebugLogger> & l);
+ MySQL_PreparedResultSetMetaData(
+     std::shared_ptr<NativeAPI::NativeStatementWrapper> &_proxy,
+     std::shared_ptr<MySQL_DebugLogger> &l);
 
-  virtual ~MySQL_PreparedResultSetMetaData();
+ virtual ~MySQL_PreparedResultSetMetaData();
 
-  SQLString getCatalogName(unsigned int columnIndex);
+ SQLString getCatalogName(unsigned int columnIndex);
 
-  unsigned int getColumnCount();
+ unsigned int getColumnCount();
 
-  unsigned int getColumnDisplaySize(unsigned int columnIndex);
+ unsigned int getColumnDisplaySize(unsigned int columnIndex);
 
-  SQLString getColumnLabel(unsigned int columnIndex);
+ SQLString getColumnLabel(unsigned int columnIndex);
 
-  SQLString getColumnName(unsigned int columnIndex);
+ SQLString getColumnName(unsigned int columnIndex);
 
-  int getColumnType(unsigned int columnIndex);
+ int getColumnType(unsigned int columnIndex);
 
-  SQLString getColumnTypeName(unsigned int columnIndex);
+ SQLString getColumnTypeName(unsigned int columnIndex);
 
-  SQLString getColumnCharset(unsigned int columnIndex);
+ SQLString getColumnCharset(unsigned int columnIndex);
 
-  SQLString getColumnCollation(unsigned int columnIndex);
+ SQLString getColumnCollation(unsigned int columnIndex);
 
-  unsigned int getPrecision(unsigned int columnIndex);
+ unsigned int getPrecision(unsigned int columnIndex);
 
-  unsigned int getScale(unsigned int columnIndex);
+ unsigned int getScale(unsigned int columnIndex);
 
-  SQLString getSchemaName(unsigned int columnIndex);
+ SQLString getSchemaName(unsigned int columnIndex);
 
-  SQLString getTableName(unsigned int columnIndex);
+ SQLString getTableName(unsigned int columnIndex);
 
-  bool isAutoIncrement(unsigned int columnIndex);
+ bool isAutoIncrement(unsigned int columnIndex);
 
-  bool isCaseSensitive(unsigned int columnIndex);
+ bool isCaseSensitive(unsigned int columnIndex);
 
-  bool isCurrency(unsigned int columnIndex);
+ bool isCurrency(unsigned int columnIndex);
 
-  bool isDefinitelyWritable(unsigned int columnIndex);
+ bool isDefinitelyWritable(unsigned int columnIndex);
 
-  int isNullable(unsigned int columnIndex);
+ int isNullable(unsigned int columnIndex);
 
-  bool isNumeric(unsigned int columnIndex);
+ bool isNumeric(unsigned int columnIndex);
 
-  bool isReadOnly(unsigned int columnIndex);
+ bool isReadOnly(unsigned int columnIndex);
 
-  bool isSearchable(unsigned int columnIndex);
+ bool isSearchable(unsigned int columnIndex);
 
-  bool isSigned(unsigned int columnIndex);
+ bool isSigned(unsigned int columnIndex);
 
-  bool isWritable(unsigned int columnIndex);
+ bool isWritable(unsigned int columnIndex);
 
-  bool isZerofill(unsigned int column);
+ bool isZerofill(unsigned int column);
 
 protected:
   void checkColumnIndex(unsigned int columnIndex) const;

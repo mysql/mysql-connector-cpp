@@ -33,11 +33,11 @@
 #ifndef _NATIVE_CONNECTION_WRAPPER_H_
 #define _NATIVE_CONNECTION_WRAPPER_H_
 
-#include <boost/noncopyable.hpp>
 #include <cppconn/config.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#include "../mysql_util.h"
 
 #include "../mysql_connection_options.h"
 
@@ -69,7 +69,7 @@ enum Protocol_Type
   PROTOCOL_COUNT
 };
 
-class NativeConnectionWrapper : public boost::noncopyable
+class NativeConnectionWrapper : public util::nocopy
 {
 public:
   virtual ~NativeConnectionWrapper() {}

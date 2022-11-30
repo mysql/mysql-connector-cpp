@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,7 +35,7 @@
 #define _BASE_TEST_FIXTURE_
 
 #include <math.h>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "resources.h"
 #include <jdbc.h>
@@ -59,10 +59,10 @@
 
 namespace testsuite
 {
-typedef boost::scoped_ptr<sql::Connection> Connection;
-typedef boost::scoped_ptr<sql::PreparedStatement> PreparedStatement;
-typedef boost::scoped_ptr<sql::Statement> Statement;
-typedef boost::scoped_ptr<sql::ResultSet> ResultSet;
+typedef std::unique_ptr<sql::Connection> Connection;
+typedef std::unique_ptr<sql::PreparedStatement> PreparedStatement;
+typedef std::unique_ptr<sql::Statement> Statement;
+typedef std::unique_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
 typedef sql::ResultSetMetaData * ResultSetMetaData;
 typedef sql::DatabaseMetaData * DatabaseMetaData;
@@ -113,7 +113,7 @@ public:
   bool instanceof(value_type type);
 };
 
-typedef boost::scoped_ptr<value_object> Object;
+typedef std::unique_ptr<value_object> Object;
 
 value_object * getObject(sql::ResultSet * rs, int colNum);
 

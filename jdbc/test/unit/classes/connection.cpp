@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -40,8 +40,8 @@
 #include <mysql_connection.h>
 #include <cppconn/exception.h>
 #include <cppconn/version_info.h>
-#include <boost/scoped_ptr.hpp>
 #include <list>
+#include <memory>
 #include <thread>
 
 #ifdef _WIN32
@@ -278,7 +278,9 @@ void connection::getSessionVariable()
   try
   {
     std::string value("");
-    boost::scoped_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(url, user, passwd)));
+    std::unique_ptr<sql::mysql::MySQL_Connection> my_con(
+        dynamic_cast<sql::mysql::MySQL_Connection *>(
+            driver->connect(url, user, passwd)));
     value=my_con->getSessionVariable("sql_mode");
 
     my_con->setSessionVariable("sql_mode", "ANSI");
@@ -342,8 +344,9 @@ void connection::checkDnsSrv()
     bool diff_found = false;
     for(int i = 0; i < 10; ++i)
     {
-      std::unique_ptr< sql::Connection > con(driver->connect(opts));
-      boost::scoped_ptr< sql::mysql::MySQL_Connection > my_con(dynamic_cast<sql::mysql::MySQL_Connection*> (driver->connect(opts)));
+      std::unique_ptr<sql::Connection> con(driver->connect(opts));
+      std::unique_ptr<sql::mysql::MySQL_Connection> my_con(
+          dynamic_cast<sql::mysql::MySQL_Connection *>(driver->connect(opts)));
       old_value = value;
       value=my_con->getSessionVariable("server_id");
       if (!old_value.empty() && old_value.compare(value))

@@ -192,4 +192,13 @@ typedef std::map<String, String>  Properties;
 typedef Properties::iterator      PropsIterator;
 typedef List::const_iterator      PropsConstIterator;
 
+class nocopy {
+ public:
+  nocopy(const nocopy &) = delete;
+  nocopy &operator=(const nocopy &) = delete;
+
+ protected:
+  nocopy() {}
+};
+
 #endif /* __C_CPP_TYPES_H_ */

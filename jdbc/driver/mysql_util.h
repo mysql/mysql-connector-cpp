@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -37,7 +37,7 @@
 #include <cppconn/config.h>
 #include <cppconn/sqlstring.h>
 #include <cppconn/exception.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 
 #ifndef UL64
@@ -187,7 +187,9 @@ void throwSQLException(::sql::mysql::NativeAPI::NativeStatementWrapper & proxy);
 int mysql_string_type_to_datatype(const sql::SQLString & name);
 int mysql_type_to_datatype(const MYSQL_FIELD * const fieldm,
                            unsigned long server_version);
-const char * mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::mysql::MySQL_DebugLogger > & l);
+const char *mysql_type_to_string(
+    const MYSQL_FIELD *const field,
+    std::shared_ptr<sql::mysql::MySQL_DebugLogger> &l);
 
 char * utf8_strup(const char * const src, size_t srclen);
 
@@ -221,6 +223,14 @@ typedef struct st_our_charset
 
 const OUR_CHARSET * find_charset(unsigned int charsetnr);
 
+class nocopy {
+ public:
+  nocopy(const nocopy &) = delete;
+  nocopy &operator=(const nocopy &) = delete;
+
+ protected:
+  nocopy() {}
+};
 
 } /* namespace util */
 } /* namespace mysql */

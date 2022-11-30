@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <limits>
-#include <boost/scoped_array.hpp>
+#include <memory>
 
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
@@ -61,17 +61,25 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSet::MySQL_ResultSet() -I- */
-MySQL_ResultSet::MySQL_ResultSet(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, std::weak_ptr< NativeAPI::NativeConnectionWrapper > _proxy, sql::ResultSet::enum_type rset_type,
-            MySQL_Statement * par, boost::shared_ptr< MySQL_DebugLogger > & l
-        )
-    : row(NULL), result(res), proxy(_proxy), row_position(0), was_null(false),
-      last_queried_column(-1), parent(par), logger(l), resultset_type(rset_type)
-{
-    CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
-    num_rows = result->num_rows();
+MySQL_ResultSet::MySQL_ResultSet(
+    std::shared_ptr<NativeAPI::NativeResultsetWrapper> res,
+    std::weak_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
+    sql::ResultSet::enum_type rset_type, MySQL_Statement *par,
+    std::shared_ptr<MySQL_DebugLogger> &l)
+    : row(NULL),
+      result(res),
+      proxy(_proxy),
+      row_position(0),
+      was_null(false),
+      last_queried_column(-1),
+      parent(par),
+      logger(l),
+      resultset_type(rset_type) {
+  CPP_ENTER("MySQL_ResultSet::MySQL_ResultSet");
+  num_rows = result->num_rows();
 
-    num_fields = result->num_fields();
-    for (unsigned int i = 0; i < num_fields; ++i) {
+  num_fields = result->num_fields();
+  for (unsigned int i = 0; i < num_fields; ++i) {
 #if A0
         std::cout << "Elements=" << field_name_to_index_map.size() << "\n";
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -31,7 +31,7 @@
 
 
 #include "mysql_warning.h"
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
 #include <sstream>
@@ -40,61 +40,36 @@ namespace sql
 {
 namespace mysql
 {
-  MySQL_Warning::MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode)
-    :sql_state(SQLState), errNo(vendorCode), descr(reason), next(NULL)
-  {
+MySQL_Warning::MySQL_Warning(const sql::SQLString &reason,
+                             const sql::SQLString &SQLState, int vendorCode)
+    : sql_state(SQLState), errNo(vendorCode), descr(reason) {}
+
+MySQL_Warning::MySQL_Warning(const sql::SQLString &reason,
+                             const sql::SQLString &SQLState)
+    : sql_state(SQLState), errNo(0), descr(reason) {}
+
+MySQL_Warning::MySQL_Warning(const sql::SQLString &reason)
+    : sql_state("HY000"), errNo(0), descr(reason) {}
+
+MySQL_Warning::MySQL_Warning() : sql_state("HY000"), errNo(0) {}
+
+const sql::SQLString &MySQL_Warning::getMessage() const { return descr; }
+
+const sql::SQLString &MySQL_Warning::getSQLState() const { return sql_state; }
+
+int MySQL_Warning::getErrorCode() const { return errNo; }
+
+const SQLWarning *MySQL_Warning::getNextWarning() const { return next.get(); }
+
+MySQL_Warning::~MySQL_Warning() {}
+
+/* We don't really want it to be called, but we need to implement it */
+void MySQL_Warning::setNextWarning(const SQLWarning *_next) {
+  if (_next) {
+    next.reset(new MySQL_Warning(*_next));
+  } else {
+    next.reset();
   }
-
-  MySQL_Warning::MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState)
-    :sql_state (SQLState), errNo(0), descr(reason), next(NULL)
-  {
-  }
-
-  MySQL_Warning::MySQL_Warning(const sql::SQLString& reason)
-    : sql_state ("HY000"), errNo(0), descr(reason), next(NULL)
-  {
-  }
-
-  MySQL_Warning::MySQL_Warning() : sql_state ("HY000"), errNo(0), next(NULL) {}
-
-
-  const sql::SQLString & MySQL_Warning::getMessage() const
-  {
-    return descr;
-  }
-
-
-  const sql::SQLString & MySQL_Warning::getSQLState() const
-  {
-    return sql_state;
-  }
-
-  int MySQL_Warning::getErrorCode() const
-  {
-    return errNo;
-  }
-
-  const SQLWarning * MySQL_Warning::getNextWarning() const
-  {
-    return next.get();
-  }
-
-  MySQL_Warning::~MySQL_Warning()
-  {
-  }
-
-
-    /* We don't really want it to be called, but we need to implement it */
-  void MySQL_Warning::setNextWarning(const SQLWarning * _next)
-  {
-    if (_next)
-    {
-      next.reset(new MySQL_Warning(*_next));
-    }
-    else
-    {
-      next.reset();
-    }
   }
 
 
@@ -250,8 +225,8 @@ loadMysqlWarnings(sql::Connection * connection, unsigned int warningsCount)
   SQLString state;
 
   if (warningsCount >0 && connection != NULL) {
-    boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-    boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SHOW WARNINGS"));
+    std::unique_ptr<sql::Statement> stmt(connection->createStatement());
+    std::unique_ptr<sql::ResultSet> rset(stmt->executeQuery("SHOW WARNINGS"));
 
     while (rset->next()) {
       // 1 - Level

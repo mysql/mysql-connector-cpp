@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -38,9 +38,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <memory>
-#include <boost/scoped_ptr.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <cppconn/resultset.h>
 
@@ -130,7 +127,8 @@ public:
   typedef std::vector< MyVal > row_t;
   typedef std::list< row_t > rset_t;
 
-  MySQL_ArtResultSet(const StringList& fn, boost::shared_ptr< rset_t > &rset, boost::shared_ptr< MySQL_DebugLogger > & l);
+  MySQL_ArtResultSet(const StringList &fn, std::shared_ptr<rset_t> &rset,
+                     std::shared_ptr<MySQL_DebugLogger> &l);
   virtual ~MySQL_ArtResultSet();
 
   bool absolute(int row);
@@ -254,26 +252,26 @@ protected:
 public:
 
   unsigned int num_fields;
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rset;
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rset;
   rset_t::iterator current_record;
   bool started;
 
   typedef std::map< sql::SQLString, int > FieldNameIndexMap;
 
   FieldNameIndexMap field_name_to_index_map;
-  boost::scoped_array< sql::SQLString > field_index_to_name_map;
+  std::unique_ptr<sql::SQLString[]> field_index_to_name_map;
 
   uint64_t num_rows;
   uint64_t row_position; /* 0 = before first row, 1 - first row, 'num_rows + 1' - after last row */
 
   bool is_closed;
 
-  boost::scoped_ptr< MySQL_ArtResultSetMetaData > meta;
+  std::unique_ptr<MySQL_ArtResultSetMetaData> meta;
 
-protected:
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+ protected:
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
-private:
+ private:
   /* Prevent use of these */
   MySQL_ArtResultSet(const MySQL_ArtResultSet &);
   void operator=(MySQL_ArtResultSet &);

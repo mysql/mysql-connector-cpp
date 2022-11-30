@@ -26,7 +26,6 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
 function(enable_cxx17)
 
   add_flags(CXX -std=c++17)
@@ -37,7 +36,7 @@ function(enable_cxx17)
   # sure that clang's native implementation of C++ std
   # libarary (libc++) is used. Otherwise clang defaults to
   # GNU version (libstdc++) which is outdated and does
-  # not handle C++11 well.
+  # not handle C++17 well.
   #
   # TODO: Add option to use the default runtime if user wishes
   # so.

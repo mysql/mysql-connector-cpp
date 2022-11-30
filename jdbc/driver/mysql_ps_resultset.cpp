@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <limits>
-#include <boost/scoped_array.hpp>
+#include <memory>
 
 
 #include <cppconn/exception.h>
@@ -91,20 +91,24 @@ static inline char * my_f_to_a(char * buf, size_t buf_size, double a)
 
 /* {{{ MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet() -I- */
 MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet(
-            boost::shared_ptr< NativeAPI::NativeStatementWrapper > & s,
-            boost::shared_ptr< MySQL_ResultBind > & r_bind,
-            sql::ResultSet::enum_type rset_type,
-            MySQL_Prepared_Statement * par,
-            boost::shared_ptr< MySQL_DebugLogger > & l
-        )
-    : proxy(s), last_queried_column(std::numeric_limits<uint32_t>::max()), row_position(0), parent(par),
-     is_valid(true), logger(l), result_bind(r_bind), resultset_type(rset_type)
-{
+    std::shared_ptr<NativeAPI::NativeStatementWrapper> &s,
+    std::shared_ptr<MySQL_ResultBind> &r_bind,
+    sql::ResultSet::enum_type rset_type, MySQL_Prepared_Statement *par,
+    std::shared_ptr<MySQL_DebugLogger> &l)
+    : proxy(s),
+      last_queried_column(std::numeric_limits<uint32_t>::max()),
+      row_position(0),
+      parent(par),
+      is_valid(true),
+      logger(l),
+      result_bind(r_bind),
+      resultset_type(rset_type) {
     CPP_ENTER("MySQL_Prepared_ResultSet::MySQL_Prepared_ResultSet");
 
     result_bind->bindResult();
 
-    boost::scoped_ptr< NativeAPI::NativeResultsetWrapper > result_meta( proxy->result_metadata() );
+    std::unique_ptr<NativeAPI::NativeResultsetWrapper> result_meta(
+        proxy->result_metadata());
     num_fields = proxy->field_count();
     num_rows = proxy->num_rows();
 

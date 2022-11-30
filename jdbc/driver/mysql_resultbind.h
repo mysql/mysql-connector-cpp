@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_RESULTBIND_H_
 #define _MYSQL_RESULTBIND_H_
 
-#include <boost/scoped_array.hpp>
+#include <memory>
 #include <vector>
 
 #include <cppconn/prepared_statement.h>
@@ -77,19 +77,19 @@ struct MySQL_Bind : public MYSQL_BIND
 class MySQL_ResultBind
 {
   unsigned int num_fields;
-  boost::scoped_array< my_bool > is_null;
-  boost::scoped_array< my_bool > err;
-  boost::scoped_array< unsigned long > len;
+  std::unique_ptr<my_bool[]> is_null;
+  std::unique_ptr<my_bool[]> err;
+  std::unique_ptr<unsigned long[]> len;
 
-  boost::shared_ptr< NativeAPI::NativeStatementWrapper > proxy;
+  std::shared_ptr<NativeAPI::NativeStatementWrapper> proxy;
 
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
-public:
-  boost::scoped_array< MYSQL_BIND > rbind;
+ public:
+  std::unique_ptr<MYSQL_BIND[]> rbind;
 
-
-  MySQL_ResultBind( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _capi, boost::shared_ptr< MySQL_DebugLogger > & log);
+  MySQL_ResultBind(std::shared_ptr<NativeAPI::NativeStatementWrapper> &_capi,
+                   std::shared_ptr<MySQL_DebugLogger> &log);
 
   ~MySQL_ResultBind();
 

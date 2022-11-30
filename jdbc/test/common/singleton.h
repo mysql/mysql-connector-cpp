@@ -33,13 +33,13 @@
 #ifndef __CCPP_SINGLETON_H
 #define __CCPP_SINGLETON_H
 
-#include <boost/noncopyable.hpp>
+#include "../common/ccppTypes.h"
 
 namespace policies
 {
 
 template <class T>
-class Singleton: public boost::noncopyable
+class Singleton: public nocopy
 {
 protected:
 

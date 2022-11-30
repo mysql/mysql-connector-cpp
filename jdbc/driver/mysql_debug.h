@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_DEBUG_H_
 #define _MYSQL_DEBUG_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 /* _MSC_VER VC6.0=1200, VC7.0=1300, VC7.1=1310, VC8.0=1400 */
 #if defined(_MSC_VER)
@@ -47,12 +47,19 @@
 
 
 #if defined(WE_HAVE_VARARGS_MACRO_SUPPORT) && (CPPCONN_TRACE_ENABLED || defined(SAL_DLLPRIVATE))
-  #define CPP_ENTER(msg)			const boost::shared_ptr< MySQL_DebugLogger > __l = this->logger;(void)__l;\
-                  MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, this->logger)
-  #define CPP_ENTER_WL(l, msg)	const boost::shared_ptr< MySQL_DebugLogger > __l = (l);(void)__l;\
-                  MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
-  #define CPP_INFO(msg)		{if (__l) __l->log("INF", msg); }
-  #define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
+#define CPP_ENTER(msg)                                         \
+  const std::shared_ptr<MySQL_DebugLogger> __l = this->logger; \
+  (void)__l;                                                   \
+  MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, this->logger)
+#define CPP_ENTER_WL(l, msg)                          \
+  const std::shared_ptr<MySQL_DebugLogger> __l = (l); \
+  (void)__l;                                          \
+  MySQL_DebugEnterEvent __this_func(__LINE__, __FILE__, msg, (l))
+#define CPP_INFO(msg)              \
+  {                                \
+    if (__l) __l->log("INF", msg); \
+  }
+#define CPP_INFO_FMT(...)	{if (__l) __l->log_va("INF", __VA_ARGS__); }
   #define CPP_ERR(msg)		{if (__l) __l->log("ERR", msg); }
   #define CPP_ERR_FMT(...)	{if (__l) __l->log_va("ERR", __VA_ARGS__); }
 #else
@@ -114,9 +121,11 @@ public:
   unsigned int line;
   const char * const file;
   const char * const func;
-  const boost::shared_ptr< MySQL_DebugLogger > logger;
+  const std::shared_ptr<MySQL_DebugLogger> logger;
 
-  MySQL_DebugEnterEvent(unsigned int l, const char * const f, const char * const func_name, const boost::shared_ptr< MySQL_DebugLogger > & logger_object);
+  MySQL_DebugEnterEvent(
+      unsigned int l, const char *const f, const char *const func_name,
+      const std::shared_ptr<MySQL_DebugLogger> &logger_object);
   ~MySQL_DebugEnterEvent();
 };
 

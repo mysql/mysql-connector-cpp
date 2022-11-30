@@ -17,9 +17,9 @@ project's root folder. CDK should be included from project's main
 
   ADD_SUBDIRECTORY(cdk)
 
-CDK requires boost and protobuf to be built. If these libraries can not
-be found automatically, locations should be specified using ``WITH_BOOST``
-and ``WITH_PROTOBUF`` configuration options.
+CDK requires protobuf to be built. If protobuf can not
+be found automatically, locations should be specified using ``WITH_PROTOBUF``
+configuration option.
 
 To build a library target ``foo`` which uses CDK
 one should declare it as follows in ``CMakeLists.txt``::
@@ -92,7 +92,7 @@ with build configuration options:
   (see below).
 
 :WITH_CDK_DOC:
-  Build CDK documetation using Sphinx. 
+  Build CDK documetation using Sphinx.
 
 :WITH_NGS_MOCKUP:
   Build NGS mockup server which can be used for testing client-side code.
@@ -548,7 +548,7 @@ and one has to wait for it to complete, before connection can be used.
 
 Reporting bugs
 ==============
-Please report bugs in Jira project 
+Please report bugs in Jira project
 `MySQLng Connector/C <https://jira.oraclecorp.com/jira/browse/MYC>`_
 as issues of type ``Defect`` with "Component" set to ``CDK``.
 

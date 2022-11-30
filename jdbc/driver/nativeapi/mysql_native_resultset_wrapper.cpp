@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -46,11 +46,11 @@ namespace NativeAPI
 {
 
 /* {{{ MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper */
-MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(::MYSQL *_mysql,::MYSQL_RES * res, boost::shared_ptr< NativeAPI::IMySQLCAPI > & _capi
-                      /*, boost::shared_ptr< MySQL_DebugLogger > & l*/)
-  : /*logger(l),*/ capi(_capi), mysql(_mysql), rs(res)
-{
-}
+MySQL_NativeResultsetWrapper::MySQL_NativeResultsetWrapper(
+    ::MYSQL *_mysql, ::MYSQL_RES *res,
+    std::shared_ptr<NativeAPI::IMySQLCAPI> &_capi
+    /*, std::shared_ptr< MySQL_DebugLogger > & l*/)
+    : /*logger(l),*/ capi(_capi), mysql(_mysql), rs(res) {}
 /* }}} */
 
 

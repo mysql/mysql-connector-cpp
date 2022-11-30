@@ -43,7 +43,6 @@
 # error This should never happen - if this header is included, one of macros above supposed to be defined.
 #endif
 
-#include <boost/noncopyable.hpp>
 #include <map>
 
 namespace sql
@@ -63,9 +62,8 @@ typedef void *  SymbolHandle;
 
 /* possibly C_LibraryLoader would be better name */
 
-class LibraryLoader : public boost::noncopyable
-{
-private:
+class LibraryLoader : public util::nocopy {
+ private:
   typedef std::map< std::string, SymbolHandle > ProcCache;
 
   ProcCache		functions;

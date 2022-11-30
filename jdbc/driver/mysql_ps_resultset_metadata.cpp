@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -55,14 +55,15 @@ namespace mysql
 
 
 /* {{{ MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData -I- */
-MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & _proxy,
-    boost::shared_ptr< MySQL_DebugLogger> & l)
-  : proxy(_proxy), logger(l), result_meta( _proxy->result_metadata()),
-    num_fields(_proxy->field_count()),
-    server_version(_proxy->server_version())
-{
+MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData(
+    std::shared_ptr<NativeAPI::NativeStatementWrapper> &_proxy,
+    std::shared_ptr<MySQL_DebugLogger> &l)
+    : proxy(_proxy),
+      logger(l),
+      result_meta(_proxy->result_metadata()),
+      num_fields(_proxy->field_count()),
+      server_version(_proxy->server_version()) {
   CPP_ENTER("MySQL_PreparedResultSetMetaData::MySQL_PreparedResultSetMetaData");
-
 }
 /* }}} */
 

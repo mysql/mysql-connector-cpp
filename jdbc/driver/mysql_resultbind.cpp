@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -40,8 +40,9 @@
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include <string.h>
+#include <assert.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 namespace sql
 {
@@ -284,11 +285,16 @@ MySQL_Bind::clear()
 
 
 /* {{{ MySQL_ResultBind::MySQL_ResultBind -I- */
-MySQL_ResultBind::MySQL_ResultBind(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt,
-                                   boost::shared_ptr< MySQL_DebugLogger > & log)
-  : num_fields(0), is_null(NULL), err(NULL), len(NULL), proxy(stmt), logger(log), rbind(NULL)
-{
-}
+MySQL_ResultBind::MySQL_ResultBind(
+    std::shared_ptr<NativeAPI::NativeStatementWrapper> &stmt,
+    std::shared_ptr<MySQL_DebugLogger> &log)
+    : num_fields(0),
+      is_null(NULL),
+      err(NULL),
+      len(NULL),
+      proxy(stmt),
+      logger(log),
+      rbind(NULL) {}
 /* }}} */
 
 
@@ -333,7 +339,8 @@ void MySQL_ResultBind::bindResult()
   len.reset(new unsigned long[num_fields]);
   memset(len.get(), 0, sizeof(unsigned long) * num_fields);
 
-  boost::scoped_ptr< NativeAPI::NativeResultsetWrapper > resultMeta(proxy->result_metadata());
+  std::unique_ptr<NativeAPI::NativeResultsetWrapper> resultMeta(
+      proxy->result_metadata());
 
   for (unsigned int i = 0; i < num_fields; ++i) {
     MYSQL_FIELD * field = resultMeta->fetch_field();

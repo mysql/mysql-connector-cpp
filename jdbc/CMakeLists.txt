@@ -145,7 +145,6 @@ endif()
 
 
 find_dependency(MySQL)
-find_dependency(Boost)
 
 
 #-----------------
@@ -242,7 +241,6 @@ file(WRITE "${INFO}" "Connector/C++ build information.\n\n")
 set(INFO_PREFIX "jdbc-")
 
 merge_libraries(connector-jdbc jdbc)
-target_link_libraries(connector-jdbc PUBLIC Boost::boost)
 
 
 #

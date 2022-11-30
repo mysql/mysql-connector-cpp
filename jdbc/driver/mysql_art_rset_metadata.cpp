@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -49,11 +49,9 @@ namespace mysql
 {
 
 /* {{{ MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData() -I- */
-MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData(const MySQL_ArtResultSet * p,
-                             boost::shared_ptr< MySQL_DebugLogger > & l)
-  : parent(p), logger(l), num_fields(parent->num_fields)
-{
-}
+MySQL_ArtResultSetMetaData::MySQL_ArtResultSetMetaData(
+    const MySQL_ArtResultSet *p, std::shared_ptr<MySQL_DebugLogger> &l)
+    : parent(p), logger(l), num_fields(parent->num_fields) {}
 /* }}} */
 
 

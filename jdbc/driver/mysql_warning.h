@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -37,59 +37,53 @@
 #include <cppconn/warning.h>
 #include <cppconn/config.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 namespace sql
 {
 namespace mysql
 {
 
-  class MySQL_Warning : public ::sql::SQLWarning
-  {
-  private:
+class MySQL_Warning : public ::sql::SQLWarning {
+ private:
+  const sql::SQLString sql_state;
+  const int errNo;
+  const sql::SQLString descr;
+  std::unique_ptr<MySQL_Warning> next;
 
-    const sql::SQLString				sql_state;
-    const int							errNo;
-    const sql::SQLString				descr;
-    boost::scoped_ptr<MySQL_Warning>	next;
+ public:
+  MySQL_Warning(const sql::SQLString &reason, const sql::SQLString &SQLState,
+                int vendorCode);
 
-  public:
+  MySQL_Warning(const sql::SQLString &reason, const sql::SQLString &SQLState);
 
-    MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState, int vendorCode);
+  MySQL_Warning(const sql::SQLString &reason);
 
-    MySQL_Warning(const sql::SQLString& reason, const sql::SQLString& SQLState);
+  MySQL_Warning();
 
-    MySQL_Warning(const sql::SQLString& reason);
+  const sql::SQLString &getMessage() const;
 
-    MySQL_Warning();
+  const sql::SQLString &getSQLState() const;
 
-    const sql::SQLString & getMessage() const;
+  int getErrorCode() const;
 
-    const sql::SQLString & getSQLState() const;
+  const SQLWarning *getNextWarning() const;
 
-    int getErrorCode() const;
+  ~MySQL_Warning();
 
-    const SQLWarning * getNextWarning() const;
+ private:
+  /* We don't really want it to be called, but we need to implement it */
+  void setNextWarning(const SQLWarning *_next);
 
-    ~MySQL_Warning();
+ public:
+  void setNextWarning(MySQL_Warning *_next);
 
-  private:
+ private:
+  MySQL_Warning(const MySQL_Warning &w);
 
-    /* We don't really want it to be called, but we need to implement it */
-    void setNextWarning(const SQLWarning * _next);
+  MySQL_Warning(const ::sql::SQLWarning &w);
 
-  public:
-
-    void setNextWarning(MySQL_Warning * _next);
-
-  private:
-
-    MySQL_Warning(const MySQL_Warning& w);
-
-    MySQL_Warning(const ::sql::SQLWarning & w);
-
-    const MySQL_Warning & operator = (const MySQL_Warning & rhs);
-
-  };
+  const MySQL_Warning &operator=(const MySQL_Warning &rhs);
+};
 
   const sql::SQLString & errCode2SqlState(int32_t errCode, ::sql::SQLString & state);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -39,17 +39,17 @@
 #include <stdlib.h>
 #include <cppconn/connection.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 namespace testsuite
 {
 /* TODO - document */
-typedef boost::scoped_ptr<sql::Connection> Connection;
-typedef boost::scoped_ptr<sql::PreparedStatement> PreparedStatement;
+typedef std::unique_ptr<sql::Connection> Connection;
+typedef std::unique_ptr<sql::PreparedStatement> PreparedStatement;
 typedef sql::ParameterMetaData ParameterMetaData;
-typedef boost::scoped_ptr<sql::Statement> Statement;
-typedef boost::scoped_ptr<sql::Savepoint> Savepoint;
-typedef boost::scoped_ptr<sql::ResultSet> ResultSet;
+typedef std::unique_ptr<sql::Statement> Statement;
+typedef std::unique_ptr<sql::Savepoint> Savepoint;
+typedef std::unique_ptr<sql::ResultSet> ResultSet;
 typedef sql::Driver Driver;
 typedef sql::ResultSetMetaData ResultSetMetaData;
 typedef sql::DatabaseMetaData DatabaseMetaData;
@@ -316,7 +316,7 @@ protected:
    * Returns a Connector/C++ connection object
    *
    * Note: you are responsible for handling the object, you might
-   * want to use typedef boost::scoped_ptr<sql::Connection>con(getConnection())
+   * want to use typedef std::unique_ptr<sql::Connection>con(getConnection())
    * or similar for convenience reasons.
    *
    * @throws SQLException &

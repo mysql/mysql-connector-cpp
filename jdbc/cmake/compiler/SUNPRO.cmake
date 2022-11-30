@@ -58,7 +58,7 @@ function(enable_cxx17)
   # Note: calling _enable_cxx17() did not work on Solaris
   #
   # With SunPro use GNU libstdc++ implementation of c++ std library. This
-  # is the default for -std=c++11, but we set it explicitly to be on the safe
+  # is the default for -std=c++17, but we set it explicitly to be on the safe
   # side.
   #
   add_flags(CXX -std=c++17 -library=stdcpp)

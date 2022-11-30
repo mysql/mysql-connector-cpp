@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -31,7 +31,7 @@
 
 
 #include <map>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <cppconn/sqlstring.h>
 
 #include "binding_config.h"
@@ -52,20 +52,19 @@ namespace NativeAPI
 {
 
 /* We need probably multi_index map by path and HMODULE/void * as we can load same library by different name */
-static std::map< sql::SQLString, boost::shared_ptr<IMySQLCAPI> > wrapper;
+static std::map<sql::SQLString, std::shared_ptr<IMySQLCAPI>> wrapper;
 
-boost::shared_ptr< IMySQLCAPI > getCApiHandle(const sql::SQLString & name)
-{
+std::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString &name) {
 #ifdef MYSQLCLIENT_STATIC_BINDING
   return LibmysqlStaticProxy::theInstance();
 #else
 
-  std::map< sql::SQLString, boost::shared_ptr< IMySQLCAPI > >::const_iterator cit;
+  std::map<sql::SQLString, std::shared_ptr<IMySQLCAPI>>::const_iterator cit;
 
   if ((cit = wrapper.find(name)) != wrapper.end()) {
     return cit->second;
   } else {
-    boost::shared_ptr< IMySQLCAPI > newWrapper;
+    std::shared_ptr<IMySQLCAPI> newWrapper;
 
     newWrapper.reset(new LibmysqlDynamicProxy(name));
     wrapper[name] = newWrapper;

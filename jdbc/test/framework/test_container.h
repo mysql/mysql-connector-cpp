@@ -34,7 +34,7 @@
 #define __TESTCONTAINER_H_
 
 #include "../common/ccppTypes.h"
-#include <boost/noncopyable.hpp>
+
 
 
 namespace testsuite
@@ -48,7 +48,7 @@ namespace testsuite
     {
     protected:
 
-    class StorableTest : public boost::noncopyable
+    class StorableTest : public nocopy
       {
         StorableTest(){}
 

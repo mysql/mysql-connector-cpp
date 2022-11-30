@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_PARAMETER_METADATA_H_
 #define _MYSQL_PARAMETER_METADATA_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <cppconn/parameter_metadata.h>
 
@@ -50,27 +50,28 @@ class MySQL_ParameterMetaData : public sql::ParameterMetaData
 {
   unsigned int param_count;
 public:
-  MySQL_ParameterMetaData( boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt);
+ MySQL_ParameterMetaData(
+     std::shared_ptr<NativeAPI::NativeStatementWrapper> &stmt);
 
-  virtual ~MySQL_ParameterMetaData() {}
+ virtual ~MySQL_ParameterMetaData() {}
 
-  virtual sql::SQLString getParameterClassName(unsigned int paramNo);
+ virtual sql::SQLString getParameterClassName(unsigned int paramNo);
 
-  virtual int getParameterCount();
+ virtual int getParameterCount();
 
-  virtual int getParameterMode(unsigned int paramNo);
+ virtual int getParameterMode(unsigned int paramNo);
 
-  virtual int getParameterType(unsigned int paramNo);
+ virtual int getParameterType(unsigned int paramNo);
 
-  virtual sql::SQLString getParameterTypeName(unsigned int paramNo);
+ virtual sql::SQLString getParameterTypeName(unsigned int paramNo);
 
-  virtual int getPrecision(unsigned int paramNo);
+ virtual int getPrecision(unsigned int paramNo);
 
-  virtual int getScale(unsigned int paramNo);
+ virtual int getScale(unsigned int paramNo);
 
-  virtual int isNullable(unsigned int paramNo);
+ virtual int isNullable(unsigned int paramNo);
 
-  virtual bool isSigned(unsigned int paramNo);
+ virtual bool isSigned(unsigned int paramNo);
 
 
 private:

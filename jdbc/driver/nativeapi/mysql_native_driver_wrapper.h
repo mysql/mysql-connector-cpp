@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_NATIVE_DRIVER_WRAPPER_H_
 #define _MYSQL_NATIVE_DRIVER_WRAPPER_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "native_driver_wrapper.h"
 
@@ -48,7 +48,7 @@ class IMySQLCAPI;
 
 class MySQL_NativeDriverWrapper : public NativeDriverWrapper
 {
-  boost::shared_ptr<IMySQLCAPI> api;
+  std::shared_ptr<IMySQLCAPI> api;
 
   MySQL_NativeDriverWrapper(){}
 

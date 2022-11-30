@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -36,7 +36,7 @@
 #include "native_connection_wrapper.h"
 
 #include <cppconn/sqlstring.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 
 namespace sql
@@ -57,8 +57,7 @@ inline const char * nullIfEmpty(const ::sql::SQLString & str)
 class MySQL_NativeConnectionWrapper : public NativeConnectionWrapper
 {
   /* api should be declared before mysql here */
-  boost::shared_ptr< IMySQLCAPI >	api;
-
+  std::shared_ptr<IMySQLCAPI> api;
 
 #if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
 struct MYSQL* mysql;
@@ -72,117 +71,105 @@ struct st_mysql* mysql;
   MySQL_NativeConnectionWrapper(){}
 
 public:
+ MySQL_NativeConnectionWrapper(std::shared_ptr<IMySQLCAPI> _api);
 
-  MySQL_NativeConnectionWrapper(boost::shared_ptr<IMySQLCAPI> _api);
+ virtual ~MySQL_NativeConnectionWrapper();
 
-  virtual ~MySQL_NativeConnectionWrapper();
+ uint64_t affected_rows() override;
 
+ bool autocommit(bool) override;
 
-  uint64_t affected_rows() override;
+ bool connect(const ::sql::SQLString &host, const ::sql::SQLString &user,
+              const ::sql::SQLString &passwd, const ::sql::SQLString &db,
+              unsigned int port, const ::sql::SQLString &socket_or_pipe,
+              unsigned long client_flag) override;
 
-  bool autocommit(bool) override;
+ bool connect_dns_srv(const ::sql::SQLString &host,
+                      const ::sql::SQLString &user,
+                      const ::sql::SQLString &passwd,
+                      const ::sql::SQLString &db,
+                      unsigned long client_flag) override;
 
-  bool connect(const ::sql::SQLString & host,
-        const ::sql::SQLString & user,
-        const ::sql::SQLString & passwd,
-        const ::sql::SQLString & db,
-        unsigned int			 port,
-        const ::sql::SQLString & socket_or_pipe,
-        unsigned long			client_flag) override;
+ bool commit() override;
 
-  bool connect_dns_srv(const ::sql::SQLString & host,
-        const ::sql::SQLString & user,
-        const ::sql::SQLString & passwd,
-        const ::sql::SQLString & db,
-        unsigned long			client_flag) override;
+ void debug(const ::sql::SQLString &) override;
 
-  bool commit() override;
+ unsigned int errNo() override;
 
-  void debug(const ::sql::SQLString &) override;
+ ::sql::SQLString error() override;
 
-  unsigned int errNo() override;
+ ::sql::SQLString escapeString(const ::sql::SQLString &) override;
 
-  ::sql::SQLString error() override;
+ unsigned int field_count() override;
 
-  ::sql::SQLString escapeString(const ::sql::SQLString &) override;
+ unsigned long get_client_version() override;
 
-  unsigned int field_count() override;
+ const ::sql::SQLString &get_server_info() override;
 
-  unsigned long get_client_version() override;
+ unsigned long get_server_version() override;
 
-  const ::sql::SQLString & get_server_info() override;
+ void get_character_set_info(void *cs) override;
 
-  unsigned long get_server_version() override;
+ bool more_results() override;
 
-  void get_character_set_info(void *cs) override;
+ int next_result() override;
 
-  bool more_results() override;
+ int options(::sql::mysql::MySQL_Connection_Options, const void *) override;
+ int options(::sql::mysql::MySQL_Connection_Options,
+             const ::sql::SQLString &) override;
+ int options(::sql::mysql::MySQL_Connection_Options, const bool &) override;
+ int options(::sql::mysql::MySQL_Connection_Options, const int &) override;
+ int options(::sql::mysql::MySQL_Connection_Options, const ::sql::SQLString &,
+             const ::sql::SQLString &) override;
+ int options(::sql::mysql::MySQL_Connection_Options, const int &,
+             const ::sql::SQLString &) override;
 
-  int next_result() override;
+ int get_option(::sql::mysql::MySQL_Connection_Options, const void *) override;
+ int get_option(::sql::mysql::MySQL_Connection_Options,
+                const ::sql::SQLString &) override;
+ int get_option(::sql::mysql::MySQL_Connection_Options, const bool &) override;
+ int get_option(::sql::mysql::MySQL_Connection_Options, const int &) override;
 
-  int options(::sql::mysql::MySQL_Connection_Options, const void * ) override;
-  int options(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &) override;
-  int options(::sql::mysql::MySQL_Connection_Options, const bool &) override;
-  int options(::sql::mysql::MySQL_Connection_Options, const int &) override;
-  int options(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &, const ::sql::SQLString &) override;
-  int options(::sql::mysql::MySQL_Connection_Options,
-              const int &, const ::sql::SQLString &) override;
+ int plugin_option(int plugin_type, const ::sql::SQLString &plugin_name,
+                   const ::sql::SQLString &option, const void *) override;
 
-  int get_option(::sql::mysql::MySQL_Connection_Options, const void * ) override;
-  int get_option(::sql::mysql::MySQL_Connection_Options,
-        const ::sql::SQLString &) override;
-  int get_option(::sql::mysql::MySQL_Connection_Options, const bool &) override;
-  int get_option(::sql::mysql::MySQL_Connection_Options, const int &) override;
+ int plugin_option(int plugin_type, const ::sql::SQLString &plugin_name,
+                   const ::sql::SQLString &option,
+                   const ::sql::SQLString &value) override;
 
-  int plugin_option(int plugin_type,
-                    const ::sql::SQLString & plugin_name,
-                    const ::sql::SQLString & option,
-                    const void *) override;
+ int get_plugin_option(int plugin_type, const ::sql::SQLString &plugin_name,
+                       const ::sql::SQLString &option,
+                       const ::sql::SQLString &value) override;
 
-  int plugin_option(int plugin_type,
-                    const ::sql::SQLString & plugin_name,
-                    const ::sql::SQLString & option,
-                    const ::sql::SQLString & value) override;
+ bool has_query_attributes() override;
 
-  int get_plugin_option(int plugin_type,
-                        const ::sql::SQLString & plugin_name,
-                        const ::sql::SQLString & option,
-                        const ::sql::SQLString & value) override;
+ bool query_attr(unsigned number, const char **names, MYSQL_BIND *) override;
 
-  bool has_query_attributes() override;
+ int query(const ::sql::SQLString &) override;
 
-  bool query_attr(unsigned number, const char **names, MYSQL_BIND *) override;
+ int ping() override;
 
-  int query(const ::sql::SQLString &) override;
+ /* int real_query(const ::sql::SQLString &, uint64_t);*/
 
-  int ping() override;
+ bool rollback() override;
 
-  /* int real_query(const ::sql::SQLString &, uint64_t);*/
+ ::sql::SQLString sqlstate() override;
 
+ bool ssl_set(const ::sql::SQLString &key, const ::sql::SQLString &cert,
+              const ::sql::SQLString &ca, const ::sql::SQLString &capath,
+              const ::sql::SQLString &cipher) override;
 
-  bool rollback() override;
+ ::sql::SQLString info() override;
 
-  ::sql::SQLString sqlstate() override;
+ NativeResultsetWrapper *store_result() override;
 
-  bool ssl_set(const ::sql::SQLString & key,
-        const ::sql::SQLString & cert,
-        const ::sql::SQLString & ca,
-        const ::sql::SQLString & capath,
-        const ::sql::SQLString & cipher) override;
+ int use_protocol(Protocol_Type protocol) override;
 
-  ::sql::SQLString info() override;
+ NativeResultsetWrapper *use_result() override;
 
-  NativeResultsetWrapper * store_result() override;
+ NativeStatementWrapper &stmt_init() override;
 
-  int use_protocol(Protocol_Type protocol) override;
-
-  NativeResultsetWrapper * use_result() override;
-
-  NativeStatementWrapper & stmt_init() override;
-
-  unsigned int warning_count() override;
+ unsigned int warning_count() override;
 };
 
 } /* namespace NativeAPI */

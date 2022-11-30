@@ -97,18 +97,6 @@ if(VS)
 endif()
 
 #
-# Find Boost which is required by legacy connector
-#
-
-#include(boost)
-if (DEFINED BOOST_ROOT)
-  list(APPEND jdbc_cmake_opts -DBOOST_ROOT=${BOOST_ROOT})
-endif()
-if (DEFINED WITH_BOOST)
-  list(APPEND jdbc_cmake_opts -DWITH_BOOST=${WITH_BOOST})
-endif()
-
-#
 # Generate version info for legacy connector
 #
 

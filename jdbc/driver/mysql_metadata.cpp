@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,8 +35,6 @@
 #include <sstream>
 
 #include <memory>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <cppconn/exception.h>
 #include "mysql_util.h"
 #include "mysql_connection.h"
@@ -1218,16 +1216,16 @@ static inline const char * my_i_to_a(char * buf, size_t buf_size, int a)
 
 
 /* {{{ MySQL_ConnectionMetaData::MySQL_ConnectionMetaData() -I- */
-MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(sql::Statement * const service, std::shared_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
-                          boost::shared_ptr< MySQL_DebugLogger > & l)
-  : stmt(service),
-    connection(dynamic_cast< MySQL_Connection * >(service->getConnection())),
-    logger(l),
-    proxy(_proxy)
-{
+MySQL_ConnectionMetaData::MySQL_ConnectionMetaData(
+    sql::Statement *const service,
+    std::shared_ptr<NativeAPI::NativeConnectionWrapper> _proxy,
+    std::shared_ptr<MySQL_DebugLogger> &l)
+    : stmt(service),
+      connection(dynamic_cast<MySQL_Connection *>(service->getConnection())),
+      logger(l),
+      proxy(_proxy) {
   CPP_ENTER("MySQL_ConnectionMetaData::MySQL_ConnectionMetaData");
   server_version = proxy->get_server_version();
-
 }
 /* }}} */
 
@@ -1345,7 +1343,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
     }
   }
 
-  boost::scoped_ptr< sql::ResultSet > native_rs(stmt->executeQuery(query));
+  std::unique_ptr<sql::ResultSet> native_rs(stmt->executeQuery(query));
 
   int objtype_field_index = native_rs->findColumn("OBJECT_TYPE");
   int catalog_field_index = native_rs->findColumn("CATALOG");
@@ -1366,7 +1364,8 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
               "	FROM information_schema.triggers ")
       .append(triggers_where_clause);
 
-    boost::scoped_ptr< sql::ResultSet > trigger_ddl_rs(stmt->executeQuery(trigger_ddl_query));
+    std::unique_ptr<sql::ResultSet> trigger_ddl_rs(
+        stmt->executeQuery(trigger_ddl_query));
 
     // trigger specific fields: exclusion from the rule - 'show create trigger' is not supported by versions below 5.1.21
     // reproducing ddl based on metadata
@@ -1433,7 +1432,8 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
   rs_field_data.push_back("NAME");
   rs_field_data.push_back("DDL");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   while (native_rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
@@ -1524,7 +1524,7 @@ MySQL_ConnectionMetaData::getSchemaObjects(const sql::SQLString& /* catalogName 
           ddl.append(it->second);
         }
       } else {
-        boost::scoped_ptr< sql::ResultSet > sql_rs(stmt->executeQuery(ddl_query));
+        std::unique_ptr<sql::ResultSet> sql_rs(stmt->executeQuery(ddl_query));
 
         sql_rs->next();
 
@@ -1559,7 +1559,8 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSchemaObjectTypes()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getSchemaObjectTypes");
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("OBJECT_TYPE");
@@ -1657,7 +1658,8 @@ MySQL_ConnectionMetaData::getAttributes(const sql::SQLString& /*catalog*/, const
                     const sql::SQLString& /*typeNamePattern*/, const sql::SQLString& /*attributeNamePattern*/)
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getAttributes");
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
 
@@ -1695,7 +1697,8 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, co
                         const sql::SQLString& table, int /* scope */, bool /* nullable */)
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getBestRowIdentifier");
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("SCOPE");
@@ -1707,7 +1710,7 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, co
   rs_field_data.push_back("DECIMAL_DIGITS");
   rs_field_data.push_back("PSEUDO_COLUMN");
 
-  boost::scoped_ptr< sql::ResultSet > rs(getPrimaryKeys(catalog, schema, table));
+  std::unique_ptr<sql::ResultSet> rs(getPrimaryKeys(catalog, schema, table));
 
   if (!rs->rowsCount())
     rs.reset(getUniqueNonNullableKeys(catalog, schema, table));
@@ -1715,7 +1718,8 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, co
   while (rs->next()) {
     sql::SQLString columnNamePattern(rs->getString(4));
 
-    boost::scoped_ptr< sql::ResultSet > rsCols(getColumns(catalog, schema, table, columnNamePattern));
+    std::unique_ptr<sql::ResultSet> rsCols(
+        getColumns(catalog, schema, table, columnNamePattern));
     if (rsCols->next()) {
       MySQL_ArtResultSet::row_t rs_data_row;
       rs_data_row.push_back((int64_t) DatabaseMetaData::bestRowSession); // SCOPE
@@ -1741,7 +1745,8 @@ MySQL_ConnectionMetaData::getBestRowIdentifier(const sql::SQLString& catalog, co
 sql::ResultSet *
 MySQL_ConnectionMetaData::getCatalogs()
 {
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
 
@@ -1802,7 +1807,8 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
   rs_field_data.push_back("PRIVILEGE");
   rs_field_data.push_back("IS_GRANTABLE");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   /* I_S seems currently (20080220) not to work */
 
@@ -1813,12 +1819,13 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
                          "FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES\n"
                          "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME=? AND COLUMN_NAME LIKE ?\n"
                          "ORDER BY COLUMN_NAME, PRIVILEGE_TYPE");
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+    std::unique_ptr<sql::PreparedStatement> pStmt(
+        connection->prepareStatement(query));
     pStmt->setString(1, escapedSchema);
     pStmt->setString(2, escapedTableName);
     pStmt->setString(3, escapedColumnNamePattern);
 
-    boost::scoped_ptr< sql::ResultSet > rs(pStmt->executeQuery());
+    std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
 
     while (rs->next()) {
       MySQL_ArtResultSet::row_t rs_data_row;
@@ -1840,10 +1847,10 @@ MySQL_ConnectionMetaData::getColumnPrivileges(const sql::SQLString& /*catalog*/,
     sql::SQLString query("SHOW FULL COLUMNS FROM `");
     query.append(schema).append("`.`").append(table).append("` LIKE '").append(escapedColumnNamePattern).append("'");
 
-    boost::scoped_ptr< sql::ResultSet > res(NULL);
+    std::unique_ptr<sql::ResultSet> res;
     try {
       res.reset(stmt->executeQuery(query));
-    } catch (SQLException &) {
+    } catch (SQLException&) {
       // schema and/or table doesn't exist. return empty set
       // do nothing here
     }
@@ -1897,7 +1904,8 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
   sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
   sql::SQLString escapedColumnNamePattern = connection->escapeString(columnNamePattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
 
@@ -1980,7 +1988,8 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
   }
   query.append("AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
     "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
-  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   if (schemaPattern.length()) {
     pStmt->setString(1, escapedSchemaPattern);
     pStmt->setString(2, escapedTableNamePattern);
@@ -1990,7 +1999,7 @@ MySQL_ConnectionMetaData::getColumns(const sql::SQLString& /*catalog*/, const sq
     pStmt->setString(2, escapedColumnNamePattern);
   }
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
@@ -2047,7 +2056,8 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
         primaryCatalog.c_str(), foreignCatalog.c_str(), primarySchema.c_str(), foreignSchema.c_str(),
         primaryTable.c_str(), foreignTable.c_str());
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("PKTABLE_CAT");
@@ -2121,13 +2131,14 @@ MySQL_ConnectionMetaData::getCrossReference(const sql::SQLString& primaryCatalog
     query.append(OptionalRefConstraintJoinStr);
     query.append("\nORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION");
 
-    boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+    std::unique_ptr<sql::PreparedStatement> pStmt(
+        connection->prepareStatement(query));
     pStmt->setString(1, primarySchema);
     pStmt->setString(2, primaryTable);
     pStmt->setString(3, foreignSchema);
     pStmt->setString(4, foreignTable);
 
-    boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+    std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
 
     while (rs->next()) {
       MySQL_ArtResultSet::row_t rs_data_row;
@@ -2278,7 +2289,8 @@ MySQL_ConnectionMetaData::getExportedKeys(const sql::SQLString& catalog, const s
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getExportedKeys");
   CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("PKTABLE_CAT");
@@ -2344,11 +2356,12 @@ MySQL_ConnectionMetaData::getExportedKeys(const sql::SQLString& catalog, const s
                "B.CONSTRAINT_TYPE = 'FOREIGN KEY' AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=?)\n");
   query.append(OptionalRefConstraintJoinStr);
   query.append("ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION\n");
- boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   pStmt->setString(1, schema);
   pStmt->setString(2, table);
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
    rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
@@ -2548,8 +2561,8 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getImportedKeys");
   CPP_INFO_FMT("catalog=%s schema=%s table=%s", catalog.c_str(), schema.c_str(), table.c_str());
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("PKTABLE_CAT");
@@ -2619,11 +2632,12 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
                "A.REFERENCED_TABLE_SCHEMA IS NOT NULL) \n");
   query.append(OptionalRefConstraintJoinStr);
   query.append("\nORDER BY A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, A.ORDINAL_POSITION");
- boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   pStmt->setString(1, schema);
   pStmt->setString(2, table);
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
    rs_data_row.push_back(rs->getString(1));	// PKTABLE_CAT
@@ -2642,7 +2656,6 @@ MySQL_ConnectionMetaData::getImportedKeys(const sql::SQLString& catalog, const s
     rs_data_row.push_back(rs->getString(14));	// DEFERRABILITY
    rs_data->push_back(rs_data_row);
   }
-
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -2669,8 +2682,8 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
                     const sql::SQLString& table, bool unique, bool /* approximate */)
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getIndexInfo");
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_CAT");
@@ -2704,11 +2717,12 @@ MySQL_ConnectionMetaData::getIndexInfo(const sql::SQLString& /*catalog*/, const 
     query.append(" AND NON_UNIQUE=0");
   }
   query.append(" ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
-  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   pStmt->setString(1, schema);
   pStmt->setString(2, table);
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
@@ -2981,27 +2995,28 @@ MySQL_ConnectionMetaData::getPrimaryKeys(const sql::SQLString& catalog, const sq
   rs_field_data.push_back("KEY_SEQ");
   rs_field_data.push_back("PK_NAME");
 
-
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   /* Bind Problems with 49999, check later why */
   const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME, "
         "COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, INDEX_NAME AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS "
         "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME='PRIMARY' "
         "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
-  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   pStmt->setString(1, schema);
   pStmt->setString(2, table);
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
-    MySQL_ArtResultSet::row_t rs_data_row;
-    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-    rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
-    rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
-    rs_data_row.push_back(rs->getString(6));	// PK_NAME
+   MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));  // TABLE_CAT
+   rs_data_row.push_back(rs->getString(2));  // TABLE_SCHEM
+   rs_data_row.push_back(rs->getString(3));  // TABLE_NAME
+   rs_data_row.push_back(rs->getString(4));  // COLUMN_NAME
+   rs_data_row.push_back(rs->getString(5));  // KEY_SEQ
+   rs_data_row.push_back(rs->getString(6));  // PK_NAME
    rs_data->push_back(rs_data_row);
   }
 
@@ -3025,8 +3040,8 @@ MySQL_ConnectionMetaData::getUniqueNonNullableKeys(const sql::SQLString& catalog
   rs_field_data.push_back("KEY_SEQ");
   rs_field_data.push_back("PK_NAME");
 
-
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   /* Bind Problems with 49999, check later why */
   const sql::SQLString query("SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM, TABLE_NAME,"
@@ -3035,21 +3050,22 @@ MySQL_ConnectionMetaData::getUniqueNonNullableKeys(const sql::SQLString& catalog
                              "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND INDEX_NAME <> 'PRIMARY'"
                              "  AND NON_UNIQUE = 0 AND NULLABLE <> 'YES'"
                              "ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX");
-  boost::scoped_ptr< sql::PreparedStatement > stmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> stmt(
+      connection->prepareStatement(query));
   stmt->setString(1, schema);
   stmt->setString(2, table);
 
   return stmt->executeQuery();
 
-  boost::scoped_ptr<sql::ResultSet> rs(stmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery());
   while (rs->next()) {
-    MySQL_ArtResultSet::row_t rs_data_row;
-    rs_data_row.push_back(rs->getString(1));	// TABLE_CAT
-    rs_data_row.push_back(rs->getString(2));	// TABLE_SCHEM
-    rs_data_row.push_back(rs->getString(3));	// TABLE_NAME
-    rs_data_row.push_back(rs->getString(4));	// COLUMN_NAME
-    rs_data_row.push_back(rs->getString(5));	// KEY_SEQ
-    rs_data_row.push_back(rs->getString(6));	// PK_NAME
+   MySQL_ArtResultSet::row_t rs_data_row;
+   rs_data_row.push_back(rs->getString(1));  // TABLE_CAT
+   rs_data_row.push_back(rs->getString(2));  // TABLE_SCHEM
+   rs_data_row.push_back(rs->getString(3));  // TABLE_NAME
+   rs_data_row.push_back(rs->getString(4));  // COLUMN_NAME
+   rs_data_row.push_back(rs->getString(5));  // KEY_SEQ
+   rs_data_row.push_back(rs->getString(6));  // PK_NAME
    rs_data->push_back(rs_data_row);
   }
 
@@ -3084,7 +3100,8 @@ MySQL_ConnectionMetaData::getProcedureColumns(const sql::SQLString& /* catalog *
   rs_field_data.push_back("NULLABLE");
   rs_field_data.push_back("REMARKS");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -3112,7 +3129,8 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
   rs_field_data.push_back("REMARKS");
   rs_field_data.push_back("PROCEDURE_TYPE");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   char procRetNoRes[5];
   my_i_to_a(procRetNoRes, sizeof(procRetNoRes) - 1, procedureNoResult);
@@ -3134,13 +3152,14 @@ MySQL_ConnectionMetaData::getProcedures(const sql::SQLString& /*catalog*/, const
   query.append(" END AS PROCEDURE_TYPE\nFROM INFORMATION_SCHEMA.ROUTINES\n"
         "WHERE ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ?\n"
         "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME");
-  boost::scoped_ptr< sql::PreparedStatement > pStmt(connection->prepareStatement(query));
+  std::unique_ptr<sql::PreparedStatement> pStmt(
+      connection->prepareStatement(query));
   pStmt->setString(1, escapedSchemaPattern);
   pStmt->setString(2, escapedProcedureNamePattern.length() ? escapedProcedureNamePattern : "%");
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
   while (rs->next()) {
-    MySQL_ArtResultSet::row_t rs_data_row;
+   MySQL_ArtResultSet::row_t rs_data_row;
    rs_data_row.push_back(rs->getString(1));	// PROCEDURE_CAT
     rs_data_row.push_back(rs->getString(2));	// PROCEDURE_SCHEM
     rs_data_row.push_back(rs->getString(3));	// PROCEDURE_NAME
@@ -3184,14 +3203,14 @@ sql::ResultSet *
 MySQL_ConnectionMetaData::getSchemas()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getSchemas");
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_SCHEM");
   rs_field_data.push_back("TABLE_CATALOG");
 
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery(
       "SELECT SCHEMA_NAME AS TABLE_SCHEM, CATALOG_NAME AS TABLE_CATALOG FROM "
       "INFORMATION_SCHEMA.SCHEMATA ORDER BY SCHEMA_NAME"));
 
@@ -3231,7 +3250,8 @@ MySQL_ConnectionMetaData::getSchemaCollation(const sql::SQLString& /* catalog */
 
   sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("SCHEMA_CAT");
@@ -3243,8 +3263,8 @@ MySQL_ConnectionMetaData::getSchemaCollation(const sql::SQLString& /* catalog */
   "where SCHEMA_NAME LIKE '");
   query.append(escapedSchemaPattern).append("'");
 
-  boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+  std::unique_ptr<sql::Statement> stmt(connection->createStatement());
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
 
@@ -3270,7 +3290,8 @@ MySQL_ConnectionMetaData::getSchemaCharset(const sql::SQLString& /* catalog */,
 
   sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("SCHEMA_CAT");
@@ -3282,8 +3303,8 @@ MySQL_ConnectionMetaData::getSchemaCharset(const sql::SQLString& /* catalog */,
   "where SCHEMA_NAME LIKE '");
   query.append(escapedSchemaPattern).append("'");
 
-  boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+  std::unique_ptr<sql::Statement> stmt(connection->createStatement());
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
 
@@ -3455,7 +3476,8 @@ MySQL_ConnectionMetaData::getSuperTables(const sql::SQLString& /*catalog*/, cons
   rs_field_data.push_back("TABLE_NAME");
   rs_field_data.push_back("SUPERTABLE_NAME");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -3477,7 +3499,8 @@ MySQL_ConnectionMetaData::getSuperTypes(const sql::SQLString& /*catalog*/, const
   rs_field_data.push_back("SUPERTYPE_SCHEM");
   rs_field_data.push_back("SUPERTYPE_NAME");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -3504,7 +3527,7 @@ MySQL_ConnectionMetaData::getTablePrivileges(const sql::SQLString& catalog, cons
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getTablePrivileges");
 
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery("SHOW GRANTS"));
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery("SHOW GRANTS"));
 
   std::list< sql::SQLString > aPrivileges, aSchemas, aTables;
 
@@ -3572,13 +3595,14 @@ MySQL_ConnectionMetaData::getTablePrivileges(const sql::SQLString& catalog, cons
   rs_field_data.push_back("PRIVILEGE");
   rs_field_data.push_back("IS_GRANTABLE");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
-
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list< sql::SQLString > tableTypes;
   tableTypes.push_back(sql::SQLString("TABLE"));
 
-  boost::scoped_ptr< sql::ResultSet > tables(getTables(catalog, schemaPattern, tableNamePattern, tableTypes));
+  std::unique_ptr<sql::ResultSet> tables(
+      getTables(catalog, schemaPattern, tableNamePattern, tableTypes));
   sql::SQLString schema, table;
   while (tables->next()) {
     schema = tables->getString(2);
@@ -3642,7 +3666,8 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
   sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
   sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_CAT");
@@ -3661,12 +3686,12 @@ MySQL_ConnectionMetaData::getTables(const sql::SQLString& /* catalog */, const s
       "TABLE_NAME LIKE ?\n"
       "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME");
 
-  boost::scoped_ptr<sql::PreparedStatement> pStmt(
+  std::unique_ptr<sql::PreparedStatement> pStmt(
       connection->prepareStatement(query));
   pStmt->setString(1, escapedSchemaPattern);
   pStmt->setString(2, escapedTableNamePattern);
 
-  boost::scoped_ptr<sql::ResultSet> rs(pStmt->executeQuery());
+  std::unique_ptr<sql::ResultSet> rs(pStmt->executeQuery());
 
   while (rs->next()) {
     std::list<sql::SQLString>::const_iterator it = types.begin();
@@ -3704,7 +3729,8 @@ MySQL_ConnectionMetaData::getTableTypes()
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_TYPE");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   for (unsigned int i = 0; i < 3; ++i) {
     if (server_version >= requiredVersion[i]) {
@@ -3733,7 +3759,8 @@ MySQL_ConnectionMetaData::getTableCollation(const sql::SQLString& /* catalog */,
   sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
   sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_CAT");
@@ -3746,8 +3773,8 @@ MySQL_ConnectionMetaData::getTableCollation(const sql::SQLString& /* catalog */,
   query.append(escapedTableNamePattern).append("' ").append("AND TABLE_SCHEMA LIKE '");
   query.append(escapedSchemaPattern).append("'");
 
-  boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+  std::unique_ptr<sql::Statement> stmt(connection->createStatement());
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
 
@@ -3776,7 +3803,8 @@ MySQL_ConnectionMetaData::getTableCharset(const sql::SQLString& /* catalog */,
   sql::SQLString escapedSchemaPattern = connection->escapeString(schemaPattern);
   sql::SQLString escapedTableNamePattern = connection->escapeString(tableNamePattern);
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   std::list<sql::SQLString> rs_field_data;
   rs_field_data.push_back("TABLE_CAT");
@@ -3791,8 +3819,8 @@ MySQL_ConnectionMetaData::getTableCharset(const sql::SQLString& /* catalog */,
   query.append(escapedTableNamePattern).append("' ").append("AND t.TABLE_SCHEMA LIKE '");
   query.append(escapedSchemaPattern).append("'");
 
-  boost::scoped_ptr< sql::Statement > stmt(connection->createStatement());
-  boost::scoped_ptr< sql::ResultSet > rs(stmt->executeQuery(query));
+  std::unique_ptr<sql::Statement> stmt(connection->createStatement());
+  std::unique_ptr<sql::ResultSet> rs(stmt->executeQuery(query));
   while (rs->next()) {
     MySQL_ArtResultSet::row_t rs_data_row;
 
@@ -3854,7 +3882,8 @@ MySQL_ConnectionMetaData::getTypeInfo()
   rs_field_data.push_back("SQL_DATETIME_SUB");
   rs_field_data.push_back("NUM_PREC_RADIX");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   int i = 0;
   while (mysqlc_types[i].typeName) {
@@ -3905,7 +3934,8 @@ MySQL_ConnectionMetaData::getUDTs(const sql::SQLString& /*catalog*/, const sql::
   rs_field_data.push_back("DATA_TYPE");
   rs_field_data.push_back("REMARKS");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;
@@ -3929,7 +3959,7 @@ SQLString
 MySQL_ConnectionMetaData::getUserName()
 {
   CPP_ENTER("MySQL_ConnectionMetaData::getUserName");
-  boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT USER()"));
+  std::unique_ptr<sql::ResultSet> rset(stmt->executeQuery("SELECT USER()"));
   if (rset->next()) {
     return sql::SQLString(rset->getString(1));
   }
@@ -3954,7 +3984,8 @@ MySQL_ConnectionMetaData::getVersionColumns(const sql::SQLString& /*catalog*/, c
   rs_field_data.push_back("DECIMAL_DIGITS");
   rs_field_data.push_back("PSEUDO_COLUMN");
 
-  boost::shared_ptr< MySQL_ArtResultSet::rset_t > rs_data(new MySQL_ArtResultSet::rset_t());
+  std::shared_ptr<MySQL_ArtResultSet::rset_t> rs_data(
+      new MySQL_ArtResultSet::rset_t());
 
   MySQL_ArtResultSet * ret = new MySQL_ArtResultSet(rs_field_data, rs_data, logger);
   return ret;

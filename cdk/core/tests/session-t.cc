@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -920,7 +920,7 @@ struct Doc_list
 
   uint32_t count() const { return N; }
 
-  boost::scoped_ptr<Doc> m_doc;
+  std::unique_ptr<Doc> m_doc;
 
   Doc& get_doc(uint32_t pos) const
   {

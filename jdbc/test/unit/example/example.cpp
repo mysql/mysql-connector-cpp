@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -84,17 +84,17 @@ void example_test_class::test_hello_world2()
     /*
      Connection, Statement and ResultSet are typedefs from unit_fixture.h:
 
-     typedef boost::scoped_ptr<sql::Connection> Connection;
-     typedef boost::scoped_ptr<sql::PreparedStatement> PreparedStatement;
-     typedef boost::scoped_ptr<sql::ParameterMetaData> ParameterMetaData;
-     typedef boost::scoped_ptr<sql::Statement> Statement;
-     typedef boost::scoped_ptr<sql::Savepoint> Savepoint;
-     typedef boost::scoped_ptr<sql::ResultSet> ResultSet;
+     typedef std::unique_ptr<sql::Connection> Connection;
+     typedef std::unique_ptr<sql::PreparedStatement> PreparedStatement;
+     typedef std::unique_ptr<sql::ParameterMetaData> ParameterMetaData;
+     typedef std::unique_ptr<sql::Statement> Statement;
+     typedef std::unique_ptr<sql::Savepoint> Savepoint;
+     typedef std::unique_ptr<sql::ResultSet> ResultSet;
      typedef sql::Driver Driver;
-     typedef boost::scoped_ptr<sql::ResultSetMetaData> ResultSetMetaData;
-     typedef boost::scoped_ptr<sql::DatabaseMetaData> DatabaseMetaData;
+     typedef std::unique_ptr<sql::ResultSetMetaData> ResultSetMetaData;
+     typedef std::unique_ptr<sql::DatabaseMetaData> DatabaseMetaData;
 
-     Do yourself a favour and use boost::scoped_ptr in tests!
+     Do yourself a favour and use std::unique_ptr in tests!
      */
     Connection my_con(getConnection());
     Statement my_stmt(my_con->createStatement());

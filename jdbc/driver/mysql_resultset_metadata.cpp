@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -37,7 +37,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <cppconn/datatype.h>
 #include <cppconn/exception.h>
@@ -56,11 +56,12 @@ namespace mysql
 
 
 /* {{{ MySQL_ResultSetMetaData::MySQL_ResultSetMetaData -I- */
-MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(boost::shared_ptr< NativeAPI::NativeResultsetWrapper > res, boost::shared_ptr< MySQL_DebugLogger > & l)
-  : result(res), logger(l)
-{
+MySQL_ResultSetMetaData::MySQL_ResultSetMetaData(
+    std::shared_ptr<NativeAPI::NativeResultsetWrapper> res,
+    std::shared_ptr<MySQL_DebugLogger> &l)
+    : result(res), logger(l) {
   CPP_ENTER("MySQL_ResultSetMetaData::MySQL_ResultSetMetaData");
-  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  std::shared_ptr<NativeAPI::NativeResultsetWrapper> result_p = result.lock();
   if (result_p) {
     num_fields = result_p->num_fields();
   }
@@ -93,7 +94,7 @@ void
 MySQL_ResultSetMetaData::checkValid() const
 {
   CPP_ENTER("MySQL_ResultSetMetaData::checkValid");
-  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  std::shared_ptr<NativeAPI::NativeResultsetWrapper> result_p = result.lock();
   if (!result_p) {
     throw sql::InvalidArgumentException("ResultSet is not valid anymore");
   }
@@ -244,7 +245,7 @@ MySQL_ResultSetMetaData::getColumnCollation(unsigned int columnIndex)
 MYSQL_FIELD *
 MySQL_ResultSetMetaData::getFieldMeta(unsigned int columnIndex) const
 {
-  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result_p = result.lock();
+  std::shared_ptr<NativeAPI::NativeResultsetWrapper> result_p = result.lock();
   return result_p->fetch_field_direct(columnIndex - 1);
 }
 /* }}} */

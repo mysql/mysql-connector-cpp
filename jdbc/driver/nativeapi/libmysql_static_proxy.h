@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -35,7 +35,7 @@
 
 #include "mysql_client_api.h"
 #include <cppconn/config.h>
-#include <boost/noncopyable.hpp>
+#include "../mysql_util.h"
 
 namespace sql
 {
@@ -44,20 +44,18 @@ namespace mysql
 namespace util
 {
 template <class T>
-class Singleton: public boost::noncopyable
+class Singleton: public util::nocopy
 {
 protected:
   Singleton(){}
 
 public:
+ static std::shared_ptr<T> &theInstance() {
+   // shared::ptr is used only to be able to use in getCApiHandle
+   static std::shared_ptr<T> instance(new T());
 
-  static boost::shared_ptr<T> & theInstance()
-  {
-    //shared::ptr is used only to be able to use in getCApiHandle
-    static boost::shared_ptr<T> instance(new T());
-
-    return instance;
-  }
+   return instance;
+ }
 };
 
 

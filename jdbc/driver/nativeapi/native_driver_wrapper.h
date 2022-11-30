@@ -33,7 +33,7 @@
 #ifndef _NATIVE_DRIVER_WRAPPER_H_
 #define _NATIVE_DRIVER_WRAPPER_H_
 
-#include <boost/noncopyable.hpp>
+#include "../mysql_util.h"
 #include <config.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -48,9 +48,8 @@ namespace NativeAPI
 
 class NativeConnectionWrapper;
 
-class NativeDriverWrapper : public boost::noncopyable
-{
-public:
+class NativeDriverWrapper : public util::nocopy {
+ public:
   virtual ~NativeDriverWrapper(){}
 
   virtual NativeConnectionWrapper & conn_init() = 0;

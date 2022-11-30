@@ -92,6 +92,10 @@ endif()
 #  gcc toolchain. Below they are re-defined for other compilers, if needed.
 #
 
+macro(reset_flags LANG)
+  set(CMAKE_${LANG}_FLAGS "" PARENT_SCOPE)
+endmacro()
+
 macro(add_flags LANG)
   string(REPLACE ";" " " flags "${ARGN}")
   set(CMAKE_${LANG}_FLAGS "${flags} ${CMAKE_${LANG}_FLAGS}")

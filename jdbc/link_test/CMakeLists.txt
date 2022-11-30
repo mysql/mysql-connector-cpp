@@ -54,9 +54,7 @@ endif()
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
 #
-# WITH_BOOST              where to look for Boost if can not be found
-#                         at standard locations.
-#
+
 # Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
 # set.
 #

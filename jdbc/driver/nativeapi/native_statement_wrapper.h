@@ -34,13 +34,13 @@
 #define _NATIVE_STATEMENT_WRAPPER_H_
 
 #include <cppconn/config.h>
-#include <boost/noncopyable.hpp>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
-#include "../mysql_statement_options.h"
 #include <cppconn/version_info.h>
+#include "../mysql_util.h"
+#include "../mysql_statement_options.h"
 
 #if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
 struct MYSQL_BIND;
@@ -66,7 +66,7 @@ class NativeResultsetWrapper;
  *
  *
  */
-class NativeStatementWrapper : public boost::noncopyable
+class NativeStatementWrapper : public util::nocopy
 {
 public:
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -30,8 +30,6 @@
 
 
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <stdlib.h>
 #include <memory>
 #include <sstream>
@@ -167,7 +165,7 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
   connection_properties["userName"] = userName;
   connection_properties["password"] = password;
 
-  boost::shared_ptr< MySQL_DebugLogger > tmp_logger(new MySQL_DebugLogger());
+  std::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
   intern.reset(new MySQL_ConnectionData(tmp_logger));
 
   service.reset(createServiceStmt());
@@ -182,7 +180,7 @@ MySQL_Connection::MySQL_Connection(Driver * _driver,
                    sql::ConnectOptionsMap & properties)
   : driver(_driver), proxy(&_proxy)
 {
-  boost::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
+  std::shared_ptr<MySQL_DebugLogger> tmp_logger(new MySQL_DebugLogger());
   intern.reset(new MySQL_ConnectionData(tmp_logger));
 
   service.reset(createServiceStmt());
@@ -1488,8 +1486,9 @@ MySQL_Connection::getSchema()
 {
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::getSchema");
   checkClosed();
-  boost::scoped_ptr< sql::Statement > stmt(createStatement());
-  boost::scoped_ptr< sql::ResultSet > rset(stmt->executeQuery("SELECT DATABASE()")); //SELECT SCHEMA()
+  std::unique_ptr<sql::Statement> stmt(createStatement());
+  std::unique_ptr<sql::ResultSet> rset(
+      stmt->executeQuery("SELECT DATABASE()"));  // SELECT SCHEMA()
   rset->next();
   return rset->getString(1);
 }
@@ -1649,7 +1648,7 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
   CPP_INFO_FMT("query=%s", sql.c_str());
   checkClosed();
-  boost::shared_ptr< NativeAPI::NativeStatementWrapper > stmt;
+  std::shared_ptr<NativeAPI::NativeStatementWrapper> stmt;
 
   //TODO change - probably no need to catch and throw here. Logging can be done inside proxy
   try {
@@ -1746,7 +1745,7 @@ MySQL_Connection::releaseSavepoint(Savepoint * savepoint)
   sql::SQLString sql("RELEASE SAVEPOINT ");
   sql.append(savepoint->getSavepointName());
 
-  boost::scoped_ptr<sql::Statement> stmt(createStatement());
+  std::unique_ptr<sql::Statement> stmt(createStatement());
   stmt->execute(sql);
 }
 /* }}} */
@@ -1775,7 +1774,7 @@ MySQL_Connection::rollback(Savepoint * savepoint)
   sql::SQLString sql("ROLLBACK TO SAVEPOINT ");
   sql.append(savepoint->getSavepointName());
 
-  boost::scoped_ptr< sql::Statement > stmt(createStatement());
+  std::unique_ptr<sql::Statement> stmt(createStatement());
   stmt->execute(sql);
 }
 /* }}} */
@@ -1800,7 +1799,7 @@ MySQL_Connection::setSchema(const sql::SQLString& catalog)
   sql::SQLString sql("USE `");
   sql.append(catalog).append("`");
 
-  boost::scoped_ptr< sql::Statement > stmt(createStatement());
+  std::unique_ptr<sql::Statement> stmt(createStatement());
   stmt->execute(sql);
 }
 /* }}} */
@@ -1913,7 +1912,7 @@ MySQL_Connection::setSavepoint(const sql::SQLString& name)
   sql::SQLString sql("SAVEPOINT ");
   sql.append(name);
 
-  boost::scoped_ptr< sql::Statement > stmt(createStatement());
+  std::unique_ptr<sql::Statement> stmt(createStatement());
   stmt->execute(sql);
 
   return new MySQL_Savepoint(name);
@@ -1989,7 +1988,7 @@ MySQL_Connection::getSessionVariable(const sql::SQLString & varname)
   sql::SQLString q("SELECT @@");
   q.append(varname);
 
-  boost::scoped_ptr< sql::ResultSet > rset(service->executeQuery(q));
+  std::unique_ptr<sql::ResultSet> rset(service->executeQuery(q));
 
   if (rset->next()) {
     if (intern->cache_sql_mode && intern->sql_mode_set == false && !varname.compare("sql_mode")) {

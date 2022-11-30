@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -46,15 +46,7 @@ namespace testsuite
 
 Driver * unit_fixture::driver=NULL;
 
-unit_fixture::unit_fixture(const String & name)
-: super(name),
-con(NULL),
-pstmt(NULL),
-stmt(NULL),
-res(NULL)
-{
-  init();
-}
+unit_fixture::unit_fixture(const String &name) : super(name) { init(); }
 
 void unit_fixture::init()
 {

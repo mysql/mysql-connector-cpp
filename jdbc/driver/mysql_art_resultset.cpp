@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -202,11 +202,18 @@ MyVal::getBool()
 
 
 /* {{{ MySQL_ArtResultSet::MySQL_ArtResultSet() -I- */
-MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList& fn, boost::shared_ptr< rset_t > &rs, boost::shared_ptr< MySQL_DebugLogger > & l)
-  : num_fields(static_cast<int>(fn.size())), rset(rs), current_record(rset->begin()),
-    started(false), field_index_to_name_map(new sql::SQLString[num_fields]),
-  num_rows(rset->size()), row_position(0), is_closed(false), logger(l)
-{
+MySQL_ArtResultSet::MySQL_ArtResultSet(const StringList &fn,
+                                       std::shared_ptr<rset_t> &rs,
+                                       std::shared_ptr<MySQL_DebugLogger> &l)
+    : num_fields(static_cast<int>(fn.size())),
+      rset(rs),
+      current_record(rset->begin()),
+      started(false),
+      field_index_to_name_map(new sql::SQLString[num_fields]),
+      num_rows(rset->size()),
+      row_position(0),
+      is_closed(false),
+      logger(l) {
   CPP_ENTER("MySQL_ArtResultSet::MySQL_ArtResultSet");
   CPP_INFO_FMT("metadata.size=%d resultset.size=%d", fn.size(), rset->size());
 

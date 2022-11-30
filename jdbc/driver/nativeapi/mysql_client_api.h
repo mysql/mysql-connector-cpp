@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -34,7 +34,7 @@
 #define _MYSQL_LIBMYSQL_API_H_
 
 #include "mysql_private_iface.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace sql
 {
@@ -346,7 +346,7 @@ public:
   virtual void thread_init() = 0;
 };
 
-boost::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString & name);
+std::shared_ptr<IMySQLCAPI> getCApiHandle(const sql::SQLString &name);
 
 } /* namespace NativeAPI */
 } /* namespace mysql */

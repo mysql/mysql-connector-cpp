@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -34,8 +34,7 @@
 #define _MYSQL_CONNECTION_DATA_H_
 
 #include <list>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <cppconn/resultset.h>
 #include "mysql_util.h"
 #include "mysql_metadata.h"
@@ -51,13 +50,18 @@ class MySQL_ConnectionMetaData;
 
 struct MySQL_ConnectionData
 {
-  MySQL_ConnectionData(boost::shared_ptr< MySQL_DebugLogger > & l)
-    : closed(false), autocommit(false), txIsolationLevel(TRANSACTION_READ_COMMITTED),
-      is_valid(false), sql_mode_set(false), cache_sql_mode(false),
-      reconnect(false),
-      defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-      defaultPreparedStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-      logger(l), meta(NULL) {}
+  MySQL_ConnectionData(std::shared_ptr<MySQL_DebugLogger> &l)
+      : closed(false),
+        autocommit(false),
+        txIsolationLevel(TRANSACTION_READ_COMMITTED),
+        is_valid(false),
+        sql_mode_set(false),
+        cache_sql_mode(false),
+        reconnect(false),
+        defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+        defaultPreparedStatementResultType(
+            sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
+        logger(l) {}
 
   ~MySQL_ConnectionData()
   {
@@ -67,7 +71,7 @@ struct MySQL_ConnectionData
   bool autocommit;
   enum_transaction_isolation txIsolationLevel;
 
-  boost::scoped_ptr<const MySQL_Warning> warnings;
+  std::unique_ptr<const MySQL_Warning> warnings;
 
   bool is_valid;
 
@@ -79,9 +83,9 @@ struct MySQL_ConnectionData
   sql::ResultSet::enum_type defaultStatementResultType;
   sql::ResultSet::enum_type defaultPreparedStatementResultType;
 
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
-  boost::scoped_ptr< MySQL_ConnectionMetaData > meta;
+  std::unique_ptr<MySQL_ConnectionMetaData> meta;
 };
 
 } /* namespace mysql */

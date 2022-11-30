@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_METADATA_H_
 #define _MYSQL_METADATA_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <cppconn/metadata.h>
 #include <map>
@@ -59,370 +59,430 @@ class MySQL_ConnectionMetaData : public sql::DatabaseMetaData
   sql::Statement * stmt;
   MySQL_Connection * connection;
   unsigned long server_version;
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
   std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy;
 
   sql::SQLString lower_case_table_names;
 
 public:
-  MySQL_ConnectionMetaData(sql::Statement * const service, std::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
-              boost::shared_ptr< MySQL_DebugLogger > & l);
+ MySQL_ConnectionMetaData(
+     sql::Statement *const service,
+     std::shared_ptr<NativeAPI::NativeConnectionWrapper> _capi,
+     std::shared_ptr<MySQL_DebugLogger> &l);
 
-  virtual ~MySQL_ConnectionMetaData();
+ virtual ~MySQL_ConnectionMetaData();
 
-  bool allProceduresAreCallable();
+ bool allProceduresAreCallable();
 
-  bool allTablesAreSelectable();
+ bool allTablesAreSelectable();
 
-  bool dataDefinitionCausesTransactionCommit();
+ bool dataDefinitionCausesTransactionCommit();
 
-  bool dataDefinitionIgnoredInTransactions();
+ bool dataDefinitionIgnoredInTransactions();
 
-  bool deletesAreDetected(int type);
+ bool deletesAreDetected(int type);
 
-  bool doesMaxRowSizeIncludeBlobs();
+ bool doesMaxRowSizeIncludeBlobs();
 
-  sql::ResultSet * getAttributes(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern, const sql::SQLString& attributeNamePattern);
+ sql::ResultSet *getAttributes(const sql::SQLString &catalog,
+                               const sql::SQLString &schemaPattern,
+                               const sql::SQLString &typeNamePattern,
+                               const sql::SQLString &attributeNamePattern);
 
-  sql::ResultSet * getBestRowIdentifier(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, int scope, bool nullable);
+ sql::ResultSet *getBestRowIdentifier(const sql::SQLString &catalog,
+                                      const sql::SQLString &schema,
+                                      const sql::SQLString &table, int scope,
+                                      bool nullable);
 
-  sql::ResultSet * getCatalogs();
+ sql::ResultSet *getCatalogs();
 
-  const sql::SQLString& getCatalogSeparator();
+ const sql::SQLString &getCatalogSeparator();
 
-  const sql::SQLString& getCatalogTerm();
+ const sql::SQLString &getCatalogTerm();
 
-  sql::ResultSet * getColumnPrivileges(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, const sql::SQLString& columnNamePattern);
+ sql::ResultSet *getColumnPrivileges(const sql::SQLString &catalog,
+                                     const sql::SQLString &schema,
+                                     const sql::SQLString &table,
+                                     const sql::SQLString &columnNamePattern);
 
-  sql::ResultSet * getColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern, const sql::SQLString& columnNamePattern);
+ sql::ResultSet *getColumns(const sql::SQLString &catalog,
+                            const sql::SQLString &schemaPattern,
+                            const sql::SQLString &tableNamePattern,
+                            const sql::SQLString &columnNamePattern);
 
-  sql::Connection * getConnection();
+ sql::Connection* getConnection();
 
-  sql::ResultSet * getCrossReference(const sql::SQLString& primaryCatalog, const sql::SQLString& primarySchema, const sql::SQLString& primaryTable, const sql::SQLString& foreignCatalog, const sql::SQLString& foreignSchema, const sql::SQLString& foreignTable);
+ sql::ResultSet *getCrossReference(const sql::SQLString &primaryCatalog,
+                                   const sql::SQLString &primarySchema,
+                                   const sql::SQLString &primaryTable,
+                                   const sql::SQLString &foreignCatalog,
+                                   const sql::SQLString &foreignSchema,
+                                   const sql::SQLString &foreignTable);
 
-  unsigned int getDatabaseMajorVersion();
+ unsigned int getDatabaseMajorVersion();
 
-  unsigned int getDatabaseMinorVersion();
+ unsigned int getDatabaseMinorVersion();
 
-  unsigned int getDatabasePatchVersion();
+ unsigned int getDatabasePatchVersion();
 
-  const sql::SQLString& getDatabaseProductName();
+ const sql::SQLString &getDatabaseProductName();
 
-  SQLString getDatabaseProductVersion();
+ SQLString getDatabaseProductVersion();
 
-  int getDefaultTransactionIsolation();
+ int getDefaultTransactionIsolation();
 
-  unsigned int getDriverMajorVersion();
+ unsigned int getDriverMajorVersion();
 
-  unsigned int getDriverMinorVersion();
+ unsigned int getDriverMinorVersion();
 
-  unsigned int getDriverPatchVersion();
+ unsigned int getDriverPatchVersion();
 
-  const sql::SQLString& getDriverName();
+ const sql::SQLString &getDriverName();
 
-  const sql::SQLString& getDriverVersion();
+ const sql::SQLString &getDriverVersion();
 
-  sql::ResultSet * getExportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+ sql::ResultSet *getExportedKeys(const sql::SQLString &catalog,
+                                 const sql::SQLString &schema,
+                                 const sql::SQLString &table);
 
-  const sql::SQLString& getExtraNameCharacters();
+ const sql::SQLString &getExtraNameCharacters();
 
-  const sql::SQLString& getIdentifierQuoteString();
+ const sql::SQLString &getIdentifierQuoteString();
 
-  sql::ResultSet * getImportedKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+ sql::ResultSet *getImportedKeys(const sql::SQLString &catalog,
+                                 const sql::SQLString &schema,
+                                 const sql::SQLString &table);
 
-  sql::ResultSet * getIndexInfo(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table, bool unique, bool approximate);
+ sql::ResultSet *getIndexInfo(const sql::SQLString &catalog,
+                              const sql::SQLString &schema,
+                              const sql::SQLString &table, bool unique,
+                              bool approximate);
 
-  unsigned int getCDBCMajorVersion();
+ unsigned int getCDBCMajorVersion();
 
-  unsigned int getCDBCMinorVersion();
+ unsigned int getCDBCMinorVersion();
 
-  unsigned int getMaxBinaryLiteralLength();
+ unsigned int getMaxBinaryLiteralLength();
 
-  unsigned int getMaxCatalogNameLength();
+ unsigned int getMaxCatalogNameLength();
 
-  unsigned int getMaxCharLiteralLength();
+ unsigned int getMaxCharLiteralLength();
 
-  unsigned int getMaxColumnNameLength();
+ unsigned int getMaxColumnNameLength();
 
-  unsigned int getMaxColumnsInGroupBy();
+ unsigned int getMaxColumnsInGroupBy();
 
-  unsigned int getMaxColumnsInIndex();
+ unsigned int getMaxColumnsInIndex();
 
-  unsigned int getMaxColumnsInOrderBy();
+ unsigned int getMaxColumnsInOrderBy();
 
-  unsigned int getMaxColumnsInSelect();
+ unsigned int getMaxColumnsInSelect();
 
-  unsigned int getMaxColumnsInTable();
+ unsigned int getMaxColumnsInTable();
 
-  unsigned int getMaxConnections();
+ unsigned int getMaxConnections();
 
-  unsigned int getMaxCursorNameLength();
+ unsigned int getMaxCursorNameLength();
 
-  unsigned int getMaxIndexLength();
+ unsigned int getMaxIndexLength();
 
-  unsigned int getMaxProcedureNameLength();
+ unsigned int getMaxProcedureNameLength();
 
-  unsigned int getMaxRowSize();
+ unsigned int getMaxRowSize();
 
-  unsigned int getMaxSchemaNameLength();
+ unsigned int getMaxSchemaNameLength();
 
-  unsigned int getMaxStatementLength();
+ unsigned int getMaxStatementLength();
 
-  unsigned int getMaxStatements();
+ unsigned int getMaxStatements();
 
-  unsigned int getMaxTableNameLength();
+ unsigned int getMaxTableNameLength();
 
-  unsigned int getMaxTablesInSelect();
+ unsigned int getMaxTablesInSelect();
 
-  unsigned int getMaxUserNameLength();
+ unsigned int getMaxUserNameLength();
 
-  const sql::SQLString& getNumericFunctions();
+ const sql::SQLString &getNumericFunctions();
 
-  sql::ResultSet * getPrimaryKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+ sql::ResultSet *getPrimaryKeys(const sql::SQLString &catalog,
+                                const sql::SQLString &schema,
+                                const sql::SQLString &table);
 
-  sql::ResultSet * getUniqueNonNullableKeys(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+ sql::ResultSet *getUniqueNonNullableKeys(const sql::SQLString &catalog,
+                                          const sql::SQLString &schema,
+                                          const sql::SQLString &table);
 
-  sql::ResultSet * getProcedureColumns(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern, const sql::SQLString& columnNamePattern);
+ sql::ResultSet *getProcedureColumns(const sql::SQLString &catalog,
+                                     const sql::SQLString &schemaPattern,
+                                     const sql::SQLString &procedureNamePattern,
+                                     const sql::SQLString &columnNamePattern);
 
-  sql::ResultSet * getProcedures(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& procedureNamePattern);
+ sql::ResultSet *getProcedures(const sql::SQLString &catalog,
+                               const sql::SQLString &schemaPattern,
+                               const sql::SQLString &procedureNamePattern);
 
-  const sql::SQLString& getProcedureTerm();
+ const sql::SQLString &getProcedureTerm();
 
-  int getResultSetHoldability();
+ int getResultSetHoldability();
 
-  sql::ResultSet * getSchemas();
+ sql::ResultSet *getSchemas();
 
-  const sql::SQLString& getSchemaTerm();
+ const sql::SQLString &getSchemaTerm();
 
-  sql::ResultSet * getSchemaCollation(const sql::SQLString& catalog, const sql::SQLString& schemaPattern);
+ sql::ResultSet *getSchemaCollation(const sql::SQLString &catalog,
+                                    const sql::SQLString &schemaPattern);
 
-  sql::ResultSet * getSchemaCharset(const sql::SQLString& catalog, const sql::SQLString& schemaPattern);
+ sql::ResultSet *getSchemaCharset(const sql::SQLString &catalog,
+                                  const sql::SQLString &schemaPattern);
 
-  const sql::SQLString& getSearchStringEscape();
+ const sql::SQLString &getSearchStringEscape();
 
-  const sql::SQLString& getSQLKeywords();
+ const sql::SQLString &getSQLKeywords();
 
-  int getSQLStateType();
+ int getSQLStateType();
 
-  const sql::SQLString& getStringFunctions();
+ const sql::SQLString &getStringFunctions();
 
-  sql::ResultSet * getSuperTables(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
+ sql::ResultSet *getSuperTables(const sql::SQLString &catalog,
+                                const sql::SQLString &schemaPattern,
+                                const sql::SQLString &tableNamePattern);
 
-  sql::ResultSet * getSuperTypes(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern);
+ sql::ResultSet *getSuperTypes(const sql::SQLString &catalog,
+                               const sql::SQLString &schemaPattern,
+                               const sql::SQLString &typeNamePattern);
 
-  const sql::SQLString& getSystemFunctions();
+ const sql::SQLString &getSystemFunctions();
 
-  sql::ResultSet * getTablePrivileges(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
+ sql::ResultSet *getTablePrivileges(const sql::SQLString &catalog,
+                                    const sql::SQLString &schemaPattern,
+                                    const sql::SQLString &tableNamePattern);
 
-  sql::ResultSet * getTables(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern, std::list<sql::SQLString> &types);
+ sql::ResultSet *getTables(const sql::SQLString &catalog,
+                           const sql::SQLString &schemaPattern,
+                           const sql::SQLString &tableNamePattern,
+                           std::list<sql::SQLString> &types);
 
-  sql::ResultSet * getTableTypes();
+ sql::ResultSet *getTableTypes();
 
-  sql::ResultSet * getTableCollation(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
+ sql::ResultSet *getTableCollation(const sql::SQLString &catalog,
+                                   const sql::SQLString &schemaPattern,
+                                   const sql::SQLString &tableNamePattern);
 
-  sql::ResultSet * getTableCharset(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& tableNamePattern);
+ sql::ResultSet *getTableCharset(const sql::SQLString &catalog,
+                                 const sql::SQLString &schemaPattern,
+                                 const sql::SQLString &tableNamePattern);
 
-  const sql::SQLString& getTimeDateFunctions();
+ const sql::SQLString &getTimeDateFunctions();
 
-  sql::ResultSet * getTypeInfo();
+ sql::ResultSet *getTypeInfo();
 
-  sql::ResultSet * getUDTs(const sql::SQLString& catalog, const sql::SQLString& schemaPattern, const sql::SQLString& typeNamePattern, std::list<int> &types);
+ sql::ResultSet *getUDTs(const sql::SQLString &catalog,
+                         const sql::SQLString &schemaPattern,
+                         const sql::SQLString &typeNamePattern,
+                         std::list<int> &types);
 
-  SQLString getURL();
+ SQLString getURL();
 
-  SQLString getUserName();
+ SQLString getUserName();
 
-  sql::ResultSet * getVersionColumns(const sql::SQLString& catalog, const sql::SQLString& schema, const sql::SQLString& table);
+ sql::ResultSet *getVersionColumns(const sql::SQLString &catalog,
+                                   const sql::SQLString &schema,
+                                   const sql::SQLString &table);
 
-  bool insertsAreDetected(int type);
+ bool insertsAreDetected(int type);
 
-  bool isCatalogAtStart();
+ bool isCatalogAtStart();
 
-  bool isReadOnly();
+ bool isReadOnly();
 
-  bool locatorsUpdateCopy();
+ bool locatorsUpdateCopy();
 
-  bool nullPlusNonNullIsNull();
+ bool nullPlusNonNullIsNull();
 
-  bool nullsAreSortedAtEnd();
+ bool nullsAreSortedAtEnd();
 
-  bool nullsAreSortedAtStart();
+ bool nullsAreSortedAtStart();
 
-  bool nullsAreSortedHigh();
+ bool nullsAreSortedHigh();
 
-  bool nullsAreSortedLow();
+ bool nullsAreSortedLow();
 
-  bool othersDeletesAreVisible(int type);
+ bool othersDeletesAreVisible(int type);
 
-  bool othersInsertsAreVisible(int type);
+ bool othersInsertsAreVisible(int type);
 
-  bool othersUpdatesAreVisible(int type);
+ bool othersUpdatesAreVisible(int type);
 
-  bool ownDeletesAreVisible(int type);
+ bool ownDeletesAreVisible(int type);
 
-  bool ownInsertsAreVisible(int type);
+ bool ownInsertsAreVisible(int type);
 
-  bool ownUpdatesAreVisible(int type);
+ bool ownUpdatesAreVisible(int type);
 
-  bool storesLowerCaseIdentifiers();
+ bool storesLowerCaseIdentifiers();
 
-  bool storesLowerCaseQuotedIdentifiers();
+ bool storesLowerCaseQuotedIdentifiers();
 
-  bool storesMixedCaseIdentifiers();
+ bool storesMixedCaseIdentifiers();
 
-  bool storesMixedCaseQuotedIdentifiers();
+ bool storesMixedCaseQuotedIdentifiers();
 
-  bool storesUpperCaseIdentifiers();
+ bool storesUpperCaseIdentifiers();
 
-  bool storesUpperCaseQuotedIdentifiers();
+ bool storesUpperCaseQuotedIdentifiers();
 
-  bool supportsAlterTableWithAddColumn();
+ bool supportsAlterTableWithAddColumn();
 
-  bool supportsAlterTableWithDropColumn();
+ bool supportsAlterTableWithDropColumn();
 
-  bool supportsANSI92EntryLevelSQL();
+ bool supportsANSI92EntryLevelSQL();
 
-  bool supportsANSI92FullSQL();
+ bool supportsANSI92FullSQL();
 
-  bool supportsANSI92IntermediateSQL();
+ bool supportsANSI92IntermediateSQL();
 
-  bool supportsBatchUpdates();
+ bool supportsBatchUpdates();
 
-  bool supportsCatalogsInDataManipulation();
+ bool supportsCatalogsInDataManipulation();
 
-  bool supportsCatalogsInIndexDefinitions();
+ bool supportsCatalogsInIndexDefinitions();
 
-  bool supportsCatalogsInPrivilegeDefinitions();
+ bool supportsCatalogsInPrivilegeDefinitions();
 
-  bool supportsCatalogsInProcedureCalls();
+ bool supportsCatalogsInProcedureCalls();
 
-  bool supportsCatalogsInTableDefinitions();
+ bool supportsCatalogsInTableDefinitions();
 
-  bool supportsColumnAliasing();
+ bool supportsColumnAliasing();
 
-  bool supportsConvert();
+ bool supportsConvert();
 
-  bool supportsConvert(int fromType, int toType);
+ bool supportsConvert(int fromType, int toType);
 
-  bool supportsCoreSQLGrammar();
+ bool supportsCoreSQLGrammar();
 
-  bool supportsCorrelatedSubqueries();
+ bool supportsCorrelatedSubqueries();
 
-  bool supportsDataDefinitionAndDataManipulationTransactions();
+ bool supportsDataDefinitionAndDataManipulationTransactions();
 
-  bool supportsDataManipulationTransactionsOnly();
+ bool supportsDataManipulationTransactionsOnly();
 
-  bool supportsDifferentTableCorrelationNames();
+ bool supportsDifferentTableCorrelationNames();
 
-  bool supportsExpressionsInOrderBy();
+ bool supportsExpressionsInOrderBy();
 
-  bool supportsExtendedSQLGrammar();
+ bool supportsExtendedSQLGrammar();
 
-  bool supportsFullOuterJoins();
+ bool supportsFullOuterJoins();
 
-  bool supportsGetGeneratedKeys();
+ bool supportsGetGeneratedKeys();
 
-  bool supportsGroupBy();
+ bool supportsGroupBy();
 
-  bool supportsGroupByBeyondSelect();
+ bool supportsGroupByBeyondSelect();
 
-  bool supportsGroupByUnrelated();
+ bool supportsGroupByUnrelated();
 
-  bool supportsIntegrityEnhancementFacility();
+ bool supportsIntegrityEnhancementFacility();
 
-  bool supportsLikeEscapeClause();
+ bool supportsLikeEscapeClause();
 
-  bool supportsLimitedOuterJoins();
+ bool supportsLimitedOuterJoins();
 
-  bool supportsMinimumSQLGrammar();
+ bool supportsMinimumSQLGrammar();
 
-  bool supportsMixedCaseIdentifiers();
+ bool supportsMixedCaseIdentifiers();
 
-  bool supportsMixedCaseQuotedIdentifiers();
+ bool supportsMixedCaseQuotedIdentifiers();
 
-  bool supportsMultipleOpenResults();
+ bool supportsMultipleOpenResults();
 
-  bool supportsMultipleResultSets();
+ bool supportsMultipleResultSets();
 
-  bool supportsMultipleTransactions();
+ bool supportsMultipleTransactions();
 
-  bool supportsNamedParameters();
+ bool supportsNamedParameters();
 
-  bool supportsNonNullableColumns();
+ bool supportsNonNullableColumns();
 
-  bool supportsOpenCursorsAcrossCommit();
+ bool supportsOpenCursorsAcrossCommit();
 
-  bool supportsOpenCursorsAcrossRollback();
+ bool supportsOpenCursorsAcrossRollback();
 
-  bool supportsOpenStatementsAcrossCommit();
+ bool supportsOpenStatementsAcrossCommit();
 
-  bool supportsOpenStatementsAcrossRollback();
+ bool supportsOpenStatementsAcrossRollback();
 
-  bool supportsOrderByUnrelated();
+ bool supportsOrderByUnrelated();
 
-  bool supportsOuterJoins();
+ bool supportsOuterJoins();
 
-  bool supportsPositionedDelete();
+ bool supportsPositionedDelete();
 
-  bool supportsPositionedUpdate();
+ bool supportsPositionedUpdate();
 
-  bool supportsResultSetConcurrency(int type, int concurrency);
+ bool supportsResultSetConcurrency(int type, int concurrency);
 
-  bool supportsResultSetHoldability(int holdability);
+ bool supportsResultSetHoldability(int holdability);
 
-  bool supportsResultSetType(int type);
+ bool supportsResultSetType(int type);
 
-  bool supportsSavepoints();
+ bool supportsSavepoints();
 
-  bool supportsSchemasInDataManipulation();
+ bool supportsSchemasInDataManipulation();
 
-  bool supportsSchemasInIndexDefinitions();
+ bool supportsSchemasInIndexDefinitions();
 
-  bool supportsSchemasInPrivilegeDefinitions();
+ bool supportsSchemasInPrivilegeDefinitions();
 
-  bool supportsSchemasInProcedureCalls();
+ bool supportsSchemasInProcedureCalls();
 
-  bool supportsSchemasInTableDefinitions();
+ bool supportsSchemasInTableDefinitions();
 
-  bool supportsSelectForUpdate();
+ bool supportsSelectForUpdate();
 
-  bool supportsStatementPooling();
+ bool supportsStatementPooling();
 
-  bool supportsStoredProcedures();
+ bool supportsStoredProcedures();
 
-  bool supportsSubqueriesInComparisons();
+ bool supportsSubqueriesInComparisons();
 
-  bool supportsSubqueriesInExists();
+ bool supportsSubqueriesInExists();
 
-  bool supportsSubqueriesInIns();
+ bool supportsSubqueriesInIns();
 
-  bool supportsSubqueriesInQuantifieds();
+ bool supportsSubqueriesInQuantifieds();
 
-  bool supportsTableCorrelationNames();
+ bool supportsTableCorrelationNames();
 
-  bool supportsTransactionIsolationLevel(int level);
+ bool supportsTransactionIsolationLevel(int level);
 
-  bool supportsTransactions();
+ bool supportsTransactions();
 
-  bool supportsTypeConversion();
+ bool supportsTypeConversion();
 
-  bool supportsUnion();
+ bool supportsUnion();
 
-  bool supportsUnionAll();
+ bool supportsUnionAll();
 
-  bool updatesAreDetected(int type);
+ bool updatesAreDetected(int type);
 
-  bool usesLocalFilePerTable();
+ bool usesLocalFilePerTable();
 
-  bool usesLocalFiles();
+ bool usesLocalFiles();
 
-  sql::ResultSet *getSchemata(const sql::SQLString& catalogName = "");
+ sql::ResultSet *getSchemata(const sql::SQLString &catalogName = "");
 
-  sql::ResultSet *getSchemaObjects(const sql::SQLString& catalogName = "", const sql::SQLString& schemaName = "", const sql::SQLString& objectType = "", bool includingDdl = true, const sql::SQLString& objectName = "", const sql::SQLString& contextTableName = "");
+ sql::ResultSet *getSchemaObjects(const sql::SQLString &catalogName = "",
+                                  const sql::SQLString &schemaName = "",
+                                  const sql::SQLString &objectType = "",
+                                  bool includingDdl = true,
+                                  const sql::SQLString &objectName = "",
+                                  const sql::SQLString &contextTableName = "");
 
-  // Returns all schema object types this database supports
-  sql::ResultSet *getSchemaObjectTypes();
+ // Returns all schema object types this database supports
+ sql::ResultSet *getSchemaObjectTypes();
 
 private:
   bool matchTable(const sql::SQLString& sPattern, const sql::SQLString& tPattern, const sql::SQLString& schema, const sql::SQLString& table);

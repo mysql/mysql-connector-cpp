@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -38,8 +38,7 @@
 #include <iomanip>
 #include <list>
 #include <vector>
-
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "start_options.h"
 #include "test_tapOutputter.h"
@@ -61,7 +60,7 @@ class TestsListener : public policies::Singleton<TestsListener>
 {
   CCPP_SINGLETON(TestsListener);
 
-  boost::scoped_ptr<TestOutputter> outputter;
+  std::unique_ptr<TestOutputter> outputter;
 
   String            curSuiteName;
   String            curTestName;

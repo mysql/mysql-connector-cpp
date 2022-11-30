@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -584,9 +584,9 @@ mysql_string_type_to_datatype(const sql::SQLString & name)
 
 
 /* {{{ mysql_to_datatype() -I- */
-const char *
-mysql_type_to_string(const MYSQL_FIELD * const field, boost::shared_ptr< sql::mysql::MySQL_DebugLogger > & l)
-{
+const char *mysql_type_to_string(
+    const MYSQL_FIELD *const field,
+    std::shared_ptr<sql::mysql::MySQL_DebugLogger> &l) {
   CPP_ENTER_WL(l, "mysql_type_to_string");
 
   bool isUnsigned = (field->flags & UNSIGNED_FLAG) != 0;

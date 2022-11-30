@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -43,9 +43,9 @@ namespace mysql
 
 
 /* {{{ MySQL_ParameterMetaData::MySQL_ParameterMetaData -I- */
-MySQL_ParameterMetaData::MySQL_ParameterMetaData(boost::shared_ptr< NativeAPI::NativeStatementWrapper > & stmt)
-{
-  // 2nd parameter is to be changed to boost::shared_ptr in case it's kept in the object
+MySQL_ParameterMetaData::MySQL_ParameterMetaData(
+    std::shared_ptr<NativeAPI::NativeStatementWrapper> &stmt) {
+  // 2nd parameter is to be changed to std::shared_ptr in case it's kept in the object
   param_count= stmt->param_count();
 }
 /* }}} */

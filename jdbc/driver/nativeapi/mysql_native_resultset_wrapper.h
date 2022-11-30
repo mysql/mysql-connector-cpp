@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -33,7 +33,7 @@
 #ifndef _MYSQL_NativeResultsetWrapper_H_
 #define _MYSQL_NativeResultsetWrapper_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "native_resultset_wrapper.h"
 #include "../cppconn/version_info.h"
@@ -63,36 +63,39 @@ class IMySQLCAPI;
 class MySQL_NativeResultsetWrapper : public NativeResultsetWrapper
 {
 public:
-  MySQL_NativeResultsetWrapper(::MYSQL *,::MYSQL_RES *, boost::shared_ptr<NativeAPI::IMySQLCAPI> &/*, boost::shared_ptr< MySQL_DebugLogger > & l*/);
+ MySQL_NativeResultsetWrapper(
+     ::MYSQL *, ::MYSQL_RES *,
+     std::shared_ptr<NativeAPI::IMySQLCAPI>
+         & /*, std::shared_ptr< MySQL_DebugLogger > & l*/);
 
-  ~MySQL_NativeResultsetWrapper();
+ ~MySQL_NativeResultsetWrapper();
 
-  unsigned long server_version() override;
+ unsigned long server_version() override;
 
-  void data_seek(uint64_t) override;
+ void data_seek(uint64_t) override;
 
-  ::MYSQL_FIELD * fetch_field() override;
+ ::MYSQL_FIELD *fetch_field() override;
 
-  ::MYSQL_FIELD * fetch_field_direct(unsigned int) override;
+ ::MYSQL_FIELD *fetch_field_direct(unsigned int) override;
 
-  unsigned long * fetch_lengths() override;
+ unsigned long *fetch_lengths() override;
 
-  char** fetch_row() override;
+ char **fetch_row() override;
 
-  unsigned int num_fields() override;
+ unsigned int num_fields() override;
 
-  uint64_t num_rows() override;
+ uint64_t num_rows() override;
 
-  //boost::shared_ptr<IMySQLCAPI> getApiHandle();
+ // std::shared_ptr<IMySQLCAPI> getApiHandle();
 
 private:
 
   MySQL_NativeResultsetWrapper(){}
   //Also need to decide should it be copyable
 
-  boost::shared_ptr< MySQL_DebugLogger > logger;
+  std::shared_ptr<MySQL_DebugLogger> logger;
 
-  boost::shared_ptr< NativeAPI::IMySQLCAPI > capi;
+  std::shared_ptr<NativeAPI::IMySQLCAPI> capi;
 
   ::MYSQL *mysql;
   ::MYSQL_RES * rs;

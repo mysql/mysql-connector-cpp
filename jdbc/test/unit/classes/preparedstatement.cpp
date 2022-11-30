@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -36,8 +36,7 @@
 #include "preparedstatement.h"
 #include <stdlib.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/scoped_array.hpp>
+#include <memory>
 
 namespace testsuite
 {
@@ -380,9 +379,9 @@ void preparedstatement::InsertSelectAllTypes()
       if (it->check_as_string)
       {
         {
-          boost::scoped_ptr<std::istream> blob_output_stream(res->getBlob(1));
+          std::unique_ptr<std::istream> blob_output_stream(res->getBlob(1));
           len=it->as_string.length();
-          boost::scoped_array<char> blob_out(new char[len]);
+          std::unique_ptr<char[]> blob_out(new char[len]);
           blob_output_stream->read(blob_out.get(), len);
           if (it->as_string.compare(0, blob_output_stream->gcount()
                                     , blob_out.get(), blob_output_stream->gcount()))
@@ -396,9 +395,9 @@ void preparedstatement::InsertSelectAllTypes()
         }
 
         {
-          boost::scoped_ptr<std::istream> blob_output_stream(res->getBlob("id"));
+          std::unique_ptr<std::istream> blob_output_stream(res->getBlob("id"));
           len=it->as_string.length();
-          boost::scoped_array<char> blob_out(new char[len]);
+          std::unique_ptr<char[]> blob_out(new char[len]);
           blob_output_stream->read(blob_out.get(), len);
           if (it->as_string.compare(0, blob_output_stream->gcount()
                                     , blob_out.get(), blob_output_stream->gcount()))
@@ -1458,7 +1457,7 @@ void preparedstatement::blob()
     ASSERT_EQUALS(res->getString("col1"), blob_input_stream.str());
     ASSERT_EQUALS(res->getString("col1"), blob_input);
 
-    boost::scoped_ptr< std::istream > blob_output_stream(res->getBlob(2));
+    std::unique_ptr<std::istream> blob_output_stream(res->getBlob(2));
     blob_output_stream->seekg(std::ios::beg);
     blob_output_stream->get(blob_output, offset + 1);
     ASSERT_EQUALS(blob_input_stream.str(), blob_output);

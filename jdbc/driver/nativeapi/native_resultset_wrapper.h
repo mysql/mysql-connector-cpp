@@ -33,13 +33,13 @@
 #ifndef _NATIVE_RESULTSET_WRAPPER_H_
 #define _NATIVE_RESULTSET_WRAPPER_H_
 
-#include <boost/noncopyable.hpp>
 #include <config.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
 #include "../cppconn/version_info.h"
+#include "../mysql_util.h"
 
 #if (MYCPPCONN_STATIC_MYSQL_VERSION_ID > 80004)
 struct MYSQL_FIELD;
@@ -55,7 +55,7 @@ namespace mysql
 namespace NativeAPI
 {
 
-class NativeResultsetWrapper : public boost::noncopyable
+class NativeResultsetWrapper : public util::nocopy
 {
 public:
   virtual ~NativeResultsetWrapper(){}

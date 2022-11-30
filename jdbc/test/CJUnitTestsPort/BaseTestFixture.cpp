@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -220,22 +220,16 @@ bool value_object::instanceof(value_type type)
  *            The name of the JUnit test case
  */
 
-
-BaseTestFixture::BaseTestFixture(const String & name)
-  : super             (name),
-    TestFixtureCommon (),
-    myInstanceNumber  (0),
-    conn              (NULL),
-    pstmt(NULL),
-stmt(NULL),
-rs(NULL),
-/*dbClass           ( "sql::mysql::Driver"),*/
-hasSps(true)
+BaseTestFixture::BaseTestFixture(const String &name)
+    : super(name),
+      TestFixtureCommon(),
+      myInstanceNumber(0),
+      /*dbClass           ( "sql::mysql::Driver"),*/
+      hasSps(true)
 
 {
   this->myInstanceNumber=instanceCount++;
 }
-
 
 void BaseTestFixture::createStandardTable(standard_tables table)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -60,11 +60,18 @@ namespace mysql
 {
 
 /* {{{ MySQL_Statement::MySQL_Statement() -I- */
-MySQL_Statement::MySQL_Statement(MySQL_Connection * conn, std::shared_ptr< NativeAPI::NativeConnectionWrapper > & _proxy,
-                  sql::ResultSet::enum_type rset_type, boost::shared_ptr< MySQL_DebugLogger > & l)
-  : warnings(NULL), connection(conn), proxy(_proxy), isClosed(false), warningsHaveBeenLoaded(true),
-  last_update_count(UL64(~0)), logger(l), resultset_type(rset_type), warningsCount(0)
-{
+MySQL_Statement::MySQL_Statement(
+    MySQL_Connection *conn,
+    std::shared_ptr<NativeAPI::NativeConnectionWrapper> &_proxy,
+    sql::ResultSet::enum_type rset_type, std::shared_ptr<MySQL_DebugLogger> &l)
+    : connection(conn),
+      proxy(_proxy),
+      isClosed(false),
+      warningsHaveBeenLoaded(true),
+      last_update_count(UL64(~0)),
+      logger(l),
+      resultset_type(rset_type),
+      warningsCount(0) {
   CPP_ENTER("MySQL_Statement::MySQL_Statement");
   CPP_INFO_FMT("this=%p", this);
 }
@@ -115,9 +122,8 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
-boost::shared_ptr< NativeAPI::NativeResultsetWrapper >
-MySQL_Statement::get_resultset()
-{
+std::shared_ptr<NativeAPI::NativeResultsetWrapper>
+MySQL_Statement::get_resultset() {
   CPP_ENTER("MySQL_Statement::get_resultset");
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
@@ -145,7 +151,7 @@ MySQL_Statement::get_resultset()
     throw e;
   }
 
-  return boost::shared_ptr< NativeAPI::NativeResultsetWrapper >(result);
+  return std::shared_ptr<NativeAPI::NativeResultsetWrapper>(result);
 }
 /* }}} */
 
@@ -210,7 +216,8 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
 void
 dirty_drop_rs(std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
 {
-  boost::scoped_ptr<NativeAPI::NativeResultsetWrapper> result(proxy->store_result());
+  std::unique_ptr<NativeAPI::NativeResultsetWrapper> result(
+      proxy->store_result());
   // Destructor will do the job on result freeing
 }
 
@@ -303,7 +310,7 @@ MySQL_Statement::getResultSet()
 
   last_update_count = UL64(~0);
 
-  boost::shared_ptr< NativeAPI::NativeResultsetWrapper > result;
+  std::shared_ptr<NativeAPI::NativeResultsetWrapper> result;
 
   std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy_p = proxy.lock();
 
