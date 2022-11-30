@@ -64,6 +64,8 @@ if(MSVC)
     -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
   )
 
+  target_compile_options(test_harness PUBLIC /std:c++14)
+
 else()
 
   set(TEST_COMPILE_FLAGS

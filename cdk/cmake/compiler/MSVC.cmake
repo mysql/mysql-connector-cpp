@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -62,9 +62,14 @@ set(VS     "vs${VS}" CACHE INTERNAL "")
 function(enable_pic)
 endfunction()
 
-# C++11 is enabled by default for compilers that we support.
+function(enable_cxx17)
 
-function(enable_cxx11)
+  # Note: std::shared_ptr<>::unique is deprecated in C++17 [1].
+  # TODO: Remove Supression once WL15527 is implemented
+  # [1] https://en.cppreference.com/w/cpp/memory/shared_ptr/unique
+
+  add_flags(CXX /std:c++17
+  -D_SILENCE_CXX17_SHARED_PTR_UNIQUE_DEPRECATION_WARNING)
 endfunction()
 
 # Note: Needs to be implemented if we ever want to change the default

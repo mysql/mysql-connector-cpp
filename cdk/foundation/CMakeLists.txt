@@ -31,7 +31,7 @@
 # Detect required std features.
 #
 
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++17")
 
 include(CheckCXXSourceCompiles)
 include(CheckTypeSize)

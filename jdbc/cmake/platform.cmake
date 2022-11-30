@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -41,7 +41,7 @@
 # Defines the following commands:
 #
 #  enable_pic()
-#  enable_cxx11()
+#  enable_cxx17()
 #  set_arch(A)
 #  set_visibility()
 #
@@ -104,15 +104,15 @@ endmacro()
 
 if(CMAKE_VERSION VERSION_LESS "3.1.3")
 
-function(enable_cxx11)
-  add_flags(CXX -std=c++11)
+function(enable_cxx17)
+  add_flags(CXX -std=c++17)
 endfunction()
 
 else()
 
-function(enable_cxx11)
+function(enable_cxx17)
   set(CMAKE_CXX_EXTENSIONS OFF PARENT_SCOPE)
-  set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
+  set(CMAKE_CXX_STANDARD 17 PARENT_SCOPE)
   set(CMAKE_CXX_STANDARD_REQUIRED ON PARENT_SCOPE)
 endfunction()
 

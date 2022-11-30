@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -382,60 +382,53 @@ size_t str_encode(
 
 template <class ENC>
 class char_iterator_base
-  : public std::iterator<
-      std::input_iterator_tag,
-      char_t,
-      long,
-      const char_t*,
-      const char_t&
-    >
 {
-protected:
+  public:
+   using iterator_category = std::input_iterator_tag;
+   using value_type = char_t;
+   using difference_type = long;
+   using pointer = const char_t*;
+   using reference = const char_t&;
 
-  using code_unit = typename ENC::Ch;
+  protected:
+   using code_unit = typename ENC::Ch;
 
-  Mem_stream<code_unit>   m_stream;
+   Mem_stream<code_unit> m_stream;
 
-  /*
-    If m_char !=0 then it contains the current character (which was already
-    decoded) and m_pos points at the next code unit after the character.
-    If m_char == 0 then m_pos points at the first code unit of the next
-    character (which is not yet decoded).
+   /*
+     If m_char !=0 then it contains the current character (which was already
+     decoded) and m_pos points at the next code unit after the character.
+     If m_char == 0 then m_pos points at the first code unit of the next
+     character (which is not yet decoded).
 
-           m_char != 0
-           |   m_pos                    m_pos (m_char == 0)
-           |   |                        |
-           v   v                        v
-    ------|===|--------            ----|===|-----
+            m_char != 0
+            |   m_pos                    m_pos (m_char == 0)
+            |   |                        |
+            v   v                        v
+     ------|===|--------            ----|===|-----
 
-    TODO: m_pos is redundant, as it is the same as m_stream.src_ ?
-  */
+     TODO: m_pos is redundant, as it is the same as m_stream.src_ ?
+   */
 
-  const code_unit *m_pos = nullptr;
-  char_t   m_char = 0;
-  bool     m_at_end = false;
+   const code_unit *m_pos = nullptr;
+   char_t m_char = 0;
+   bool m_at_end = false;
 
-public:
+  public:
+   char_iterator_base() : m_at_end(true) {}
 
-  char_iterator_base()
-    : m_at_end(true)
-  {}
+   char_iterator_base(const code_unit *beg, const code_unit *end)
+       : m_stream(beg, end), m_pos(beg) {}
 
-  char_iterator_base(const code_unit *beg, const code_unit *end)
-    : m_stream(beg, end), m_pos(beg)
-  {}
+   char_iterator_base(const code_unit *beg, size_t len)
+       : char_iterator_base(beg, beg + len) {}
 
-  char_iterator_base(const code_unit *beg, size_t len)
-    : char_iterator_base(beg, beg + len)
-  {}
+   char_iterator_base(const char_iterator_base &other) = default;
+   char_iterator_base &operator=(const char_iterator_base &) = default;
 
-  char_iterator_base(const char_iterator_base &other) = default;
-  char_iterator_base& operator=(const char_iterator_base&) = default;
+   // examine current character
 
-  // examine current character
-
-  reference operator*() const
-  {
+   reference operator*() const {
     /*
       If m_char != 0 then it already contains the current character and
       the corresponding code units have been consumed from the input stream.

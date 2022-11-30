@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -64,7 +64,7 @@ endfunction()
 
 # C++11 is enabled by default for compilers that we support.
 
-function(enable_cxx11)
+function(enable_cxx17)
 endfunction()
 
 # Note: Needs to be implemented if we ever want to change the default

@@ -157,7 +157,7 @@ if(NOT DEFINED CMAKE_CXX_FLAGS)
   set_visibility(hidden)
 endif()
 
-enable_cxx11()
+enable_cxx17()
 
 
 #-----------------

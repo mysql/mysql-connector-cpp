@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -359,24 +359,19 @@ do_set(session_opt_list_t &&opts);
 
 template<typename Option, typename base_iterator>
 class iterator
-  : public std::iterator<std::input_iterator_tag,
-                         std::pair<Option, mysqlx::Value>>
 {
   base_iterator m_it;
   std::pair<Option, mysqlx::Value> m_pair;
 
 public:
-  iterator(const base_iterator &init)
-    : m_it(init)
-  {}
+ using iterator_category = std::input_iterator_tag;
+ using value_type = std::pair<Option, mysqlx::Value>;
 
-  iterator(const iterator &init)
-    : m_it(init.m_it)
-  {}
+ iterator(const base_iterator &init) : m_it(init) {}
 
+ iterator(const iterator &init) : m_it(init.m_it) {}
 
-  std::pair<Option, mysqlx::Value>& operator*()
-  {
+ std::pair<Option, mysqlx::Value> &operator*() {
     auto &el = *m_it;
     m_pair.first = static_cast<typename Option::Enum>(el.first);
     m_pair.second = el.second;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -388,18 +388,20 @@ template<
   typename Reference  = typename std::iterator_traits<T*>::reference
 >
 struct Iterator
-  : std::iterator < std::input_iterator_tag, T, Distance, Pointer, Reference >
 {
-protected:
+  public:
+   using iterator_category = std::input_iterator_tag;
+   using value_type = T;
+   using difference_type = Distance;
+   using pointer = Pointer;
+   using reference = Reference;
 
-  typename std::remove_reference<Impl>::type *m_impl = NULL;
-  bool m_at_end = false;
+  protected:
+   typename std::remove_reference<Impl>::type *m_impl = NULL;
+   bool m_at_end = false;
 
-public:
-
-  Iterator(Impl& impl)
-    : m_impl(&impl)
-  {
+  public:
+   Iterator(Impl &impl) : m_impl(&impl) {
     m_impl->iterator_start();
     m_at_end = !m_impl->iterator_next();
   }

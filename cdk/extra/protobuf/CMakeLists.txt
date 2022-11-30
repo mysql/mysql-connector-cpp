@@ -70,7 +70,7 @@ SET(PROTO_SRC_DIR  "${PROJECT_SOURCE_DIR}/protobuf-3.19.6")
 #
 
 enable_pic()
-enable_cxx11()
+enable_cxx17()
 
 # -O3 using GCC on SPARC leds to segfault on protoc
 if(SPARC AND GCC)

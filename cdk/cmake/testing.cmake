@@ -165,6 +165,8 @@ IF(WITH_TESTS)
       /wd4456  # declaration of hides previous local declaration
     )
 
+    target_compile_options(${TEST} PUBLIC /std:c++14)
+
     if(STATIC_TESTS_MSVCRT)
       target_compile_options(${TEST} PRIVATE
         $<$<CONFIG:Debug>:/MTd>

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -27,21 +27,25 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 
-function(enable_cxx11)
+function(enable_cxx17)
+
+  add_flags(CXX -std=c++17)
 
   #
-  # If Clang is used and deployment target is not specified
+  # If Clang is used on macOS and deployment target is not specified
   # with MACOSX_DEPLOYMENT_TARGET environment variable, make
   # sure that clang's native implementation of C++ std
   # libarary (libc++) is used. Otherwise clang defaults to
   # GNU version (libstdc++) which is outdated and does
-  # not handle C++11 well.
+  # not handle C++17 well.
   #
   # TODO: Add option to use the default runtime if user wishes
   # so.
   #
 
-  add_flags(CXX -std=c++11 -stdlib=libc++)
+  if (MACOS)
+    add_flags(CXX -stdlib=libc++)
+  endif()
 
 endfunction()
 
