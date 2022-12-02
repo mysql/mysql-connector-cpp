@@ -95,4 +95,11 @@ add_unit_test(CJUnitTestsPort CJUnitTestsPort)
 #Copy sql.properties file to build dir
 file(COPY sql.properties DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+install(
+  FILES sql.properties
+  DESTINATION tests/jdbc
+  COMPONENT JDBCTests
+  EXCLUDE_FROM_ALL
+)
+
 MESSAGE(STATUS "Configuring C/J junit tests port")

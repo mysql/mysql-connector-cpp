@@ -137,6 +137,10 @@ foreach(COMP ${CPACK_COMPONENTS_ALL})
   #message("-- files: ${FILES_${CMAKE_INSTALL_COMPONENT}}")
 endforeach()
 
+# Remove test components that we don't include in our packages.
+
+list(REMOVE_ITEM COMPONENTS JDBCTests XDevAPITests)
+
 # Write gathered information to the output file.
 # Note: Original file() command was redefined above!
 

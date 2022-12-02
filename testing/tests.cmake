@@ -49,12 +49,50 @@ endif()
 # Auto-generated test targets
 
 IF (WITH_TESTS)
+
   # Unit tests declared with ADD_NG_TEST() (see cdk/cmake/testing.cmake)
   ADD_TEST_TARGET()
+
+  # Install these as part of `Tests` component.
+
+  install(
+    TARGETS run_unit_tests
+    DESTINATION tests/devapi
+    COMPONENT XDevAPITests
+    EXCLUDE_FROM_ALL
+  )
+
+  # Note: ${test_group_defs} is defined by ADD_TESTS_TARGET() and the file will 
+  # be generated once test executable is built.
+
+  install(
+    FILES "${test_group_defs}"
+    DESTINATION tests/devapi
+    RENAME CTestTestfile.cmake
+    COMPONENT XDevAPITests
+    EXCLUDE_FROM_ALL
+  )
+
+  # Generate and install the master CTestTestfile.cmake that includes other 
+  # installed tests.
+
+  file(WRITE "${PROJECT_BINARY_DIR}/all_tests.cmake" "subdirs(devapi)\n")
+  if (WITH_JDBC)
+    file(APPEND "${PROJECT_BINARY_DIR}/all_tests.cmake" "subdirs(jdbc)\n")
+  endif()
+
+  install(
+    FILES "${PROJECT_BINARY_DIR}/all_tests.cmake"
+    DESTINATION tests
+    RENAME CTestTestfile.cmake
+    COMPONENT XDevAPITests
+    EXCLUDE_FROM_ALL    
+  )
 
   # Test for public headers declared with ADD_HEADERS()
   # (see cdk/cmake/headers.cmake)
   ADD_HEADERS_TEST()
+
 ENDIF (WITH_TESTS)
 
 

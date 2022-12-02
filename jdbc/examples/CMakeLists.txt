@@ -147,7 +147,8 @@ IF(MYSQLCPPCONN_BUILD_EXAMPLES)
       )
 
       ADD_TEST(jdbc_${example} ${example})
-
+      install_test(${example} ${example})
+      
     endforeach()
 
 
