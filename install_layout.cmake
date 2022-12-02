@@ -26,6 +26,18 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# Install component groups used in this project
+# ---------------------------------------------
+#
+# - main : Contents of the main package we publish - these are bits needed to 
+#   run code that is linked against our connector and also to build such code + 
+#   readmes and other information files.
+#
+# - debug : Debug libraries for development.
+#
+# - tests : Stand-alone unit tests (they still require connector libs to be run)
+#
 
 #
 # Pick install location for the main library

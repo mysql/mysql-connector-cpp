@@ -121,6 +121,12 @@ endif()
 
 message("Binary package name: ${CPACK_PACKAGE_FILE_NAME}")
 
+# Package names for component-aware packing.
+
+set(CPACK_ARCHIVE_MAIN_FILE_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
+set(CPACK_ARCHIVE_DEBUG_FILE_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}-debug")
+set(CPACK_ARCHIVE_TESTS_FILE_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}-tests")
+
 
 # ======================================================================
 # Specs for source package

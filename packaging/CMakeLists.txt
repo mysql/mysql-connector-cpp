@@ -96,10 +96,29 @@ if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 
-include(PackageSpecs.cmake)
+include(PackageSpecs.cmake)  # Note: must be included before CPack
 
 CONFIGURE_FILE(mysql-connector-c++.spec.in ${CMAKE_CURRENT_BINARY_DIR}/mysql-connector-c++.spec @ONLY)
 ADD_SUBDIRECTORY(deb-in)
+
+include(CPack)
+
+# Define install component groups.
+
+cpack_add_component_group(main)
+cpack_add_component_group(tests)
+cpack_add_component_group(debug)
+
+cpack_add_component(XDevAPIDev GROUP main)
+cpack_add_component(XDevAPIDll GROUP main)
+cpack_add_component(JDBCDev GROUP main)
+cpack_add_component(JDBCDll GROUP main)
+cpack_add_component(OpenSSLDll GROUP main)
+cpack_add_component(OpenSSLDev GROUP main)
+cpack_add_component(Readme GROUP main)
+cpack_add_component(Debuginfo GROUP debug)
+cpack_add_component(JDBCTests GROUP tests)
+cpack_add_component(XDevAPITests GROUP tests)
 
 
 # ======================================================================
@@ -135,5 +154,3 @@ set_property(TARGET clean_source_tree build_packages
   PROPERTY EXCLUDE_FROM_DEFAULT_BUILD 1
 )
 
-
-include(CPack)
