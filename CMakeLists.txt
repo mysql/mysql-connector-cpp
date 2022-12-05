@@ -444,6 +444,34 @@ add_custom_command(TARGET connector POST_BUILD
 )
 endif()
 
+
+# To be able to use connector library from its build location on Windows we
+# need to make OpenSSL DLLs available to it (in case they are not installed
+# system-wide). Here we arrange for the OpenSSL DLLs to be copied to the build
+# location of the connector library after building it.
+
+if(WIN32 AND OPENSSL_LIB_DIR)
+
+  # Note: For simplicity we just copy any DLLs we can find at the given
+  # OpenSSL location.
+
+  file(GLOB glob1
+    "${OPENSSL_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+  )
+
+  file(GLOB glob2
+    "${OPENSSL_LIB_DIR}/../bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+  )
+
+  add_custom_command(TARGET connector POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+      ${glob1} ${glob2} $<TARGET_FILE_DIR:connector>
+    COMMENT "# Copy OpenSSL dependency of connector library."
+  )
+
+endif()
+
+
 #
 # Stop here if this is a sub-project of a bigger project.
 #
