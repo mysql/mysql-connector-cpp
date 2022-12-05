@@ -350,17 +350,17 @@ IF(WITH_TESTS)
   INCLUDE(${test_group_defs})
 
   ADD_CUSTOM_TARGET(${cdk_target_prefix}update_test_groups
-     run_unit_tests --generate_test_groups=${test_group_defs}
-     SOURCES ${tests_dir}/test_main.in
+    COMMAND $<TARGET_FILE:${target_run_unit_tests}>
+      "--generate_test_groups=${test_group_defs}"
+    SOURCES ${tests_dir}/test_main.in
+    COMMENT "# Generating test group definitons."
   )
 
   set_target_properties(${cdk_target_prefix}update_test_groups PROPERTIES FOLDER "Tests")
 
-  file(TO_NATIVE_PATH "${test_group_defs}" test_group_defs_native)
-
   add_custom_command(TARGET ${target_run_unit_tests} POST_BUILD
     COMMAND $<TARGET_FILE:${target_run_unit_tests}>
-      "--generate_test_groups=${test_group_defs_native}"
+      "--generate_test_groups=${test_group_defs}"
     # BYPRODUCTS ${test_group_defs}
     COMMENT "# Generating test group definitons."
   )
