@@ -408,14 +408,14 @@ set(AUTH_DEPS_fido fido2)
 
 
 if(WIN32)
-  set(AUTH_DEPS_kerberos 
+  set(AUTH_DEPS_kerberos
     comerr gssapi k5sprt krbcc xpprof krb5
   )
 else()
   set(AUTH_DEPS_kerberos gssapi_krb5 k5crypto krb5support krb5 com_err)
 endif()
 
-# Note: On Solaris and macOS all dependencies of ldap_sasl plugin are assumed 
+# Note: On Solaris and macOS all dependencies of ldap_sasl plugin are assumed
 # to be part of the OS.
 
 if(WIN32)
@@ -638,7 +638,7 @@ macro(bundle_plugins ignored)
       set(sasl_bundled 1)
     endif()
 
-    # On Windows the MIT Kerberos library uses ccapiserver.exe application 
+    # On Windows the MIT Kerberos library uses ccapiserver.exe application
     # in some scenarios - we need to bundle it as well.
 
     if(WIN32 AND "${DEPS_${plugin}}" MATCHES "krb5")
@@ -782,18 +782,19 @@ endif(BUNDLE_DEPENDENCIES)
 
 
 #
-# Instructions to install test implemented by target TGT_NAME which produces 
-# executable EXE_NAME. Apart from installing the executable itself, 
-# corresponding test definition is added to a ctest file wihich will be 
-# installed allongside with the tests (as CTestTestfile.cmake) to allow running # them using ctest command. Tests are installed as `Tests` component.
+# Instructions to install test implemented by target TGT_NAME which produces
+# executable EXE_NAME. Apart from installing the executable itself,
+# corresponding test definition is added to a ctest file wihich will be
+# installed allongside with the tests (as CTestTestfile.cmake) to allow running
+# them using ctest command. Tests are installed as `Tests` component.
 #
-# Note: This is automatically called from add_unit_test() function. But it 
+# Note: This is automatically called from add_unit_test() function. But it
 # needs to be called explicitly for the examples.
 #
 
 function(install_test TGT_NAME EXE_NAME)
 
-  # FIXME: Currently it puts all tests in a single folder which might lead 
+  # FIXME: Currently it puts all tests in a single folder which might lead
   # to name conflicts.
 
   install(

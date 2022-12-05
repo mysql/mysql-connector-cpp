@@ -30,9 +30,9 @@
 # Install component groups used in this project
 # ---------------------------------------------
 #
-# - main : Contents of the main package we publish - these are bits needed to 
-#   run code that is linked against our connector and also to build such code + 
-#   readmes and other information files.
+# - main : Contents of the main package we publish - these are bits needed to
+#   run code that is linked against our connector and also to build such code
+#   + readmes and other information files.
 #
 # - debug : Debug libraries for development.
 #
