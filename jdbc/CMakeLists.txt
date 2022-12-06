@@ -86,7 +86,7 @@ endif(jdbc_stand_alone)
 
 
 
-add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static linking")
+add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT OFF "enable libmysqlclient static linking")
 add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static binding")
 
 
@@ -408,14 +408,14 @@ set(AUTH_DEPS_fido fido2)
 
 
 if(WIN32)
-  set(AUTH_DEPS_kerberos 
+  set(AUTH_DEPS_kerberos
     comerr gssapi k5sprt krbcc xpprof krb5
   )
 else()
   set(AUTH_DEPS_kerberos gssapi_krb5 k5crypto krb5support krb5 com_err)
 endif()
 
-# Note: On Solaris and macOS all dependencies of ldap_sasl plugin are assumed 
+# Note: On Solaris and macOS all dependencies of ldap_sasl plugin are assumed
 # to be part of the OS.
 
 if(WIN32)
@@ -638,7 +638,7 @@ macro(bundle_plugins ignored)
       set(sasl_bundled 1)
     endif()
 
-    # On Windows the MIT Kerberos library uses ccapiserver.exe application 
+    # On Windows the MIT Kerberos library uses ccapiserver.exe application
     # in some scenarios - we need to bundle it as well.
 
     if(WIN32 AND "${DEPS_${plugin}}" MATCHES "krb5")
