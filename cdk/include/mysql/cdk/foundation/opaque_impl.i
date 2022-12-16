@@ -43,7 +43,6 @@
 */
 
 #include "opaque_impl.h"
-#include "static_assert.h"
 
 namespace cdk {
 namespace foundation {

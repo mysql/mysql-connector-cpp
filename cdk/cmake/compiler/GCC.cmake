@@ -29,6 +29,14 @@
 ##########################################################################
 
 #
+# TOOLSET and CXX_FRONTEND
+#
+set(TOOLSET "GCC" CACHE INTERNAL "")
+set(CXX_FRONTEND "GCC" CACHE INTERNAL "")
+set(TOOLSET_GCC "1" CACHE INTERNAL "")
+set(CXX_FRONTEND_GCC "1" CACHE INTERNAL "")
+
+#
 # Ensure relative source locations in debug entries
 #
 

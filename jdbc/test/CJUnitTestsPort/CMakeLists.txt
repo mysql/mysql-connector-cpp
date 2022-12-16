@@ -26,16 +26,16 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-IF(WIN32)
+IF(MSBUILD)
   LINK_DIRECTORIES(../framework/$(ConfigurationName))
   SET(MY_TARGET_LINK_LIBRARIES connector-jdbc test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
   ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
   ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
 
-ELSEIF(NOT WIN32)
+ELSEIF(NOT MSBUILD)
   SET(MY_TARGET_LINK_LIBRARIES connector-jdbc test_framework)
-ENDIF(WIN32)
+ENDIF(MSBUILD)
 
 if(NOT MYSQLCLIENT_STATIC_LINKING)
   list(APPEND MY_TARGET_LINK_LIBRARIES MySQL::client)

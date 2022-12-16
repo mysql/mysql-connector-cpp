@@ -274,13 +274,15 @@ if(MSVC)
 
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 
-  # Disable MSVC unreachable code warnings unless requested.
-  add_compile_options(/wd4702)
+  if(CXX_FRONTEND_MSVC)
+    # Disable MSVC unreachable code warnings unless requested.
+    add_compile_options(/wd4702)
 
-  # Disable MSVC warning C4297 as it seems to be buggy.
-  # Seehttps://connect.microsoft.com/VisualStudio/feedback/details/897611/incorrect-warning-of-c4297-for-destructor-with-try-catch-statement
+    # Disable MSVC warning C4297 as it seems to be buggy.
+    # Seehttps://connect.microsoft.com/VisualStudio/feedback/details/897611/incorrect-warning-of-c4297-for-destructor-with-try-catch-statement
 
-  add_compile_options(/wd4297)
+    add_compile_options(/wd4297)
+  endif()
 
 endif()
 

@@ -35,7 +35,15 @@
   Macros used to disable warnings for fragments of code.
 */
 
-#if defined __GNUC__ || defined __clang__
+#if defined _MSC_VER
+
+#define PRAGMA_CDK(X) __pragma(X)
+#define DISABLE_WARNING_CDK(W) PRAGMA_CDK(warning (disable:W))
+
+#define DIAGNOSTIC_PUSH_CDK  PRAGMA_CDK(warning (push))
+#define DIAGNOSTIC_POP_CDK   PRAGMA_CDK(warning (pop))
+
+#elif defined __GNUC__ || defined __clang__ 
 
 #define PRAGMA_CDK(X) _Pragma(#X)
 #define DISABLE_WARNING_CDK(W) PRAGMA_CDK(GCC diagnostic ignored #W)
@@ -48,14 +56,7 @@
 #define DIAGNOSTIC_POP_CDK
 #endif
 
-#elif defined _MSC_VER
 
-
-#define PRAGMA_CDK(X) __pragma(X)
-#define DISABLE_WARNING_CDK(W) PRAGMA_CDK(warning (disable:W))
-
-#define DIAGNOSTIC_PUSH_CDK  PRAGMA_CDK(warning (push))
-#define DIAGNOSTIC_POP_CDK   PRAGMA_CDK(warning (pop))
 
 #else
 

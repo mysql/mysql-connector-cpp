@@ -38,6 +38,16 @@
 #  MSVC/GCC/CLANG/SUNPRO   - if defined, set to compiler version
 #  SPARC
 #
+#  Variables used to define TOOLSET used to build connector
+#  TOOLSET                 - currently GCC OR MSVC
+#  TOOLSET_GCC             - defined if TOOLSET = GCC
+#  TOOLSET_MSVC            - defined if TOOLSET = MSVC
+
+#  Variables used to define compiler frontend (command-line interface)
+#  CXX_FRONTEND            - currently GCC OR MSVC
+#  CXX_FRONTEND_GCC        - defined if CXX_FRONTEND = GCC
+#  CXX_FRONTEND_MSVC       - defined if CXX_FRONTEND = MSVC
+#
 # Defines the following commands:
 #
 #  enable_pic()
@@ -193,6 +203,15 @@ else()
   endif()
   include(compiler/GCC OPTIONAL)
 
+endif()
+
+
+# Note: std::shared_ptr<>::unique is deprecated in C++17 [1].
+# TODO: Remove Supression once WL15527 is implemented
+# [1] https://en.cppreference.com/w/cpp/memory/shared_ptr/unique
+
+if(TOOLSET_MSVC)
+  add_flags(CXX -D_SILENCE_CXX17_SHARED_PTR_UNIQUE_DEPRECATION_WARNING)
 endif()
 
 

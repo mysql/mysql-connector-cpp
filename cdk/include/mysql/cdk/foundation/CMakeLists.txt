@@ -26,32 +26,6 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-
-INCLUDE(CheckCXXSourceCompiles)
-
-#
-# Required for static_assert.h
-#
-
-#
-# Note: on OSX with clang compiler, it seems that <string> header
-# brings in definition of static-assert. I (Rafal) could not find
-# a better header that would work
-#
-
-CHECK_CXX_SOURCE_COMPILES(
- "#include <string>
-  int main() { static_assert(true,\"Ok\"); }"
- HAVE_STATIC_ASSERT)
- ADD_CONFIG(HAVE_STATIC_ASSERT)
-
-CHECK_CXX_SOURCE_COMPILES(
- "void main() { return is_same<bool,char>::value; }"
- HAVE_IS_SAME)
- ADD_CONFIG(HAVE_IS_SAME)
-
 FILE(GLOB headers *.h)
 
 ADD_HEADERS(${headers})

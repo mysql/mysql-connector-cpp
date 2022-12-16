@@ -38,7 +38,16 @@
   Macros used to disable warnings for fragments of code.
 */
 
-#if defined __GNUC__ || defined __clang__
+#if defined _MSC_VER
+
+
+#define PRAGMA(X) __pragma(X)
+#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
+
+#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
+#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
+
+#elif defined __GNUC__ || defined __clang__
 
 #define PRAGMA(X) _Pragma(#X)
 #define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
@@ -50,15 +59,6 @@
 #define DIAGNOSTIC_PUSH
 #define DIAGNOSTIC_POP
 #endif
-
-#elif defined _MSC_VER
-
-
-#define PRAGMA(X) __pragma(X)
-#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
-
-#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
-#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
 
 #else
 
@@ -172,8 +172,15 @@ POP_SYS_WARNINGS
 #undef DIAGNOSTIC_PUSH
 #undef DIAGNOSTIC_POP
 
+#if defined _MSC_VER
 
-#if defined __GNUC__ || defined __clang__
+#define PRAGMA(X) __pragma(X)
+#define DISABLE_WARNING(W) PRAGMA(warning(disable : W))
+
+#define DIAGNOSTIC_PUSH PRAGMA(warning(push))
+#define DIAGNOSTIC_POP PRAGMA(warning(pop))
+
+#elif defined __GNUC__ || defined __clang__
 
 #define PRAGMA(X) _Pragma(#X)
 #define DISABLE_WARNING(W) PRAGMA(GCC diagnostic ignored #W)
@@ -185,14 +192,6 @@ POP_SYS_WARNINGS
 #define DIAGNOSTIC_PUSH
 #define DIAGNOSTIC_POP
 #endif
-
-#elif defined _MSC_VER
-
-#define PRAGMA(X) __pragma(X)
-#define DISABLE_WARNING(W) PRAGMA(warning (disable:W))
-
-#define DIAGNOSTIC_PUSH  PRAGMA(warning (push))
-#define DIAGNOSTIC_POP   PRAGMA(warning (pop))
 
 #else
 

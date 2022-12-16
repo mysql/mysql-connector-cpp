@@ -26,14 +26,13 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-IF(WIN32)
+IF(MSBUILD)
 #	LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
 #	ADD_DEFINITIONS("-D_SECURE_SCL")
   ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
   ADD_DEFINITIONS("-D_CRT_SECURE_NO_WARNINGS")
 
-ELSEIF(NOT WIN32)
-ENDIF(WIN32)
+ENDIF()
 
 INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/include")
 INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/include/jdbc")
@@ -78,7 +77,7 @@ IF(WIN32)
     ../common/stringutils.h
     ../common/file.h
     )
-ENDIF(WIN32)
+ENDIF(WIN32 AND NOT CLANG)
 
 ADD_LIBRARY(test_framework STATIC ${testframework_sources})
 SET_TARGET_PROPERTIES(test_framework PROPERTIES

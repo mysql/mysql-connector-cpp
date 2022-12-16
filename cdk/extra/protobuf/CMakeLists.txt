@@ -89,7 +89,7 @@ endif()
 
 set_visibility(hidden)
 
-if(NOT MSVC AND NOT APPLE)
+if(NOT TOOLSET_MSVC AND NOT APPLE)
   add_compile_options(-Wno-stringop-overflow -Wno-stringop-overread)
 endif()
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -26,6 +26,28 @@
 # along with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+#
+# TOOLSET and CXX_FRONTEND
+#
+if(WIN32)
+  set(TOOLSET "MSVC" CACHE INTERNAL "")
+  set(TOOLSET_MSVC "1" CACHE INTERNAL "")
+  if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    set(CXX_FRONTEND "MSVC" CACHE INTERNAL "")
+    set(CXX_FRONTEND_MSVC "1" CACHE INTERNAL "")
+    # clang-cl behaves has MSVC
+    set(MSVC ${compiler_version} CACHE INTERNAL "")
+  else()
+    set(CXX_FRONTEND "GCC" CACHE INTERNAL "")
+    set(CXX_FRONTEND_GCC "1" CACHE INTERNAL "")
+  endif()
+else()
+  set(TOOLSET "GCC" CACHE INTERNAL "")
+  set(CXX_FRONTEND "GCC" CACHE INTERNAL "")
+  set(TOOLSET_GCC "1" CACHE INTERNAL "")
+  set(CXX_FRONTEND_GCC "1" CACHE INTERNAL "")
+endif()
+
 function(enable_cxx17)
 
   add_flags(CXX -std=c++17)
@@ -48,6 +70,11 @@ function(enable_cxx17)
 
 endfunction()
 
+function(enable_pic)
+  if(TOOLSET_GCC)
+    add_compile_options(-fPIC)
+  endif()
+endfunction()
 
 function(set_visibility)
   add_compile_options(-fvisibility-ms-compat)

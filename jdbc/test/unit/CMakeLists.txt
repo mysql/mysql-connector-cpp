@@ -27,8 +27,10 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 IF(WIN32)
-  LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
-  LINK_DIRECTORIES(../framework/$(ConfigurationName))
+  if(MSBUILD)
+    LINK_DIRECTORIES(${MYSQL_DIR}/lib/$(ConfigurationName))
+    LINK_DIRECTORIES(../framework/$(ConfigurationName))
+  endif()
   SET(MY_TARGET_LINK_LIBRARIES connector-jdbc test_framework)
   SET(MY_TARGET_LINK_LIBRARIES_STATIC_CPPLIB connector-jdbc-static test_framework)
 #	ADD_DEFINITIONS("-D_SECURE_SCL")

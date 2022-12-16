@@ -34,6 +34,14 @@
 set(ARCH ${MSVC_CXX_ARCHITECTURE_ID} CACHE INTERNAL "architecture id")
 
 #
+# If clang-cl is used, we should still set CLANG variable
+#
+
+if(compiler_id MATCHES "Clang")
+    set(CLANG ${compiler_version} CACHE INTERNAL "")
+endif()
+
+#
 # Set VS and VS_VER (MSVC toolset version)
 #
 
@@ -50,10 +58,14 @@ else()
 
 endif()
 
-#message("-- vs: ${VS}")
+#
+# TOOLSET and CXX_FRONTEND
+#
+set(TOOLSET "MSVC" CACHE INTERNAL "")
+set(CXX_FRONTEND "MSVC" CACHE INTERNAL "")
+set(TOOLSET_MSVC "1" CACHE INTERNAL "")
+set(CXX_FRONTEND_MSVC "1" CACHE INTERNAL "")
 
-set(VS_VER ${VS} CACHE INTERNAL "")
-set(VS     "vs${VS}" CACHE INTERNAL "")
 
 #
 # Commands for global compiler options.
@@ -63,13 +75,7 @@ function(enable_pic)
 endfunction()
 
 function(enable_cxx17)
-
-  # Note: std::shared_ptr<>::unique is deprecated in C++17 [1].
-  # TODO: Remove Supression once WL15527 is implemented
-  # [1] https://en.cppreference.com/w/cpp/memory/shared_ptr/unique
-
-  add_flags(CXX /std:c++17
-  -D_SILENCE_CXX17_SHARED_PTR_UNIQUE_DEPRECATION_WARNING)
+  add_flags(CXX /std:c++17)
 endfunction()
 
 # Note: Needs to be implemented if we ever want to change the default

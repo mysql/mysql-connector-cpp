@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -180,7 +180,7 @@ function(merge_libraries TARGET)
   # by merge_archives script is appended to that file.
   #
 
-  if(NOT MSVC OR NOT TYPE STREQUAL "SHARED")
+  if(TYPE STREQUAL "STATIC" OR NOT CXX_FRONTEND_MSVC)
 
     set(log_name "${TARGET}.log")
     set(log_file
@@ -195,6 +195,13 @@ function(merge_libraries TARGET)
       -DBUILD_LOG=${log_file}.${TYPE}
       -DMSBUILD=${MSBUILD}
       -DMSVC=${MSVC}
+      -DWIN32=${WIN32}
+      -DCLANG=${CLANG}
+      -DTOOLSET_MSVC=${TOOLSET_MSVC}
+      -DTOOLSET_GCC=${TOOLSET_GCC}
+      -DCXX_FRONTEND_MSVC=${CXX_FRONTEND_MSVC}
+      -DCXX_FRONTEND_GCC=${CXX_FRONTEND_GCC}
+      -DTOOLSET_GCC=${TOOLSET_GCC}
       -DINFO=${INFO}
       -DINFO_PREFIX=${INFO_PREFIX}
       -P ${LIBUTILS_BIN_DIR}/merge_archives.cmake
@@ -270,15 +277,13 @@ function(merge_libraries TARGET)
       # the same as cmake target name.
       #
 
-      set(link_flags)
       foreach(lib ${ARGN})
-        list(APPEND link_flags "/wholearchive:${lib}")
+        if(CLANG)
+          target_link_options(${TARGET} PRIVATE /wholearchive:$<TARGET_FILE:${lib}>)
+        else()
+          target_link_options(${TARGET} PRIVATE /wholearchive:${lib})
+        endif()
       endforeach()
-
-      string(REPLACE ";" " " link_flags "${link_flags}")
-      #message("-- additional link flags: ${link_flags}")
-
-      set_property(TARGET ${TARGET} APPEND PROPERTY LINK_FLAGS ${link_flags})
 
       return()
 

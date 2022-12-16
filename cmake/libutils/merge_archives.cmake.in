@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -131,14 +131,14 @@ function(main)
     set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
   else()
- 
+
     # In this case BUILD_LOG contains extracted linker options, one per line
     # but the first line is the working directory in which the linker was
     # invoked (important for resolving relative paths)
-  
+
     file(STRINGS "${BUILD_LOG}" DEPS)
     list(GET DEPS 0 BUILD_DIR)
-    list(REMOVE_AT DEPS 0) 
+    list(REMOVE_AT DEPS 0)
 
   endif()
 
@@ -225,13 +225,25 @@ function(merge_libraries_gcc)
     foreach(item ${LINK_LINE})
       #message("-- looking at: ${item}")
       if(item STREQUAL "<LIBS>")
-        list(APPEND link_line
-          "-Wl,--whole-archive" ${LIBS} "-Wl,--no-whole-archive" ${LIBS1}
-        )
+        foreach(lib ${LIBS})
+          #message("-- adding lib: ${lib}")
+          if(NOT TOOLSET_MSVC)
+            list(APPEND link_line
+              "-Wl,--whole-archive" ${lib} "-Wl,--no-whole-archive")
+          else()
+            list(APPEND link_line "-Xlinker" "/wholearchive:${lib}")
+          endif()
+        endforeach()
+        list(APPEND link_line ${LIBS1})
       else()
+      # if "-Xlinker option" is used, command line will not work unless each
+      # option is as a list element.
+      # So replacing to "-Xlinker;option" will make it work
+        string(REPLACE " " ";" item ${item})
         list(APPEND link_line ${item})
       endif()
     endforeach()
+
 
     # Now invoke linker to produce shared library.
 
@@ -401,7 +413,7 @@ function(merge_libraries_win)
 
     foreach(dll ${dlls_in})
       string(REGEX REPLACE "Appending +(.*.dll)\n" "\\1" dll ${dll})
-      message("-- dependency: ${dll}")
+      #message("-- dependency: ${dll}")
       add_info(" ${dll}")
     endforeach()
 
@@ -547,13 +559,18 @@ function(process_deps)
     # for dependent DLLS when linking to it.
     #
 
+    # Note: Use BASE_DIR to resolve relative paths. This is needed in case
+    # this script is not executed in the expected location as happens with
+    # ninja, for example.
+
+    get_filename_component(libpath "${lib}" ABSOLUTE BASE_DIR "${BUILD_DIR}")
+
     if(
       lib MATCHES "${libext}$"
       AND NOT lib MATCHES "${NAME}${libext}$"
-      AND EXISTS "${lib}"
+      AND EXISTS "${libpath}"
     )
-
-      if(lib MATCHES "protobuf|uuid_gen")
+      if(lib MATCHES "protobuf|uuid_gen|libssl|libcrypto|mysqlclient")
         list(APPEND LIBS1 "${lib}")
       else()
         list(APPEND LIBS "${lib}")
@@ -580,23 +597,25 @@ function(process_deps_gcc)
   set(DEPS "")
   set(ext_deps "")
   set(LINK_LINE "")
+  set(PREFIX "")
 
   foreach(opt ${deps_in})
+    if(opt MATCHES "^-X(clang)|(linker)")
+      set(PREFIX "${opt} ")
+    elseif(opt MATCHES "^-")
 
-    if(opt MATCHES "^-")
+      list(APPEND LINK_LINE "${PREFIX}${opt}")
+      set(PREFIX "")
+      if(opt MATCHES "^-l")
 
-     list(APPEND LINK_LINE ${opt})
+        string(REGEX REPLACE "^-l(.*)$" "\\1" lib ${opt})
 
-     if(opt MATCHES "^-l")
+        if(NOT "${lib}" MATCHES "^c(\\+\\+)?$|^gcc|^m$|^stdc")
+          #message("-- ext dependency: ${lib}")
+          list(APPEND ext_deps "${lib}")
+        endif()
 
-       string(REGEX REPLACE "^-l(.*)$" "\\1" lib ${opt})
-
-       if(NOT "${lib}" MATCHES "^c(\\+\\+)?$|^gcc|^m$|^stdc")
-         #message("-- ext dependency: ${lib}")
-         list(APPEND ext_deps "${lib}")
-       endif()
-
-     endif()
+      endif()
 
       # note: ignoring any other options
 
@@ -604,11 +623,11 @@ function(process_deps_gcc)
 
       list(APPEND LINK_LINE "<LIBS>")
       list(APPEND DEPS "${opt}")
-
+      set(PREFIX "")
     else()
 
-      list(APPEND LINK_LINE "${opt}")
-
+      list(APPEND LINK_LINE "${PREFIX}${opt}")
+      set(PREFIX "")
     endif()
 
   endforeach()

@@ -36,34 +36,6 @@ set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++17")
 include(CheckCXXSourceCompiles)
 include(CheckTypeSize)
 
-CHECK_CXX_SOURCE_COMPILES(
-  "#include <memory>
-   void test(std::shared_ptr<int>) {};
-   int main() { return 0; }"
-  HAVE_SHARED_PTR
-)
-#message("HAVE_SHARED_PTR: ${HAVE_SHARED_PTR}")
-ADD_CONFIG(HAVE_SHARED_PTR)
-
-if (NOT HAVE_SHARED_PTR)
-  message(FATAL_ERROR "Type std::shared_ptr required by CDK is not available")
-endif()
-
-
-CHECK_CXX_SOURCE_COMPILES(
-  "#include <system_error>
-   void test(std::system_error) {};
-   int main() { return 0; }"
-  HAVE_SYSTEM_ERROR
-)
-#message("HAVE_SYSTEM_ERROR: ${HAVE_SYSTEM_ERROR}")
-ADD_CONFIG(HAVE_SYSTEM_ERROR)
-
-if (NOT HAVE_SYSTEM_ERROR)
-  message(FATAL_ERROR "Type std::system_error required by CDK is not available")
-endif()
-
-
 check_type_size("wchar_t" WCHAR_SIZE)
 add_config(WCHAR_SIZE ${WCHAR_SIZE})
 
