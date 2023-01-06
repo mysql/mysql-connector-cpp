@@ -2382,9 +2382,68 @@ void connection::enableClearTextAuth()
   stmt->executeUpdate("DROP USER 't_ct_user'@'%'");
 }
 
+void connection::default_connector_attributes() {
+  logMsg(
+      "connection::default_connector_attributes - Check if default attributes "
+      "are set");
 
-void connection::connectAttrAdd()
-{
+  sql::SQLString query =
+      "SELECT ATTR_NAME, ATTR_VALUE FROM "
+      "performance_schema.session_account_connect_attrs WHERE ATTR_NAME LIKE "
+      "'_connector_%' AND PROCESSLIST_ID = connection_id() ORDER BY ATTR_NAME "
+      "ASC;";
+
+  std::map<sql::SQLString, sql::SQLString> attributes = {
+      {"_connector_version", MYCPPCONN_DM_VERSION},
+      {"_connector_license", MYSQL_CONCPP_LICENSE},
+      {"_connector_name", "mysql-connector-cpp"}};
+
+  auto check_attr = [&attributes](ResultSet &res) {
+    ASSERT_EQUALS(attributes.size(), res->rowsCount());
+    while (res->next()) {
+      ASSERT_EQUALS(attributes[res->getString("ATTR_NAME")],
+                    res->getString("ATTR_VALUE"));
+    }
+  };
+
+  res.reset(stmt->executeQuery(query));
+
+  check_attr(res);
+
+  {
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    std::map<sql::SQLString, sql::SQLString> connectAttrMap = {
+        {"_connector_version", "1.1.1"},
+        {"_connector_license", "MIT"},
+        {"_connector_name", "mysql-connector-cpp-modified"}};
+
+    opts[OPT_CONNECT_ATTR_ADD] = connectAttrMap;
+
+    conn1.reset(getConnection(&opts));
+    stmt.reset(conn1->createStatement());
+    res.reset(stmt->executeQuery(query));
+
+    check_attr(res);
+  }
+
+  {
+    testsuite::Connection conn1;
+    sql::ConnectOptionsMap opts;
+    std::list<sql::SQLString> connectAttrMapDelete = {
+        "_connector_version", "_connector_license", "_connector_name"};
+
+    opts[OPT_CONNECT_ATTR_DELETE] = connectAttrMapDelete;
+
+    conn1.reset(getConnection(&opts));
+    stmt.reset(conn1->createStatement());
+    res.reset(stmt->executeQuery(query));
+
+    check_attr(res);
+  }
+}
+
+void connection::connectAttrAdd() {
   logMsg("connection::connectAttr - MYSQL_OPT_CONNECT_ATTR_ADD|MYSQL_OPT_CONNECT_ATTR_DELETE");
 
   int serverVersion=getMySQLVersion(con);

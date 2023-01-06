@@ -80,6 +80,7 @@ public:
     TEST_CASE(loadSameLibraryTwice);
 #endif
   TEST_CASE(enableClearTextAuth);
+  TEST_CASE(default_connector_attributes);
   TEST_CASE(connectAttrAdd);
   TEST_CASE(connectAttrReset);
   TEST_CASE(connectCharsetDir);
@@ -212,6 +213,11 @@ public:
 #endif
 
   void enableClearTextAuth();
+
+  /*
+    Test to check if connector default attributes are set
+   */
+  void default_connector_attributes();
 
   /*
    * Test for Connection attributes options MYSQL_OPT_CONNECT_ATTR_ADD

@@ -48,6 +48,16 @@ set(CONCPP_VERSION_NUMBER
 )
 
 #
+#  Generate version info
+#
+
+if(EXTRA_NAME_SUFFIX STREQUAL "-commercial")
+  SET(CONCPP_LICENSE "COMMERCIAL" CACHE INTERNAL "license info")
+else()
+  SET(CONCPP_LICENSE "GPL-2.0" CACHE INTERNAL "license info")
+endif()
+
+#
 #  ABI versions
 #
 # Note: When updating ABI version, a corresponding MYSQLX_ABI_X_Y macro

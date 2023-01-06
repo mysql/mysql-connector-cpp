@@ -44,18 +44,6 @@ if(CLANG)
 endif()
 
 #
-#  Generate version info
-#
-
-set(CLIENT_VERSION ${CONCPP_VERSION})
-
-if(EXTRA_NAME_SUFFIX STREQUAL "-commercial")
-  SET(CONCPP_LICENSE "COMMERCIAL")
-else()
-  SET(CONCPP_LICENSE "GPL-2.0")
-endif()
-
-#
 # Note: generated version_info.h is placed in the build location
 # and the common target is configured to include it before the
 # original version in the sources
