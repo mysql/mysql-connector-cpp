@@ -86,7 +86,7 @@ endif(jdbc_stand_alone)
 
 
 
-add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static linking")
+add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT OFF "enable libmysqlclient static linking")
 add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static binding")
 
 
