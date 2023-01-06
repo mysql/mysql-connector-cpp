@@ -103,7 +103,7 @@ endmacro()
 # -----------------------------------------------------------------
 
 
-if(CMAKE_VERSION VERSION_LESS "3.1.3")
+if(CMAKE_VERSION VERSION_LESS "3.8.0")
 
 function(enable_cxx17)
   add_flags(CXX -std=c++17)
