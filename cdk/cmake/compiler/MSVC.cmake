@@ -58,6 +58,10 @@ else()
 
 endif()
 
+#message("-- vs: ${VS}")
+set(VS_VER ${VS} CACHE INTERNAL "")
+set(VS     "vs${VS}" CACHE INTERNAL "")
+
 #
 # TOOLSET and CXX_FRONTEND
 #
