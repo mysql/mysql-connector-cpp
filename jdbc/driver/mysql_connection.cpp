@@ -1029,6 +1029,24 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           OPT_OCI_CONFIG_FILE
         );
       }
+    } else if (!it->first.compare(OPT_OCI_CLIENT_CONFIG_PROFILE)) {
+      try {
+        p_s = (it->second).get<sql::SQLString>();
+      } catch (sql::InvalidArgumentException &) {
+        throw sql::InvalidArgumentException(
+            "Wrong type passed for OPT_OCI_CLIENT_CONFIG_PROFILE. Expected "
+            "sql::SQLString.");
+      }
+
+      try {
+        proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                             "authentication_oci_client",
+                             "authentication-oci-client-config-profile", *p_s);
+      } catch (sql::InvalidArgumentException &e) {
+        throw ::sql::SQLUnsupportedOptionException(
+            "Failed to set config profile for authentication_oci_client plugin",
+            OPT_OCI_CLIENT_CONFIG_PROFILE);
+      }
 
     } else if (!it->first.compare(OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE)) {
 #if defined(_WIN32)
