@@ -89,7 +89,10 @@ endif(jdbc_stand_alone)
 add_config_option(MYSQLCLIENT_STATIC_LINKING BOOL ADVANCED DEFAULT OFF "enable libmysqlclient static linking")
 add_config_option(MYSQLCLIENT_STATIC_BINDING BOOL ADVANCED DEFAULT ON "enable libmysqlclient static binding")
 
-
+if(BUNDLE_DEPENDENCIES AND NOT MYSQLCLIENT_STATIC_LINKING)
+  message("Warning: When dynamic linking with libmysqlclient, BUNDLE_DEPENDENCIES will be turned off.")
+  set(BUNDLE_DEPENDENCIES OFF)
+endif()
 
 if(BUILD_STATIC)
   set(BUILD_SHARED_LIBS OFF)

@@ -77,7 +77,7 @@ IF(WIN32)
     ../common/stringutils.h
     ../common/file.h
     )
-ENDIF(WIN32 AND NOT CLANG)
+ENDIF(WIN32)
 
 ADD_LIBRARY(test_framework STATIC ${testframework_sources})
 SET_TARGET_PROPERTIES(test_framework PROPERTIES
