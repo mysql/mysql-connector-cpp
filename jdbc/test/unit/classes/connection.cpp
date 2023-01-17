@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -2399,7 +2399,8 @@ void connection::default_connector_attributes() {
       {"_connector_name", "mysql-connector-cpp"}};
 
   auto check_attr = [&attributes](ResultSet &res) {
-    ASSERT_EQUALS(static_cast<size_t>(attributes.size()), res->rowsCount());
+    ASSERT_EQUALS(static_cast<uint64_t>(attributes.size()),
+                  static_cast<uint64_t>(res->rowsCount()));
     while (res->next()) {
       ASSERT_EQUALS(attributes[res->getString("ATTR_NAME")],
                     res->getString("ATTR_VALUE"));
