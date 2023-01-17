@@ -2399,7 +2399,7 @@ void connection::default_connector_attributes() {
       {"_connector_name", "mysql-connector-cpp"}};
 
   auto check_attr = [&attributes](ResultSet &res) {
-    ASSERT_EQUALS(attributes.size(), res->rowsCount());
+    ASSERT_EQUALS(static_cast<size_t>(attributes.size()), res->rowsCount());
     while (res->next()) {
       ASSERT_EQUALS(attributes[res->getString("ATTR_NAME")],
                     res->getString("ATTR_VALUE"));
