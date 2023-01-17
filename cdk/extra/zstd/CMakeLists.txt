@@ -38,6 +38,7 @@ SET(ZSTD_SRCS
   lib/compress/zstd_compress.c
   lib/compress/zstd_compress_literals.c
   lib/compress/zstd_compress_sequences.c
+  lib/compress/zstd_compress_superblock.c
   lib/compress/zstd_double_fast.c
   lib/compress/zstd_fast.c
   lib/compress/zstd_lazy.c
@@ -48,9 +49,6 @@ SET(ZSTD_SRCS
   lib/decompress/zstd_ddict.c
   lib/decompress/zstd_decompress_block.c
   lib/decompress/zstd_decompress.c
-  lib/deprecated/zbuff_common.c
-  lib/deprecated/zbuff_compress.c
-  lib/deprecated/zbuff_decompress.c
   lib/dictBuilder/cover.c
   lib/dictBuilder/divsufsort.c
   lib/dictBuilder/fastcover.c
