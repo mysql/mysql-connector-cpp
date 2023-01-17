@@ -45,6 +45,7 @@
 %endif
 
 %{?el8:%global gcc_toolset gcc-toolset-12}
+%{?el9:%global gcc_toolset gcc-toolset-12}
 %if 0%{?suse_version} == 1315
 %global dist            .sles12
 %endif
