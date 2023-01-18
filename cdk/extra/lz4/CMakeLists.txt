@@ -35,12 +35,12 @@ include(platform)
 enable_pic()
 
 add_library(lz4 STATIC
-    lz4.c
-    lz4frame.c
-    lz4hc.c
-    xxhash.c
+    lib/lz4.c
+    lib/lz4frame.c
+    lib/lz4hc.c
+    lib/xxhash.c
 )
 
-target_include_directories(lz4 PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(lz4 PUBLIC ${PROJECT_SOURCE_DIR}/lib)
 export(TARGETS lz4 NAMESPACE ext_ FILE ${PROJECT_BINARY_DIR}/exports.cmake)
 
