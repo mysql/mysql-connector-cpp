@@ -948,3 +948,19 @@ TEST_F(Bugs, Bug33352469)
   remove.bind("id", "2").execute();
   EXPECT_EQ(0U, coll.find().execute().count());
 }
+
+TEST_F(Bugs, Bug35000027)
+{
+  auto coll = get_sess().getSchema("test").createCollection("coll", true);
+  coll.remove("true").execute();
+  size_t nr_docs = 10000;
+  DbDoc doc(R"({"name":"foo", "bar": "baz" })");
+  auto add_task = coll.add(doc);
+  auto add_tast_2 = add_task.add(doc);
+  for (size_t i = 2; i < nr_docs; ++i) {
+    add_task = add_task.add(doc);
+    add_tast_2 = add_tast_2.add(doc);
+  }
+  EXPECT_EQ(nr_docs, add_task.execute().getAffectedItemsCount());
+  EXPECT_EQ(nr_docs, add_tast_2.execute().getAffectedItemsCount());
+}
