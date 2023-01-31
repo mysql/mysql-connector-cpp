@@ -1,4 +1,4 @@
-# Copyright (c) 2016, 2022, Oracle and/or its affiliates.
+# Copyright (c) 2016, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -32,7 +32,7 @@
 
 set(CONCPP_VERSION_MAJOR  8 CACHE INTERNAL "version info")
 set(CONCPP_VERSION_MINOR  0 CACHE INTERNAL "version info")
-set(CONCPP_VERSION_MICRO 33 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MICRO 34 CACHE INTERNAL "version info")
 # Level is "-alpha", "-beta", empty if GA
 set(CONCPP_VERSION_LEVEL  "" CACHE INTERNAL "version info")
 
