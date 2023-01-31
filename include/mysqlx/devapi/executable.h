@@ -89,7 +89,7 @@ protected:
 
   void reset(const Executable &other)
   {
-    m_impl.reset(other.m_impl->clone());
+    if (m_impl.get() != other.m_impl.get()) m_impl.reset(other.m_impl->clone());
   }
 
   void reset(const Executable &&other)
