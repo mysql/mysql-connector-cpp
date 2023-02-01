@@ -31,14 +31,14 @@
 # Auto generated file for compiling public header tests
 #
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 PROJECT(Headers_check)
 
 add_compile_options(/wd4251)  # FIXME: DLL warning
 add_compile_options(/wd4521)  # multiple copy ctors
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options("-std=c++11")
+  add_compile_options("-std=c++17")
 endif()
 
 INCLUDE_DIRECTORIES(@hdr_include_dir@)
