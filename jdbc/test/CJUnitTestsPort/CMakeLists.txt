@@ -56,7 +56,6 @@ INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/include/jdbc")
 SET(test_CJUnitTestsPort_sources
   ccpptests.cpp
   BaseTestFixture.cpp
-  ../common/stringutils.cpp
   resources.cpp
   regression/EscapeProcessorRegressionTest.cpp
   compliance/ConnectionTest.cpp
