@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -2209,6 +2209,8 @@ public:
     JSON_INSERT(<json>, '$._id', <id>)
 
   where <json> and <id> are given as constructor parameters.
+
+  <id> can either be a string or an expression which generates the <id>
 */
 
 struct Insert_id
@@ -2219,7 +2221,13 @@ struct Insert_id
   typedef cdk::string string;
 
   const cdk::Expression &m_doc;
+  const cdk::Expression *m_id_exr = nullptr;
   std::string  m_id;
+
+  Insert_id(const cdk::Expression &doc, const cdk::Expression &id_expr)
+      : m_doc(doc){
+    m_id_exr = &id_expr;
+  }
 
   Insert_id(const cdk::Expression &doc, const std::string &id)
     : m_doc(doc), m_id(id)
@@ -2248,7 +2256,11 @@ struct Insert_id
     sprc->list_begin();
     m_doc.process_if(sprc->list_el()); // the document to modify
     sprc->list_el()->scalar()->val()->str("$._id");
-    sprc->list_el()->scalar()->val()->str(m_id);
+    if (m_id_exr) {
+      m_id_exr->process_if(sprc->list_el());
+    } else {
+      sprc->list_el()->scalar()->val()->str(m_id);
+    }
     sprc->list_end();
   }
 
@@ -2407,6 +2419,22 @@ public:
   }
 };
 
+/*
+  Represents an expression which generates _id.
+  In this case, will use the _id column value.
+*/
+struct Extract_id : cdk::Expression {
+  struct : cdk::api::Column_ref {
+    const cdk::api::Table_ref *table() const override { return nullptr; }
+    const cdk::string name() const override { return "_id"; }
+  } m_id;
+
+  Extract_id() {}
+
+  void process(cdk::Expression::Processor &prc) const override {
+    safe_prc(prc)->scalar()->ref(m_id, nullptr);
+  }
+};
 
 /*
   Implementation of collection CRUD modify operation (Collection_modify_if
@@ -2467,7 +2495,16 @@ class Op_collection_modify
       if (m_expr)
         return m_expr->process(prc);
 
-      Value::Access::process(parser::Parser_mode::DOCUMENT, m_val, prc);
+      if(m_field == "$")
+      {
+        Value_expr doc(m_val, parser::Parser_mode::DOCUMENT);
+
+        Extract_id expr_id;
+        Insert_id id(doc, expr_id);
+        id.process(prc);
+      } else {
+        Value::Access::process(parser::Parser_mode::DOCUMENT, m_val, prc);
+      }
     }
   };
 
@@ -2494,8 +2531,7 @@ public:
     return new Op_collection_modify(*this);
   }
 
-  cdk::Reply* do_send_command() override
-  {
+  cdk::Reply *do_send_command() override {
     // Do nothing if no update specifications were added
 
     if (m_update.empty())
@@ -2629,7 +2665,6 @@ public:
     add_operation(SET, "$", *this);
     add_param("id", id);
   }
-
 };
 
 

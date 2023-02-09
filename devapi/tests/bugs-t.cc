@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -963,4 +963,53 @@ TEST_F(Bugs, Bug35000027)
   }
   EXPECT_EQ(nr_docs, add_task.execute().getAffectedItemsCount());
   EXPECT_EQ(nr_docs, add_tast_2.execute().getAffectedItemsCount());
+}
+
+TEST_F(Bugs, Bug35046616) {
+  Schema sch = get_sess().createSchema("test", true);
+  Collection coll = sch.createCollection("c1", true);
+
+  cout << "Inserting documents..." << endl;
+
+  coll.remove("true").execute();
+  auto ids = {"1", "MYID1", "MYID2"};
+  for (auto _id : ids) {
+    coll.addOrReplaceOne(_id, R"({ "name": "foo", "age": 1 })");
+  }
+
+  auto find_id = coll.find("_id = :id");
+  for(auto _id : ids)
+  {
+    EXPECT_EQ(std::string("foo"), find_id.bind("id", _id)
+                                      .execute()
+                                      .fetchOne()["name"]
+                                      .get<std::string>());
+  }
+
+  cout << "Updating document..." << endl;
+
+  auto modify = coll.modify("_id = :id")
+                    .set("$", R"({ "_id": "DISCARDED", "name": "bar"})");
+  for (auto _id : ids) {
+    modify.bind("id", _id).execute();
+  }
+
+  for (auto _id : ids) {
+    EXPECT_EQ(std::string("bar"), find_id.bind("id", _id)
+                                      .execute()
+                                      .fetchOne()["name"]
+                                      .get<std::string>());
+  }
+
+  // Changing all documents of the collection setting name to baz
+  coll.modify("true")
+      .set("$", R"({ "_id": "DISCARDED", "name": "baz"})")
+      .execute();
+
+  for (auto _id : ids) {
+    EXPECT_EQ(std::string("baz"), find_id.bind("id", _id)
+                                      .execute()
+                                      .fetchOne()["name"]
+                                      .get<std::string>());
+  }
 }
