@@ -175,7 +175,9 @@ public:
   friend Impl;
   friend DocResult;
   friend Value;
+  /// \cond  Note: Ignore by doxygen
   friend internal::Schema_detail;
+  /// \endcond
 };
 
 

@@ -86,6 +86,12 @@ set(OUTPUT_DIRECTORY "$(OUTPUT_DIRECTORY)")
 configure_file(doxygen.cfg.in ${CMAKE_CURRENT_SOURCE_DIR}/doxygen.cfg @ONLY)
 configure_file(DoxygenLayout.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/DoxygenLayout.xml @ONLY)
 
+message(STATUS "Updating doxygen configuration file.")
+execute_process(
+  COMMAND ${DOXYGEN_EXECUTABLE} -u doxygen.cfg
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 FILE(GLOB sources *.txt)
 LIST(APPEND sources doxygen.cfg.in)
 

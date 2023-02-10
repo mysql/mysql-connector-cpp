@@ -310,8 +310,7 @@
 
 
 #define COLLECTION_OPTIONS_OPTION(X)\
-  X(REUSE,1) /*!< Use existing collection. Expects boolean value
-                  @anchor OPT_COLLECTION_REUSE */ \
+  X(REUSE,1) /*!< Use existing collection. Expects a boolean value. */ \
   X(VALIDATION,2) /*!< Collection validation options. Expects
                        CollectionValidation or a json string.*/ \
   END_LIST

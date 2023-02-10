@@ -286,9 +286,11 @@ protected:
 
   Data m_data;
 
+  /// \cond  Exclude from doxygen.
   friend CollectionOptions;
   friend Schema;
   friend mysqlx::internal::Schema_detail;
+  /// \endcond
 };
 
 
@@ -512,7 +514,9 @@ protected:
 
   Data m_data;
 
+  /// \cond Exclude from doxygne
   friend mysqlx::internal::Schema_detail;
+  /// \endcond
 };
 
 

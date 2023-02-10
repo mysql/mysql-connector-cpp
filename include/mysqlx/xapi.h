@@ -514,6 +514,10 @@ mysqlx_collection_validation_level_t;
 #define OPT_COLLECTION_VALIDATION_LEVEL(X) MYSQLX_OPT_COLLECTION_VALIDATION_LEVEL, (unsigned int)X
 #define OPT_COLLECTION_VALIDATION_SCHEMA(X) MYSQLX_OPT_COLLECTION_VALIDATION_SCHEMA, (const char*)X
 
+/**
+  Compression modes.
+  TODO: see...
+*/
 typedef enum mysqlx_compression_mode_enum
 {
 #define XAPI_COMPRESSION_ENUM(X,N)  MYSQLX_COMPRESSION_##X = N,

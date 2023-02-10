@@ -69,6 +69,8 @@ class SessionOption
 
 public:
 
+  /// Possible session creation options.
+
   enum Enum {
     SESSION_OPTION_LIST(SESS_OPT_ENUM)
     LAST
@@ -124,6 +126,8 @@ public:
 
   using SessionEnum = SessionOption::Enum;
 
+  /// Possible client creation options.
+  
   enum Enum {
     CLIENT_OPTION_LIST(CLIENT_OPT_ENUM)
   };

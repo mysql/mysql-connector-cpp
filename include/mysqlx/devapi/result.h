@@ -251,7 +251,7 @@ enum class Type : unsigned short
   that also use this macro.
 */
 
-/// @var mysqlx::Type::BIT
+/// @var Type::BIT
 ///   See <https://dev.mysql.com/doc/refman/8.0/en/bit-type.html>
 /// @var Type::TINYINT
 ///   See <https://dev.mysql.com/doc/refman/8.0/en/integer-types.html>
