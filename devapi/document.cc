@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -47,6 +47,19 @@
 using namespace ::mysqlx;
 using std::endl;
 
+// Value::get specialization to allow convertion to common::Value type
+// --------------------
+
+// We need to export this template instantiation
+template PUBLIC_API common::Value Value::get<common::Value>() const;
+
+template <>
+common::Value Value::get<common::Value>() const {
+  if (getType() == DOCUMENT) {
+    return common::Value::Access::mk_json(m_doc.get_json());
+  }
+  return *this;
+}
 
 // DbDoc implementation
 // --------------------
