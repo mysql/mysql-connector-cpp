@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -796,7 +796,7 @@ void Session::close()
   try {
     clean_up();
     m_protocol.snd_ConnectionClose().wait();
-    m_protocol.rcv_Reply(*this).wait();
+    // Not waiting for reply since it blocked on old router implementations...
   }
   catch (...)
   {
