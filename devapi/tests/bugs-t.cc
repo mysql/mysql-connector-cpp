@@ -972,9 +972,13 @@ TEST_F(Bugs, Bug35046616) {
   cout << "Inserting documents..." << endl;
 
   coll.remove("true").execute();
+
   auto ids = {"1", "MYID1", "MYID2"};
+
   for (auto _id : ids) {
-    coll.addOrReplaceOne(_id, R"({ "name": "foo", "age": 1 })");
+    coll.add(std::string(R"({ "_id": ")") + _id +
+             R"(", "name": "foo", "age": 1 })")
+        .execute();
   }
 
   auto find_id = coll.find("_id = :id");
@@ -989,12 +993,10 @@ TEST_F(Bugs, Bug35046616) {
   cout << "Updating document..." << endl;
 
   auto modify = coll.modify("_id = :id")
-                    .set("$", R"({ "_id": "DISCARDED", "name": "bar"})");
+                    .set("$",expr( R"({ "_id": "DISCARDED", "name": "bar"})"));
   for (auto _id : ids) {
     modify.bind("id", _id).execute();
-  }
 
-  for (auto _id : ids) {
     EXPECT_EQ(std::string("bar"), find_id.bind("id", _id)
                                       .execute()
                                       .fetchOne()["name"]
@@ -1003,7 +1005,7 @@ TEST_F(Bugs, Bug35046616) {
 
   // Changing all documents of the collection setting name to baz
   coll.modify("true")
-      .set("$", R"({ "_id": "DISCARDED", "name": "baz"})")
+      .set("$", DbDoc(R"({ "_id": "DISCARDED", "name": "baz"})"))
       .execute();
 
   for (auto _id : ids) {
@@ -1011,5 +1013,30 @@ TEST_F(Bugs, Bug35046616) {
                                       .execute()
                                       .fetchOne()["name"]
                                       .get<std::string>());
+  }
+
+  // Changing all documents of the collection setting name to a document
+  // {first: last:}
+  coll.modify("true")
+      .set("$.name", DbDoc(R"({"first": "foo", "last": "bar"})"))
+      .execute();
+
+  for (auto _id : ids) {
+    auto doc = find_id.bind("id", _id).execute().fetchOne();
+    EXPECT_EQ(Value::DOCUMENT, doc["name"].getType());
+    EXPECT_EQ(std::string("foo"), doc["name"]["first"].get<std::string>());
+  }
+
+  // Changing all documents of the collection setting name to a string with a
+  // JSON. JSON should not be processed.
+  coll.modify("true")
+      .set("$.name", R"({"first": "foo", "last": "bar"})")
+      .execute();
+
+  for (auto _id : ids) {
+    auto doc = find_id.bind("id", _id).execute().fetchOne();
+    EXPECT_EQ(Value::STRING, doc["name"].getType());
+    EXPECT_EQ(std::string(R"({"first": "foo", "last": "bar"})"),
+              doc["name"].get<std::string>());
   }
 }

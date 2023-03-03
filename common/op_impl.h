@@ -2490,18 +2490,26 @@ class Op_collection_modify
       : m_op(op), m_field(field), m_val(val)
     {}
 
-    void process(Processor &prc) const
-    {
-      if (m_expr)
-        return m_expr->process(prc);
+    void process(Processor &prc) const {
+      if (m_expr) return m_expr->process(prc);
 
-      if(m_field == "$")
-      {
-        Value_expr doc(m_val, parser::Parser_mode::DOCUMENT);
-
-        Extract_id expr_id;
-        Insert_id id(doc, expr_id);
-        id.process(prc);
+      // We send document given by a JSON string as an SQL expression
+      // `JSON_INSERT(val, '$', '{}')` to force server to interpret it as JSON
+      // value. Otherwise it would be interpreted as a literal string value,
+      // not a document.
+      if (Value::JSON == m_val.get_type()) {
+        struct : cdk::api::Object_ref {
+          const cdk::api::Schema_ref *schema() const override {
+            return nullptr;
+          }
+          const cdk::string name() const override { return "JSON_INSERT"; }
+        } json_insert;
+        auto json_set_args = safe_prc(prc.scalar()->call(json_insert));
+        json_set_args->list_begin();
+        json_set_args->list_el()->scalar()->val()->str(m_val.get_string());
+        json_set_args->list_el()->scalar()->val()->str("$");
+        json_set_args->list_el()->scalar()->val()->str("{}");
+        json_set_args->list_end();
       } else {
         Value::Access::process(parser::Parser_mode::DOCUMENT, m_val, prc);
       }
