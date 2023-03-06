@@ -50,10 +50,9 @@ using std::endl;
 // Value::get specialization to allow convertion to common::Value type
 // --------------------
 
-// // We need to export this template instantiation
-template PUBLIC_API common::Value Value::get<common::Value>() const;
 
 template <>
+PUBLIC_API
 common::Value Value::get<common::Value>() const {
   if (getType() == DOCUMENT) {
     return common::Value::Access::mk_json(m_doc.get_json());
