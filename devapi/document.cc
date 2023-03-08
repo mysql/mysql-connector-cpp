@@ -52,7 +52,6 @@ using std::endl;
 
 
 template <>
-PUBLIC_API
 common::Value Value::get<common::Value>() const {
   if (getType() == DOCUMENT) {
     return common::Value::Access::mk_json(m_doc.get_json());
