@@ -1,4 +1,4 @@
-# Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -204,16 +204,6 @@ else()
   include(compiler/GCC OPTIONAL)
 
 endif()
-
-
-# Note: std::shared_ptr<>::unique is deprecated in C++17 [1].
-# TODO: Remove Supression once WL15527 is implemented
-# [1] https://en.cppreference.com/w/cpp/memory/shared_ptr/unique
-
-if(TOOLSET_MSVC)
-  add_flags(CXX -D_SILENCE_CXX17_SHARED_PTR_UNIQUE_DEPRECATION_WARNING)
-endif()
-
 
 ########################################################################
 

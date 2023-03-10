@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -1093,7 +1093,7 @@ void Session_pool::time_to_live_cleanup()
   auto it = m_pool.begin();
   for(; it != m_pool.end(); )
   {
-    if (it->first.unique() && it->second.m_deadline < current_time)
+    if (it->first.use_count()==1 && it->second.m_deadline < current_time)
     {
       // Note: removed session is not active and does not need calling
       // of the cleanup handler.

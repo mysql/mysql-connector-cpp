@@ -160,8 +160,7 @@ public:
   uint32_t create_stmt_id()
   {
     assert(m_sess);
-    if (!m_stmt_id.unique())
-    {
+    if (m_stmt_id.use_count() != 1) {
       uint32_t id = m_sess->create_stmt_id();
       if(id != 0)
         m_stmt_id.reset(new uint32_t(id));
@@ -173,7 +172,7 @@ public:
 
   void release_stmt_id()
   {
-    if (m_stmt_id.unique())
+    if (m_stmt_id.use_count() == 1)
       m_sess->release_stmt_id(*m_stmt_id);
     m_stmt_id.reset();
   }
@@ -186,7 +185,7 @@ public:
 
   void reset_state()
   {
-    if (m_stmt_id.unique())
+    if (m_stmt_id.use_count()==1)
       get_session()->error_stmt_id(*m_stmt_id);
     m_stmt_id.reset();
     m_prepare_state = PS_EXECUTE;
