@@ -83,7 +83,7 @@ class Collection;
 class Table;
 
 template<>
-common::Value Value::get<common::Value>() const;
+PUBLIC_API common::Value Value::get<common::Value>() const;
 
 // ----------------------------------------------------------------------
 

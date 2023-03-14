@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -182,18 +182,20 @@ IF(WITH_TESTS)
       -Wno-unused-value
     )
 
-  elseif((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+
+
+  else()
+    #target_compile_options(${TEST} PRIVATE -Wno-unused-result)
+  endif()
+
+  if(CLANG)
 
   #TODO: Remove -Wno-delete-non-abstract-non-virtual-dtor when bumping ABI and
   #      adding virtual destructor for DbDoc, Value and Column_detail
     target_compile_options(${TEST} PRIVATE
       -Wno-unused-value -Wno-delete-non-abstract-non-virtual-dtor
     )
-
-  else()
-    #target_compile_options(${TEST} PRIVATE -Wno-unused-result)
-  endif()
-
+endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
     add_definitions(
       -D_POSIX_PTHREAD_SEMANTICS

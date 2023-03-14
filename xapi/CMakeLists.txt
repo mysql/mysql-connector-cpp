@@ -1,4 +1,4 @@
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -59,7 +59,7 @@ add_coverage(xapi)
 
 #TODO: Remove -Wno-delete-non-abstract-non-virtual-dtor when bumping ABI and
   #      adding virtual destructor for DbDoc, Value and Column_detail
-if((CMAKE_C_COMPILER_ID MATCHES "Clang") OR(CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+if(CLANG)
   target_compile_options(xapi PRIVATE
     -Wno-delete-non-abstract-non-virtual-dtor
   )
