@@ -99,6 +99,8 @@ std::mutex callback_mutex;
 
 sql::Fido_Callback * fido_callback_instance = nullptr;
 
+bool oci_plugin_is_loaded = false;
+
 static void fido_callback_func(const char* msg)
 {
   if (!fido_callback_instance)
@@ -1023,6 +1025,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
                                 "authentication_oci_client",
                                 "oci-config-file",
                                 *p_s);
+        oci_plugin_is_loaded = true;
       }  catch (sql::InvalidArgumentException &e) {
         throw ::sql::SQLUnsupportedOptionException(
           "Failed to set config file for authentication_oci_client plugin",
@@ -1042,6 +1045,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
                              "authentication_oci_client",
                              "authentication-oci-client-config-profile", *p_s);
+        oci_plugin_is_loaded = true;
       } catch (sql::InvalidArgumentException &e) {
         throw ::sql::SQLUnsupportedOptionException(
             "Failed to set config profile for authentication_oci_client plugin",
@@ -1096,6 +1100,34 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   } /* End of cycle on connection options map */
 
+  if (oci_plugin_is_loaded) {
+    if (properties.find(OPT_OCI_CONFIG_FILE) == properties.end()) {
+      // If OCI plugin is loaded, but oci-config-file is not explicitly set
+      // the option value needs resetting.
+      try {
+        proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                             "authentication_oci_client",
+                             "oci-config-file",
+                             nullptr);
+      } catch (sql::InvalidArgumentException &) {
+        // Do nothing, the exception is expected.
+      }
+    }
+
+    if (properties.find(OPT_OCI_CLIENT_CONFIG_PROFILE) == properties.end()) {
+      // If OCI plugin is loaded, but oci-config-profile is not explicitly set
+      // the option value needs resetting.
+      try {
+        proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+                             "authentication_oci_client",
+                             "authentication-oci-client-config-profile",
+                             nullptr);
+      } catch (sql::InvalidArgumentException &) {
+        // Do nothing, the exception is expected.
+      }
+    }
+
+  }
 
 #undef PROCESS_CONNSTR_OPTION
 
