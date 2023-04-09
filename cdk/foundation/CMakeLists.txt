@@ -90,7 +90,7 @@ target_include_directories(cdk_foundation PUBLIC
 
 target_link_libraries(cdk_foundation
   PUBLIC RapidJSON::rapidjson
-  PRIVATE SSL::ssl
+  PRIVATE OpenSSL::SSL
 )
 
 IF(WIN32)
