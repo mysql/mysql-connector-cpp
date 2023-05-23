@@ -106,6 +106,7 @@ SET(MYSQLCPPCONN_SOURCES
   mysql_resultset.cpp
   mysql_resultset_metadata.cpp
   mysql_statement.cpp
+  mysql_telemetry.cpp
   mysql_util.cpp
   mysql_warning.cpp
   mysql_uri.cpp
@@ -140,6 +141,7 @@ IF(WIN32)
     mysql_resultset.h
     mysql_resultset_metadata.h
     mysql_statement.h
+    mysql_telemetry.h
     mysql_util.h
     mysql_warning.h
     mysql_uri.h
@@ -184,7 +186,6 @@ ENDIF(WIN32)
 
 #-----------------
 
-
 add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 
 IF(WIN32)
@@ -196,11 +197,14 @@ ENDIF()
 if (MYSQLCLIENT_STATIC_BINDING)
   target_link_libraries(jdbc PRIVATE MySQL::client)
 else()
+
   target_include_directories(jdbc PRIVATE ${MYSQL_INCLUDE_DIR})
   if(NOT WIN32)
     target_link_libraries(jdbc PRIVATE dl)
   ENDIF(NOT WIN32)
 endif()
+
+target_link_libraries(jdbc PRIVATE ext::opentelemetry_api)
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(jdbc PRIVATE -DCPPCONN_LIB_BUILD)

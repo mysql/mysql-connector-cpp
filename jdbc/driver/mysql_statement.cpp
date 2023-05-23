@@ -53,6 +53,7 @@
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
+#include "cppconn/version_info.h"
 
 namespace sql
 {
@@ -104,6 +105,24 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
     throw sql::InvalidInstanceException("Connection has been closed");
   }
 
+  if (!MySQL_Telemetry::otel_libs_loaded() && 
+     connection->getOpenTelemetryMode() == enum_opentelemetry_mode::OTEL_REQUIRED
+     )
+  {
+    throw sql::SQLException("OPT_OPENTELEMETRY is set to OTEL_REQUIRED, "
+      "but OpenTelemetry libraries are not loaded");
+  }
+
+  if (MySQL_Telemetry::otel_libs_loaded() &&
+      connection->getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED &&
+      !attrbind.attribNameExists("traceparent"))
+  {
+    telemetry.reset(new MySQL_Telemetry("SQL statement"));
+    auto span_id = telemetry->get_span_id();
+    auto trace_id = telemetry->get_trace_id();
+    attrbind.setQueryAttrString("traceparent", "00-" + trace_id + "-" + span_id + "-00");
+  }
+  
   if(attrbind.nrAttr() != 0)
   {
     proxy_p->query_attr(attrbind.nrAttr(), attrbind.getNames(), attrbind.getBinds());
@@ -111,11 +130,13 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 
   if (proxy_p->query(q) && proxy_p->errNo()) {
     CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+    if (telemetry)
+      telemetry->set_status(MySQL_Telemetry::Status::ERROR, proxy_p->error().c_str());
+
     sql::mysql::util::throwSQLException(*proxy_p.get());
   }
 
   warningsCount= proxy_p->warning_count();
-
   warningsHaveBeenLoaded= false;
 }
 /* }}} */

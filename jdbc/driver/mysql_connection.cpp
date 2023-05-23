@@ -1193,6 +1193,19 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
+  if (!MySQL_Telemetry::otel_libs_loaded() && 
+     getOpenTelemetryMode() == enum_opentelemetry_mode::OTEL_REQUIRED)
+  {
+    throw sql::SQLException("OPT_OPENTELEMETRY is set to OTEL_REQUIRED, "
+      "but OpenTelemetry libraries are not loaded");
+  }
+
+  if (MySQL_Telemetry::otel_libs_loaded() &&
+      getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED)
+  {
+    intern->telemetry.reset(new MySQL_Telemetry("connection"));
+  }
+
   auto connect = [this,flags,client_exp_pwd, opt_dns_srv](
                  const std::string &host,
                  const std::string &user,
@@ -1418,6 +1431,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         }
       }
       proxy.reset();
+      if (intern->telemetry)
+      {
+        intern->telemetry->set_status(MySQL_Telemetry::Status::ERROR, err.str());
+        intern->telemetry.reset();
+      }
       throw sql::SQLException(err.str(), sql_state, error);
     }
   }
@@ -1429,6 +1447,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       proxy->options(MYSQL_OPT_RECONNECT, (const char *) &intern->reconnect);
     } catch (sql::InvalidArgumentException& e) {
       std::string errorOption("MYSQL_OPT_RECONNECT");
+      if (intern->telemetry)
+      {
+        intern->telemetry->set_status(MySQL_Telemetry::Status::ERROR, e.what());
+        intern->telemetry.reset();
+      }
       throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
     }
   }
@@ -1654,6 +1677,28 @@ MySQL_Connection::getTransactionIsolation()
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::getTransactionIsolation");
   checkClosed();
   return intern->txIsolationLevel;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::getOpenTelemetryMode() -I- */
+enum_opentelemetry_mode
+MySQL_Connection::getOpenTelemetryMode()
+{
+  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getOpenTelemetryMode");
+  checkClosed();
+  return intern->openTelemetryMode;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::getTelemetry() -I- */
+MySQL_Telemetry *
+MySQL_Connection::getTelemetry()
+{
+  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getTelemetry");
+  checkClosed();
+  return intern->telemetry.get();
 }
 /* }}} */
 

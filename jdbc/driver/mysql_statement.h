@@ -39,6 +39,7 @@
 #include "mysql_resultbind.h"
 
 #include "mysql_warning.h"
+#include "mysql_telemetry.h"
 
 #include "mysql_util.h"
 
@@ -62,6 +63,7 @@ protected:
  std::unique_ptr<MySQL_Warning> warnings;
  MySQL_Connection *connection;
  std::weak_ptr<NativeAPI::NativeConnectionWrapper> proxy;
+ std::unique_ptr<MySQL_Telemetry> telemetry;
 
  MySQL_AttributesBind attrbind;
 

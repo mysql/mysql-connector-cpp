@@ -61,7 +61,9 @@ struct MySQL_ConnectionData
         defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
         defaultPreparedStatementResultType(
             sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-        logger(l) {}
+        logger(l),
+        openTelemetryMode(OTEL_PREFERRED)
+         {}
 
   ~MySQL_ConnectionData()
   {
@@ -86,6 +88,8 @@ struct MySQL_ConnectionData
   std::shared_ptr<MySQL_DebugLogger> logger;
 
   std::unique_ptr<MySQL_ConnectionMetaData> meta;
+  std::unique_ptr<MySQL_Telemetry> telemetry;
+  enum_opentelemetry_mode openTelemetryMode;
 };
 
 } /* namespace mysql */

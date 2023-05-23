@@ -549,6 +549,20 @@ MySQL_AttributesBind::getNames()
 /* }}} */
 
 
+/* {{{ MySQL_AttributesBind::attribNameExists() */
+bool
+MySQL_AttributesBind::attribNameExists(const sql::SQLString &name)
+{
+  for (auto n : names)
+  {
+    if (n && name.caseCompare(n) == 0)
+      return true;
+  }
+  return false;
+}
+/* }}} */
+
+
 } /* namespace mysql */
 } /* namespace sql */
 

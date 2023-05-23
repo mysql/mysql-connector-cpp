@@ -127,7 +127,8 @@ public:
   int nrAttr();
   MYSQL_BIND* getBinds();
   const char **getNames();
-
+  
+  bool attribNameExists(const sql::SQLString &name);
 };
 
 } /* namespace mysql */

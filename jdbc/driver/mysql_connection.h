@@ -45,6 +45,8 @@ namespace sql
 namespace mysql
 {
 
+class MySQL_Telemetry;
+
 class CPPCONN_PUBLIC_FUNC MySQL_Savepoint : public sql::Savepoint
 {
   sql::SQLString name;
@@ -117,6 +119,8 @@ public:
 
   enum_transaction_isolation getTransactionIsolation();
 
+  enum_opentelemetry_mode getOpenTelemetryMode();
+
   const SQLWarning * getWarnings();
 
   bool isClosed();
@@ -174,6 +178,10 @@ public:
   virtual void setSessionVariable(const sql::SQLString & varname, unsigned int value);
 
   virtual sql::SQLString getLastStatementInfo();
+
+  enum_opentelemetry_mode getOpenTelemetryMode();
+
+  MySQL_Telemetry * getTelemetry();
 
 private:
   /* We do not really think this class has to be subclassed*/
