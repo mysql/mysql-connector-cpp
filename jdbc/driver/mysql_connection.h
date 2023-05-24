@@ -119,8 +119,6 @@ public:
 
   enum_transaction_isolation getTransactionIsolation();
 
-  enum_opentelemetry_mode getOpenTelemetryMode();
-
   const SQLWarning * getWarnings();
 
   bool isClosed();

@@ -53,7 +53,6 @@
 #include "nativeapi/native_resultset_wrapper.h"
 
 #include "mysql_debug.h"
-#include "cppconn/version_info.h"
 
 namespace sql
 {
