@@ -116,7 +116,8 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
       connection->getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED &&
       !attrbind.attribNameExists("traceparent"))
   {
-    telemetry.reset(new MySQL_Telemetry("SQL statement"));
+    telemetry.reset(new MySQL_Telemetry("SQL statement",
+      &(connection->getTelemetry()->get_span())));
     auto span_id = telemetry->get_span_id();
     auto trace_id = telemetry->get_trace_id();
     attrbind.setQueryAttrString("traceparent", "00-" + trace_id + "-" + span_id + "-00");
@@ -130,7 +131,10 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
   if (proxy_p->query(q) && proxy_p->errNo()) {
     CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
     if (telemetry)
+    {
       telemetry->set_status(MySQL_Telemetry::Status::ERROR, proxy_p->error().c_str());
+      telemetry.reset();
+    }
 
     sql::mysql::util::throwSQLException(*proxy_p.get());
   }

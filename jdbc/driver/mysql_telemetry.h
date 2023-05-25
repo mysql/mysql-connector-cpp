@@ -72,22 +72,31 @@ enum class Status
 };
 
 
-MySQL_Telemetry(const sql::SQLString span_name, bool set_active = false) :
+MySQL_Telemetry(const sql::SQLString span_name, trace::Span *linked_span = nullptr,
+  bool set_active = false) :
     provider(trace::Provider::GetTracerProvider()),
-    tracer(provider.get()->GetTracer("MySQL Connector/C++", MYCPPCONN_DM_VERSION)),
-    // TODO: StartSpan() can accept the spanKind option and the links to
-    //       other spans.
-    span(tracer.get()->StartSpan(span_name.asStdString())),
-    scope((set_active ? new trace::Scope(span) : nullptr))
+    tracer(provider.get()->GetTracer("MySQL Connector/C++", MYCPPCONN_DM_VERSION))
 {
-  char buf_trace[trace::TraceId::kSize * 2];
-  char buf_span[trace::SpanId::kSize * 2];
+  trace_api::StartSpanOptions opts{{}, {}, trace::SpanContext::GetInvalid(), trace::SpanKind::kClient};
+  
+  if (linked_span)
+  {
+    auto link_ctx = linked_span->GetContext();
+    span = tracer.get()->StartSpan(span_name.asStdString(), {}, {{link_ctx, {}}}, opts);
+  }
+  else
+    span = tracer.get()->StartSpan(span_name.asStdString(), opts);
+    
+  if (set_active)
+    scope.reset(new trace::Scope(span));
+
+  char buf[trace::TraceId::kSize * 2];
   trace::SpanContext ctx = span->GetContext();
-  ctx.trace_id().ToLowerBase16(buf_trace);
-  ctx.span_id().ToLowerBase16(buf_span);
+  ctx.trace_id().ToLowerBase16(buf);
+  m_trace_id = std::string{buf, trace::TraceId::kSize * 2};
+  ctx.span_id().ToLowerBase16({buf, trace::SpanId::kSize * 2});
+  m_span_id = std::string{buf, trace::SpanId::kSize * 2};
   span->SetAttribute("db.system", "mysql");
-  m_trace_id = std::string(buf_trace, sizeof(buf_trace));
-  m_span_id = std::string(buf_span, sizeof(buf_span));
 }
 
 static bool otel_libs_loaded() { return check_process_otel_libs(); }
@@ -116,6 +125,7 @@ void  set_status(Status status, const sql::SQLString& descr)
   span->SetStatus(otel_code, descr.asStdString());
 }
 
+trace::Span& get_span() { return *span.get(); }
 const sql::SQLString& get_trace_id() { return m_trace_id; }
 const sql::SQLString& get_span_id() { return m_span_id; }
 
