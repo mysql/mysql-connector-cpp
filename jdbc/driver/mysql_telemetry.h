@@ -48,6 +48,22 @@ typedef opentelemetry::nostd::shared_ptr<trace::Tracer> otel_tracer;
 typedef opentelemetry::nostd::shared_ptr<trace::Span> otel_span;
 typedef opentelemetry::nostd::shared_ptr<trace::Scope> otel_scope;
 
+
+template <typename T>
+void logm(T&& msg)
+{
+  std::cerr << msg << std::endl;
+}
+
+template <typename T, typename... TT>
+void logm(T&& first, TT&&... rest)
+{
+  std::cerr << first << " ";
+  logm(std::forward<TT>(rest)...);
+}
+
+
+
 namespace sql
 {
 namespace mysql
@@ -57,77 +73,83 @@ bool check_process_otel_libs();
 
 class MySQL_Telemetry
 {
+public:
+
+  enum class Status
+  {
+    UNSET, OK, ERROR
+  };
+
+
+  MySQL_Telemetry(
+    const sql::SQLString span_name,
+    trace::Span *linked_span = nullptr,
+    bool set_active = false
+  ) 
+    : provider(trace::Provider::GetTracerProvider()),
+      tracer(
+        provider.get()->GetTracer("MySQL Connector/C++", MYCPPCONN_DM_VERSION)
+      )
+  {
+    trace_api::StartSpanOptions opts{{}, {}, trace::SpanContext::GetInvalid(), trace::SpanKind::kClient};
+    
+    if (linked_span)
+    {
+      auto link_ctx = linked_span->GetContext();
+      span = tracer.get()->StartSpan(span_name.asStdString(), {}, {{link_ctx, {}}}, opts);
+    }
+    else
+      span = tracer.get()->StartSpan(span_name.asStdString(), opts);
+      
+    // FIXME: rather call tracer.WithActiveSpan
+    if (set_active)
+      scope.reset(new trace::Scope(span));
+
+    char buf[trace::TraceId::kSize * 2];
+    trace::SpanContext ctx = span->GetContext();
+    ctx.trace_id().ToLowerBase16(buf);
+    m_trace_id = std::string{buf, trace::TraceId::kSize * 2};
+    ctx.span_id().ToLowerBase16({buf, trace::SpanId::kSize * 2});
+    m_span_id = std::string{buf, trace::SpanId::kSize * 2};
+    span->SetAttribute("db.system", "mysql");
+  }
+
+  //static bool otel_libs_loaded() { return check_process_otel_libs(); }
+
+  void  set_attribute(const sql::SQLString& name, const sql::SQLString& val)
+  {
+    span->SetAttribute(name.asStdString(), val.asStdString());
+  }
+
+  void  set_status(Status status, const sql::SQLString& descr)
+  {
+    trace::StatusCode otel_code = trace::StatusCode::kUnset;
+    switch (status)
+    {
+      case Status::ERROR:
+        otel_code = trace::StatusCode::kError;
+        break;
+      case Status::OK:
+        otel_code = trace::StatusCode::kOk;
+        break;
+      default:
+        otel_code = trace::StatusCode::kUnset;
+        break;
+    }
+
+    span->SetStatus(otel_code, descr.asStdString());
+  }
+
+  trace::Span& get_span() { return *span.get(); }
+  const sql::SQLString& get_trace_id() { return m_trace_id; }
+  const sql::SQLString& get_span_id() { return m_span_id; }
+
 private:
   otel_provider provider;
   otel_tracer tracer;
   otel_span span;
   std::unique_ptr<trace::Scope> scope;
   sql::SQLString m_trace_id, m_span_id;
-
-public:
-
-enum class Status
-{
-  UNSET, OK, ERROR
-};
-
-
-MySQL_Telemetry(const sql::SQLString span_name, trace::Span *linked_span = nullptr,
-  bool set_active = false) :
-    provider(trace::Provider::GetTracerProvider()),
-    tracer(provider.get()->GetTracer("MySQL Connector/C++", MYCPPCONN_DM_VERSION))
-{
-  trace_api::StartSpanOptions opts{{}, {}, trace::SpanContext::GetInvalid(), trace::SpanKind::kClient};
-  
-  if (linked_span)
-  {
-    auto link_ctx = linked_span->GetContext();
-    span = tracer.get()->StartSpan(span_name.asStdString(), {}, {{link_ctx, {}}}, opts);
-  }
-  else
-    span = tracer.get()->StartSpan(span_name.asStdString(), opts);
-    
-  if (set_active)
-    scope.reset(new trace::Scope(span));
-
-  char buf[trace::TraceId::kSize * 2];
-  trace::SpanContext ctx = span->GetContext();
-  ctx.trace_id().ToLowerBase16(buf);
-  m_trace_id = std::string{buf, trace::TraceId::kSize * 2};
-  ctx.span_id().ToLowerBase16({buf, trace::SpanId::kSize * 2});
-  m_span_id = std::string{buf, trace::SpanId::kSize * 2};
-  span->SetAttribute("db.system", "mysql");
-}
-
-static bool otel_libs_loaded() { return check_process_otel_libs(); }
-
-void  set_attribute(const sql::SQLString& name, const sql::SQLString& val)
-{
-  span->SetAttribute(name.asStdString(), val.asStdString());
-}
-
-void  set_status(Status status, const sql::SQLString& descr)
-{
-  trace::StatusCode otel_code = trace::StatusCode::kUnset;
-  switch (status)
-  {
-    case Status::ERROR:
-      otel_code = trace::StatusCode::kError;
-      break;
-    case Status::OK:
-      otel_code = trace::StatusCode::kOk;
-      break;
-    default:
-      otel_code = trace::StatusCode::kUnset;
-      break;
-  }
-
-  span->SetStatus(otel_code, descr.asStdString());
-}
-
-trace::Span& get_span() { return *span.get(); }
-const sql::SQLString& get_trace_id() { return m_trace_id; }
-const sql::SQLString& get_span_id() { return m_span_id; }
 
 };
 

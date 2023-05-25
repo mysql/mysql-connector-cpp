@@ -622,6 +622,69 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
   }
 
+  // auto get_option_s = [&properties, &p_s](const char *name, bool check = true) 
+  // {
+  //   if (!properties.count(name))
+  //     return false;
+  //   try {
+  //     p_s = properties.at(name).get<sql::SQLString>();
+  //     if (check && !p_s)
+  //       throw sql::InvalidArgumentException{
+  //         std::string{"No string value passed for "} + name
+  //       };
+  //     return true;
+  //   } 
+  //   catch (sql::InvalidArgumentException&) 
+  //   {
+  //     throw sql::InvalidArgumentException{
+  //       std::string{"Wrong type passed for "} + name
+  //       + " expected sql::SQLString"
+  //     };
+  //   }
+  // };
+
+  auto get_option_i = [&properties, &p_i](const char *name, bool check = true) 
+  {
+    if (!properties.count(name))
+      return false;
+    try {
+      p_i = properties.at(name).get<int>();
+      if (check && !p_i)
+        throw sql::InvalidArgumentException{
+          std::string{"No long long value passed for "} + name
+        };
+      return true;
+    } 
+    catch (sql::InvalidArgumentException&) 
+    {
+      throw sql::InvalidArgumentException{
+        std::string{"Wrong type passed for "} + name
+        + " expected long long"
+      };
+    }
+  };
+
+  // TODO: Option set to boolean value
+
+  if (get_option_i(OPT_OPENTELEMETRY))
+  {
+    switch (*p_i)
+    {
+    case OTEL_DISABLED:
+    case OTEL_PREFERRED:
+      break;
+    default:
+      throw sql::InvalidArgumentException{
+        "Invalid value for OPT_OPENTELEMETRY;"
+        " expecting OTEL_DISABLED or OTEL_PREFERRED"
+      };
+    };
+
+    intern->openTelemetryMode = (enum_opentelemetry_mode)*p_i;
+  }
+
+
+
 #define PROCESS_CONN_OPTION(option_type, options_map) \
   process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
 
@@ -1193,15 +1256,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
-  if (!MySQL_Telemetry::otel_libs_loaded() && 
-     getOpenTelemetryMode() == enum_opentelemetry_mode::OTEL_REQUIRED)
-  {
-    throw sql::SQLException("OPT_OPENTELEMETRY is set to OTEL_REQUIRED, "
-      "but OpenTelemetry libraries are not loaded");
-  }
-
-  if (MySQL_Telemetry::otel_libs_loaded() &&
-      getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED)
+  if (getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED)
   {
     intern->telemetry.reset(new MySQL_Telemetry("connection"));
   }
