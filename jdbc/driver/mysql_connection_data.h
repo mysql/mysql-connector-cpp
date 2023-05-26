@@ -39,6 +39,7 @@
 #include "mysql_util.h"
 #include "mysql_metadata.h"
 #include "mysql_warning.h"
+#include "mysql_telemetry.h"
 
 namespace sql
 {
@@ -61,9 +62,8 @@ struct MySQL_ConnectionData
         defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
         defaultPreparedStatementResultType(
             sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-        logger(l),
-        openTelemetryMode(OTEL_PREFERRED)
-         {}
+        logger(l)
+  {}
 
   ~MySQL_ConnectionData()
   {
@@ -88,8 +88,9 @@ struct MySQL_ConnectionData
   std::shared_ptr<MySQL_DebugLogger> logger;
 
   std::unique_ptr<MySQL_ConnectionMetaData> meta;
-  std::unique_ptr<MySQL_Telemetry> telemetry;
-  enum_opentelemetry_mode openTelemetryMode;
+
+  enum_opentelemetry_mode telemetryMode = OTEL_PREFERRED;
+  telemetry::Span_ptr trace_span;
 };
 
 } /* namespace mysql */

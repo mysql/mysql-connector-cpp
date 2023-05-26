@@ -538,6 +538,71 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   sql::ConnectOptionsMap::const_iterator it;
 
+  // TODO: Use these helpers to reduce code repetition.
+
+  auto get_option_i = [&properties, &p_i](std::string name, bool check = true) 
+  {
+    if (!properties.count(name))
+      return false;
+    try {
+      p_i = properties.at(name).get<int>();
+      if (check && !p_i)
+        throw sql::InvalidArgumentException{
+          "No long long value passed for " + name
+        };
+      return true;
+    } 
+    catch (sql::InvalidArgumentException&) 
+    {
+      throw sql::InvalidArgumentException{
+        "Wrong type passed for " + name + " expected long long"
+      };
+    }
+  };
+
+  auto get_option_b = [&properties, &p_b](std::string name, bool check = true)
+  {
+    if (!properties.count(name))
+      return false;
+    try {
+      p_b = properties.at(name).get<bool>();
+      if (check && !p_b)
+        throw sql::InvalidArgumentException{
+          "No bool value passed for " + name
+        };
+      return true;
+    } 
+    catch (sql::InvalidArgumentException&) 
+    {
+      throw sql::InvalidArgumentException{
+        "Wrong type passed for " + name + " expected bool"
+      };
+    }
+  };
+
+#if 0
+  auto get_option_s = [&properties, &p_s](const char *name, bool check = true) 
+  {
+    if (!properties.count(name))
+      return false;
+    try {
+      p_s = properties.at(name).get<sql::SQLString>();
+      if (check && !p_s)
+        throw sql::InvalidArgumentException{
+          std::string{"No string value passed for "} + name
+        };
+      return true;
+    } 
+    catch (sql::InvalidArgumentException&) 
+    {
+      throw sql::InvalidArgumentException{
+        std::string{"Wrong type passed for "} + name
+        + " expected sql::SQLString"
+      };
+    }
+  };
+#endif
+
   /* Port from options must be set as default for all hosts where port
      is not specified */
   {
@@ -622,67 +687,12 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
   }
 
-  // auto get_option_s = [&properties, &p_s](const char *name, bool check = true) 
-  // {
-  //   if (!properties.count(name))
-  //     return false;
-  //   try {
-  //     p_s = properties.at(name).get<sql::SQLString>();
-  //     if (check && !p_s)
-  //       throw sql::InvalidArgumentException{
-  //         std::string{"No string value passed for "} + name
-  //       };
-  //     return true;
-  //   } 
-  //   catch (sql::InvalidArgumentException&) 
-  //   {
-  //     throw sql::InvalidArgumentException{
-  //       std::string{"Wrong type passed for "} + name
-  //       + " expected sql::SQLString"
-  //     };
-  //   }
-  // };
-
-  auto get_option_i = [&properties, &p_i](std::string name, bool check = true) 
-  {
-    if (!properties.count(name))
-      return false;
-    try {
-      p_i = properties.at(name).get<int>();
-      if (check && !p_i)
-        throw sql::InvalidArgumentException{
-          "No long long value passed for " + name
-        };
-      return true;
-    } 
-    catch (sql::InvalidArgumentException&) 
-    {
-      throw sql::InvalidArgumentException{
-        "Wrong type passed for " + name + " expected long long"
-      };
-    }
-  };
-
-  auto get_option_b = [&properties, &p_b](std::string name, bool check = true)
-  {
-    if (!properties.count(name))
-      return false;
-    try {
-      p_b = properties.at(name).get<bool>();
-      if (check && !p_b)
-        throw sql::InvalidArgumentException{
-          "No bool value passed for " + name
-        };
-      return true;
-    } 
-    catch (sql::InvalidArgumentException&) 
-    {
-      throw sql::InvalidArgumentException{
-        "Wrong type passed for " + name + " expected bool"
-      };
-    }
-  };
-
+  /*
+    OPT_OPENTELEMETRY 
+  
+    We first try to get it as enum constant (integer value). If this does 
+    not work, we try bool value.
+  */
 
   try {
     if (get_option_i(OPT_OPENTELEMETRY))
@@ -699,7 +709,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         };
       };
 
-      intern->openTelemetryMode = (enum_opentelemetry_mode)*p_i;
+      intern->telemetryMode = (enum_opentelemetry_mode)*p_i;
     }
   }
   catch(const sql::InvalidArgumentException&)
@@ -722,7 +732,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         "OPT_OPENTELEMETRY can only be set to FALSE"
       };
 
-    intern->openTelemetryMode = OTEL_DISABLED;
+    intern->telemetryMode = OTEL_DISABLED;
   }
 
 
@@ -1297,270 +1307,268 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
-  if (getOpenTelemetryMode() != enum_opentelemetry_mode::OTEL_DISABLED)
+  if (!telemetry_disabled())
   {
-    intern->telemetry.reset(new MySQL_Telemetry("connection"));
+    intern->trace_span = telemetry::mk_span(this);
   }
 
-  auto connect = [this,flags,client_exp_pwd, opt_dns_srv](
-                 const std::string &host,
-                 const std::string &user,
-                 const std::string &pwd,
-                 const std::string &schema,
-                 uint16_t port,
-                 const std::string &socketOrPipe)
+  try
   {
-    CPP_INFO_FMT("hostName=%s", host.c_str());
-    CPP_INFO_FMT("user=%s", user.c_str());
-    CPP_INFO_FMT("port=%d", port);
-    CPP_INFO_FMT("schema=%s", schema.c_str());
-    CPP_INFO_FMT("socket/pipe=%s", socketOrPipe.c_str());
-
-    bool connect_result = !opt_dns_srv ?
-                            proxy->connect(host, user, pwd, schema, port,
-                                           socketOrPipe, flags)
-                            :
-                            proxy->connect_dns_srv(host, user, pwd,
-                                                   schema, flags);
-
-    if (!connect_result)
+    auto connect = [this,flags,client_exp_pwd, opt_dns_srv](
+                  const std::string &host,
+                  const std::string &user,
+                  const std::string &pwd,
+                  const std::string &schema,
+                  uint16_t port,
+                  const std::string &socketOrPipe)
     {
-      CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
-      CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
-      CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
-      CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+      CPP_INFO_FMT("hostName=%s", host.c_str());
+      CPP_INFO_FMT("user=%s", user.c_str());
+      CPP_INFO_FMT("port=%d", port);
+      CPP_INFO_FMT("schema=%s", schema.c_str());
+      CPP_INFO_FMT("socket/pipe=%s", socketOrPipe.c_str());
 
-      /* If error is "Password has expired" and application supports it while
-         mysql client lib does not */
-      std::string error_message;
-      unsigned int native_error= proxy->errNo();
+      bool connect_result = !opt_dns_srv ?
+                              proxy->connect(host, user, pwd, schema, port,
+                                            socketOrPipe, flags)
+                              :
+                              proxy->connect_dns_srv(host, user, pwd,
+                                                    schema, flags);
 
-      if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
-          && client_exp_pwd) {
-
-        native_error= deCL_CANT_HANDLE_EXP_PWD;
-        error_message= "Your password has expired, but your instance of"
-                       " Connector/C++ is not linked against mysql client library that"
-                       " allows to reset it. To resolve this you either need to change"
-                       " the password with mysql client that is capable to do that,"
-                       " or rebuild your instance of Connector/C++ against mysql client"
-                       " library that supports resetting of an expired password.";
-      } else if(native_error == CR_SSL_CONNECTION_ERROR){
-        error_message= proxy->error();
-        if(error_message.find("TLS version") != std::string::npos)
-        {
-          error_message+=", valid versions are: TLSv1.2, TLSv1.3";
-        }
-      }else {
-        error_message= proxy->error();
-      }
-
-      sql::SQLException e(error_message, proxy->sqlstate(), native_error);
-      throw e;
-    }
-  };
-
-  if(opt_dns_srv)
-  {
-    if(uri.size() > 1)
-    {
-      throw sql::InvalidArgumentException("Using more than one host with DNS SRV lookup is not allowed.");
-    }
-
-    if(uri.size() ==0)
-    {
-      throw sql::InvalidArgumentException("No hostname specified for DNS SRV lookup.");
-    }
-
-    host = *uri.begin();
-
-    if(host.Protocol() == NativeAPI::PROTOCOL_SOCKET)
-    {
-      throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
-    }
-
-    if(host.Protocol() == NativeAPI::PROTOCOL_PIPE)
-    {
-      throw sql::InvalidArgumentException("Using pipe with DNS SRV lookup is not allowed.");
-    }
-
-    if(host.hasPort())
-    {
-      throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
-    }
-
-  }
-
-  /*
-   * Helper class to simplify setting and resetting of the plugin callback.
-   */
-  struct Fido_Callback_Setter
-  {
-    NativeAPI::NativeConnectionWrapper *proxy = nullptr;
-
-    /*
-     * Construct the setter using the callback and proxy.
-     */
-    Fido_Callback_Setter(Fido_Callback *callback,
-      NativeAPI::NativeConnectionWrapper *_proxy) :
-        proxy(_proxy)
-    {
-      if (proxy && callback && *callback)
+      if (!connect_result)
       {
-        callback_mutex.lock();
-        try
-        {
-          fido_callback_instance = callback;
-          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
-            "authentication_fido_client",
-            "fido_messages_callback",
-            (const void*)fido_callback_func
-          );
+        CPP_ERR_FMT("Couldn't connect : %d", proxy->errNo());
+        CPP_ERR_FMT("Couldn't connect : (%s)", proxy->sqlstate().c_str());
+        CPP_ERR_FMT("Couldn't connect : %s", proxy->error().c_str());
+        CPP_ERR_FMT("Couldn't connect : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
 
-        }
-        catch (sql::InvalidArgumentException& e) {
-          throw ::sql::SQLUnsupportedOptionException(
-            "Failed to set fido message callback for authentication_fido_client plugin",
-            OPT_OCI_CONFIG_FILE
-          );
-        }
-      }
-    }
+        /* If error is "Password has expired" and application supports it while
+          mysql client lib does not */
+        std::string error_message;
+        unsigned int native_error= proxy->errNo();
 
-    ~Fido_Callback_Setter()
-    {
-      if(fido_callback_instance && proxy)
-      {
-        try
-        {
-          proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
-            "authentication_fido_client",
-            "fido_messages_callback",
-            nullptr);
-        }
-        catch(...) {}
-        fido_callback_instance = nullptr;
-        callback_mutex.unlock();
-      }
-    }
-  };
+        if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
+            && client_exp_pwd) {
 
-  Fido_Callback_Setter setter(
-    static_cast<MySQL_Driver*>(driver)->fido_callback,
-    proxy.get());
-
-  //Connect loop
-  {
-    bool connected = false;
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    int error=0;
-    std::string sql_state;
-
-    while(uri.size() && !connected)
-    {
-      std::uniform_int_distribution<int> distribution(
-            0, uri.size() - 1); // define the range of random numbers
-
-      int pos = distribution(generator);
-      auto el = uri.begin();
-
-      std::advance(el, pos);
-      proxy->use_protocol(el->Protocol());
-
-      try {
-        connect(el->Host(), userName,
-                password,
-                uri.Schema() /* schema */,
-                el->hasPort() ?  el->Port() : uri.DefaultPort(),
-                el->SocketOrPipe());
-        connected = true;
-        break;
-      }
-      catch (sql::SQLException& e)
-      {
-        error = e.getErrorCode();
-        sql_state = e.getSQLState();
-        switch (error)
-        {
-        case ER_CON_COUNT_ERROR:
-        case CR_SOCKET_CREATE_ERROR:
-        case CR_CONNECTION_ERROR:
-        case CR_CONN_HOST_ERROR:
-        case CR_IPSOCK_ERROR:
-        case CR_UNKNOWN_HOST:
-          //On Network errors, continue
-          break;
-        default:
-          //If SQLSTATE not 08xxx, which is used for network errors
-          if(e.getSQLState().compare(0,2, "08") != 0)
+          native_error= deCL_CANT_HANDLE_EXP_PWD;
+          error_message= "Your password has expired, but your instance of"
+                        " Connector/C++ is not linked against mysql client library that"
+                        " allows to reset it. To resolve this you either need to change"
+                        " the password with mysql client that is capable to do that,"
+                        " or rebuild your instance of Connector/C++ against mysql client"
+                        " library that supports resetting of an expired password.";
+        } else if(native_error == CR_SSL_CONNECTION_ERROR){
+          error_message= proxy->error();
+          if(error_message.find("TLS version") != std::string::npos)
           {
-            //Re-throw error and do not try another host
-            throw;
+            error_message+=", valid versions are: TLSv1.2, TLSv1.3";
           }
+        }else {
+          error_message= proxy->error();
         }
 
+        sql::SQLException e(error_message, proxy->sqlstate(), native_error);
+        throw e;
       }
-
-      uri.erase(el);
-
     };
 
-    if(!connected)
+    if(opt_dns_srv)
     {
-      std::stringstream err;
-      if(opt_dns_srv)
-        err << "Unable to connect to any of the hosts of " << host.Host() << " SRV";
-      else if (uri.size() >1) {
-        err << "Unable to connect to any of the hosts";
+      if(uri.size() > 1)
+      {
+        throw sql::InvalidArgumentException("Using more than one host with DNS SRV lookup is not allowed.");
       }
-      else {
-        switch(host.Protocol())
+
+      if(uri.size() ==0)
+      {
+        throw sql::InvalidArgumentException("No hostname specified for DNS SRV lookup.");
+      }
+
+      host = *uri.begin();
+
+      if(host.Protocol() == NativeAPI::PROTOCOL_SOCKET)
+      {
+        throw sql::InvalidArgumentException("Using Unix domain sockets with DNS SRV lookup is not allowed.");
+      }
+
+      if(host.Protocol() == NativeAPI::PROTOCOL_PIPE)
+      {
+        throw sql::InvalidArgumentException("Using pipe with DNS SRV lookup is not allowed.");
+      }
+
+      if(host.hasPort())
+      {
+        throw sql::InvalidArgumentException("Specifying a port number with DNS SRV lookup is not allowed.");
+      }
+
+    }
+
+    /*
+    * Helper class to simplify setting and resetting of the plugin callback.
+    */
+    struct Fido_Callback_Setter
+    {
+      NativeAPI::NativeConnectionWrapper *proxy = nullptr;
+
+      /*
+      * Construct the setter using the callback and proxy.
+      */
+      Fido_Callback_Setter(Fido_Callback *callback,
+        NativeAPI::NativeConnectionWrapper *_proxy) :
+          proxy(_proxy)
+      {
+        if (proxy && callback && *callback)
         {
-        case NativeAPI::PROTOCOL_SOCKET:
-        case NativeAPI::PROTOCOL_PIPE:
-          err << "Unable to connect to " << host.SocketOrPipe() ;
-          break;
-        default:
-          err << "Unable to connect to " << host.Host() << ":" << host.Port();
-          break;
+          callback_mutex.lock();
+          try
+          {
+            fido_callback_instance = callback;
+            proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+              "authentication_fido_client",
+              "fido_messages_callback",
+              (const void*)fido_callback_func
+            );
+
+          }
+          catch (sql::InvalidArgumentException& e) {
+            throw ::sql::SQLUnsupportedOptionException(
+              "Failed to set fido message callback for authentication_fido_client plugin",
+              OPT_OCI_CONFIG_FILE
+            );
+          }
         }
       }
-      proxy.reset();
-      if (intern->telemetry)
+
+      ~Fido_Callback_Setter()
       {
-        intern->telemetry->set_status(MySQL_Telemetry::Status::ERROR, err.str());
-        intern->telemetry.reset();
+        if(fido_callback_instance && proxy)
+        {
+          try
+          {
+            proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+              "authentication_fido_client",
+              "fido_messages_callback",
+              nullptr);
+          }
+          catch(...) {}
+          fido_callback_instance = nullptr;
+          callback_mutex.unlock();
+        }
       }
-      throw sql::SQLException(err.str(), sql_state, error);
+    };
+
+    Fido_Callback_Setter setter(
+      static_cast<MySQL_Driver*>(driver)->fido_callback,
+      proxy.get());
+
+    //Connect loop
+    {
+      bool connected = false;
+      std::random_device rd;
+      std::mt19937 generator(rd());
+      int error=0;
+      std::string sql_state;
+
+      while(uri.size() && !connected)
+      {
+        std::uniform_int_distribution<int> distribution(
+              0, uri.size() - 1); // define the range of random numbers
+
+        int pos = distribution(generator);
+        auto el = uri.begin();
+
+        std::advance(el, pos);
+        proxy->use_protocol(el->Protocol());
+
+        try {
+          connect(el->Host(), userName,
+                  password,
+                  uri.Schema() /* schema */,
+                  el->hasPort() ?  el->Port() : uri.DefaultPort(),
+                  el->SocketOrPipe());
+          connected = true;
+          break;
+        }
+        catch (sql::SQLException& e)
+        {
+          error = e.getErrorCode();
+          sql_state = e.getSQLState();
+          switch (error)
+          {
+          case ER_CON_COUNT_ERROR:
+          case CR_SOCKET_CREATE_ERROR:
+          case CR_CONNECTION_ERROR:
+          case CR_CONN_HOST_ERROR:
+          case CR_IPSOCK_ERROR:
+          case CR_UNKNOWN_HOST:
+            //On Network errors, continue
+            break;
+          default:
+            //If SQLSTATE not 08xxx, which is used for network errors
+            if(e.getSQLState().compare(0,2, "08") != 0)
+            {
+              //Re-throw error and do not try another host
+              throw;
+            }
+          }
+
+        }
+
+        uri.erase(el);
+
+      };
+
+      if(!connected)
+      {
+        std::stringstream err;
+        if(opt_dns_srv)
+          err << "Unable to connect to any of the hosts of " << host.Host() << " SRV";
+        else if (uri.size() >1) {
+          err << "Unable to connect to any of the hosts";
+        }
+        else {
+          switch(host.Protocol())
+          {
+          case NativeAPI::PROTOCOL_SOCKET:
+          case NativeAPI::PROTOCOL_PIPE:
+            err << "Unable to connect to " << host.SocketOrPipe() ;
+            break;
+          default:
+            err << "Unable to connect to " << host.Host() << ":" << host.Port();
+            break;
+          }
+        }
+        proxy.reset();
+        throw sql::SQLException(err.str(), sql_state, error);
+      }
+    }
+
+
+
+    if (opt_reconnect) {
+      try {
+        proxy->options(MYSQL_OPT_RECONNECT, (const char *) &intern->reconnect);
+      } catch (sql::InvalidArgumentException& e) {
+        std::string errorOption("MYSQL_OPT_RECONNECT");
+        throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
+      }
+    }
+
+    setAutoCommit(true);
+    // Different Values means we have to set different result set encoding
+    if (characterSetResults.compare(defaultCharset)) {
+      setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
+    }
+    intern->meta.reset(new MySQL_ConnectionMetaData(service.get(), proxy, intern->logger));
+
+    if (postInit.length() > 0) {
+      service->executeUpdate(postInit);
     }
   }
-
-
-
-  if (opt_reconnect) {
-    try {
-      proxy->options(MYSQL_OPT_RECONNECT, (const char *) &intern->reconnect);
-    } catch (sql::InvalidArgumentException& e) {
-      std::string errorOption("MYSQL_OPT_RECONNECT");
-      if (intern->telemetry)
-      {
-        intern->telemetry->set_status(MySQL_Telemetry::Status::ERROR, e.what());
-        intern->telemetry.reset();
-      }
-      throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
-    }
-  }
-
-  setAutoCommit(true);
-  // Different Values means we have to set different result set encoding
-  if (characterSetResults.compare(defaultCharset)) {
-    setSessionVariable("character_set_results", characterSetResults.length() ? characterSetResults:"NULL");
-  }
-  intern->meta.reset(new MySQL_ConnectionMetaData(service.get(), proxy, intern->logger));
-
-  if (postInit.length() > 0) {
-    service->executeUpdate(postInit);
+  catch(sql::SQLException &e)
+  {
+    telemetry::set_error(intern->trace_span, e.what());
+    throw;
   }
 }
 /* }}} */
@@ -1777,26 +1785,10 @@ MySQL_Connection::getTransactionIsolation()
 /* }}} */
 
 
-/* {{{ MySQL_Connection::getOpenTelemetryMode() -I- */
-enum_opentelemetry_mode
-MySQL_Connection::getOpenTelemetryMode()
+bool MySQL_Connection::telemetry_disabled() const
 {
-  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getOpenTelemetryMode");
-  checkClosed();
-  return intern->openTelemetryMode;
+  return !intern || (OTEL_DISABLED == intern->telemetryMode);
 }
-/* }}} */
-
-
-/* {{{ MySQL_Connection::getTelemetry() -I- */
-MySQL_Telemetry *
-MySQL_Connection::getTelemetry()
-{
-  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getTelemetry");
-  checkClosed();
-  return intern->telemetry.get();
-}
-/* }}} */
 
 
 /* {{{ MySQL_Connection::getWarnings() -I- */

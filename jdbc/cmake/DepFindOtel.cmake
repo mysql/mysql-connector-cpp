@@ -43,24 +43,31 @@ endif()
 
 message(STATUS "Setting up OpenTelemetry libraries.")
 
-#######
-# OpenTelemetry
-#
-add_ext(otel tracer_provider.h)
+# Note: Adds opentelemetry dependency, either pointed by WITH_OTEL and friends
+# or the one bundled at extra/otel. In case of opentelemetry we use 
+# haeader-only bits so the sources do not need to be built.
 
-# message(STATUS "===================== ALL VARIABLES ============================")
-# get_cmake_property(_variableNames VARIABLES)
-# foreach(_variableName ${_variableNames})
-#     message(STATUS "${_variableName}=${${_variableName}}")
-# endforeach()
+add_ext(otel "opentelemetry/trace/provider.h")
+
 
 if(NOT OTEL_FOUND)
   message(FATAL_ERROR "Can't build without OpenTelemetry support")
 endif()
 
-add_ext_targets(otel
-  LIBRARY opentelemetry_api otel_api
-#  LIBRARY resources otel_resources
-#  LIBRARY trace otel_trace
-)
+# Note: When using bundled sources the `otel_api` tarrget is imported from 
+# the project and we refer to it. Otherwise (external location given
+# by WITH_OTEL etc.) we just create ext::opentelemetry_api interface library
+# manually here to point at the external include location.
 
+if(TARGET otel_api)
+
+  add_ext_targets(otel
+    LIBRARY opentelemetry_api otel_api
+  )
+
+else()
+
+  add_library(ext::opentelemetry_api INTERFACE GLOBAL)
+  target_include_directories(ext::opentelemetry_api INTERFACE "${OTEL_INCLUDE_DIR}")
+
+endif()

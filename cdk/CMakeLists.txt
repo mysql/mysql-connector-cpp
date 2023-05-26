@@ -273,6 +273,7 @@ ADD_SUBDIRECTORY(protocol)
 ADD_SUBDIRECTORY(mysqlx)
 ADD_SUBDIRECTORY(core)
 
+
 #
 # Write configuration with detected settings.
 #

@@ -29,57 +29,84 @@
  */
 
 #include "mysql_telemetry.h"
-#include <iostream>
+#include "mysql_connection.h"
+#include "mysql_statement.h"
 
-#if defined(WIN32)
-#include <Psapi.h>
-static const std::string otel_lib_name = "opentelemetry_common.dll";
-#else
-#include <link.h>
-#include <iostream>
-#include <dlfcn.h>
-static const std::string otel_lib_name = "libopentelemetry_common.so";
-#endif
+//#include <iostream>
+#include <optional>
+#include <string>
 
 
 namespace sql
 {
 namespace mysql
 {
-
-static int otel_libs_found = -1;
-
-bool check_process_otel_libs()
+namespace telemetry
 {
-  if (otel_libs_found > -1)
-    return otel_libs_found > 0;
-    
-  otel_libs_found = 0;
 
-#if defined(WIN32)
-#else
-  dl_iterate_phdr(
-    [](struct dl_phdr_info* info, size_t size, void* data) {
-      if (otel_libs_found)
-        return 0;
-        
-      if (info->dlpi_name)
-      {
-        std::string s = info->dlpi_name;
-        size_t pos = s.find_last_of('/');
 
-        if (pos == std::string::npos)
-          return 0;
+  Span_ptr mk_span(
+    std::string name,
+    std::optional<trace::SpanContext> link = {}
+  )
+  {
+    auto tracer = trace::Provider::GetTracerProvider()->GetTracer(
+      "MySQL Connector/C++", MYCPPCONN_DM_VERSION
+    );
+  
+    trace::StartSpanOptions opts;
+    opts.kind = trace::SpanKind::kClient;
 
-        if (s.find_last_of(otel_lib_name, pos) != std::string::npos)
-          otel_libs_found = 1;
-      }
+    auto span
+    = link ? tracer->StartSpan(name, {}, {{*link, {}}},  opts) 
+           : tracer->StartSpan(name, opts);
 
-      return 0;
-    } , nullptr);
-#endif
-  return otel_libs_found > 0;
+    span->SetAttribute("db.system", "mysql");
+    return span;
+  }
+
+
+  Span_ptr mk_span(MySQL_Connection *conn)
+  {
+    return mk_span("connection");
+  }
+
+
+ Span_ptr mk_span(MySQL_Statement *stmt)
+ {
+    Span_ptr conn_span = stmt->get_conn_span();
+    auto span = mk_span("SQL statement", conn_span->GetContext());
+
+    if (!stmt->attrbind.attribNameExists("traceparent"))
+    {
+      char buf[trace::TraceId::kSize * 2];
+      auto ctx = span->GetContext();
+
+      ctx.trace_id().ToLowerBase16(buf);
+      std::string trace_id{buf, sizeof(buf)};
+
+      ctx.span_id().ToLowerBase16({buf, trace::SpanId::kSize * 2});
+      std::string span_id{buf, trace::SpanId::kSize * 2};
+
+      stmt->attrbind.setQueryAttrString(
+        "traceparent", "00-" + trace_id + "-" + span_id + "-00"
+      );
+    }
+
+    return span;
+ }
+
+  void set_error(Span_ptr& span, std::string msg)
+  {
+    if (!span)
+      return;
+      
+    span->SetStatus(trace::StatusCode::kError, msg);
+    // TODO: explain why...
+    Span_ptr sink;
+    span.swap(sink);
+  }
+
 }
-
 }
 }

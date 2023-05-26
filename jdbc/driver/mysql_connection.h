@@ -45,8 +45,6 @@ namespace sql
 namespace mysql
 {
 
-class MySQL_Telemetry;
-
 class CPPCONN_PUBLIC_FUNC MySQL_Savepoint : public sql::Savepoint
 {
   sql::SQLString name;
@@ -77,6 +75,8 @@ class NativeConnectionWrapper;
 
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
+  friend MySQL_Statement;
+  
   MySQL_Statement * createServiceStmt();
 
 public:
@@ -177,15 +177,11 @@ public:
 
   virtual sql::SQLString getLastStatementInfo();
 
-  enum_opentelemetry_mode getOpenTelemetryMode();
-
-  MySQL_Telemetry * getTelemetry();
-
 private:
   /* We do not really think this class has to be subclassed*/
   void checkClosed();
   void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
-
+  
   Driver * driver;
 
 #ifdef _WIN32
@@ -209,6 +205,8 @@ private:
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
+
+  bool telemetry_disabled() const;
 
   /* Prevent use of these */
   MySQL_Connection(const MySQL_Connection &);
