@@ -643,7 +643,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   //   }
   // };
 
-  auto get_option_i = [&properties, &p_i](const char *name, bool check = true) 
+  auto get_option_i = [&properties, &p_i](std::string name, bool check = true) 
   {
     if (!properties.count(name))
       return false;
@@ -651,38 +651,79 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       p_i = properties.at(name).get<int>();
       if (check && !p_i)
         throw sql::InvalidArgumentException{
-          std::string{"No long long value passed for "} + name
+          "No long long value passed for " + name
         };
       return true;
     } 
     catch (sql::InvalidArgumentException&) 
     {
       throw sql::InvalidArgumentException{
-        std::string{"Wrong type passed for "} + name
-        + " expected long long"
+        "Wrong type passed for " + name + " expected long long"
       };
     }
   };
 
-  // TODO: Option set to boolean value
-
-  if (get_option_i(OPT_OPENTELEMETRY))
+  auto get_option_b = [&properties, &p_b](std::string name, bool check = true)
   {
-    switch (*p_i)
+    if (!properties.count(name))
+      return false;
+    try {
+      p_b = properties.at(name).get<bool>();
+      if (check && !p_b)
+        throw sql::InvalidArgumentException{
+          "No bool value passed for " + name
+        };
+      return true;
+    } 
+    catch (sql::InvalidArgumentException&) 
     {
-    case OTEL_DISABLED:
-    case OTEL_PREFERRED:
-      break;
-    default:
       throw sql::InvalidArgumentException{
-        "Invalid value for OPT_OPENTELEMETRY;"
-        " expecting OTEL_DISABLED or OTEL_PREFERRED"
+        "Wrong type passed for " + name + " expected bool"
       };
-    };
+    }
+  };
 
-    intern->openTelemetryMode = (enum_opentelemetry_mode)*p_i;
+
+  try {
+    if (get_option_i(OPT_OPENTELEMETRY))
+    {
+      switch (*p_i)
+      {
+      case OTEL_DISABLED:
+      case OTEL_PREFERRED:
+        break;
+      default:
+        throw sql::InvalidArgumentException{
+          "Invalid value for OPT_OPENTELEMETRY;"
+          " expecting OTEL_DISABLED or OTEL_PREFERRED"
+        };
+      };
+
+      intern->openTelemetryMode = (enum_opentelemetry_mode)*p_i;
+    }
   }
+  catch(const sql::InvalidArgumentException&)
+  {
+    try {
 
+      get_option_b(OPT_OPENTELEMETRY);
+
+    }
+    catch(const sql::InvalidArgumentException&)
+    {
+      throw sql::InvalidArgumentException{
+        "Wrong type passed for OPT_OPENTELEMETRY"
+        " expected enum_opentelemetry_mode or bool (FALSE)"
+      };
+    }
+
+    if (*p_b)
+      throw sql::InvalidArgumentException{
+        "OPT_OPENTELEMETRY can only be set to FALSE"
+      };
+
+    intern->openTelemetryMode = OTEL_DISABLED;
+  }
 
 
 #define PROCESS_CONN_OPTION(option_type, options_map) \

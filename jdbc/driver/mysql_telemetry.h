@@ -91,8 +91,11 @@ public:
         provider.get()->GetTracer("MySQL Connector/C++", MYCPPCONN_DM_VERSION)
       )
   {
-    trace_api::StartSpanOptions opts{{}, {}, trace::SpanContext::GetInvalid(), trace::SpanKind::kClient};
+    trace_api::StartSpanOptions opts;
+    opts.kind = trace::SpanKind::kClient;
     
+    // logm(">>> span opts, kind:", (int)opts.kind, (int)trace::SpanKind::kClient);
+
     if (linked_span)
     {
       auto link_ctx = linked_span->GetContext();
