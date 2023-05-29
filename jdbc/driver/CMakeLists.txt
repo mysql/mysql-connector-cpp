@@ -39,6 +39,9 @@ configure_file(version_info.h.cmake version_info.h @ONLY)
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 #-------------------
+# Work around the compiler errors in Windows
+ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN -DNOGDI)
+
 
 if(MYSQLCLIENT_STATIC_BINDING)
   message(STATUS "Using static libmysql binding")

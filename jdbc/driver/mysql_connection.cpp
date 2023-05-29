@@ -513,8 +513,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   bool ssl_used = false;
   unsigned long flags = CLIENT_MULTI_RESULTS;
 
-  const int * p_i;
-  const bool * p_b;
+  const int * p_i = nullptr;
+  const bool * p_b = nullptr;
   const sql::SQLString * p_s = nullptr;
   bool opt_reconnect = false;
   int  client_exp_pwd = false;
@@ -717,7 +717,11 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     try {
 
       get_option_b(OPT_OPENTELEMETRY);
-
+      if (*p_b)
+        throw sql::InvalidArgumentException{
+          "OPT_OPENTELEMETRY can only be set to FALSE"
+        };
+      intern->telemetryMode = OTEL_DISABLED;
     }
     catch(const sql::InvalidArgumentException&)
     {
@@ -726,13 +730,6 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         " expected enum_opentelemetry_mode or bool (FALSE)"
       };
     }
-
-    if (*p_b)
-      throw sql::InvalidArgumentException{
-        "OPT_OPENTELEMETRY can only be set to FALSE"
-      };
-
-    intern->telemetryMode = OTEL_DISABLED;
   }
 
 
