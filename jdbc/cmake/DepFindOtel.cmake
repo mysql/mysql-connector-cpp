@@ -28,23 +28,19 @@
 
 # #############################################################################
 #
-# Targets:
-#
-# (re)build-{otel}
-#
 # Imported/alias targets:
 #
-# otel::api
+# ext::opentelemetry_api
 #
 
-if(TARGET otel::api)
+if(TARGET ext::opentelemetry_api)
   return()
 endif()
 
 message(STATUS "Setting up OpenTelemetry libraries.")
 
 # Note: Adds opentelemetry dependency, either pointed by WITH_OTEL and friends
-# or the one bundled at extra/otel. In case of opentelemetry we use 
+# or the one bundled at extra/otel. In case of opentelemetry we use
 # haeader-only bits so the sources do not need to be built.
 
 add_ext(otel "opentelemetry/trace/provider.h")
@@ -54,20 +50,19 @@ if(NOT OTEL_FOUND)
   message(FATAL_ERROR "Can't build without OpenTelemetry support")
 endif()
 
-# Note: When using bundled sources the `otel_api` tarrget is imported from 
-# the project and we refer to it. Otherwise (external location given
-# by WITH_OTEL etc.) we just create ext::opentelemetry_api interface library
-# manually here to point at the external include location.
+# Note: If external otel location is used (as given by WITH_OTEL and friends)
+# then OTEL_INCLUDE_DIR should be defined and we create ext::opentelemetry_api
+# interface library manually to point at the external include location.
+# Otherwise bundled otel sources are used and we create the interface library
+# using `add_ext_tragets()` function.
 
-if(TARGET otel_api)
+if(DEFINED OTEL_INCLUDE_DIR)
 
-  add_ext_targets(otel
-    LIBRARY opentelemetry_api otel_api
-  )
+  add_library(ext::opentelemetry_api INTERFACE)
+  target_include_directories(ext::opentelemetry_api INTERFACE "${OTEL_INCLUDE_DIR}")
 
 else()
 
-  add_library(ext::opentelemetry_api INTERFACE GLOBAL)
-  target_include_directories(ext::opentelemetry_api INTERFACE "${OTEL_INCLUDE_DIR}")
+  add_ext_targets(otel LIBRARY opentelemetry_api otel_api)
 
 endif()

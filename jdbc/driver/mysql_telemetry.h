@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -39,20 +39,6 @@
 #include <cppconn/sqlstring.h>
 #include <cppconn/version_info.h>
 #include <vector>
-
-template <typename T>
-void logm(T&& msg)
-{
-  std::cerr << msg << std::endl;
-}
-
-template <typename T, typename... TT>
-void logm(T&& first, TT&&... rest)
-{
-  std::cerr << first << " ";
-  logm(std::forward<TT>(rest)...);
-}
-
 
 
 namespace sql
