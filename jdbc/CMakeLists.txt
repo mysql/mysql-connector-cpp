@@ -148,6 +148,7 @@ endif()
 
 
 find_dependency(MySQL)
+find_dependency(Otel)
 
 
 #-----------------
