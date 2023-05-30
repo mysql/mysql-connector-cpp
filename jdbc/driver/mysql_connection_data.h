@@ -89,8 +89,7 @@ struct MySQL_ConnectionData
 
   std::unique_ptr<MySQL_ConnectionMetaData> meta;
 
-  enum_opentelemetry_mode telemetryMode = OTEL_PREFERRED;
-  telemetry::Span_ptr trace_span;
+  telemetry::Telemetry<MySQL_Connection> telemetry;
 };
 
 } /* namespace mysql */

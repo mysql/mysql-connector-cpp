@@ -129,7 +129,7 @@ function(add_ext NAME HEADER)
   )
 
   
-  show_config_options()
+  #show_config_options()
 
   # Handle non-path value of WITH_X option
 

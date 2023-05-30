@@ -538,6 +538,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   sql::ConnectOptionsMap::const_iterator it;
 
+#ifdef TELEMETRY
   // TODO: Use these helpers to reduce code repetition.
 
   auto get_option_i = [&properties, &p_i](std::string name, bool check = true) 
@@ -601,6 +602,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
       };
     }
   };
+#endif
 #endif
 
   /* Port from options must be set as default for all hosts where port
@@ -694,6 +696,17 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     not work, we try bool value.
   */
 
+#ifndef TELEMETRY
+
+  if (properties.count(OPT_OPENTELEMETRY))
+  {
+    throw sql::SQLException{
+      "Option OPT_OPENTELEMETRY not yet supported on this platform."
+    };
+  }
+
+#else
+
   try {
     if (get_option_i(OPT_OPENTELEMETRY))
     {
@@ -709,7 +722,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         };
       };
 
-      intern->telemetryMode = (enum_opentelemetry_mode)*p_i;
+      intern->telemetry.set_mode((enum_opentelemetry_mode)*p_i);
     }
   }
   catch(const sql::InvalidArgumentException&)
@@ -721,7 +734,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
         throw sql::InvalidArgumentException{
           "OPT_OPENTELEMETRY can only be set to FALSE"
         };
-      intern->telemetryMode = OTEL_DISABLED;
+      intern->telemetry.set_mode(OTEL_DISABLED);
     }
     catch(const sql::InvalidArgumentException&)
     {
@@ -732,6 +745,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
   }
 
+#endif
 
 #define PROCESS_CONN_OPTION(option_type, options_map) \
   process_connection_option< option_type >(it, options_map, sizeof(options_map)/sizeof(String2IntMap), proxy)
@@ -1304,10 +1318,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 
   CPP_INFO_FMT("OPT_DNS_SRV=%d", opt_dns_srv);
 
-  if (!telemetry_disabled())
-  {
-    intern->trace_span = telemetry::mk_span(this);
-  }
+  intern->telemetry.span_start(this);
 
   try
   {
@@ -1564,7 +1575,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   }
   catch(sql::SQLException &e)
   {
-    telemetry::set_error(intern->trace_span, e.what());
+    intern->telemetry.set_error(this, e.what());
     throw;
   }
 }
@@ -1780,12 +1791,6 @@ MySQL_Connection::getTransactionIsolation()
   return intern->txIsolationLevel;
 }
 /* }}} */
-
-
-bool MySQL_Connection::telemetry_disabled() const
-{
-  return !intern || (OTEL_DISABLED == intern->telemetryMode);
-}
 
 
 /* {{{ MySQL_Connection::getWarnings() -I- */

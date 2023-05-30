@@ -32,13 +32,12 @@
 #ifndef _MYSQL_TELEMETRY_H_
 #define _MYSQL_TELEMETRY_H_
 
-#include <iostream>
+#ifdef TELEMETRY
+#include <cppconn/connection.h> // opentelemetry_mode enum
 #include <opentelemetry/trace/provider.h>
-#include <string>
+#endif
 
-#include <cppconn/sqlstring.h>
-#include <cppconn/version_info.h>
-#include <vector>
+#include <string>
 
 
 namespace sql
@@ -51,22 +50,95 @@ namespace mysql
   
   namespace telemetry
   {
+
+    /*
+      Note: If TELEMETRY flag is not enabled then defines phony classes
+      Telemetry_base<X> and Telemetry<X> that do nothing (and should
+      be optimized out by the compiler).
+    */
+
+#ifndef TELEMETRY
+
+    template<class>
+    struct Telemetry_base
+    {};
+
+#else
+
     namespace nostd      = opentelemetry::nostd;
     namespace trace      = opentelemetry::trace;
 
     using Span_ptr = nostd::shared_ptr<trace::Span>;
-    
-    Span_ptr mk_span(MySQL_Statement*);
-    Span_ptr mk_span(MySQL_Connection*);
 
-    // Set error status for the given span and clear the pointer.
+    template<class Obj> 
+    struct Telemetry_base
+    {
+      bool disabled(Obj*) const;
+    protected:
+      Span_ptr mk_span(Obj*);
+    };
 
-    void set_error(Span_ptr&, std::string);
+    template<>
+    struct Telemetry_base<MySQL_Connection>
+    {
+      using Obj = MySQL_Connection;
+
+      bool disabled(Obj *) const
+      {
+        return OTEL_DISABLED == mode;
+      }
+
+      enum opentelemetry_mode mode = OTEL_PREFERRED;
+      void set_mode(opentelemetry_mode m)
+      {
+        mode = m;
+      }
+
+    protected:
+
+      Span_ptr mk_span(Obj*);
+    };
+
+#endif
+
+    template<class Obj> 
+    struct Telemetry
+     : public Telemetry_base<Obj>
+    {
+#ifndef TELEMETRY
+
+      static void span_start(Obj*) {}
+      static void set_error(Obj*, std::string) {}
+
+#else
+      using Base = Telemetry_base<Obj>;
+
+      Span_ptr span;
+
+      void span_start(Obj *obj)
+      {
+        if (Base::disabled(obj))
+          return;
+        span = Base::mk_span(obj);  
+      }
+
+      void set_error(Obj *obj, std::string msg)
+      {
+        if (Base::disabled(obj))
+          return;
+        span->SetStatus(trace::StatusCode::kError, msg);
+        // TODO: explain why...
+        Span_ptr sink;
+        span.swap(sink);       
+      }
+#endif
+    };
 
   } /* namespace telemetry */
 
 } /* namespace mysql */
 } /* namespace sql */
+
 
 #endif /*_MYSQL_URI_H_*/
 /*

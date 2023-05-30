@@ -206,8 +206,6 @@ private:
 #pragma warning(pop)
 #endif
 
-  bool telemetry_disabled() const;
-
   /* Prevent use of these */
   MySQL_Connection(const MySQL_Connection &);
   void operator=(MySQL_Connection &);

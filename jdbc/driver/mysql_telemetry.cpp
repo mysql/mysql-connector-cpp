@@ -32,9 +32,14 @@
 #include "mysql_connection.h"
 #include "mysql_statement.h"
 
+#include <cppconn/sqlstring.h>
+#include <cppconn/version_info.h>
+
 //#include <iostream>
 #include <optional>
 #include <string>
+#include <vector>
+
 
 
 namespace sql
@@ -66,16 +71,32 @@ namespace telemetry
   }
 
 
-  Span_ptr mk_span(MySQL_Connection *conn)
+  Span_ptr 
+  Telemetry_base<MySQL_Connection>::mk_span(MySQL_Connection *conn)
   {
-    return mk_span("connection");
+    return telemetry::mk_span("connection");
   }
 
 
- Span_ptr mk_span(MySQL_Statement *stmt)
- {
-    Span_ptr conn_span = stmt->get_conn_span();
-    auto span = mk_span("SQL statement", conn_span->GetContext());
+  template<>
+  bool 
+  Telemetry_base<MySQL_Statement>::disabled(MySQL_Statement *stmt) const
+  {
+    return stmt->conn_telemetry().disabled(stmt->connection);
+  }
+
+  /*
+    Creating statement span: we link it to the connection span and we also
+    set "traceparent" attribute unless user already set it.
+  */
+ 
+  template<>
+  Span_ptr 
+  Telemetry_base<MySQL_Statement>::mk_span(MySQL_Statement *stmt)
+  {
+    auto span = telemetry::mk_span("SQL statement",
+      stmt->conn_telemetry().span->GetContext()
+    );
 
     if (!stmt->attrbind.attribNameExists("traceparent"))
     {
@@ -94,17 +115,6 @@ namespace telemetry
     }
 
     return span;
- }
-
-  void set_error(Span_ptr& span, std::string msg)
-  {
-    if (!span)
-      return;
-      
-    span->SetStatus(trace::StatusCode::kError, msg);
-    // TODO: explain why...
-    Span_ptr sink;
-    span.swap(sink);
   }
 
 }

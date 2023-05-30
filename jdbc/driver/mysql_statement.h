@@ -59,8 +59,6 @@ class NativeConnectionWrapper;
 
 class MySQL_Statement : public sql::Statement
 {
-  friend telemetry::Span_ptr telemetry::mk_span(MySQL_Statement*);
-
 protected:
  std::unique_ptr<MySQL_Warning> warnings;
  MySQL_Connection *connection;
@@ -80,12 +78,15 @@ protected:
 
  unsigned int warningsCount;
 
- telemetry::Span_ptr trace_span;
-
  virtual std::shared_ptr<NativeAPI::NativeResultsetWrapper> get_resultset();
  virtual void checkClosed();
 
- telemetry::Span_ptr get_conn_span();
+ telemetry::Telemetry<MySQL_Statement> telemetry;
+
+ // Get connection's telemetry object.
+ telemetry::Telemetry<MySQL_Connection>& conn_telemetry();
+
+ friend telemetry::Telemetry_base<MySQL_Statement>;
 
 public:
  MySQL_Statement(MySQL_Connection *conn,

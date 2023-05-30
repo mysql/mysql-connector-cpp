@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cstring>
+#include <cassert>
 
 
 /*
@@ -105,10 +106,7 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
     throw sql::InvalidInstanceException("Connection has been closed");
   }
 
-  if (!connection->telemetry_disabled())
-  {
-    trace_span = telemetry::mk_span(this);
-  }
+  telemetry.span_start(this);
   
   try 
   {
@@ -125,7 +123,7 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
   }
   catch(sql::SQLException &e)
   {
-    telemetry::set_error(trace_span, e.what());
+    telemetry.set_error(this, e.what());
     throw;
   }
 
@@ -134,11 +132,11 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 }
 /* }}} */
 
-
-telemetry::Span_ptr
-MySQL_Statement::get_conn_span()
+telemetry::Telemetry<MySQL_Connection>&
+MySQL_Statement::conn_telemetry()
 {
-  return connection->intern->trace_span;
+  assert(connection && connection->intern);
+  return connection->intern->telemetry;
 }
 
 
