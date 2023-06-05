@@ -55,6 +55,14 @@ SET(ZSTD_SRCS
   lib/dictBuilder/zdict.c
 )
 
+
+IF((LINUX OR APPLE) AND NOT ARM_CPU)
+  ENABLE_LANGUAGE(ASM)
+  LIST(APPEND ZSTD_SRCS
+    lib/decompress/huf_decompress_amd64.S
+    )
+ENDIF()
+
 ADD_LIBRARY(zstd STATIC ${ZSTD_SRCS})
 set_target_properties(zstd PROPERTIES FOLDER "Misc")
 

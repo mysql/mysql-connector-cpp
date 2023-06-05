@@ -83,6 +83,9 @@ if(APPLE)
   set(MACOS ${CMAKE_SYSTEM_VERSION})
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(LINUX TRUE CACHE INTERNAL "")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
   set(SUNOS ${CMAKE_SYSTEM_VERSION})
@@ -96,6 +99,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
   set(SPARC TRUE CACHE INTERNAL "")
 endif()
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+  set(ARM_CPU TRUE CACHE INTERNAL "")
+endif()
 
 ########################################################################
 #
