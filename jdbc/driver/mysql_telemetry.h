@@ -108,6 +108,7 @@ namespace mysql
 #ifndef TELEMETRY
 
       static void span_start(Obj*) {}
+      static void span_end(Obj*) {}
       static void set_error(Obj*, std::string) {}
 
 #else
@@ -121,6 +122,18 @@ namespace mysql
           return;
         span = Base::mk_span(obj);  
       }
+
+      
+      void span_end(Obj *obj)
+      {
+        if (!span)
+          return;
+        span->End();
+        // Destroy span just in case
+        Span_ptr sink;
+        span.swap(sink);
+      }
+
 
       void set_error(Obj *obj, std::string msg)
       {

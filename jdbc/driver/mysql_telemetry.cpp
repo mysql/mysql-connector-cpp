@@ -117,6 +117,6 @@ namespace telemetry
     return span;
   }
 
-}
-}
-}
+} // telemetry
+} // mysql
+} // sql
