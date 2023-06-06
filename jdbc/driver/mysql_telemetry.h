@@ -61,7 +61,9 @@ namespace mysql
 
     template<class>
     struct Telemetry_base
-    {};
+    {
+      void set_mode(opentelemetry_mode) {}
+    };
 
 #else
 
@@ -145,6 +147,21 @@ namespace mysql
         span.swap(sink);       
       }
 #endif
+    
+      Telemetry(opentelemetry_mode);
+      Telemetry() = default;
+    };
+
+    /*
+      Note: This ctor can be used to construct connection telemetry object
+      with a different default mode.
+    */
+
+    template <>
+    inline
+    Telemetry<MySQL_Connection>::Telemetry(opentelemetry_mode m)
+    {      
+      set_mode(m);
     };
 
   } /* namespace telemetry */

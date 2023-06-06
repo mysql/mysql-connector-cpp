@@ -141,7 +141,30 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 telemetry::Telemetry<MySQL_Connection>&
 MySQL_Statement::conn_telemetry()
 {
-  assert(connection && connection->intern);
+  assert(connection);
+  
+  /*
+    Note: It can happend that connection was closed when this method is called. 
+    In that case connection->intern is empty and we have nothing to return 
+    here. Then we use a dummy telemetry object which is always disabled.
+  */
+
+  static telemetry::Telemetry<MySQL_Connection> dummy{OTEL_DISABLED};
+
+  /*
+    Note: `proxy` is a weak pointer to the proxy object owned by
+    the connection. If connection has been deleted then `proxy` should
+    be expired and we use this fact to detect whether the connection
+    is still good.
+  */
+
+  if (proxy.expired())
+    return dummy;
+
+  // Note: We assume that if the proxy is still around then so is
+  // the connection and it has non-empty intern pointer.
+
+  assert(connection->intern);
   return connection->intern->telemetry;
 }
 
