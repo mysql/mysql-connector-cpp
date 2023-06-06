@@ -120,6 +120,12 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
       
       sql::mysql::util::throwSQLException(*proxy_p.get());
     }
+
+    // Note: If statement has no results then we close the span here, otherwise 
+    // it will be closed after reading all result sets.
+
+    if ((0 == proxy_p->field_count()) && !proxy_p->more_results())
+      telemetry.span_end(this);
   }
   catch(sql::SQLException &e)
   {
@@ -243,11 +249,6 @@ try
             logger
         );
   CPP_INFO_FMT("rset=%p", tmp);
-  if (tmp->isClosed() || tmp->rowsCount() == 0)
-  {
-    // Close span if the result set is closed or empty
-    telemetry.span_end(this);
-  }
   return tmp;
 }
 catch (sql::SQLException &e)
