@@ -137,7 +137,7 @@ namespace mysql
 
       void set_error(Obj *obj, std::string msg)
       {
-        if (Base::disabled(obj))
+        if (Base::disabled(obj) || !span)
           return;
         span->SetStatus(trace::StatusCode::kError, msg);
         // TODO: explain why...
