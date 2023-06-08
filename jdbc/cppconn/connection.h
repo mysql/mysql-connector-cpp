@@ -139,6 +139,11 @@
   "OPT_AUTHENTICATION_KERBEROS_CLIENT_MODE"
 #define OPT_OCI_CLIENT_CONFIG_PROFILE "OPT_OCI_CLIENT_CONFIG_PROFILE"
 
+/*
+  Telemetry options
+*/
+#define OPT_OPENTELEMETRY           "OPT_OPENTELEMETRY"
+
 namespace sql
 {
 
@@ -165,6 +170,11 @@ enum ssl_mode
   SSL_MODE_DISABLED= 1, SSL_MODE_PREFERRED, SSL_MODE_REQUIRED,
   SSL_MODE_VERIFY_CA, SSL_MODE_VERIFY_IDENTITY
 };
+
+typedef enum opentelemetry_mode
+{
+  OTEL_DISABLED = 1, OTEL_PREFERRED, OTEL_REQUIRED
+} enum_opentelemetry_mode;
 
 class CPPCONN_PUBLIC_FUNC Savepoint
 {

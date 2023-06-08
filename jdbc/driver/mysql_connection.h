@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -75,6 +75,8 @@ class NativeConnectionWrapper;
 
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
+  friend MySQL_Statement;
+  
   MySQL_Statement * createServiceStmt();
 
 public:
@@ -179,7 +181,7 @@ private:
   /* We do not really think this class has to be subclassed*/
   void checkClosed();
   void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
-
+  
   Driver * driver;
 
 #ifdef _WIN32

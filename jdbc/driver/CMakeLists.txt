@@ -39,6 +39,9 @@ configure_file(version_info.h.cmake version_info.h @ONLY)
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 #-------------------
+# Work around the compiler errors in Windows
+ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN -DNOGDI)
+
 
 if(MYSQLCLIENT_STATIC_BINDING)
   message(STATUS "Using static libmysql binding")
@@ -117,6 +120,10 @@ SET(MYSQLCPPCONN_SOURCES
   nativeapi/mysql_native_resultset_wrapper.cpp
 )
 
+if(TELEMETRY)
+  list(APPEND MYSQLCPPCONN_SOURCES  mysql_telemetry.cpp)
+endif()
+
 
 IF(WIN32)
 # adding headers to sources, so they will be included to VS projects
@@ -175,6 +182,10 @@ IF(WIN32)
         nativeapi/library_loader.h)
   ENDIF(NOT MYSQLCLIENT_STATIC_BINDING)
 
+  if(TELEMETRY)
+    list(APPEND MYSQLCPPCONN_SOURCES  mysql_telemetry.h)
+  endif()
+
   # Used to create source filter in projects in VS
   SOURCE_GROUP(NativeApi nativeapi/.+)
   SOURCE_GROUP(API ../cppconn/.+)
@@ -183,7 +194,6 @@ ENDIF(WIN32)
 
 
 #-----------------
-
 
 add_library(jdbc STATIC ${MYSQLCPPCONN_SOURCES})
 
@@ -196,11 +206,14 @@ ENDIF()
 if (MYSQLCLIENT_STATIC_BINDING)
   target_link_libraries(jdbc PRIVATE MySQL::client)
 else()
+
   target_include_directories(jdbc PRIVATE ${MYSQL_INCLUDE_DIR})
   if(NOT WIN32)
     target_link_libraries(jdbc PRIVATE dl)
   ENDIF(NOT WIN32)
 endif()
+
+target_link_libraries(jdbc PRIVATE otel_api)
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(jdbc PRIVATE -DCPPCONN_LIB_BUILD)

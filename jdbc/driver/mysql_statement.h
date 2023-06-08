@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -39,6 +39,7 @@
 #include "mysql_resultbind.h"
 
 #include "mysql_warning.h"
+#include "mysql_telemetry.h"
 
 #include "mysql_util.h"
 
@@ -79,6 +80,13 @@ protected:
 
  virtual std::shared_ptr<NativeAPI::NativeResultsetWrapper> get_resultset();
  virtual void checkClosed();
+
+ telemetry::Telemetry<MySQL_Statement> telemetry;
+
+ // Get connection's telemetry object.
+ telemetry::Telemetry<MySQL_Connection>& conn_telemetry();
+
+ friend telemetry::Telemetry_base<MySQL_Statement>;
 
 public:
  MySQL_Statement(MySQL_Connection *conn,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cstring>
+#include <cassert>
 
 
 /*
@@ -46,6 +47,7 @@
 #include <cppconn/resultset.h>
 #include <cppconn/warning.h>
 #include "mysql_connection.h"
+#include "mysql_connection_data.h"
 #include "mysql_statement.h"
 #include "mysql_resultset.h"
 #include "mysql_warning.h"
@@ -104,21 +106,67 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
     throw sql::InvalidInstanceException("Connection has been closed");
   }
 
-  if(attrbind.nrAttr() != 0)
+  telemetry.span_start(this);
+  
+  try 
   {
-    proxy_p->query_attr(attrbind.nrAttr(), attrbind.getNames(), attrbind.getBinds());
-  }
+    if(attrbind.nrAttr() != 0)
+    {
+      proxy_p->query_attr(attrbind.nrAttr(), attrbind.getNames(), attrbind.getBinds());
+    }
 
-  if (proxy_p->query(q) && proxy_p->errNo()) {
-    CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-    sql::mysql::util::throwSQLException(*proxy_p.get());
+    if (proxy_p->query(q) && proxy_p->errNo()) {
+      CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
+      
+      sql::mysql::util::throwSQLException(*proxy_p.get());
+    }
+
+    // Note: If statement has no results then we close the span here, otherwise 
+    // it will be closed after reading all result sets.
+
+    if ((0 == proxy_p->field_count()) && !proxy_p->more_results())
+      telemetry.span_end(this);
+  }
+  catch(sql::SQLException &e)
+  {
+    telemetry.set_error(this, e.what());
+    throw;
   }
 
   warningsCount= proxy_p->warning_count();
-
   warningsHaveBeenLoaded= false;
 }
 /* }}} */
+
+telemetry::Telemetry<MySQL_Connection>&
+MySQL_Statement::conn_telemetry()
+{
+  assert(connection);
+  
+  /*
+    Note: It can happend that connection was closed when this method is called. 
+    In that case connection->intern is empty and we have nothing to return 
+    here. Then we use a dummy telemetry object which is always disabled.
+  */
+
+  static telemetry::Telemetry<MySQL_Connection> dummy{OTEL_DISABLED};
+
+  /*
+    Note: `proxy` is a weak pointer to the proxy object owned by
+    the connection. If connection has been deleted then `proxy` should
+    be expired and we use this fact to detect whether the connection
+    is still good.
+  */
+
+  if (proxy.expired())
+    return dummy;
+
+  // Note: We assume that if the proxy is still around then so is
+  // the connection and it has non-empty intern pointer.
+
+  assert(connection->intern);
+  return connection->intern->telemetry;
+}
 
 
 /* {{{ MySQL_Statement::get_resultset() -I- */
@@ -171,6 +219,7 @@ MySQL_Statement::cancel()
 /* {{{ MySQL_Statement::execute() -I- */
 bool
 MySQL_Statement::execute(const sql::SQLString& sql)
+try
 {
   CPP_ENTER("MySQL_Statement::execute");
   CPP_INFO_FMT("this=%p", this);
@@ -182,8 +231,23 @@ MySQL_Statement::execute(const sql::SQLString& sql)
     throw sql::InvalidInstanceException("Connection has been closed");
   }
   bool ret = proxy_p->field_count() > 0;
+  if (!ret)
+  {
+    // If no results the span can be ended.
+    telemetry.span_end(this);
+  }
   last_update_count = ret? UL64(~0):proxy_p->affected_rows();
   return ret;
+}
+catch (sql::SQLException &e)
+{
+  telemetry.set_error(this, e.what());
+  throw e;
+}
+catch (...)
+{
+  telemetry.set_error(this, "Unknown error in MySQL_Statement::execute");
+  throw;
 }
 /* }}} */
 
@@ -191,6 +255,7 @@ MySQL_Statement::execute(const sql::SQLString& sql)
 /* {{{ MySQL_Statement::executeQuery() -I- */
 sql::ResultSet *
 MySQL_Statement::executeQuery(const sql::SQLString& sql)
+try
 {
   CPP_ENTER("MySQL_Statement::executeQuery");
   CPP_INFO_FMT("this=%p", this);
@@ -209,6 +274,16 @@ MySQL_Statement::executeQuery(const sql::SQLString& sql)
   CPP_INFO_FMT("rset=%p", tmp);
   return tmp;
 }
+catch (sql::SQLException &e)
+{
+  telemetry.set_error(this, e.what());
+  throw e;
+}
+catch (...)
+{
+  telemetry.set_error(this, "Unknown error in MySQL_Statement::executeQuery");
+  throw;
+}
 /* }}} */
 
 
@@ -224,6 +299,7 @@ dirty_drop_rs(std::shared_ptr< NativeAPI::NativeConnectionWrapper > proxy)
 /* {{{ MySQL_Statement::executeUpdate() -I- */
 int
 MySQL_Statement::executeUpdate(const sql::SQLString& sql)
+try
 {
   CPP_ENTER("MySQL_Statement::executeUpdate");
   CPP_INFO_FMT("this=%p", this);
@@ -253,6 +329,7 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
       if (got_rs){
         throw sql::InvalidArgumentException("Statement returning result set");
       } else {
+        telemetry.span_end(this);
         return static_cast<int>(last_update_count);
       }
     }
@@ -270,8 +347,20 @@ MySQL_Statement::executeUpdate(const sql::SQLString& sql)
   } while (1);
 
   /* Should not actually get here*/
+  telemetry.span_end(this);
   return 0;
 }
+catch (sql::SQLException &e)
+{
+  telemetry.set_error(this, e.what());
+  throw e;
+}
+catch (...)
+{
+  telemetry.set_error(this, "Unknown error in MySQL_Statement::executeUpdate");
+  throw;
+}
+
 /* }}} */
 
 
@@ -303,6 +392,7 @@ MySQL_Statement::getFetchSize()
 /* {{{ MySQL_Statement::getResultSet() -I- */
 sql::ResultSet *
 MySQL_Statement::getResultSet()
+try
 {
   CPP_ENTER("MySQL_Statement::getResultSet");
   CPP_INFO_FMT("this=%p", this);
@@ -346,12 +436,15 @@ MySQL_Statement::getResultSet()
     }
     else
     {
+      // End span for NULL resultset
+      telemetry.span_end(this);
       return NULL;
     }
   }
 
   if (!result) {
     /* if there was an update then this method should return NULL and not throw */
+    telemetry.span_end(this);
     return NULL;
   }
 
@@ -360,6 +453,17 @@ MySQL_Statement::getResultSet()
   CPP_INFO_FMT("res=%p", ret);
   return ret;
 }
+catch (sql::SQLException &e)
+{
+  telemetry.set_error(this, e.what());
+  throw e;
+}
+catch (...)
+{
+  telemetry.set_error(this, "Unknown error in MySQL_Statement::getResultSet");
+  throw;
+}
+
 /* }}} */
 
 
@@ -441,6 +545,7 @@ MySQL_Statement::getMaxRows()
 /* {{{ MySQL_Statement::getMoreResults() -I- */
 bool
 MySQL_Statement::getMoreResults()
+try
 {
   CPP_ENTER("MySQL_Statement::getMoreResults");
   CPP_INFO_FMT("this=%p", this);
@@ -467,8 +572,21 @@ MySQL_Statement::getMoreResults()
       throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
     }
   }
+  // If no more results close the statement span
+  telemetry.span_end(this);
   return false;
 }
+catch (sql::SQLException &e)
+{
+  telemetry.set_error(this, e.what());
+  throw e;
+}
+catch (...)
+{
+  telemetry.set_error(this, "Unknown error in MySQL_Statement::getMoreResults");
+  throw;
+}
+
 /* }}} */
 
 

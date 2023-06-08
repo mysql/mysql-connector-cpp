@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -545,6 +545,20 @@ const char**
 MySQL_AttributesBind::getNames()
 {
   return names.data();
+}
+/* }}} */
+
+
+/* {{{ MySQL_AttributesBind::attribNameExists() */
+bool
+MySQL_AttributesBind::attribNameExists(const sql::SQLString &name)
+{
+  for (auto n : names)
+  {
+    if (n && name.caseCompare(n) == 0)
+      return true;
+  }
+  return false;
 }
 /* }}} */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -39,6 +39,7 @@
 #include "mysql_util.h"
 #include "mysql_metadata.h"
 #include "mysql_warning.h"
+#include "mysql_telemetry.h"
 
 namespace sql
 {
@@ -61,7 +62,8 @@ struct MySQL_ConnectionData
         defaultStatementResultType(sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
         defaultPreparedStatementResultType(
             sql::ResultSet::TYPE_SCROLL_INSENSITIVE),
-        logger(l) {}
+        logger(l)
+  {}
 
   ~MySQL_ConnectionData()
   {
@@ -86,6 +88,8 @@ struct MySQL_ConnectionData
   std::shared_ptr<MySQL_DebugLogger> logger;
 
   std::unique_ptr<MySQL_ConnectionMetaData> meta;
+
+  telemetry::Telemetry<MySQL_Connection> telemetry;
 };
 
 } /* namespace mysql */
