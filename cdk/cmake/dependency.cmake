@@ -124,7 +124,7 @@ function(add_ext NAME HEADER)
     "Path to ${EXT_LIB} bin directory."
   )
 
-  add_config_option(${EXT_LIB}_LIBRARY PATH ADVANCED
+  add_config_option(${EXT_LIB}_LIBRARY STRING ADVANCED
     "${EXT_LIB} library name"
   )
 

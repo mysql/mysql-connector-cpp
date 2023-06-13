@@ -100,6 +100,11 @@ function(add_config_option OPT TYPE)
     set(${OPT} $ENV{${OPT}})
   endif()
 
+  if(DEFINED ${OPT} AND NOT "${${OPT}}" STREQUAL "${default_value}")
+    # message(STATUS "Option ${OPT} set explictily to: ${${OPT}}")
+    set(${OPT}_SET true CACHE INTERNAL "")
+  endif()
+
   if(NOT DEFINED ${OPT} AND DEFINED default_value)
     set(${OPT} ${default_value})
   endif()
@@ -134,7 +139,7 @@ function(show_config_options)
 
   foreach(opt ${CONFIG_OPTIONS})
 
-    if(NOT "${${opt}_ADVANCED}")
+    if(${opt}_SET OR NOT "${${opt}_ADVANCED}")
       message(": ${opt}: ${${opt}}")
       message("${${opt}_DOC}\n")
     endif()
