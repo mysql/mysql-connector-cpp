@@ -1,10 +1,10 @@
-Using Connector/C++ 8.0  {#usage}
+Using Connector/C++ 8  {#usage}
 =======================
 
-Connector/C++ 8.0 implements new APIs for accessing document store of
+Connector/C++ 8 implements new APIs for accessing document store of
 MySQL Server 8: X DevAPI for applications written in C++11 and X DevAPI for C
 for applications written in plain C. The same APIs can be also used to execute
-traditional SQL queries. Connector/C++ 8.0 also implements the legacy C++ API
+traditional SQL queries. Connector/C++ 8 also implements the legacy C++ API
 based on JDBC4 which is backward compatible with version 1.1 of the connector.
 
 The choice of the API is done by including appropriate public headers.
@@ -53,7 +53,7 @@ Depending on the platform, the shared Connector/C++ library is named:
 - `mysqlcppconn8-1-vsXX.dll` on Windows platforms
   (with import library vsXX/mysqlcppconn8.lib)
 
-This library implements the new X DevAPI and X DevAPI for C. Connector/C++ 8.0
+This library implements the new X DevAPI and X DevAPI for C. Connector/C++ 8
 also includes the legacy connector library `libmsysqlcppconn(.so/.dylib/.dll)`
 which implements the legacy JDBC4 API.
 
@@ -243,7 +243,7 @@ target computer on which the application will run.
 
 For more information on building code that uses Connector/C++ consult our
 [online documentation]
-(https://dev.mysql.com/doc/connector-cpp/8.0/en/connector-cpp-apps.html).
+(https://dev.mysql.com/doc/connector-cpp/en/connector-cpp-apps.html).
 
 
 <!--
