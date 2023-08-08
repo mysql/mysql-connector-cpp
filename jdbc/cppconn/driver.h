@@ -60,12 +60,14 @@ public:
   virtual const sql::SQLString & getName() = 0;
 
   virtual void setCallBack(sql::Fido_Callback &cb) = 0;
-
   virtual void setCallBack(sql::Fido_Callback &&cb) = 0;
 
   virtual void threadInit() = 0;
 
   virtual void threadEnd() = 0;
+
+  virtual void setCallBack(sql::WebAuthn_Callback &cb) = 0;
+  virtual void setCallBack(sql::WebAuthn_Callback &&cb) = 0;
 };
 
 } /* namespace sql */
