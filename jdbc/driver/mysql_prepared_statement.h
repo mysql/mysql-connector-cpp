@@ -38,6 +38,7 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/parameter_metadata.h>
 
+#include "mysql_telemetry.h"
 
 namespace sql
 {
@@ -48,6 +49,7 @@ class MySQL_ParamBind;
 class MySQL_ParameterMetaData;
 class MySQL_PreparedResultSetMetaData;
 class MySQL_ResultBind;
+class MySQL_Prepared_ResultSet;
 class MySQL_Warning;
 class MySQL_Connection;
 
@@ -90,8 +92,17 @@ protected:
 
   bool sendLongDataBeforeParamBind();
 
+  telemetry::Telemetry<MySQL_Prepared_Statement> telemetry;
+
+  // Get connection's telemetry object.
+  telemetry::Telemetry<MySQL_Connection>& conn_telemetry();
+
+  friend telemetry::Telemetry_base<MySQL_Prepared_Statement>;
+  friend MySQL_Connection;
+  friend MySQL_Prepared_ResultSet;
+
 public:
- MySQL_Prepared_Statement(std::shared_ptr<NativeAPI::NativeStatementWrapper> &s,
+ MySQL_Prepared_Statement(const sql::SQLString &sql,
                           MySQL_Connection *conn,
                           sql::ResultSet::enum_type rset_type,
                           std::shared_ptr<MySQL_DebugLogger> &log);
@@ -202,6 +213,9 @@ private:
   /* Prevent use of these */
   MySQL_Prepared_Statement(const MySQL_Prepared_Statement &);
   void operator=(MySQL_Prepared_Statement &);
+
+  // For internal use
+  sql::ResultSet *_getResultSet();
 };
 
 } /* namespace mysql */

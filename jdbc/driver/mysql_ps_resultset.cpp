@@ -1247,6 +1247,7 @@ MySQL_Prepared_ResultSet::moveToInsertRow()
 /* {{{ MySQL_Prepared_ResultSet::next() -I- */
 bool
 MySQL_Prepared_ResultSet::next()
+try
 {
     CPP_ENTER("MySQL_Prepared_ResultSet::next");
     CPP_INFO_FMT("row_position=%llu num_rows=%llu", row_position, num_rows);
@@ -1308,8 +1309,21 @@ MySQL_Prepared_ResultSet::next()
         }
         ++row_position;
     }
+
+    if (!ret && !proxy->more_results())
+    {
+      auto p = const_cast<MySQL_Prepared_Statement*>(parent);
+      p->telemetry.span_end(p);
+    }
     return ret;
 }
+catch(sql::SQLException &e)
+{
+    auto p = const_cast<MySQL_Prepared_Statement*>(parent);
+    p->telemetry.set_error(p, e.what());
+    throw;
+}
+
 /* }}} */
 
 

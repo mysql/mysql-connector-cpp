@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <iostream>
 #include <sstream>
@@ -47,6 +48,7 @@ DIAGNOSTIC_POP
 #endif
 #include <cppconn/exception.h>
 #include "mysql_connection.h"
+#include "mysql_connection_data.h"
 #include "mysql_statement.h"
 #include "mysql_prepared_statement.h"
 #include "mysql_ps_resultset.h"
@@ -352,28 +354,68 @@ public:
 };
 
 
+telemetry::Telemetry<MySQL_Connection>&
+MySQL_Prepared_Statement::conn_telemetry()
+{
+  assert(connection);
+  assert(connection->intern);
+  return connection->intern->telemetry;
+}
+
+
 /* {{{ MySQL_Prepared_Statement::MySQL_Prepared_Statement() -I- */
 MySQL_Prepared_Statement::MySQL_Prepared_Statement(
-    std::shared_ptr<NativeAPI::NativeStatementWrapper> &s,
+    const sql::SQLString &sql,
     MySQL_Connection *conn, sql::ResultSet::enum_type rset_type,
     std::shared_ptr<MySQL_DebugLogger> &log)
     : connection(conn),
-      proxy(s),
       isClosed(false),
       warningsHaveBeenLoaded(true),
       logger(log),
       resultset_type(rset_type),
-      result_bind(new MySQL_ResultBind(proxy, logger)),
       warningsCount(0)
 
 {
   CPP_ENTER("MySQL_Prepared_Statement::MySQL_Prepared_Statement");
   CPP_INFO_FMT("this=%p", this);
-  param_count = proxy->param_count();
-  param_bind.reset(new MySQL_ParamBind(param_count));
 
-  res_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
-  param_meta.reset(new MySQL_ParameterMetaData(proxy));
+  std::shared_ptr<NativeAPI::NativeStatementWrapper> stmt;
+
+  //TODO change - probably no need to catch and throw here. Logging can be done inside proxy
+  auto &connProxy = connection->proxy;
+  try {
+     stmt.reset(&connProxy->stmt_init());
+  } catch (sql::SQLException& e) {
+    CPP_ERR_FMT("No statement : %d:(%s) %s", connProxy->errNo(),
+      connProxy->sqlstate().c_str(), connProxy->error().c_str());
+    throw e;
+  }
+
+  telemetry.span_start(this, "SQL prepare");
+  try
+  {
+    if (stmt->prepare(sql)) {
+      CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate().c_str(), stmt->error().c_str());
+      sql::SQLException e(stmt->error(), stmt->sqlstate(), stmt->errNo());
+      stmt.reset();
+      throw e;
+    }
+
+    proxy = stmt;
+    result_bind.reset(new MySQL_ResultBind(proxy, logger));
+
+    param_count = proxy->param_count();
+    param_bind.reset(new MySQL_ParamBind(param_count));
+
+    res_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
+    param_meta.reset(new MySQL_ParameterMetaData(proxy));
+  }
+  catch(sql::SQLException &e)
+  {
+    telemetry.set_error(this, e.what());
+    throw;
+  }
+  telemetry.span_end(this);
 }
 /* }}} */
 
@@ -418,20 +460,30 @@ MySQL_Prepared_Statement::sendLongDataBeforeParamBind()
 void
 MySQL_Prepared_Statement::do_query()
 {
-  CPP_ENTER("MySQL_Prepared_Statement::do_query");
-  if (param_count && !param_bind->isAllSet()) {
-    CPP_ERR("Value not set for all parameters");
-    throw sql::SQLException("Value not set for all parameters");
-  }
+  telemetry.span_start(this, "SQL execute");
 
-  if (proxy->bind_param(param_bind->getBindObject())) {
-    CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-    sql::mysql::util::throwSQLException(*proxy.get());
-  }
+  try
+  {
+    CPP_ENTER("MySQL_Prepared_Statement::do_query");
+    if (param_count && !param_bind->isAllSet()) {
+      CPP_ERR("Value not set for all parameters");
+      throw sql::SQLException("Value not set for all parameters");
+    }
 
-  if (!sendLongDataBeforeParamBind() || proxy->execute()) {
-    CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-    sql::mysql::util::throwSQLException(*proxy.get());
+    if (proxy->bind_param(param_bind->getBindObject())) {
+      CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+      sql::mysql::util::throwSQLException(*proxy.get());
+    }
+
+    if (!sendLongDataBeforeParamBind() || proxy->execute()) {
+      CPP_ERR_FMT("Couldn't execute : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
+      sql::mysql::util::throwSQLException(*proxy.get());
+    }
+  }
+  catch(sql::SQLException &e)
+  {
+    telemetry.set_error(this, e.what());
+    throw;
   }
 
   warningsCount= proxy->warning_count();
@@ -473,6 +525,12 @@ MySQL_Prepared_Statement::execute()
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
   do_query();
+
+  if (proxy->num_rows() == 0 && !proxy->more_results())
+  {
+    // No result set, just end the span
+    telemetry.span_end(this);
+  }
   return (proxy->field_count() > 0);
 }
 /* }}} */
@@ -499,23 +557,7 @@ MySQL_Prepared_Statement::executeQuery()
 
   do_query();
 
-  my_bool	bool_tmp=1;
-  proxy->attr_set( STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
-  sql::ResultSet::enum_type tmp_type;
-  if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-    if (proxy->store_result()) {
-      sql::mysql::util::throwSQLException(*proxy.get());
-    }
-    tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
-  } else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
-    tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
-  } else {
-    throw SQLException("Invalid value for result set type");
-  }
-  sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, result_bind, tmp_type, this, logger);
-
-  CPP_INFO_FMT("rset=%p", tmp);
-  return tmp;
+  return _getResultSet();
 }
 /* }}} */
 
@@ -538,6 +580,8 @@ MySQL_Prepared_Statement::executeUpdate()
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
   do_query();
+  // No result set, just end the span
+  telemetry.span_end(this);
   return static_cast<int>(proxy->affected_rows());
 }
 /* }}} */
@@ -1017,6 +1061,42 @@ MySQL_Prepared_Statement::getParameterMetaData()
 /* }}} */
 
 
+sql::ResultSet *
+MySQL_Prepared_Statement::_getResultSet()
+{
+  my_bool	bool_tmp = 1;
+  try
+  {
+    proxy->attr_set(STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
+    sql::ResultSet::enum_type tmp_type;
+    if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
+      if (proxy->store_result()) {
+        sql::mysql::util::throwSQLException(*proxy.get());
+      }
+      tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
+    } else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
+      tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
+    } else {
+      throw SQLException("Invalid value for result set type");
+    }
+
+    sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, result_bind, tmp_type, this, logger);
+
+    CPP_INFO_FMT("rset=%p", tmp);
+    return tmp;
+  }
+  catch(sql::SQLException &e)
+  {
+    telemetry.set_error(this, e.what());
+    throw;
+  }
+
+  // Normally it should never come to this line.
+  return nullptr;
+}
+/* }}} */
+
+
 /* {{{ MySQL_Prepared_Statement::getResultSet() -I- */
 sql::ResultSet *
 MySQL_Prepared_Statement::getResultSet()
@@ -1024,25 +1104,7 @@ MySQL_Prepared_Statement::getResultSet()
   CPP_ENTER("MySQL_Prepared_Statement::getResultSet");
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
-
-  my_bool	bool_tmp = 1;
-  proxy->attr_set(STMT_ATTR_UPDATE_MAX_LENGTH, &bool_tmp);
-  sql::ResultSet::enum_type tmp_type;
-  if (resultset_type == sql::ResultSet::TYPE_SCROLL_INSENSITIVE) {
-    if (proxy->store_result()) {
-      sql::mysql::util::throwSQLException(*proxy.get());
-    }
-    tmp_type = sql::ResultSet::TYPE_SCROLL_INSENSITIVE;
-  } else if (resultset_type == sql::ResultSet::TYPE_FORWARD_ONLY) {
-    tmp_type = sql::ResultSet::TYPE_FORWARD_ONLY;
-  } else {
-    throw SQLException("Invalid value for result set type");
-  }
-
-  sql::ResultSet * tmp = new MySQL_Prepared_ResultSet(proxy, result_bind, tmp_type, this, logger);
-
-  CPP_INFO_FMT("rset=%p", tmp);
-  return tmp;
+  return _getResultSet();
 }
 /* }}} */
 
@@ -1126,12 +1188,17 @@ MySQL_Prepared_Statement::getMoreResults()
   CPP_INFO_FMT("this=%p", this);
   checkClosed();
 
-  if (proxy->more_results()) {
-
+  if (proxy->more_results())
+  try
+  {
     int next_result = proxy->stmt_next_result();
 
     if (next_result == 0) {
       bool ret = proxy->field_count() > 0;
+      if (!ret)
+      {
+        telemetry.span_end(this);
+      }
       return  ret;
     } else if (next_result == -1) {
       throw sql::SQLException("Impossible! more_results() said true, next_result says no more results");
@@ -1140,8 +1207,14 @@ MySQL_Prepared_Statement::getMoreResults()
       sql::mysql::util::throwSQLException(*proxy.get());
     }
   }
-  return false;
+  catch(sql::SQLException &e)
+  {
+    telemetry.set_error(this, e.what());
+    throw;
+  }
 
+  telemetry.span_end(this);
+  return false;
 }
 /* }}} */
 

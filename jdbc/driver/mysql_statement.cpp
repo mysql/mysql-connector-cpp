@@ -107,8 +107,8 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
   }
 
   telemetry.span_start(this);
-  
-  try 
+
+  try
   {
     if(attrbind.nrAttr() != 0)
     {
@@ -117,11 +117,11 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 
     if (proxy_p->query(q) && proxy_p->errNo()) {
       CPP_ERR_FMT("Error during proxy->query : %d:(%s) %s", proxy_p->errNo(), proxy_p->sqlstate().c_str(), proxy_p->error().c_str());
-      
+
       sql::mysql::util::throwSQLException(*proxy_p.get());
     }
 
-    // Note: If statement has no results then we close the span here, otherwise 
+    // Note: If statement has no results then we close the span here, otherwise
     // it will be closed after reading all result sets.
 
     if ((0 == proxy_p->field_count()) && !proxy_p->more_results())
@@ -142,10 +142,10 @@ telemetry::Telemetry<MySQL_Connection>&
 MySQL_Statement::conn_telemetry()
 {
   assert(connection);
-  
+
   /*
-    Note: It can happend that connection was closed when this method is called. 
-    In that case connection->intern is empty and we have nothing to return 
+    Note: It can happend that connection was closed when this method is called.
+    In that case connection->intern is empty and we have nothing to return
     here. Then we use a dummy telemetry object which is always disabled.
   */
 
@@ -231,11 +231,6 @@ try
     throw sql::InvalidInstanceException("Connection has been closed");
   }
   bool ret = proxy_p->field_count() > 0;
-  if (!ret)
-  {
-    // If no results the span can be ended.
-    telemetry.span_end(this);
-  }
   last_update_count = ret? UL64(~0):proxy_p->affected_rows();
   return ret;
 }

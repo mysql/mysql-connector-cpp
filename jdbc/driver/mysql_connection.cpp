@@ -1495,6 +1495,10 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
                   el->hasPort() ?  el->Port() : uri.DefaultPort(),
                   el->SocketOrPipe());
           connected = true;
+
+          // Connected. We can set the connection telemetry.
+          intern->telemetry.set_attribs(this, *el);
+          currentUser = userName;
           break;
         }
         catch (sql::SQLException& e)
@@ -1852,24 +1856,9 @@ MySQL_Connection::prepareStatement(const sql::SQLString& sql)
   CPP_ENTER_WL(intern->logger, "MySQL_Connection::prepareStatement");
   CPP_INFO_FMT("query=%s", sql.c_str());
   checkClosed();
-  std::shared_ptr<NativeAPI::NativeStatementWrapper> stmt;
 
-  //TODO change - probably no need to catch and throw here. Logging can be done inside proxy
-  try {
-     stmt.reset(&proxy->stmt_init());
-  } catch (sql::SQLException& e) {
-    CPP_ERR_FMT("No statement : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
-    throw e;
-  }
-
-  if (stmt->prepare(sql)) {
-    CPP_ERR_FMT("Cannot prepare %d:(%s) %s", stmt->errNo(), stmt->sqlstate().c_str(), stmt->error().c_str());
-    sql::SQLException e(stmt->error(), stmt->sqlstate(), stmt->errNo());
-    stmt.reset();
-    throw e;
-  }
-
-  return new MySQL_Prepared_Statement(stmt, this, intern->defaultPreparedStatementResultType, intern->logger);
+  return new MySQL_Prepared_Statement(sql, this,
+    intern->defaultPreparedStatementResultType, intern->logger);
 }
 /* }}} */
 
@@ -2174,6 +2163,18 @@ MySQL_Connection::getLastStatementInfo()
   checkClosed();
 
   return proxy->info();
+}
+/* }}} */
+
+
+/* {{{ MySQL_Connection::getCurrentUser() -I- */
+sql::SQLString
+MySQL_Connection::getCurrentUser()
+{
+  CPP_ENTER_WL(intern->logger, "MySQL_Connection::getCurrentUser");
+  checkClosed();
+
+  return currentUser;
 }
 /* }}} */
 

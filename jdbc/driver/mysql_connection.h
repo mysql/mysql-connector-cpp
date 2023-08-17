@@ -67,6 +67,7 @@ private:
 class MySQL_DebugLogger;
 struct MySQL_ConnectionData; /* PIMPL */
 class MySQL_Statement;
+class MySQL_Prepared_Statement;
 
 namespace NativeAPI
 {
@@ -76,7 +77,8 @@ class NativeConnectionWrapper;
 class CPPCONN_PUBLIC_FUNC MySQL_Connection : public sql::Connection
 {
   friend MySQL_Statement;
-  
+  friend MySQL_Prepared_Statement;
+
   MySQL_Statement * createServiceStmt();
 
 public:
@@ -177,11 +179,13 @@ public:
 
   virtual sql::SQLString getLastStatementInfo();
 
+  sql::SQLString getCurrentUser();
+
 private:
   /* We do not really think this class has to be subclassed*/
   void checkClosed();
   void init(std::map< sql::SQLString, sql::ConnectPropertyVal > & properties);
-  
+
   Driver * driver;
 
 #ifdef _WIN32
@@ -205,6 +209,9 @@ private:
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
+
+  /* We need to store the user name for telemetry */
+  SQLString currentUser;
 
   /* Prevent use of these */
   MySQL_Connection(const MySQL_Connection &);
