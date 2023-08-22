@@ -47,6 +47,9 @@ class connection : public unit_fixture
 private:
   typedef unit_fixture super;
 
+  template <class CB, class MY>
+  void test_fido_webauthn(bool = false);
+
 protected:
 
   bool check_tls_ver(const char* tls_ver);
@@ -98,6 +101,7 @@ public:
   TEST_CASE(mfa);
   TEST_CASE(tls_deprecation);
   TEST_CASE(fido_test);
+  TEST_CASE(webauthn_test);
   TEST_CASE(normalize_ssl_options);
   TEST_CASE(macro_version);
   }
@@ -320,6 +324,7 @@ public:
    *
    */
   void fido_test();
+  void webauthn_test();
 
   /*
    * Test version macros.

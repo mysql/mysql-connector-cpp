@@ -3962,6 +3962,29 @@ void connection::tls_deprecation()
 
 }
 
+
+/*
+  Testing FIDO/WebAuthn connection and callback functionality.
+  
+  These tests are designed for manual run. They require the following preparation steps:
+ 
+  1. Install FIDO auth plugin on the server:
+
+    INSTALL PLUGIN authentication_fido SONAME 'authentication_fido.so'
+
+  2. Create user with FIDO/Webauthn authentication:
+
+    CREATE USER 'u2'@'localhost' 
+    IDENTIFIED WITH caching_sha2_password BY 'sha2_password'
+    AND IDENTIFIED WITH authentication_webauthn
+
+  3. Register FIDO:
+
+    mysql --port=13000 --protocol=tcp --user=u2 --password1 --fido-register-factor=2
+
+  4. Set env variable MYSQL_FIDO to non-empty value
+*/
+
 /* Variable value will be changed by callbacks */
 int callback_variable = -1;
 
@@ -3971,171 +3994,131 @@ void my_callback(sql::SQLString s)
   callback_variable = 1;
 }
 
-/**
- * Testing FIDO connection and callback functionality.
- *
- * The test is designed for manual run.
- * It requires the following preparation steps:
- *
- * 1. Install FIDO auth plugin on the server:
- *   INSTALL PLUGIN authentication_fido SONAME 'authentication_fido.so'
- *
- * 2. Create user with FIDO authentication:
- *   CREATE USER 'u2'@'localhost' IDENTIFIED WITH caching_sha2_password
- *   BY 'sha2_password' AND IDENTIFIED WITH authentication_fido
- *
- * 3. Register FIDO:
- *   mysql --port=13000 --protocol=tcp --user=u2 --password1
- *   --fido-register-factor=2
- *
- * 4. Set env variable MYSQL_FIDO to non-empty value
- */
-void connection::fido_test()
+class MyWindowFido : public sql::Fido_Callback
 {
-  if(!getenv("MYSQL_FIDO"))
-    return;
+  public:
 
-  class MyWindow : public sql::Fido_Callback
+  virtual void FidoActionRequested(sql::SQLString msg) override
   {
-    public:
+    std::cout << "Method Override (3): " << msg << std::endl;
+    callback_variable = 3;
+  }
+};
 
-    virtual void FidoActionRequested(sql::SQLString msg) override
-    {
-      std::cout << "Method Override (3): " << msg << std::endl;
-      callback_variable = 3;
-    }
+class MyWindowWebAuthn : public sql::WebAuthn_Callback
+{
+  public:
+
+  virtual void ActionRequested(sql::SQLString msg) override
+  {
+    std::cout << "Method Override (3): " << msg << std::endl;
+    callback_variable = 3;
+  }
+};
+
+
+/*
+  Note: If `callback_ignored` parameter is set to true then we are testing
+  scenario where registered callback should not be called. In this case only
+  this simple scenario is tested.
+*/
+
+template <class CB, class MY>
+void connection::test_fido_webauthn(bool callback_ignored)
+{
+  using std::string;
+  using std::cout;
+  using std::endl;
+  
+  String fido_user = "u2";
+  String fido_pwd = "sha2_password";
+
+  sql::ConnectOptionsMap opt;
+  opt[OPT_HOSTNAME] = url;
+  opt[OPT_USERNAME] = fido_user;
+  opt[OPT_PASSWORD] = fido_pwd;
+
+  sql::Driver * driver = sql::mysql::get_driver_instance();
+
+  auto test_connection_drv = [&opt](int expected, sql::Driver *drv)
+  {
+    callback_variable = 0;
+    cout << "Before connect: " << callback_variable << endl;
+    Connection fido_connection(drv->connect(opt));
+    cout << "After connect: " << callback_variable << endl;
+    ASSERT_EQUALS(expected, callback_variable);
   };
 
-  std::string fido_user = "u2";
-  std::string fido_pwd = "sha2_password";
+  auto test_connection = [test_connection_drv, driver](int expected)
+  {
+    test_connection_drv(expected, driver);
+  };
 
   try
   {
-    sql::ConnectOptionsMap opt;
-    opt[OPT_HOSTNAME] = url;
-    opt[OPT_USERNAME] = fido_user;
-    opt[OPT_PASSWORD] = fido_pwd;
 
-    /* No callback */
+
+    cout << endl << "Default callback (0)" << endl;
+    test_connection(0);
+
+    cout << endl << "Callback Function (1)" << endl;
+    driver->setCallBack(CB{my_callback});
+    test_connection(callback_ignored ? 0 : 1);
+
+    if(callback_ignored)
+      return;
+
+    cout << endl << "Callback Lambda (2)" << endl;
+    driver->setCallBack(CB{[](sql::SQLString msg) {
+      std::cout << "Callback Lambda (2): " << msg << std::endl;
+      callback_variable = 2;
+    }});
+    test_connection(2);
+
+    cout << endl << "Callback Class (3)" << endl;
     {
-      callback_variable = 0;
-      sql::Driver * driver = sql::mysql::get_driver_instance();
-      std::cout << "\nBefore connect: " << callback_variable << std::endl;
-      std::cout << "Default callback (0): ";
-      Connection fido_connection(driver->connect(opt));
-      std::cout << "After connect: " << callback_variable << std::endl;
-      ASSERT_EQUALS(0, callback_variable);
-    }
-
-    /* Callback Function */
-    {
-      sql::Driver * driver = sql::mysql::get_driver_instance();
-      driver->setCallBack(sql::Fido_Callback(my_callback));
-
-      std::cout << "\nBefore connect: " << callback_variable << std::endl;
-      Connection fido_connection(driver->connect(opt));
-      std::cout << "After connect: " << callback_variable << std::endl;
-      ASSERT_EQUALS(1, callback_variable);
-    }
-
-    /* Callback Lambda */
-    {
-      sql::Driver * driver = sql::mysql::get_driver_instance();
-      driver->setCallBack(sql::Fido_Callback([](sql::SQLString msg) {
-        std::cout << "Callback Lambda (2): " << msg << std::endl;
-        callback_variable = 2;
-      }));
-
-      std::cout << "\nBefore connect: " << callback_variable << std::endl;
-      Connection fido_connection(driver->connect(opt));
-      std::cout << "After connect: " << callback_variable << std::endl;
-      ASSERT_EQUALS(2, callback_variable);
-    }
-
-    /* Callback class */
-    {
-      MyWindow window;
+      MY window;
 
       sql::Driver * driver = sql::mysql::get_driver_instance();
       driver->setCallBack(window);
-
-      std::cout << "\nBefore connect: " << callback_variable << std::endl;
-      Connection fido_connection(driver->connect(opt));
-      std::cout << "After connect: " << callback_variable << std::endl;
-      ASSERT_EQUALS(3, callback_variable);
-
-      // Reset callback
-      callback_variable = 0;
-      driver->setCallBack(sql::Fido_Callback(nullptr));
-      std::cout << "\nBefore connect: " << callback_variable << std::endl;
-      std::cout << "Default callback (0): ";
-      Connection fido_connection2(driver->connect(opt));
-      std::cout << "After connect: " << callback_variable << std::endl;
-      ASSERT_EQUALS(0, callback_variable);
+      test_connection(3);
     }
 
-    /* Multi driver tests */
-    std::cout << "\nMulti driver tests: " << std::endl;
+    cout << endl << "Reset callback (0)" << endl;
+    driver->setCallBack(CB{nullptr});
+    test_connection(0);
+
+
+    cout << endl << "Multi driver tests: " << endl;
+
+    auto multi_drv_test = [test_connection_drv]()
     {
       sql::Driver * driver1 = sql::mysql::get_driver_instance_by_name("drv1");
-      driver1->setCallBack(sql::Fido_Callback([](sql::SQLString msg) {
-        std::cout << "Driver 1 Callback : " << msg << std::endl;
+      driver1->setCallBack(CB{[](sql::SQLString msg) {
+        cout << "Driver 1 Callback : " << msg << endl;
         callback_variable = 111;
-      }));
+      }});
 
       sql::Driver * driver2 = sql::mysql::get_driver_instance_by_name("drv2");
-      driver2->setCallBack(sql::Fido_Callback([](sql::SQLString msg) {
-        std::cout << "Driver 2 Callback : " << msg << std::endl;
+      driver2->setCallBack(CB{[](sql::SQLString msg) {
+        cout << "Driver 2 Callback : " << msg << endl;
         callback_variable = 222;
-      }));
+      }});
 
-      for (int i = 0; i < 2; ++i)
-      {
-        std::cout << "\nBefore connect: " << callback_variable << std::endl;
-        Connection c1(driver1->connect(opt));
-        std::cout << "After connect: " << callback_variable << std::endl;
-        ASSERT_EQUALS(111, callback_variable);
+      test_connection_drv(111, driver1);
+      test_connection_drv(222, driver2);
+    };
 
-        std::cout << "\nBefore connect: " << callback_variable << std::endl;
-        Connection c2(driver2->connect(opt));
-        std::cout << "After connect: " << callback_variable << std::endl;
-        ASSERT_EQUALS(222, callback_variable);
-      }
-    }
+    multi_drv_test();
 
-    /* Multithread driver tests */
-    std::cout << "Multithread driver tests: " << std::endl;
+    cout << endl << "Multithread driver tests: " << endl;
+
     {
       std::vector<std::thread> workers;
 
-      auto worker_func = [&opt]() {
-        sql::Driver * driver1 = sql::mysql::get_driver_instance_by_name("drv1");
-        driver1->setCallBack(sql::Fido_Callback([](sql::SQLString msg) {
-          std::cout << "Driver 1 Thread Callback : " << msg << std::endl;
-          callback_variable = 1001;
-        }));
-
-        sql::Driver * driver2 = sql::mysql::get_driver_instance_by_name("drv2");
-        driver2->setCallBack(sql::Fido_Callback([](sql::SQLString msg) {
-          std::cout << "Driver 2 Thread Callback : " << msg << std::endl;
-          callback_variable = 2002;
-        }));
-
-        for (int i = 0; i < 2; ++i)
-        {
-          std::cout << "\nBefore connect: " << callback_variable << std::endl;
-          Connection c1(driver1->connect(opt));
-          std::cout << "After connect: " << callback_variable << std::endl;
-
-          std::cout << "\nBefore connect: " << callback_variable << std::endl;
-          Connection c2(driver2->connect(opt));
-          std::cout << "After connect: " << callback_variable << std::endl;
-        }
-      };
-
       for (int i = 0; i < 3; ++i)
       {
-        workers.push_back(std::thread(worker_func));
+        workers.push_back(std::thread{multi_drv_test});
       }
 
       for (auto &w : workers)
@@ -4146,10 +4129,70 @@ void connection::fido_test()
   }
   catch (sql::SQLException &e)
   {
-    std::cout << e.what() << std::endl;
+    cout << e.what() << endl;
     FAIL("Unexpected error!");
   }
-  std::cout << "Success\n";
+
+  cout << "Success\n";
+}
+
+
+/*
+  Note: This test is expecting account `u2` configured to use
+  `authentication_fido` plugin.
+*/
+
+void connection::fido_test()
+{
+  using std::cout;
+  using std::endl;
+
+  if(!getenv("MYSQL_FIDO"))
+    return;
+
+  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>();
+
+  cout << endl
+  << "Check that webauthn callback is not used for fido accounts" << endl;  
+
+  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>(true);
+}
+
+
+/*
+  Note: This test is expecting account `u2` configured to use
+  `authentication_webauthn` plugin.
+*/
+
+void connection::webauthn_test()
+{
+  using std::cout;
+  using std::endl;
+
+  if(!getenv("MYSQL_FIDO") && !getenv("MYSQL_WEBAUTHN"))
+    return;
+
+  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>();
+
+  // Note: The fido callback should also work
+
+  cout << endl << "Running tests with Fido callbacks" << endl;
+
+  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>();
+
+  cout << endl << "Overwrite WebAuthn callback with Fido one" << endl;
+
+  {
+    sql::Driver * driver = sql::mysql::get_driver_instance();
+    driver->setCallBack(sql::WebAuthn_Callback{my_callback});
+    try
+    {
+      driver->setCallBack(sql::Fido_Callback{my_callback});
+      FAIL("Expecting error but it worked!");
+    }
+    catch (sql::SQLException&)
+    {}
+  }
 }
 
 
