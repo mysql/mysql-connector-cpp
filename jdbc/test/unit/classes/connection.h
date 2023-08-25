@@ -48,7 +48,7 @@ private:
   typedef unit_fixture super;
 
   template <class CB, class MY>
-  void test_fido_webauthn(bool = false);
+  void test_fido_webauthn(sql::ConnectOptionsMap&, bool = false);
 
 protected:
 

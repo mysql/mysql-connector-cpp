@@ -3965,22 +3965,22 @@ void connection::tls_deprecation()
 
 /*
   Testing FIDO/WebAuthn connection and callback functionality.
-  
+
   These tests are designed for manual run. They require the following preparation steps:
- 
+
   1. Install FIDO auth plugin on the server:
 
     INSTALL PLUGIN authentication_fido SONAME 'authentication_fido.so'
 
   2. Create user with FIDO/Webauthn authentication:
 
-    CREATE USER 'u2'@'localhost' 
+    CREATE USER 'ufido'@'localhost'
     IDENTIFIED WITH caching_sha2_password BY 'sha2_password'
     AND IDENTIFIED WITH authentication_webauthn
 
   3. Register FIDO:
 
-    mysql --port=13000 --protocol=tcp --user=u2 --password1 --fido-register-factor=2
+    mysql --port=13000 --protocol=tcp --user=ufido --password1 --fido-register-factor=2
 
   4. Set env variable MYSQL_FIDO to non-empty value
 */
@@ -4024,19 +4024,15 @@ class MyWindowWebAuthn : public sql::WebAuthn_Callback
 */
 
 template <class CB, class MY>
-void connection::test_fido_webauthn(bool callback_ignored)
+void connection::test_fido_webauthn(sql::ConnectOptionsMap &opt, bool callback_ignored)
 {
   using std::string;
   using std::cout;
   using std::endl;
-  
-  String fido_user = "u2";
-  String fido_pwd = "sha2_password";
 
-  sql::ConnectOptionsMap opt;
   opt[OPT_HOSTNAME] = url;
-  opt[OPT_USERNAME] = fido_user;
-  opt[OPT_PASSWORD] = fido_pwd;
+  if (getenv("PLUGIN_DIR"))
+    opt[OPT_PLUGIN_DIR] = getenv("PLUGIN_DIR");
 
   sql::Driver * driver = sql::mysql::get_driver_instance();
 
@@ -4056,7 +4052,6 @@ void connection::test_fido_webauthn(bool callback_ignored)
 
   try
   {
-
 
     cout << endl << "Default callback (0)" << endl;
     test_connection(0);
@@ -4138,7 +4133,7 @@ void connection::test_fido_webauthn(bool callback_ignored)
 
 
 /*
-  Note: This test is expecting account `u2` configured to use
+  Note: This test is expecting account `ufido` configured to use
   `authentication_fido` plugin.
 */
 
@@ -4150,17 +4145,21 @@ void connection::fido_test()
   if(!getenv("MYSQL_FIDO"))
     return;
 
-  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>();
+  sql::ConnectOptionsMap opt;
+  opt[OPT_USERNAME] = "ufido";
+  opt[OPT_PASSWORD] = "sha2_password";
+
+  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>(opt);
 
   cout << endl
-  << "Check that webauthn callback is not used for fido accounts" << endl;  
+  << "Check that webauthn callback is not used for fido accounts" << endl;
 
-  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>(true);
+  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>(opt, true);
 }
 
 
 /*
-  Note: This test is expecting account `u2` configured to use
+  Note: This test is expecting account `uwebauthn` configured to use
   `authentication_webauthn` plugin.
 */
 
@@ -4172,13 +4171,17 @@ void connection::webauthn_test()
   if(!getenv("MYSQL_FIDO") && !getenv("MYSQL_WEBAUTHN"))
     return;
 
-  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>();
+  sql::ConnectOptionsMap opt;
+  opt[OPT_USERNAME] = "uwebauthn";
+  opt[OPT_PASSWORD] = "sha2_password";
+
+  test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>(opt);
 
   // Note: The fido callback should also work
 
   cout << endl << "Running tests with Fido callbacks" << endl;
 
-  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>();
+  test_fido_webauthn<sql::Fido_Callback, MyWindowFido>(opt);
 
   cout << endl << "Overwrite WebAuthn callback with Fido one" << endl;
 
