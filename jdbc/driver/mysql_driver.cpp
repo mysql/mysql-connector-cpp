@@ -185,9 +185,13 @@ void MySQL_Driver::threadEnd()
 
 void MySQL_Driver::setCallBack(sql::WebAuthn_Callback&& cb)
 {
-  webauthn_callback = cb ? std::move(cb) : nullptr;
+  if (cb)
+    webauthn_callback = std::move(cb);
+  else
+    webauthn_callback = nullptr;
+
   fido_callback
-    = reinterpret_cast<Fido_Callback*>(cb ? 1LL : 0LL);
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 1LL : 0LL);
 }
 
 void MySQL_Driver::setCallBack(sql::WebAuthn_Callback& cb)
@@ -198,15 +202,20 @@ void MySQL_Driver::setCallBack(sql::WebAuthn_Callback& cb)
     webauthn_callback = nullptr;
 
   fido_callback
-    = reinterpret_cast<Fido_Callback*>(cb ? 1LL : 0LL);
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 1LL : 0LL);
 }
 
 
-// Note: Values 1 and 4 of `fido_callback` mean that user has set an WebAuthn
-// callback before.
+/*
+  Note: Values 1 and 4 of `fido_callback` mean that user has set a WebAuthn
+  callback before and it can not be overwritten by Fido one. If later user
+  de-registers a WebAuthn callaback then `fido_callback` becomes 0 or 4 and
+  error will not be thrown -- user can set a new Fido callback in this
+  situation.
+*/
 
 #define CHECK_FIDO_ERROR \
-  if (1 == reinterpret_cast<intptr_t>(fido_callback) % 3) \
+  if (1 == (reinterpret_cast<intptr_t>(fido_callback) % 3)) \
   throw sql::SQLException{ \
     "You are trying to overwrithe WebAuthn callback with FIDO one. " \
     "FIDO authentication plugin and the corresponding callback type " \
@@ -217,9 +226,14 @@ void MySQL_Driver::setCallBack(sql::WebAuthn_Callback& cb)
 void MySQL_Driver::setCallBack(sql::Fido_Callback&& cb)
 {
   CHECK_FIDO_ERROR;
-  webauthn_callback = cb ? std::move(cb) : nullptr;
+
+  if (cb)
+    webauthn_callback = std::move(cb);
+  else
+    webauthn_callback = nullptr;
+
   fido_callback
-    = reinterpret_cast<Fido_Callback*>(cb ? 2LL : 0LL);
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 2LL : 0LL);
 }
 
 void MySQL_Driver::setCallBack(sql::Fido_Callback& cb)
@@ -232,7 +246,7 @@ void MySQL_Driver::setCallBack(sql::Fido_Callback& cb)
     webauthn_callback = nullptr;
 
   fido_callback
-    = reinterpret_cast<Fido_Callback*>(cb ? 2LL : 0LL);
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 2LL : 0LL);
 }
 
 } /* namespace mysql */

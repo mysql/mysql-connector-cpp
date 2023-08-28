@@ -468,8 +468,16 @@ struct MySQL_Driver::WebAuthn_Callback_Setter
 
     driver = &drv;  // Set current driver.
 
-    register_callback(prx, "fido", callback_type % 3 > 1);
-    register_callback(prx, "webauthn", callback_type % 3 > 0);
+    /*
+      Note: A webauthn callback (callback_type 2 or 5) is registered with both
+      "fido" and "webauthn" plugins. A fido callback (callback_type 1 or 4)
+      is registered only with "fido" plugin. And if user did not register any
+      callback (callback_type 0 or 3) then both plugin callbacks are re-set
+      to null.
+    */
+
+    register_callback(prx, "fido", (callback_type % 3) > 1);
+    register_callback(prx, "webauthn", (callback_type % 3) > 0);
 
     /*
       Note: This will be reset to value 0-2 when user deregisters
@@ -504,7 +512,9 @@ struct MySQL_Driver::WebAuthn_Callback_Setter
   void register_callback(Proxy *proxy, std::string which, bool set_or_reset)
   {
     std::string plugin = "authentication_" + which + "_client";
-    std::string opt = which + "_messages_callback";
+    std::string opt = (which == "webauthn" ?
+      "plugin_authentication_webauthn_client" : which) +
+      "_messages_callback";
 
     try
     {
