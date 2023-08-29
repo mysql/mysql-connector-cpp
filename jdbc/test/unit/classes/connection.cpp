@@ -4083,7 +4083,6 @@ void connection::test_fido_webauthn(sql::ConnectOptionsMap &opt, bool callback_i
     driver->setCallBack(CB{nullptr});
     test_connection(0);
 
-
     cout << endl << "Multi driver tests: " << endl;
 
     auto multi_drv_test = [test_connection_drv]()
@@ -4102,6 +4101,11 @@ void connection::test_fido_webauthn(sql::ConnectOptionsMap &opt, bool callback_i
 
       test_connection_drv(111, driver1);
       test_connection_drv(222, driver2);
+
+      // Multi-driver callbacks have to be reset too.
+      // Otherwise they will remain set in the next test.
+      driver1->setCallBack(CB{nullptr});
+      driver2->setCallBack(CB{nullptr});
     };
 
     multi_drv_test();
@@ -4127,7 +4131,6 @@ void connection::test_fido_webauthn(sql::ConnectOptionsMap &opt, bool callback_i
     cout << e.what() << endl;
     FAIL("Unexpected error!");
   }
-
   cout << "Success\n";
 }
 
@@ -4155,6 +4158,10 @@ void connection::fido_test()
   << "Check that webauthn callback is not used for fido accounts" << endl;
 
   test_fido_webauthn<sql::WebAuthn_Callback, MyWindowWebAuthn>(opt, true);
+
+  // Clear up the callback.
+  sql::Driver *driver = sql::mysql::get_driver_instance();
+  driver->setCallBack(sql::WebAuthn_Callback{nullptr});
 }
 
 
@@ -4181,6 +4188,11 @@ void connection::webauthn_test()
 
   cout << endl << "Running tests with Fido callbacks" << endl;
 
+  // Prevent errors by resetting callback set as Webauthn_Callback
+  // because the next test uses Fido_Callback.
+  sql::Driver *driver = sql::mysql::get_driver_instance();
+  driver->setCallBack(sql::WebAuthn_Callback{nullptr});
+
   test_fido_webauthn<sql::Fido_Callback, MyWindowFido>(opt);
 
   cout << endl << "Overwrite WebAuthn callback with Fido one" << endl;
@@ -4196,6 +4208,9 @@ void connection::webauthn_test()
     catch (sql::SQLException&)
     {}
   }
+
+  // Clear up the callback.
+  driver->setCallBack(sql::WebAuthn_Callback{nullptr});
 }
 
 
