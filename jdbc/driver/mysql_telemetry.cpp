@@ -165,14 +165,6 @@ namespace telemetry
     }
     span->SetAttribute("db.user", stmt->connection->getCurrentUser().c_str());
 
-#ifdef _WIN32
-    DWORD tid = GetCurrentThreadId();
-#else
-    auto tid = pthread_self();
-#endif
-    // Currently the conversion of native thread ID to unsigned long
-    // is possible, but in the future it might change.
-    span->SetAttribute("thread.id", (unsigned long)tid);
     return span;
   }
 
@@ -195,14 +187,6 @@ namespace telemetry
 
     span->SetAttribute("db.user", stmt->connection->getCurrentUser().c_str());
 
-#ifdef _WIN32
-    DWORD tid = GetCurrentThreadId();
-#else
-    auto tid = pthread_self();
-#endif
-    // Currently the conversion of native thread ID to unsigned long
-    // is possible, but in the future it might change.
-    span->SetAttribute("thread.id", (unsigned long)tid);
     return span;
   }
 
