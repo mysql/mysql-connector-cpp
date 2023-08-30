@@ -1497,7 +1497,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           connected = true;
 
           // Connected. We can set the connection telemetry.
-          intern->telemetry.set_attribs(this, *el);
+          intern->telemetry.set_attribs(this, *el, properties);
           currentUser = userName;
           break;
         }

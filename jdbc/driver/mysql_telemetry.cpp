@@ -85,13 +85,17 @@ namespace telemetry
 
 
   void
-  Telemetry_base<MySQL_Connection>::set_attribs(MySQL_Connection *obj, MySQL_Uri::Host_data &data)
+  Telemetry_base<MySQL_Connection>::set_attribs(
+    MySQL_Connection* con, 
+    MySQL_Uri::Host_data& endpoint, 
+    sql::ConnectOptionsMap& options
+  )
   {
-    if (disabled(obj) || !span)
+    if (disabled(con) || !span)
       return;
 
     std::string transport;
-    switch(data.Protocol())
+    switch(endpoint.Protocol())
     {
       case NativeAPI::PROTOCOL_TCP:
         transport = "ip_tcp";
@@ -106,10 +110,19 @@ namespace telemetry
     }
 
     span->SetAttribute("net.transport", transport);
-    span->SetAttribute("net.peer.name", data.Host().c_str());
-    if (data.hasPort())
+    span->SetAttribute("net.peer.name", endpoint.Host().c_str());
+    
+    /*
+      Note: `endpoint.hasPort()` alone is not good because it tells whether
+      in a multi-host sceanrio a non-default port was specified for the chosen
+      endpoint. We want to send the port attribute also when
+      no endpint-specific port was given but user set the "global" port value
+      which is used for all hosts (which is a more typical scenario).
+    */
+
+    if (options.count(OPT_PORT) || endpoint.hasPort())
     {
-      span->SetAttribute("net.peer.port", data.Port());
+      span->SetAttribute("net.peer.port", endpoint.Port());
     }
   }
 

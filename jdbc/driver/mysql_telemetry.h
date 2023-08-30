@@ -58,63 +58,70 @@ namespace mysql
       be optimized out by the compiler).
     */
 
-#ifndef TELEMETRY
-
-    template<class>
-    struct Telemetry_base
-    {
-      void set_mode(opentelemetry_mode) {}
-    };
-
-    template<>
-    struct Telemetry_base<MySQL_Connection>
-    {
-      void set_mode(opentelemetry_mode) {}
-      void set_attribs(MySQL_Connection*, MySQL_Uri::Host_data&) {}
-    };
-
-#else
+#ifdef TELEMETRY
 
     namespace nostd      = opentelemetry::nostd;
     namespace trace      = opentelemetry::trace;
 
     using Span_ptr = nostd::shared_ptr<trace::Span>;
 
+#endif
+
+
     template<class Obj>
     struct Telemetry_base
     {
+#ifdef TELEMETRY
       bool disabled(Obj*) const;
       Span_ptr span;
 
     protected:
       Span_ptr mk_span(Obj*, const char *);
+#endif
     };
+
 
     template<>
     struct Telemetry_base<MySQL_Connection>
     {
       using Obj = MySQL_Connection;
+
+      void set_mode(opentelemetry_mode m) 
+#ifndef TELEMETRY
+      {}
+#else
+      {
+        mode = m;
+      }
+#endif
+
+      void set_attribs(
+        MySQL_Connection* con, 
+        MySQL_Uri::Host_data& endpoint, 
+        sql::ConnectOptionsMap& options
+      )
+#ifndef TELEMETRY
+      {}
+#else
+      ;   // Note: Defined in .cpp file
+#endif
+
+#ifdef TELEMETRY
+
       Span_ptr span;
+      enum opentelemetry_mode mode = OTEL_PREFERRED;
 
       bool disabled(Obj *) const
       {
         return OTEL_DISABLED == mode;
       }
 
-      enum opentelemetry_mode mode = OTEL_PREFERRED;
-      void set_mode(opentelemetry_mode m)
-      {
-        mode = m;
-      }
-
-      void set_attribs(Obj*, MySQL_Uri::Host_data&);
-
     protected:
 
       Span_ptr mk_span(Obj*, const char *);
+#endif
     };
 
-#endif
 
     template<class Obj>
     struct Telemetry
