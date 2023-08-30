@@ -1,4 +1,4 @@
-# Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2010, 2023, Oracle and/or its affiliates.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -111,8 +111,10 @@ get_filename_component(IS64BIT ${IS64BIT} NAME)
 
 if(IS64BIT MATCHES "lib64")
   set(IS64BIT true)
+  set(BITNESS "always64")
 else()
   set(IS64BIT false)
+  set(BITNESS "always32")
 endif()
 
 #
@@ -228,16 +230,12 @@ set(WIX_INCLUDES "" CACHE STRING "output var" FORCE)
 
 include(wix_setup.cmake)
 
-set(EXTRA_CANDLE_ARGS $ENV{EXTRA_CANDLE_ARGS})
-set(EXTRA_LIGHT_ARGS $ENV{EXTRA_LIGHT_ARGS})
-
-file(REMOVE connector-cpp.wixobj)
+set(EXTRA_WIX_ARGS $ENV{EXTRA_WIX_ARGS})
 
 add_custom_target(MSI
-  COMMAND ${CANDLE_EXECUTABLE} -ext WixUtilExtension  connector-cpp.wxs ${EXTRA_CANDLE_ARGS}
-  COMMAND ${LIGHT_EXECUTABLE} -ext WixUIExtension -ext WixUtilExtension
-    connector-cpp.wixobj  -out  ${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.msi
-    ${EXTRA_LIGHT_ARGS}
+  COMMAND ${WIX_EXECUTABLE} build -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext -arch ${PLATFORM} connector-cpp.wxs 
+    -out  ${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.msi
+    ${EXTRA_WIX_ARGS}
 )
 
 
@@ -334,7 +332,7 @@ function(set_wix_components)
       generate_guid(GUID)
 
       out("<DirectoryRef Id='${d_id}'>")
-      out("  <Component Id='${c_id}' Guid='${GUID}' Win64='${IS64BIT}'>")
+      out("  <Component Id='${c_id}' Guid='${GUID}' Bitness='${BITNESS}'>")
 
       foreach(F ${FILES${C}${d_suffix}})
         get_file_id(${d_suffix}_${F} id path)
