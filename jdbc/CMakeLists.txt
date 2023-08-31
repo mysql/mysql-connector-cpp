@@ -421,7 +421,7 @@ set(AUTH_PLUGINS
 )
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "SunOS")
-  list(APPEND AUTH_PLUGINS fido)
+  list(APPEND AUTH_PLUGINS webauthn fido)
   # Note: Kerberos authentication plugin is not supported on macOS
   if(NOT APPLE)
     list(APPEND AUTH_PLUGINS kerberos)
@@ -435,6 +435,7 @@ endif()
 # should be listed first, otherwise the logic detecting missing dependencies
 # will break... For example: `krb5support` must go before `krb5`
 
+set(AUTH_DEPS_webauthn fido2)
 set(AUTH_DEPS_fido fido2)
 
 

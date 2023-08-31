@@ -45,11 +45,103 @@ class MySQL_Connection;
 class MySQL_Driver;
 }
 
+
+/*
+  A callback to be used with `Driver::setCallback()` to define reaction
+  to the user action request during WebAuthn authentication handshake.
+
+  The client library defines default reaction which prints message on stderr.
+  This callback can be used to change it.
+
+  Example usage:
+
+    // Use lambda
+
+    driver->setCallback(WebAuthn_Callback{[](SQLString msg){
+      cerr << "User action request: " << msg << endl;
+    }});
+
+    // Disable default behavior (and do nothing upon action request)
+
+    driver->setCallback(WebAuthn_Callback{});
+
+    // Return to default behavior
+
+    driver->setCallbacak(WebAuthn_Callback{nullptr});
+
+    // User defined callback
+
+    struct My_Callback : WebAuthn_Callback
+    {
+      void ActionRequested(SQLString) override;
+    } 
+    cb;
+
+    driver->setCallback(cb);
+*/
+
+class WebAuthn_Callback
+{
+  std::function<void(SQLString)> callback_func;
+
+public:
+
+  /*
+    Create a callback that will call given lambda upon user action request.
+  */
+
+  WebAuthn_Callback(std::function<void(SQLString)>&& cb)
+    : callback_func{std::move(cb)}
+  {}
+
+  /*
+    Create an empty callback that will do nothing upon user action request.
+    This disables the default callback defined by the client library.
+  */
+
+  WebAuthn_Callback()
+    : callback_func{[](SQLString){}}
+  {}
+
+  /*
+    Create a null callback. Setting such callback has the effect of using
+    the default callback defined by the client library.
+  */
+
+  WebAuthn_Callback(std::nullptr_t)
+  {}
+
+  /*
+    Derived class can override this method to react to user action request.
+  */
+
+  virtual void ActionRequested(sql::SQLString msg)
+  {
+    if (callback_func)
+      callback_func(msg);
+  }
+
+  // Returns true if this callback is not null.
+
+  operator bool() const
+  {
+    return (bool)callback_func;
+  }
+
+  void operator()(sql::SQLString msg)
+  {
+    ActionRequested(msg);
+  }
+
+};
+
+
 /*
  * Class that provides functionality allowing user code to set the
  * callback functions through inheriting, passing the callback as
  * constructor parameters or using lambdas.
  */
+
 class Fido_Callback
 {
   std::function<void(SQLString)> callback_func = nullptr;
@@ -96,6 +188,7 @@ public:
   friend class mysql::MySQL_Connection;
   friend class mysql::MySQL_Driver;
 };
+
 
 } /* namespace sql */
 

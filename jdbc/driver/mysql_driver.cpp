@@ -172,23 +172,87 @@ void MySQL_Driver::threadEnd()
 }
 
 
-void MySQL_Driver::setCallBack(sql::Fido_Callback&& cb)
+/*
+  Note: When setting webauthn/fido callback the `fido_calback` pointer
+  is re-used as a flag to indicate that the callback was set and its
+  type:
+
+  0 (null) = no callback was set
+  1        = webauthn callback was set
+  2        = fido callback was set
+*/
+
+
+void MySQL_Driver::setCallBack(sql::WebAuthn_Callback&& cb)
 {
-  fido_callback_store = std::move(cb);
-  fido_callback = &fido_callback_store;
+  if (cb)
+    webauthn_callback = std::move(cb);
+  else
+    webauthn_callback = nullptr;
+
+  fido_callback
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 1LL : 0LL);
 }
 
+void MySQL_Driver::setCallBack(sql::WebAuthn_Callback& cb)
+{
+  if (cb)
+    webauthn_callback = [&cb](SQLString msg) { cb(msg); };
+  else
+    webauthn_callback = nullptr;
+
+  fido_callback
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 1LL : 0LL);
+}
+
+
+/*
+  Note: Values 1 and 4 of `fido_callback` mean that user has set a WebAuthn
+  callback before and it can not be overwritten by Fido one. If later user
+  de-registers a WebAuthn callaback then `fido_callback` becomes 0 or 4 and
+  error will not be thrown -- user can set a new Fido callback in this
+  situation.
+*/
+
+#define CHECK_FIDO_ERROR \
+  if (1 == (reinterpret_cast<intptr_t>(fido_callback) % 3)) \
+  throw sql::SQLException{ \
+    "You are trying to overwrithe WebAuthn callback with FIDO one. " \
+    "FIDO authentication plugin and the corresponding callback type " \
+    "are deprecated, use WebAuthn instead." \
+  } \
+
+
+void MySQL_Driver::setCallBack(sql::Fido_Callback&& cb)
+{
+  CHECK_FIDO_ERROR;
+
+  if (cb)
+    webauthn_callback = std::move(cb);
+  else
+    webauthn_callback = nullptr;
+
+  fido_callback
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 2LL : 0LL);
+}
 
 void MySQL_Driver::setCallBack(sql::Fido_Callback& cb)
 {
-  fido_callback_store = Fido_Callback{};
-  fido_callback = &cb;
-}
+  CHECK_FIDO_ERROR;
 
+  if (cb)
+    webauthn_callback = [&cb](SQLString msg) { cb(msg); };
+  else
+    webauthn_callback = nullptr;
+
+  fido_callback
+    = reinterpret_cast<Fido_Callback*>(webauthn_callback ? 2LL : 0LL);
+}
 
 } /* namespace mysql */
 
 } /* namespace sql */
+
 
 #if(_WIN32 && CONCPP_BUILD_SHARED)
 std::string driver_dll_path;

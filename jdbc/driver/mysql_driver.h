@@ -65,8 +65,27 @@ class CPPCONN_PUBLIC_FUNC MySQL_Driver : public sql::Driver
 #pragma warning(pop)
 #endif
 
+  /*
+    Note: With current implementation `fido_callback` and `fido_callback_store`
+    are not really used and should be removed after deprecation of Fido
+    authentication plugin and when ABI can be changed.
+  */
+
   ::sql::Fido_Callback* fido_callback = nullptr;
   ::sql::Fido_Callback fido_callback_store;
+
+  /*
+    Callback function to be called by WebAuthn authentication plugin to notify 
+    the user.
+
+    Note: Currently the same callback can be used wih deprecated Fido
+    authentication plugin.
+
+    Note: The `fido_callback` pointer is re-used as a flag to indicate if
+    the callback was set by a user and its type (WebAuthn vs. Fido).
+  */
+
+  std::function<void(SQLString)> webauthn_callback;
 
 public:
   MySQL_Driver();
@@ -74,31 +93,36 @@ public:
 
   virtual ~MySQL_Driver();
 
-  sql::Connection * connect(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password);
+  sql::Connection * connect(const sql::SQLString& hostName, const sql::SQLString& userName, const sql::SQLString& password) override;
 
-  sql::Connection * connect(sql::ConnectOptionsMap & options);
+  sql::Connection * connect(sql::ConnectOptionsMap & options) override;
 
-  int getMajorVersion();
+  int getMajorVersion() override;
 
-  int getMinorVersion();
+  int getMinorVersion() override;
 
-  int getPatchVersion();
+  int getPatchVersion() override;
 
-  const sql::SQLString & getName();
+  const sql::SQLString & getName() override;
 
-  void setCallBack(sql::Fido_Callback &cb);
+  void setCallBack(sql::Fido_Callback &cb) override;
+  void setCallBack(sql::Fido_Callback &&cb) override;
 
-  void setCallBack(sql::Fido_Callback &&cb);
+  void setCallBack(sql::WebAuthn_Callback &cb) override;
+  void setCallBack(sql::WebAuthn_Callback &&cb) override;
 
-  void threadInit();
+  void threadInit() override;
 
-  void threadEnd();
+  void threadEnd() override;
 
 private:
   /* Prevent use of these */
   MySQL_Driver(const MySQL_Driver &);
   void operator=(MySQL_Driver &);
 
+  struct WebAuthn_Callback_Setter;
+
+  friend WebAuthn_Callback_Setter;
   friend MySQL_Connection;
 
 };

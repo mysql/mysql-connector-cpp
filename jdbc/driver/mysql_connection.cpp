@@ -95,18 +95,8 @@
 # define ER_MUST_CHANGE_PASSWORD_LOGIN 1820
 #endif
 
-std::mutex callback_mutex;
-
-sql::Fido_Callback * fido_callback_instance = nullptr;
 
 bool oci_plugin_is_loaded = false;
-
-static void fido_callback_func(const char* msg)
-{
-  if (!fido_callback_instance)
-    return;
-  (*fido_callback_instance)(msg);
-}
 
 
 namespace sql
@@ -414,6 +404,7 @@ bool get_connection_option(const sql::SQLString optionName,
   return false;
 }
 
+
 struct Prio
 {
   uint16_t prio;
@@ -428,6 +419,143 @@ struct Prio
     return prio < other.prio;
   }
 };
+
+
+/*
+  A callback setter object arranges for correct WebAuthn/Fido authentication
+  callbacks to be used by the correpsonding clientlib authentication plugin.
+
+  If a user has registered a callback with a driver that creates a connection
+  then a callback function is registered with authentication plugins which will
+  call the callback stored in the driver.
+
+  The callback function registered with authentication plugins must be changed
+  depending on which driver is used to create a connection. A callback setter
+  object makes necessary changes when it detects that the current driver passed
+  to its ctor is different from the one used last time. 
+  
+  While exists, callback setter also prevents modification of authentication
+  plugin callbacks by concurrent threads.
+*/
+
+struct MySQL_Driver::WebAuthn_Callback_Setter
+{
+  using Proxy = NativeAPI::NativeConnectionWrapper;
+
+  WebAuthn_Callback_Setter(MySQL_Driver &drv, Proxy *prx) 
+    : lock{mutex}
+  {
+    /*
+      Note: Meaning of callback type value:
+
+      0 or 3 = no callback
+      1 or 4 = webauthn only callback
+      2 or 5 = webauthn and fido callback
+
+      Values 3,4,5 indicate that the callback function has been already
+      (de-)registered with the plugin(s).
+    */
+
+    auto callback_type = reinterpret_cast<intptr_t>(drv.fido_callback);
+
+    /*
+      Do nothing if we use the same driver as last time nad (de-)registration
+      was already done.
+    */
+
+    if ((2 < callback_type) && (driver == &drv))
+      return;
+
+    driver = &drv;  // Set current driver.
+
+    /*
+      Note: A webauthn callback (callback_type 2 or 5) is registered with both
+      "fido" and "webauthn" plugins. A fido callback (callback_type 1 or 4)
+      is registered only with "fido" plugin. And if user did not register any
+      callback (callback_type 0 or 3) then both plugin callbacks are re-set
+      to null.
+    */
+
+    register_callback(prx, "fido", (callback_type % 3) > 1);
+    register_callback(prx, "webauthn", (callback_type % 3) > 0);
+
+    /*
+      Note: This will be reset to value 0-2 when user deregisters
+      the callback or registers a new one.
+    */
+   
+    drv.fido_callback = reinterpret_cast<Fido_Callback*>(callback_type + 3);
+  }
+
+ private:
+
+  // The driver whose callback will be called by authentication plugins.
+
+  static sql::mysql::MySQL_Driver * driver;
+
+  /*
+    Callback function to be registered with authentication plugins.
+    If the current driver has a stored callback then it is being called.
+  */
+
+  static void callback_func(const char* msg)
+  {
+    if (!driver || !driver->fido_callback)
+      return;
+    driver->webauthn_callback(msg);
+  }
+
+  static std::mutex mutex;
+  std::lock_guard<std::mutex> lock;
+
+  static
+  void register_callback(Proxy *proxy, std::string which, bool set_or_reset)
+  {
+    std::string plugin = "authentication_" + which + "_client";
+    std::string opt = (which == "webauthn" ?
+      "plugin_authentication_webauthn_client" : which) +
+      "_messages_callback";
+
+    try
+    {
+      proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
+        plugin.c_str(), opt.c_str(),
+        set_or_reset ? (const void*)callback_func : nullptr
+      );
+    }
+    catch (sql::MethodNotImplementedException &)
+    {
+      // Note: Ignore errors when re-setting the callback
+      
+      if(!set_or_reset) 
+        return;
+
+      /*
+        If failed, plugin is not present, we ignore this fact for deprected
+        fido plugin.
+      */
+      
+      if ("fido" != which)
+        throw;
+    }
+    catch (sql::InvalidArgumentException &e) 
+    {
+      if(!set_or_reset) 
+        return;
+
+      throw ::sql::SQLException(
+          "Failed to set fido message callback for "
+          + plugin + " plugin");
+    }
+  };        
+
+};
+
+
+std::mutex MySQL_Driver::WebAuthn_Callback_Setter::mutex;
+sql::mysql::MySQL_Driver *MySQL_Driver::WebAuthn_Callback_Setter::driver
+  = nullptr;
+
 
 /*
   We support :
@@ -1412,62 +1540,14 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     }
 
     /*
-    * Helper class to simplify setting and resetting of the plugin callback.
+      Note: If needed the setter will update callback functions registered with
+      webauthn/fido authentication plugins to call the callback stored
+      in the driver. It also protects the callbacks from being modified while
+      connection is being made.
     */
-    struct Fido_Callback_Setter
-    {
-      NativeAPI::NativeConnectionWrapper *proxy = nullptr;
 
-      /*
-      * Construct the setter using the callback and proxy.
-      */
-      Fido_Callback_Setter(Fido_Callback *callback,
-        NativeAPI::NativeConnectionWrapper *_proxy) :
-          proxy(_proxy)
-      {
-        if (proxy && callback && *callback)
-        {
-          callback_mutex.lock();
-          try
-          {
-            fido_callback_instance = callback;
-            proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
-              "authentication_fido_client",
-              "fido_messages_callback",
-              (const void*)fido_callback_func
-            );
-
-          }
-          catch (sql::InvalidArgumentException& e) {
-            throw ::sql::SQLUnsupportedOptionException(
-              "Failed to set fido message callback for authentication_fido_client plugin",
-              OPT_OCI_CONFIG_FILE
-            );
-          }
-        }
-      }
-
-      ~Fido_Callback_Setter()
-      {
-        if(fido_callback_instance && proxy)
-        {
-          try
-          {
-            proxy->plugin_option(MYSQL_CLIENT_AUTHENTICATION_PLUGIN,
-              "authentication_fido_client",
-              "fido_messages_callback",
-              nullptr);
-          }
-          catch(...) {}
-          fido_callback_instance = nullptr;
-          callback_mutex.unlock();
-        }
-      }
-    };
-
-    Fido_Callback_Setter setter(
-      static_cast<MySQL_Driver*>(driver)->fido_callback,
-      proxy.get());
+    MySQL_Driver::WebAuthn_Callback_Setter
+    setter{*static_cast<MySQL_Driver*>(driver), proxy.get()};
 
     //Connect loop
     {
