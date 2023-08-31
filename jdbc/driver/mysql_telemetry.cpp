@@ -84,6 +84,13 @@ namespace telemetry
   }
 
 
+  /*
+    Note: See [1] for relevant OTel semantic conventions for connection-level
+    attributes.
+
+    [1] https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#connection-level-attributes
+  */
+
   void
   Telemetry_base<MySQL_Connection>::set_attribs(
     MySQL_Connection* con, 
@@ -98,10 +105,14 @@ namespace telemetry
     switch(endpoint.Protocol())
     {
       case NativeAPI::PROTOCOL_TCP:
-        transport = "ip_tcp";
+        transport = "tcp";
+        // TODO: If we can somehow detect IPv6 connections then "network.type"
+        // should be set to "ipv6"
+        span->SetAttribute("network.type", "ipv4");
         break;
       case NativeAPI::PROTOCOL_SOCKET:
-        span->SetAttribute("net.sock.family", "unix");
+        transport = "socket";
+        span->SetAttribute("network.type", "unix");
       case NativeAPI::PROTOCOL_PIPE:
         transport = "pipe";
         break;
@@ -109,8 +120,8 @@ namespace telemetry
         transport = "other";
     }
 
-    span->SetAttribute("net.transport", transport);
-    span->SetAttribute("net.peer.name", endpoint.Host().c_str());
+    span->SetAttribute("network.transport", transport);
+    span->SetAttribute("server.address", endpoint.Host().c_str());
     
     /*
       Note: `endpoint.hasPort()` alone is not good because it tells whether
@@ -122,7 +133,7 @@ namespace telemetry
 
     if (options.count(OPT_PORT) || endpoint.hasPort())
     {
-      span->SetAttribute("net.peer.port", endpoint.Port());
+      span->SetAttribute("server.port", endpoint.Port());
     }
   }
 
