@@ -170,12 +170,6 @@ public:
 
   virtual ::sql::SQLString info() = 0;
 
-  virtual bool ssl_set(const ::sql::SQLString & key,
-            const ::sql::SQLString & cert,
-            const ::sql::SQLString & ca,
-            const ::sql::SQLString & capath,
-            const ::sql::SQLString & cipher) = 0;
-
   virtual NativeResultsetWrapper * store_result() = 0;
 
   virtual int use_protocol(Protocol_Type) = 0;

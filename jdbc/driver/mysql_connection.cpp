@@ -432,8 +432,8 @@ struct Prio
   The callback function registered with authentication plugins must be changed
   depending on which driver is used to create a connection. A callback setter
   object makes necessary changes when it detects that the current driver passed
-  to its ctor is different from the one used last time. 
-  
+  to its ctor is different from the one used last time.
+
   While exists, callback setter also prevents modification of authentication
   plugin callbacks by concurrent threads.
 */
@@ -442,7 +442,7 @@ struct MySQL_Driver::WebAuthn_Callback_Setter
 {
   using Proxy = NativeAPI::NativeConnectionWrapper;
 
-  WebAuthn_Callback_Setter(MySQL_Driver &drv, Proxy *prx) 
+  WebAuthn_Callback_Setter(MySQL_Driver &drv, Proxy *prx)
     : lock{mutex}
   {
     /*
@@ -483,7 +483,7 @@ struct MySQL_Driver::WebAuthn_Callback_Setter
       Note: This will be reset to value 0-2 when user deregisters
       the callback or registers a new one.
     */
-   
+
     drv.fido_callback = reinterpret_cast<Fido_Callback*>(callback_type + 3);
   }
 
@@ -526,28 +526,28 @@ struct MySQL_Driver::WebAuthn_Callback_Setter
     catch (sql::MethodNotImplementedException &)
     {
       // Note: Ignore errors when re-setting the callback
-      
-      if(!set_or_reset) 
+
+      if(!set_or_reset)
         return;
 
       /*
         If failed, plugin is not present, we ignore this fact for deprected
         fido plugin.
       */
-      
+
       if ("fido" != which)
         throw;
     }
-    catch (sql::InvalidArgumentException &e) 
+    catch (sql::InvalidArgumentException &e)
     {
-      if(!set_or_reset) 
+      if(!set_or_reset)
         return;
 
       throw ::sql::SQLException(
           "Failed to set fido message callback for "
           + plugin + " plugin");
     }
-  };        
+  };
 
 };
 
@@ -669,7 +669,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
 #ifdef TELEMETRY
   // TODO: Use these helpers to reduce code repetition.
 
-  auto get_option_i = [&properties, &p_i](std::string name, bool check = true) 
+  auto get_option_i = [&properties, &p_i](std::string name, bool check = true)
   {
     if (!properties.count(name))
       return false;
@@ -680,8 +680,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           "No long long value passed for " + name
         };
       return true;
-    } 
-    catch (sql::InvalidArgumentException&) 
+    }
+    catch (sql::InvalidArgumentException&)
     {
       throw sql::InvalidArgumentException{
         "Wrong type passed for " + name + " expected long long"
@@ -700,8 +700,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           "No bool value passed for " + name
         };
       return true;
-    } 
-    catch (sql::InvalidArgumentException&) 
+    }
+    catch (sql::InvalidArgumentException&)
     {
       throw sql::InvalidArgumentException{
         "Wrong type passed for " + name + " expected bool"
@@ -710,7 +710,7 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   };
 
 #if 0
-  auto get_option_s = [&properties, &p_s](const char *name, bool check = true) 
+  auto get_option_s = [&properties, &p_s](const char *name, bool check = true)
   {
     if (!properties.count(name))
       return false;
@@ -721,8 +721,8 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
           std::string{"No string value passed for "} + name
         };
       return true;
-    } 
-    catch (sql::InvalidArgumentException&) 
+    }
+    catch (sql::InvalidArgumentException&)
     {
       throw sql::InvalidArgumentException{
         std::string{"Wrong type passed for "} + name
@@ -818,9 +818,9 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
   }
 
   /*
-    OPT_OPENTELEMETRY 
-  
-    We first try to get it as enum constant (integer value). If this does 
+    OPT_OPENTELEMETRY
+
+    We first try to get it as enum constant (integer value). If this does
     not work, we try bool value.
   */
 
@@ -1416,14 +1416,28 @@ void MySQL_Connection::init(ConnectOptionsMap & properties)
     throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption);
   }
 
+#define SSL_SET(OPT, VAL) if (VAL.length()) \
+    try { \
+      proxy->options(OPT, VAL.c_str()); \
+    } \
+    catch (sql::InvalidArgumentException &e) { \
+      std::string errorOption(#OPT); \
+      throw ::sql::SQLUnsupportedOptionException(e.what(), errorOption); \
+    }
+
+#define SSL_OPTIONS_LIST(X) \
+  X(MYSQL_OPT_SSL_KEY, sslKey) \
+  X(MYSQL_OPT_SSL_CERT, sslCert) \
+  X(MYSQL_OPT_SSL_CA, sslCA) \
+  X(MYSQL_OPT_SSL_CAPATH, sslCAPath) \
+  X(MYSQL_OPT_SSL_CIPHER, sslCipher)
 
   if (ssl_used) {
-    /* According to the docs, always returns 0 */
-    proxy->ssl_set(sslKey, sslCert, sslCA, sslCAPath, sslCipher.c_str());
+    SSL_OPTIONS_LIST(SSL_SET);
   }
 
   /*
-    Workaround for libmysqlclient... if OPT_TLS_VERSION or ssl_set is used,
+    Workaround for libmysqlclient... if OPT_TLS_VERSION is used,
     it overwrites OPT_SSL_MODE... setting it again.
   */
 

@@ -160,13 +160,6 @@ public:
 
   const char * sqlstate(MYSQL *) override;
 
-  my_bool ssl_set(MYSQL * mysql,
-          const char * key,
-          const char * cert,
-          const char * ca,
-          const char * capath,
-          const char * cipher) override;
-
   MYSQL_RES * store_result(MYSQL *) override;
 
   MYSQL_RES * use_result(MYSQL *) override;

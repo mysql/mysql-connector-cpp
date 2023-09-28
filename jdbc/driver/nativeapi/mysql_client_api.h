@@ -127,8 +127,6 @@ typedef my_bool (STDCALL *ptr2mysql_rollback)(MYSQL *mysql);
 
 typedef const char * (STDCALL *ptr2mysql_sqlstate)(MYSQL *mysql);
 
-typedef my_bool (STDCALL *ptr2mysql_ssl_set)(MYSQL *, const char *, const char *, const char *, const char *, const char *);
-
 typedef MYSQL_RES * (STDCALL *ptr2mysql_store_result)(MYSQL *);
 
 typedef MYSQL_RES * (STDCALL *ptr2mysql_use_result)(MYSQL *);
@@ -284,13 +282,6 @@ public:
   virtual my_bool rollback(MYSQL *) = 0;
 
   virtual const char * sqlstate(MYSQL *) = 0;
-
-  virtual my_bool ssl_set(MYSQL * mysql,
-              const char * key,
-              const char * cert,
-              const char * ca,
-              const char * capath,
-              const char * cipher) = 0;
 
   virtual MYSQL_RES * store_result(MYSQL *) = 0;
 

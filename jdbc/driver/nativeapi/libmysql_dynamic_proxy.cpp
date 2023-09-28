@@ -628,22 +628,6 @@ LibmysqlDynamicProxy::sqlstate(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ LibmysqlDynamicProxy::ssl_set() */
-my_bool
-LibmysqlDynamicProxy::ssl_set(MYSQL * mysql,
-                      const char * key,
-                      const char * cert,
-                      const char * ca,
-                      const char * capath,
-                      const char * cipher)
-{
-  static ptr2mysql_ssl_set ptr2_ssl_set = symbol_safe_cast<ptr2mysql_ssl_set>(GetProcAddr("mysql_ssl_set"));
-
-  return (*ptr2_ssl_set)(mysql, key, cert, ca, capath, cipher);
-}
-/* }}} */
-
-
 /* {{{ LibmysqlDynamicProxy::store_result() */
 MYSQL_RES *
 LibmysqlDynamicProxy::store_result(MYSQL * mysql)

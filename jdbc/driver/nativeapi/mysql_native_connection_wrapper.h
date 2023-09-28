@@ -155,10 +155,6 @@ public:
 
  ::sql::SQLString sqlstate() override;
 
- bool ssl_set(const ::sql::SQLString &key, const ::sql::SQLString &cert,
-              const ::sql::SQLString &ca, const ::sql::SQLString &capath,
-              const ::sql::SQLString &cipher) override;
-
  ::sql::SQLString info() override;
 
  NativeResultsetWrapper *store_result() override;

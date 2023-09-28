@@ -539,20 +539,6 @@ MySQL_NativeConnectionWrapper::info()
 /* }}} */
 
 
-/* {{{ MySQL_NativeConnectionWrapper::ssl_set() */
-bool
-MySQL_NativeConnectionWrapper::ssl_set(const SQLString & key,
-                const SQLString & cert,
-                const SQLString & ca,
-                const SQLString & capath,
-                const SQLString & cipher)
-{
-  return ('\0' != api->ssl_set(mysql, nullIfEmpty(key), nullIfEmpty(cert),
-              nullIfEmpty(ca), nullIfEmpty(capath), nullIfEmpty(cipher)));
-}
-/* }}} */
-
-
 /* {{{ MySQL_NativeConnectionWrapper::store_result() */
 NativeResultsetWrapper *
 MySQL_NativeConnectionWrapper::store_result()

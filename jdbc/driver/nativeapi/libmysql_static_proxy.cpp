@@ -476,20 +476,6 @@ LibmysqlStaticProxy::sqlstate(MYSQL * mysql)
 /* }}} */
 
 
-/* {{{ LibmysqlStaticProxy::ssl_set() */
-my_bool
-LibmysqlStaticProxy::ssl_set(MYSQL* mysql,
-              const char * key,
-              const char * cert,
-              const char * ca,
-              const char * capath,
-              const char * cipher)
-{
-  return ::mysql_ssl_set(mysql, key, cert, ca, capath, cipher);
-}
-/* }}} */
-
-
 /* {{{ LibmysqlStaticProxy::store_result() */
 MYSQL_RES *
 LibmysqlStaticProxy::store_result(MYSQL * mysql)
