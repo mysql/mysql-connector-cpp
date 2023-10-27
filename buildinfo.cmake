@@ -28,6 +28,32 @@
 
 ##########################################################################
 
+include(version.cmake)
+
+
+function(generate_cmake_config)
+
+  foreach(suffix "-config" "-config-version")
+
+    configure_file(
+      mysql-concpp${suffix}.cmake.in
+      "${CMAKE_BINARY_DIR}/mysql-concpp${suffix}.cmake"
+      @ONLY
+    )
+
+    install(
+      FILES 
+        "${CMAKE_BINARY_DIR}/mysql-concpp${suffix}.cmake"
+      DESTINATION .
+      COMPONENT Readme
+    )
+
+  endforeach()
+
+endfunction(generate_cmake_config)
+
+
+
 FUNCTION(GENERATE_INFO_BIN)
 
   IF(DEFINED ENV{PRODUCT_ID} AND "$ENV{PRODUCT_ID}" MATCHES "source-dist")
@@ -94,7 +120,6 @@ FUNCTION(GENERATE_INFO_BIN)
 
 ENDFUNCTION()
 
-include(version.cmake)
 
 FUNCTION(GENERATE_INFO_SRC)
   MESSAGE("Generating INFO_SRC")
@@ -182,3 +207,4 @@ ENDFUNCTION()
 
 GENERATE_INFO_SRC()
 GENERATE_INFO_BIN()
+generate_cmake_config()

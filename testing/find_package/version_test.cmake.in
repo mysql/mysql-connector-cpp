@@ -1,0 +1,130 @@
+# Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 2.0, as
+# published by the Free Software Foundation.
+#
+# This program is also distributed with certain software (including
+# but not limited to OpenSSL) that is licensed under separate terms,
+# as designated in a particular file or component or in included license
+# documentation.  The authors of MySQL hereby grant you an
+# additional permission to link the program and your derivative works
+# with the separately licensed software that they have included with
+# MySQL.
+#
+# Without limiting anything contained in the foregoing, this file,
+# which is part of MySQL Connector/C++, is also subject to the
+# Universal FOSS Exception, version 1.0, a copy of which can be found at
+# http://oss.oracle.com/licenses/universal-foss-exception.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License, version 2.0, for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+
+#
+# This is a small project used to test find_package() functionality for our
+# connector package. It loads the package with find_package() requesting 
+# specific version given by `VERSION` parameter. If `EXACT` flag is set then
+# exact version is requested. If `EXTRA` flag is set then extra checks on 
+# variables set by the package are performed. Parameter `COMPONENTS` can
+# be set to a list of components requierd when package is loaded.
+#
+
+cmake_minimum_required(VERSION 3.15)
+project(CPP_version_test)
+
+if(EXACT)
+  set(EXACT "EXACT")
+endif()
+
+set(mysql-concpp_FIND_VERBOSE 1)
+
+find_package(mysql-concpp ${VERSION} ${EXACT} REQUIRED ${COMPONENTS})
+message("Loaded version: ${MYSQL_CONCPP_VERSION}")
+
+# Skip extra check unless they were requested
+
+if(NOT EXTRA)
+  return()
+endif()
+
+
+# Check variables that should be set by find_package(mysql-concpp ...)
+
+foreach(var 
+  FOUND ROOT_DIR VERSION
+  RUNTIME_LIBRARY_DIR RUNTIME_LIBRARY_DIRS
+  PLUGIN_DIR DEBUG_FOUND
+)
+
+  # Note: _ROOT_DIR variables are not set for RPM/DEB installs.
+
+  if(var STREQUAL "ROOT_DIR" AND NOT DEFINED MYSQL_CONCPP_ROOT_DIR)
+    continue()
+  endif()
+
+  foreach(prefix MYSQL_CONCPP mysql-concpp)
+
+    if(NOT DEFINED ${prefix}_${var})
+      message(SEND_ERROR "Required variable not set: ${prefix}_${var}")
+    else()
+      message(STATUS "config variable ${prefix}_${var}: ${${prefix}_${var}}")
+    endif()
+
+  endforeach(prefix)
+
+  if(NOT DEFINED MYSQL_CONCPP_${var})
+    continue()
+  endif()
+
+  if(NOT MYSQL_CONCPP_${var} STREQUAL mysql-concpp_${var})
+    message(SEND_ERROR 
+      "Missmatch between values of MYSQL_CONCPP_${var} and mysql-concpp_${var}"
+    )
+  endif()
+
+endforeach(var)
+
+# Check version components.
+
+string(REPLACE "." ";" version_components "${MYSQL_CONCPP_VERSION}")
+list(GET version_components 0 ver_MAJOR)
+list(GET version_components 1 ver_MINOR)
+list(GET version_components 2 ver_PATCH)
+
+foreach(prefix MYSQL_CONCPP mysql-concpp)
+foreach(comp MAJOR MINOR PATCH)
+  
+  set(comp_var ${prefix}_VERSION_${comp})
+
+  if(NOT DEFINED ${comp_var})
+    message(SEND_ERROR
+      "Version component variable not set: ${comp_var}"
+    )
+    continue()
+  endif()
+
+  if(NOT "${${comp_var}}" STREQUAL "${ver_${comp}}")
+    message(SEND_ERROR
+      "Bad version component ${comp_var} (expecting ${ver_${comp}}):"
+      " ${${comp_var}}"
+    )
+  endif()
+
+endforeach()
+endforeach()
+
+# Check _DEBUG_FOUND value
+
+if(
+  WITH_DEBUG AND NOT MYSQL_CONCPP_DEBUG_FOUND
+)
+  message(SEND_ERROR
+    "_DEBUG_FOUND variable is not correctly set: ${MYSQL_CONCPP_DEBUG_FOUND}"
+  )
+endif()

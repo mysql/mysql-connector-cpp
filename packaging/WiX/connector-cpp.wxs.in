@@ -141,18 +141,51 @@
    </Feature>
 
    <Feature Id="ALWAYSINSTALL" Title="ALWAYSINSTALL" Description="ALWAYSINSTALL" ConfigurableDirectory="INSTALLDIR" Level="1" Display="hidden">
+
     <Feature Id="Readme" Title="COMPONENT_README_DISPLAY_NAME" Description="COMPONENT_README_DESCRIPTION" ConfigurableDirectory="INSTALLDIR" Level="1">
        <ComponentGroupRef Id="componentgroup.Readme" />
     </Feature>
+
+    <!-- 
+      Register installed connector in the CMake system package registry.
+      See https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#system-package-registry
+    -->
+
+    <Component
+      Id="CMAKE_PACKAGE_REGISTRY"
+      Guid="7548d925-f065-482f-aea5-295500955198"
+      Directory="INSTALLDIR"
+    >
+
+      <RegistryValue 
+        Root="HKLM"
+        Key="Software\Kitware\CMake\Packages\mysql-concpp"
+        Type="string"
+        Name="mysql-msi-installation"
+        Value="[INSTALLDIR]"
+      />
+
+    </Component>
+
    </Feature>
 
-    <!-- WIX_DIRECTORIES -->@WIX_DIRECTORIES@<!--WIX_COMPONENTS-->@WIX_COMPONENTS@<!--WIX_COMPONENTS_GROUPS -->@WIX_COMPONENT_GROUPS@<!--WIX_INCLUDES -->@WIX_INCLUDES@
-      <Directory Id="@PROGRAM_FILES_FOLDER@">
-        <Directory Id="directory.MySQL" Name="MySQL">
-          <Directory Id="INSTALLDIR" Name="@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@">
-          </Directory>
+
+    <!-- WIX_DIRECTORIES -->
+    @WIX_DIRECTORIES@
+    <!--WIX_COMPONENTS-->
+    @WIX_COMPONENTS@
+    <!--WIX_COMPONENTS_GROUPS -->
+    @WIX_COMPONENT_GROUPS@
+    <!--WIX_INCLUDES -->
+    @WIX_INCLUDES@
+
+    <Directory Id="@PROGRAM_FILES_FOLDER@">
+      <Directory Id="directory.MySQL" Name="MySQL">
+        <Directory Id="INSTALLDIR" Name="@PRODUCT_NAME@ @MAJOR_VERSION@.@MINOR_VERSION@">
         </Directory>
       </Directory>
-    </Package>
+    </Directory>
+
+  </Package>
 
 </Wix>

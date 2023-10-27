@@ -266,10 +266,11 @@ add_custom_target(link_test
   COMMAND ${CMAKE_COMMAND} -E remove -f ${PROJECT_BINARY_DIR}/link_test/CMakeCache.txt
   COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
-    -D WITH_CONCPP=${PROJECT_BINARY_DIR}/install
+    -D mysql-concpp_DIR=${PROJECT_BINARY_DIR}/install
+    -D mysql-concpp_FIND_VERBOSE=1
     -D WITH_SSL="${WITH_SSL}"
     -D BUILD_STATIC=${BUILD_STATIC}
-    -D STATIC_MSVCRT=${STATIC_MSVCRT}
+    #-D STATIC_MSVCRT=${STATIC_MSVCRT}
     ${jdbc_options}
     ${PROJECT_SOURCE_DIR}/testapp
   COMMAND ${CMAKE_COMMAND} -E echo "==== Building test application ===="
