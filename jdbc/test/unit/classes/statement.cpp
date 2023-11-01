@@ -686,6 +686,28 @@ void statement::queryAttributes()
   ASSERT(res->isNull(3));
   ASSERT(res->isNull(4));
 
+  // Scenario 5 - traceparent behavior
+  stmt->clearAttributes();
+  res.reset(stmt->executeQuery("SELECT 1,"
+                               "mysql_query_attribute_string('traceparent')"));
+
+  ASSERT(res->next());
+  ASSERT_EQUALS(1, res->getInt(1));
+  if (!res->isNull(2))
+  {
+    // At this point we know that traceparent was set by telemetry.
+    // Set user traceparent attribute and see that it overwrites the one set
+    // by telemetry.
+    sql::SQLString s = "user set string";
+
+    stmt->setQueryAttrString("traceparent", s);
+    res.reset(stmt->executeQuery("SELECT 2,"
+                                "mysql_query_attribute_string('traceparent')"));
+    ASSERT(res->next());
+    ASSERT_EQUALS(2, res->getInt(1));
+    ASSERT_EQUALS(s, res->getString(2));
+  }
+
   stmt->execute("UNINSTALL COMPONENT 'file://component_query_attributes'");
 
 }

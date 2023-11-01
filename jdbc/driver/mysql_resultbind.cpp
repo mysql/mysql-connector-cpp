@@ -380,129 +380,175 @@ MySQL_AttributesBind::~MySQL_AttributesBind()
 int
 MySQL_AttributesBind::getBindPos(const sql::SQLString &name)
 {
-  size_t pos;
-  for(pos = 0; pos < names.size(); ++pos) {
-    if(name == names[pos])
-    {
-      break;
-    }
-  }
-  if(pos == names.size())
+  int pos = getNamePos(name);
+  if(pos < 0)
   {
     size_t length = name.length()+1;
     names.push_back( static_cast<const char*>(memcpy(new char[length] , name.c_str(), length)));
+    name_set_type.push_back(set_type::UNSET);
     bind.resize(names.size());
+    pos = names.size() - 1;
   }
   return pos;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &, const sql::SQLString& ) */
+/* {{{ MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &, const sql::SQLString&, bool ) */
 int
-MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &name, const sql::SQLString& value)
+MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &name, const sql::SQLString& value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setBigInt(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setBigInt(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &, bool) */
+/* {{{ MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &, bool, bool) */
 int
-MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &name, bool value)
+MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &name, bool value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setBoolean(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setBoolean(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &, const sql::SQLString& ) */
+/* {{{ MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &, const sql::SQLString&, bool ) */
 int
-MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value)
+MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setDateTime(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setDateTime(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &, double) */
+/* {{{ MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &, double, bool) */
 int
-MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &name, double value)
+MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &name, double value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setDouble(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setDouble(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &, int32_t) */
+/* {{{ MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &, int32_t, bool) */
 int
-MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &name, int32_t value)
+MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &name, int32_t value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setInt(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setInt(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrUInt(const SQLString &, uint32_t) */
+/* {{{ MySQL_AttributesBind::setQueryAttrUInt(const SQLString &, uint32_t, bool) */
 int
-MySQL_AttributesBind::setQueryAttrUInt(const SQLString &name, uint32_t value)
+MySQL_AttributesBind::setQueryAttrUInt(const SQLString &name, uint32_t value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setUInt(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setUInt(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrInt64(const SQLString &, int64_t) */
+/* {{{ MySQL_AttributesBind::setQueryAttrInt64(const SQLString &, int64_t, bool) */
 int
-MySQL_AttributesBind::setQueryAttrInt64(const SQLString &name, int64_t value)
+MySQL_AttributesBind::setQueryAttrInt64(const SQLString &name, int64_t value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setInt64(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setInt64(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &, uint64_t) */
+/* {{{ MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &, uint64_t, bool) */
 int
-MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value)
+MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setUInt64(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setUInt64(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &) */
+/* {{{ MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &, bool) */
 int
-MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &name)
+MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &name,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setNull();
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setNull();
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &, const sql::SQLString&) */
+/* {{{ MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &, const sql::SQLString&, bool) */
 int
-MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value)
+MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value,
+  bool is_external)
 {
   int pos =getBindPos(name);
-  bind[pos].setString(value);
+  if (is_external || !isExternal(pos))
+  {
+    bind[pos].setString(value);
+    set(pos, is_external);
+  }
   return pos+1;
 }
 /* }}} */
@@ -517,7 +563,7 @@ MySQL_AttributesBind::clearAttributes()
   for(auto el : names)
     delete [] el;
 
-  names.clear();
+  clearNames();
 }
 /* }}} */
 
@@ -540,18 +586,40 @@ MySQL_AttributesBind::getBinds()
 /* }}} */
 
 
-/* {{{ MySQL_AttributesBind::getNames() */
+/* {{{ MySQL_Names::getNames() */
 const char**
-MySQL_AttributesBind::getNames()
+MySQL_Names::getNames()
 {
   return names.data();
 }
 /* }}} */
 
+/* {{{ MySQL_Names::clearNames() */
+void
+MySQL_Names::clearNames()
+{
+  names.clear();
+  name_set_type.clear();
+}
+/* }}} */
 
-/* {{{ MySQL_AttributesBind::attribNameExists() */
+/* {{{ MySQL_Names::getNamePos() */
+int
+MySQL_Names::getNamePos(const sql::SQLString &name)
+{
+  for (int pos = 0; (size_t)pos < names.size(); ++pos)
+  {
+    auto &n = names[pos];
+    if (n && name.caseCompare(n) == 0)
+      return pos;
+  }
+  return -1;
+}
+/* }}} */
+
+/* {{{ MySQL_Names::attribNameExists() */
 bool
-MySQL_AttributesBind::attribNameExists(const sql::SQLString &name)
+MySQL_Names::attribNameExists(const sql::SQLString &name)
 {
   for (auto n : names)
   {
@@ -559,6 +627,47 @@ MySQL_AttributesBind::attribNameExists(const sql::SQLString &name)
       return true;
   }
   return false;
+}
+/* }}} */
+
+
+/* {{{ MySQL_Names::set() */
+void
+MySQL_Names::set(unsigned int position, bool is_external)
+{
+  name_set_type[position] = is_external ? set_type::EXTERNAL : set_type::INTERNAL;
+}
+/* }}} */
+
+/* {{{ MySQL_Names::unset() */
+void
+MySQL_Names::unset(unsigned int position)
+{
+  name_set_type[position] = set_type::UNSET;
+}
+/* }}} */
+
+/* {{{ MySQL_Names::isSet() */
+bool
+MySQL_Names::isSet(unsigned int position)
+{
+  return name_set_type[position] != set_type::UNSET;
+}
+/* }}} */
+
+/* {{{ MySQL_Names::isInternal() */
+bool
+MySQL_Names::isInternal(unsigned int position)
+{
+  return name_set_type[position] == set_type::INTERNAL;
+}
+/* }}} */
+
+/* {{{ MySQL_Names::isExternal() */
+bool
+MySQL_Names::isExternal(unsigned int position)
+{
+  return name_set_type[position] == set_type::EXTERNAL;
 }
 /* }}} */
 

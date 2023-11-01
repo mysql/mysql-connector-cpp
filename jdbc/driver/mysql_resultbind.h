@@ -98,10 +98,44 @@ class MySQL_ResultBind
 };
 
 
-class MySQL_AttributesBind
+class MySQL_Names
+{
+protected:
+
+  typedef enum
+  {
+    UNSET = 0,
+    EXTERNAL,
+    INTERNAL
+  }set_type;
+
+  std::vector<set_type> name_set_type;
+  std::vector<const char*> names;
+
+public:
+
+  MySQL_Names(unsigned int num) :
+    name_set_type(num), names(num)
+  {}
+
+  MySQL_Names()
+  {}
+
+  const char **getNames();
+  bool attribNameExists(const sql::SQLString &name);
+  void set(unsigned int position, bool is_external);
+  void unset(unsigned int position);
+  bool isSet(unsigned int position);
+  bool isInternal(unsigned int position);
+  bool isExternal(unsigned int position);
+  int getNamePos(const sql::SQLString &name);
+  void clearNames();
+};
+
+
+class MySQL_AttributesBind : public MySQL_Names
 {
   std::vector<MySQL_Bind> bind;
-  std::vector<const char*> names;
 
   int getBindPos(const SQLString &name);
 
@@ -111,24 +145,21 @@ public:
 
   ~MySQL_AttributesBind();
 
-  int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value);
-  int setQueryAttrBoolean(const sql::SQLString &name, bool value);
-  int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value);
-  int setQueryAttrDouble(const sql::SQLString &name, double value);
-  int setQueryAttrInt(const sql::SQLString &name, int32_t value);
-  int setQueryAttrUInt(const sql::SQLString &name, uint32_t value);
-  int setQueryAttrInt64(const sql::SQLString &name, int64_t value);
-  int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value);
-  int setQueryAttrNull(const SQLString &name);
-  int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value);
+  int setQueryAttrBigInt(const sql::SQLString &name, const sql::SQLString& value, bool is_external = true);
+  int setQueryAttrBoolean(const sql::SQLString &name, bool value, bool is_external = true);
+  int setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value, bool is_external = true);
+  int setQueryAttrDouble(const sql::SQLString &name, double value, bool is_external = true);
+  int setQueryAttrInt(const sql::SQLString &name, int32_t value, bool is_external = true);
+  int setQueryAttrUInt(const sql::SQLString &name, uint32_t value, bool is_external = true);
+  int setQueryAttrInt64(const sql::SQLString &name, int64_t value, bool is_external = true);
+  int setQueryAttrUInt64(const sql::SQLString &name, uint64_t value, bool is_external = true);
+  int setQueryAttrNull(const SQLString &name, bool is_external = true);
+  int setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value, bool is_external = true);
 
   void clearAttributes();
 
   int nrAttr();
   MYSQL_BIND* getBinds();
-  const char **getNames();
-  
-  bool attribNameExists(const sql::SQLString &name);
 };
 
 } /* namespace mysql */
