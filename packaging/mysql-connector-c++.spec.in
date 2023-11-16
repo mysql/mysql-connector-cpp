@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, 2022, Oracle and/or its affiliates.
+# Copyright (c) 2018, 2023, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -138,6 +138,11 @@ popd
 ln -s mysql-cppconn-8 %{buildroot}%{_includedir}/mysql-cppconn
 rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 
+# Add CMake files to the right location, and remove the incorrect ones
+mkdir -p %{buildroot}%{_libdir}/cmake/mysql-concpp/
+install -D -m 0644 %{buildroot}/usr/*.cmake %{buildroot}%{_libdir}/cmake/mysql-concpp/
+rm %{buildroot}/usr/*.cmake
+
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
@@ -161,12 +166,17 @@ rm %{buildroot}/usr/{INFO_SRC,INFO_BIN}
 %{_libdir}/libmysqlcppconn8.so
 %{_libdir}/libmysqlcppconn8-static.a
 %{_includedir}/mysql-cppconn
+%{_libdir}/cmake/mysql-concpp/mysql-concpp-config-version.cmake
+%{_libdir}/cmake/mysql-concpp/mysql-concpp-config.cmake
 %dir %{_includedir}/mysql-cppconn-8
 %{_includedir}/mysql-cppconn-8/mysqlx
 %{_includedir}/mysql-cppconn-8/mysql
 %{_includedir}/mysql-cppconn-8/jdbc
 
 %changelog
+* Fri Nov 03 2023 Sreedhar Sreedhargadda <sreedhar.sreedhargadda@oracle.com> - 8.2.0-1
+- Added two new files as part of ET79401
+
 * Tue Jan 25 2022 Prashant Tekriwal <prashant.tekriwal@oracle.com> - 8.0.29-1
 - Using devtoolset-11 for el7 x86 and el8(all)
 
