@@ -59,6 +59,10 @@ class NativeStatementWrapper;
 }
 
 
+int setStmtAttrString(MySQL_Prepared_Statement&,
+  const sql::SQLString&, const sql::SQLString&,
+  bool is_external = true);
+
 class MySQL_Prepared_Statement : public sql::PreparedStatement
 {
 protected:
@@ -100,6 +104,8 @@ protected:
   friend telemetry::Telemetry_base<MySQL_Prepared_Statement>;
   friend MySQL_Connection;
   friend MySQL_Prepared_ResultSet;
+  friend int setStmtAttrString(MySQL_Prepared_Statement&,
+    const sql::SQLString&, const sql::SQLString&, bool);
 
 public:
  MySQL_Prepared_Statement(const sql::SQLString &sql,

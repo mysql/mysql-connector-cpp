@@ -171,6 +171,8 @@ public:
 
   my_bool stmt_attr_set(MYSQL_STMT *, enum enum_stmt_attr_type, const void *) override;
 
+  my_bool stmt_bind_named_param(MYSQL_STMT *, MYSQL_BIND *, unsigned, const char **) override;
+
   my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *) override;
 
   my_bool stmt_bind_result(MYSQL_STMT *, MYSQL_BIND *) override;

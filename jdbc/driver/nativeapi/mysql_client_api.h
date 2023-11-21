@@ -138,6 +138,8 @@ typedef my_ulonglong (STDCALL *ptr2mysql_stmt_affected_rows)(MYSQL_STMT *);
 
 typedef my_bool (STDCALL *ptr2mysql_stmt_attr_set)(MYSQL_STMT *, enum enum_stmt_attr_type, const void *);
 
+typedef my_bool(STDCALL *ptr2mysql_stmt_bind_named_param)(MYSQL_STMT *, MYSQL_BIND *, unsigned, const char **);
+
 typedef my_bool (STDCALL *ptr2mysql_stmt_bind_param)(MYSQL_STMT *, MYSQL_BIND *);
 
 typedef my_bool (STDCALL *ptr2mysql_stmt_bind_result)(MYSQL_STMT *, MYSQL_BIND *);
@@ -293,6 +295,8 @@ public:
   virtual my_ulonglong  stmt_affected_rows (MYSQL_STMT *) = 0;
 
   virtual my_bool stmt_attr_set(MYSQL_STMT *stmt, enum enum_stmt_attr_type option , const void *arg) = 0;
+
+  virtual my_bool stmt_bind_named_param(MYSQL_STMT *, MYSQL_BIND *, unsigned, const char **) = 0;
 
   virtual my_bool stmt_bind_param(MYSQL_STMT *, MYSQL_BIND *) = 0;
 

@@ -217,6 +217,13 @@ void  resetBlobBind(MYSQL_BIND & param)
 }
 
 
+/*
+  This class stores parameter and attribute values.
+
+  Note: The number of parameter slots is fixed and determined when
+  an instance is created. Ininitially all these slots are empty.
+*/
+
 class MySQL_ParamBind
 {
 public:
@@ -224,18 +231,26 @@ public:
 
 private:
 
+  size_t param_count;
+
   std::vector<MYSQL_BIND> bind;
   std::vector<bool> value_set;
   std::vector<bool> delete_blob_after_execute;
 
   typedef std::map<unsigned int, Blob_t > Blobs;
+  using Base = MySQL_Names;
 
   Blobs blob_bind;
+
+  // Storage for attributes.
+
+  MySQL_AttributesBind attrs;
 
 public:
 
   MySQL_ParamBind(unsigned int paramCount)
-     : bind(paramCount, MYSQL_BIND {}),
+     : param_count(paramCount),
+       bind(paramCount, MYSQL_BIND {}),
        value_set(paramCount),
        delete_blob_after_execute(paramCount)
   {
@@ -251,6 +266,8 @@ public:
   {
     clearParameters();
 
+    // TODO: is it needed? Similar thing is done in `clearParameters()`.
+
     for (Blobs::iterator it= blob_bind.begin();
       it != blob_bind.end(); ++it) {
       if (delete_blob_after_execute[it->first]) {
@@ -259,6 +276,7 @@ public:
       }
     }
   }
+
 
   void set(unsigned int position)
   {
@@ -301,6 +319,32 @@ public:
     }
   }
 
+  /*
+    Set or overwrite existing value of an attribute with given name.
+    
+    If `is_external` is false then existing external value will not
+    be changed.
+  */
+
+  int setQueryAttrString(
+    const sql::SQLString &name,
+    const sql::SQLString &value,
+    bool is_external
+  )
+  {
+    int pos = attrs.setQueryAttrString(name, value, is_external);
+
+    /*
+      Note: Here we only resize `bind` vector accordingly but do not copy
+      attribute value from `attrs` -- this is done later in `getBindObject()`.
+    */
+
+    if (param_count + attrs.size() > bind.size())
+      bind.resize(param_count + attrs.size());
+
+    return pos;
+  }
+
 
   bool isAllSet()
   {
@@ -312,10 +356,18 @@ public:
     return true;
   }
 
+
   void clearParameters()
   {
-    size_t items_count = bind.size();
-    for (unsigned int i = 0; i < items_count; ++i)
+    clearAttributes();
+
+    /*
+      Note: Here we need to clear only slots corresponding to statement
+      parameters. Slots that correspond to attributes were handled above
+      (and discarded).
+    */
+
+    for (unsigned int i = 0; i < param_count; ++i)
     {
       if (bind[i].length)
         delete bind[i].length;
@@ -334,11 +386,72 @@ public:
     }
   }
 
+  void clearAttributes()
+  {
+    /*
+      Note: The `MYSQL_BIND` buffers storing attribute values are managed
+      by the `attrs` object. Even if we copy these attribute `MYSQL_BIND`
+      structures to `bind` vector, we can discard the copies here as
+      the originals are kept in `aatrs` object and will be properly freed etc.
+    */
+
+    bind.resize(param_count);
+    attrs.clearAttributes();
+  }
+
+  /*
+    Return array of `MYSQL_BIND` structures holding parameter values followed
+    by attribute values. The size of this array is given by `size()` method.
+  */
+
   MYSQL_BIND * getBindObject()
   {
+    /*
+      Note: The `bind` vector should be resized when new attributes are added.
+    */
+
+    assert(bind.size() == param_count + attrs.size());
+
+    /*
+      Copy `MYSQL_BIND` structures holding attribute values from the `attrs`
+      object. Note however that the original structures remain in and
+      are owned by the `attrs` member.
+    */
+
+    MYSQL_BIND *attr_binds = attrs.getBinds();
+
+    for (size_t i=0; i < attrs.size(); ++i)
+      bind.at(param_count + i) = attr_binds[i];
+
     return bind.data();
   }
 
+  /*
+    Number of entries in the array returned by `getBindObject()`. This
+    includes both parameters and attributes.
+  */
+
+  size_t size()
+  {
+    return bind.size();
+  }
+
+  /*
+    Return vector of names corresponding to bind structures returned
+    by `getBindObject()`. This starts with empty names for parameters
+    (which are anonymous) followed by attribute names.
+  */
+ 
+  std::vector<const char*> getNames()
+  {
+    std::vector<const char*> names{bind.size(), nullptr};
+    const char **attr_names = attrs.getNames();
+
+    for (size_t i=0; i < attrs.size(); ++i)
+      names.at(param_count+i) = attr_names[i];
+
+    return names;
+  }
 
   std::variant< std::istream *, SQLString *> getBlobObject(unsigned int position)
   {
@@ -461,6 +574,8 @@ MySQL_Prepared_Statement::do_query()
 {
   telemetry.span_start(this, "SQL execute");
 
+  assert(param_bind);
+
   try
   {
     CPP_ENTER("MySQL_Prepared_Statement::do_query");
@@ -469,7 +584,44 @@ MySQL_Prepared_Statement::do_query()
       throw sql::SQLException("Value not set for all parameters");
     }
 
-    if (proxy->bind_param(param_bind->getBindObject())) {
+    auto *bind_obj = param_bind->getBindObject();
+    size_t bind_cnt = param_bind->size();
+    std::vector<const char*> names = param_bind->getNames();
+    bool bind_res;
+
+#if MYSQL_VERSION_ID >= 80300
+    // Assume the named params are most likely implemented
+    try
+    {
+      bind_res = proxy->bind_named_param(
+        bind_obj, bind_cnt, names.data()
+      );
+    }
+    catch(const ::sql::MethodNotImplementedException& e)
+    {
+      // Dynamically linked libmysqclient is too old and it does not have
+      // mysql_stmt_bind_named_param() function.
+      // Fall back to mysql_stmt_bind_param().
+      bind_res = proxy->bind_param(bind_obj);
+    }
+#else
+    try
+    {
+      bind_res = proxy->bind_param(bind_obj);
+    }
+    catch(const ::sql::MethodNotImplementedException& e)
+    {
+      // If a new libmysqlclient library is used it might have
+      // mysql_stmt_bind_param() function removed. In that case
+      // mysql_stmt_bind_named_param() can be used.
+      // NOTE: In some versions both functions might exist.
+      bind_res = proxy->bind_named_param(
+        bind_obj, bind_cnt, names.data()
+      );
+    }
+#endif
+
+    if (bind_res) {
       CPP_ERR_FMT("Couldn't bind : %d:(%s) %s", proxy->errNo(), proxy->sqlstate().c_str(), proxy->error().c_str());
       sql::mysql::util::throwSQLException(*proxy.get());
     }
@@ -1457,6 +1609,24 @@ MySQL_Prepared_Statement::setQueryAttrNull(const sql::SQLString &name)
 /* }}} */
 
 
+/*
+  A helper function to set or replace existing named parameter value.
+
+  We need it instead of using the `setQueryAttrString()` method because
+  the latter is meant for setting "external" attributes by user. Here we need
+  to be able say whether we set internal or external value.
+
+  Note that setting external attributes for prepared statements is not yet
+  suported.
+*/
+
+int setStmtAttrString(MySQL_Prepared_Statement &stmt,
+  const sql::SQLString &name, const sql::SQLString& value,
+  bool is_external)
+{
+  return stmt.param_bind->setQueryAttrString(name, value, is_external);
+}
+
 /* {{{ MySQL_Prepared_Statement::setQueryAttrString() -U- */
 int
 MySQL_Prepared_Statement::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value)
@@ -1473,6 +1643,7 @@ MySQL_Prepared_Statement::setQueryAttrString(const sql::SQLString &name, const s
 void
 MySQL_Prepared_Statement::clearAttributes()
 {
+  param_bind->clearAttributes();
 }
 /* }}} */
 

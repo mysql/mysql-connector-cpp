@@ -522,11 +522,28 @@ LibmysqlStaticProxy::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type o
 /* }}} */
 
 
+/* {{{ LibmysqlStaticProxy::stmt_bind_named_param() */
+my_bool
+LibmysqlStaticProxy::stmt_bind_named_param(MYSQL_STMT * stmt, MYSQL_BIND * bind,
+                                           unsigned n_params, const char **names)
+{
+#if MYSQL_VERSION_ID >= 80300
+  return ::mysql_stmt_bind_named_param(stmt, bind, n_params, names);
+#else
+  throw ::sql::MethodNotImplementedException("::mysql_stmt_bind_named_param()");
+#endif
+}
+
 /* {{{ LibmysqlStaticProxy::stmt_bind_param() */
 my_bool
 LibmysqlStaticProxy::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
+#if MYSQL_VERSION_ID <= 80400
+  // TODO: we presume this will be removed in 8.4.0
   return ::mysql_stmt_bind_param(stmt, bind);
+#else
+  throw ::sql::MethodNotImplementedException("::mysql_stmt_bind_param()");
+#endif
 }
 /* }}} */
 

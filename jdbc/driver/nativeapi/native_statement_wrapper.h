@@ -78,6 +78,8 @@ public:
 
   virtual bool attr_set(MySQL_Statement_Options attr, const void *arg) = 0;
 
+  virtual bool bind_named_param(::MYSQL_BIND *, unsigned, const char **) = 0;
+
   virtual bool bind_param(::MYSQL_BIND *) = 0;
 
   virtual bool bind_result(::MYSQL_BIND *) = 0;

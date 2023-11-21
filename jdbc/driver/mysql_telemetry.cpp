@@ -192,7 +192,6 @@ namespace telemetry
     return stmt->conn_telemetry().disabled(stmt->connection);
   }
 
-
   template<>
   Span_ptr
   Telemetry_base<MySQL_Prepared_Statement>::mk_span(MySQL_Prepared_Statement *stmt,
@@ -201,6 +200,17 @@ namespace telemetry
     auto span = telemetry::mk_span( name == nullptr ? "SQL prepare" : name,
       stmt->conn_telemetry().span->GetContext()
     );
+
+    if (name && !strncmp("SQL execute", name, 11))
+    {
+      // When setting STMT attribute for telemetry we need to signal that
+      // it is not an external one. Otherwise it will be added as an attribute
+      // set by user. This cannot be done without chaning the signature of
+      // MySQL_Prepared_Statement::setQueryAttrString().
+      // Therefore, we are calling a helper function, which knows how to add
+      // such attributes.
+      setStmtAttrString(*stmt, "traceparent", get_traceparent(span), false);
+    }
 
     span->SetAttribute("db.user", stmt->connection->getCurrentUser().c_str());
 

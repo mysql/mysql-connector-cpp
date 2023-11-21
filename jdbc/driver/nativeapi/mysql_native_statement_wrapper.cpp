@@ -93,6 +93,13 @@ MySQL_NativeStatementWrapper::attr_set(MySQL_Statement_Options option, const voi
 }
 /* }}} */
 
+/* {{{ MySQL_NativeStatementWrapper::bind_named_param() */
+bool MySQL_NativeStatementWrapper::bind_named_param(::MYSQL_BIND *bind,
+                                                    unsigned n_params,
+                                                    const char **names)
+{
+  return (api->stmt_bind_named_param(stmt, bind, n_params, names) != '\0');
+}
 
 /* {{{ MySQL_NativeStatementWrapper::bind_param() */
 bool

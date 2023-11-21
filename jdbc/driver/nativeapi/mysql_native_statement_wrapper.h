@@ -77,6 +77,8 @@ public:
 
  bool attr_set(MySQL_Statement_Options option, const void *arg) override;
 
+ bool bind_named_param(::MYSQL_BIND *, unsigned, const char **) override;
+
  bool bind_param(::MYSQL_BIND *) override;
 
  bool bind_result(::MYSQL_BIND *) override;

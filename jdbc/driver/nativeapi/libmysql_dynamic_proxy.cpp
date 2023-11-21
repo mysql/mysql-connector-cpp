@@ -684,12 +684,25 @@ LibmysqlDynamicProxy::stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type 
 }
 /* }}} */
 
+/* {{{ LibmysqlDynamicProxy::stmt_bind_named_param() */
+my_bool
+LibmysqlDynamicProxy::stmt_bind_named_param(MYSQL_STMT * stmt, MYSQL_BIND * bind,
+                                            unsigned n_params, const char **names)
+{
+  static ptr2mysql_stmt_bind_named_param ptr2_stmt_bind_named_param = symbol_safe_cast<ptr2mysql_stmt_bind_named_param>(GetProcAddr("mysql_stmt_bind_named_param"));
+  if (ptr2_stmt_bind_named_param == nullptr)
+    throw ::sql::MethodNotImplementedException("::mysql_stmt_bind_named_param()");
+
+    return (*ptr2_stmt_bind_named_param)(stmt, bind, n_params, names);
+}
 
 /* {{{ LibmysqlDynamicProxy::stmt_bind_param() */
 my_bool
 LibmysqlDynamicProxy::stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bind)
 {
   static ptr2mysql_stmt_bind_param ptr2_stmt_bind_param = symbol_safe_cast<ptr2mysql_stmt_bind_param>(GetProcAddr("mysql_stmt_bind_param"));
+  if (ptr2_stmt_bind_param == nullptr)
+    throw ::sql::MethodNotImplementedException("::mysql_stmt_bind_param()");
 
   return (*ptr2_stmt_bind_param)(stmt, bind);
 }
