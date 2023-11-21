@@ -110,9 +110,9 @@ MySQL_Statement::do_query(const ::sql::SQLString &q)
 
   try
   {
-    if(attrbind.nrAttr() != 0)
+    if(attrbind.size() != 0)
     {
-      proxy_p->query_attr(attrbind.nrAttr(), attrbind.getNames(), attrbind.getBinds());
+      proxy_p->query_attr(attrbind.size(), attrbind.getNames(), attrbind.getBinds());
     }
 
     if (proxy_p->query(q) && proxy_p->errNo()) {
@@ -913,6 +913,14 @@ MySQL_Statement::setQueryAttrString(const sql::SQLString &name, const sql::SQLSt
   return attrbind.setQueryAttrString(name, value);
 }
 /* }}} */
+
+
+int setStmtAttrString(MySQL_Statement &stmt,
+  const sql::SQLString &name, const sql::SQLString &value,
+  bool is_external)
+{
+  return stmt.attrbind.setQueryAttrString(name, value, is_external);
+}
 
 
 /* {{{ MySQL_Statement::clearAttributes() -U- */

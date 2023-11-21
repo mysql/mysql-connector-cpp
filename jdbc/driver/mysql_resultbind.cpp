@@ -277,6 +277,12 @@ void
 MySQL_Bind::clear()
 {
   delete [] static_cast<char *>(buffer);
+
+  // Free the length allocation in case it was used.
+  if (length)
+    delete length;
+    
+  length = nullptr;
   buffer = nullptr;
   buffer_length = 0;
   is_unsigned = false;
@@ -377,18 +383,14 @@ MySQL_AttributesBind::~MySQL_AttributesBind()
 
 
 /* {{{ MySQL_AttributesBind::getBindPos(const sql::SQLString &) */
-int
-MySQL_AttributesBind::getBindPos(const sql::SQLString &name)
+unsigned
+MySQL_AttributesBind::get_bind_pos(
+  const sql::SQLString &name, bool &is_external
+)
 {
-  int pos = getNamePos(name);
-  if(pos < 0)
-  {
-    size_t length = name.length()+1;
-    names.push_back( static_cast<const char*>(memcpy(new char[length] , name.c_str(), length)));
-    name_set_type.push_back(set_type::UNSET);
-    bind.resize(names.size());
-    pos = names.size() - 1;
-  }
+  unsigned pos = getNamePos(name, is_external);
+  if(MySQL_Names::size() > bind.size())
+    bind.resize(MySQL_Names::size());
   return pos;
 }
 /* }}} */
@@ -399,12 +401,15 @@ int
 MySQL_AttributesBind::setQueryAttrBigInt(const SQLString &name, const sql::SQLString& value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setBigInt(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setBigInt(value);
   return pos+1;
 }
 /* }}} */
@@ -415,12 +420,15 @@ int
 MySQL_AttributesBind::setQueryAttrBoolean(const sql::SQLString &name, bool value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setBoolean(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setBoolean(value);
   return pos+1;
 }
 /* }}} */
@@ -431,12 +439,15 @@ int
 MySQL_AttributesBind::setQueryAttrDateTime(const sql::SQLString &name, const sql::SQLString& value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setDateTime(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setDateTime(value);
   return pos+1;
 }
 /* }}} */
@@ -447,12 +458,15 @@ int
 MySQL_AttributesBind::setQueryAttrDouble(const sql::SQLString &name, double value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setDouble(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setDouble(value);
   return pos+1;
 }
 /* }}} */
@@ -463,12 +477,15 @@ int
 MySQL_AttributesBind::setQueryAttrInt(const sql::SQLString &name, int32_t value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setInt(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setInt(value);
   return pos+1;
 }
 /* }}} */
@@ -479,12 +496,15 @@ int
 MySQL_AttributesBind::setQueryAttrUInt(const SQLString &name, uint32_t value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setUInt(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setUInt(value);
   return pos+1;
 }
 /* }}} */
@@ -495,12 +515,15 @@ int
 MySQL_AttributesBind::setQueryAttrInt64(const SQLString &name, int64_t value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setInt64(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setInt64(value);
   return pos+1;
 }
 /* }}} */
@@ -511,12 +534,15 @@ int
 MySQL_AttributesBind::setQueryAttrUInt64(const sql::SQLString &name, uint64_t value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setUInt64(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+  
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setUInt64(value);
   return pos+1;
 }
 /* }}} */
@@ -527,12 +553,15 @@ int
 MySQL_AttributesBind::setQueryAttrNull(const sql::SQLString &name,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setNull();
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  // See ::setQueryAttrString() for explanation.
+
+  if (pos_external != is_external)
+    return pos+1;
+
+  bind[pos].setNull();
   return pos+1;
 }
 /* }}} */
@@ -543,12 +572,40 @@ int
 MySQL_AttributesBind::setQueryAttrString(const sql::SQLString &name, const sql::SQLString& value,
   bool is_external)
 {
-  int pos =getBindPos(name);
-  if (is_external || !isExternal(pos))
-  {
-    bind[pos].setString(value);
-    set(pos, is_external);
-  }
+  bool pos_external = is_external;
+  unsigned int pos = get_bind_pos(name, pos_external);
+
+  /*
+    Note: In case we are setting internal value (`is_external` is false) and
+    the attribute already has external value `pos_external` will be true and
+    different from `is_external`. In all other cases the internal/external
+    status of the attribute that was found or added should be as requested
+    by `is_external` so that `pos_external` and `is_external` are equal.
+    In this case it is OK to overwrite old value with the new one.
+  */
+
+  if (pos_external != is_external)
+    return pos+1;
+
+  auto &mysql_bind = bind[pos];
+
+  mysql_bind.setString(value);
+
+  /*
+    Set correct length for the attribute value.
+
+    Note: setString() stores value string with the terminating null
+    character without setting its length explicitly. This results in
+    the terminating null char being treated as part of the value. This
+    is not correct -- attribute value should be the given string without
+    null terminator.
+  */
+
+  if (!mysql_bind.length)
+    mysql_bind.length = new unsigned long;
+
+  *mysql_bind.length = value.length();
+
   return pos+1;
 }
 /* }}} */
@@ -559,20 +616,16 @@ void
 MySQL_AttributesBind::clearAttributes()
 {
   bind.clear();
-
-  for(auto el : names)
-    delete [] el;
-
   clearNames();
 }
 /* }}} */
 
 
 /* {{{ MySQL_AttributesBind::nrAttr() */
-int
-MySQL_AttributesBind::nrAttr()
+size_t
+MySQL_AttributesBind::size()
 {
-  return names.size();
+  return MySQL_Names::size();
 }
 /* }}} */
 
@@ -590,60 +643,104 @@ MySQL_AttributesBind::getBinds()
 const char**
 MySQL_Names::getNames()
 {
+  for (size_t i = 0; i < s_names.size(); ++i)
+  {
+    // Need to re-adjust pointers to their corresponding string storage
+    auto &s = s_names[i];
+    names[i] = s.length() ? s.c_str() : nullptr;
+  }
   return names.data();
 }
 /* }}} */
+
+/* {{{ MySQL_Names::countTotal() - the total count of parameters and attributes together */
+size_t
+MySQL_Names::size()
+{
+  return names.size();
+}
+/* }}} */
+
 
 /* {{{ MySQL_Names::clearNames() */
 void
 MySQL_Names::clearNames()
 {
   names.clear();
+  s_names.clear();
   name_set_type.clear();
 }
 /* }}} */
 
+
 /* {{{ MySQL_Names::getNamePos() */
-int
-MySQL_Names::getNamePos(const sql::SQLString &name)
+unsigned
+MySQL_Names::get_name_pos(const sql::SQLString &name, set_type &type)
 {
-  for (int pos = 0; (size_t)pos < names.size(); ++pos)
+  size_t names_count = s_names.size();
+  size_t pos;
+  ssize_t free_pos = -1;
+
+  // Try to find the position with the name specified
+  // in the parameter.
+
+  for (pos = 0; pos < names_count; ++pos)
   {
-    auto &n = names[pos];
-    if (n && name.caseCompare(n) == 0)
-      return pos;
+    if (-1 == free_pos && !isSet(pos))
+    {
+      free_pos = pos;
+      continue;
+    }
+    if (name.caseCompare(s_names[pos]) == 0)
+      break;
   }
-  return -1;
-}
-/* }}} */
 
-/* {{{ MySQL_Names::attribNameExists() */
-bool
-MySQL_Names::attribNameExists(const sql::SQLString &name)
-{
-  for (auto n : names)
+  if (pos < names_count)
   {
-    if (n && name.caseCompare(n) == 0)
-      return true;
+    // The name was found at 'pos'
   }
-  return false;
+  else if (UNSET == type)
+  {
+    // report that name was not found without trying to add it
+    return 0;
+  }
+  else if (-1 != free_pos)
+  {
+    // use free slot
+    pos = free_pos;
+  }
+  else
+  {
+    // append new name
+    s_names.emplace_back(name);
+    pos = s_names.size()-1;
+    names.emplace_back(s_names[pos].c_str());
+    name_set_type.emplace_back();
+  }
+
+  // Upgrade current type to "higher" one if requested.
+
+  assert(UNSET < INTERNAL);
+  assert(INTERNAL < EXTERNAL);
+
+  if (type > name_set_type[pos])
+    name_set_type[pos] = type;
+
+  type = name_set_type[pos];
+
+  // Note: 1-based to distinguish from 0 which means "not found"
+  return pos + 1;
 }
 /* }}} */
 
-
-/* {{{ MySQL_Names::set() */
-void
-MySQL_Names::set(unsigned int position, bool is_external)
-{
-  name_set_type[position] = is_external ? set_type::EXTERNAL : set_type::INTERNAL;
-}
-/* }}} */
 
 /* {{{ MySQL_Names::unset() */
 void
 MySQL_Names::unset(unsigned int position)
 {
   name_set_type[position] = set_type::UNSET;
+  s_names[position] = "";
+  names[position] = nullptr;
 }
 /* }}} */
 
@@ -683,4 +780,3 @@ MySQL_Names::isExternal(unsigned int position)
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-

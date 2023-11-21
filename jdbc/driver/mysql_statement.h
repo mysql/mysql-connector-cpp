@@ -49,7 +49,7 @@ namespace mysql
 {
 class MySQL_Connection;
 class MySQL_DebugLogger;
-
+class MySQL_Statement;
 
 namespace NativeAPI
 {
@@ -57,8 +57,25 @@ class NativeResultsetWrapper;
 class NativeConnectionWrapper;
 }
 
+/*
+  Note: The bool parameter tells if "internal" or "external" attribute is set.
+*/
+
+int setStmtAttrString(MySQL_Statement&,
+  const sql::SQLString&, const sql::SQLString&,
+  bool is_external = true
+);
+
+
 class MySQL_Statement : public sql::Statement
 {
+
+  friend
+  int setStmtAttrString(MySQL_Statement&,
+    const sql::SQLString&, const sql::SQLString&,
+    bool is_external
+  );
+
 protected:
  std::unique_ptr<MySQL_Warning> warnings;
  MySQL_Connection *connection;

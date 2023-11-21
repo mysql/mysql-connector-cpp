@@ -172,8 +172,13 @@ namespace telemetry
       stmt->conn_telemetry().span->GetContext()
     );
 
-    stmt->attrbind.setQueryAttrString("traceparent",
-      get_traceparent(span), false);
+    /*
+      Note: Parameter `false` means that an "internal" value for
+      "traceparent" attribute is set that will not overwritte an existing
+      "external" value of that attribute that was set by user.
+    */
+
+    setStmtAttrString(*stmt, "traceparent", get_traceparent(span), false);
 
     span->SetAttribute("db.user", stmt->connection->getCurrentUser().c_str());
 
