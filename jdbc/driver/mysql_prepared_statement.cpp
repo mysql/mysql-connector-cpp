@@ -224,10 +224,9 @@ public:
 
 private:
 
-  unsigned int param_count;
-  std::unique_ptr<MYSQL_BIND[]> bind;
-  std::unique_ptr<bool[]> value_set;
-  std::unique_ptr<bool[]> delete_blob_after_execute;
+  std::vector<MYSQL_BIND> bind;
+  std::vector<bool> value_set;
+  std::vector<bool> delete_blob_after_execute;
 
   typedef std::map<unsigned int, Blob_t > Blobs;
 
@@ -236,18 +235,13 @@ private:
 public:
 
   MySQL_ParamBind(unsigned int paramCount)
-    : param_count(paramCount), bind(NULL), value_set(NULL),
-      delete_blob_after_execute(NULL)
+     : bind(paramCount, MYSQL_BIND {}),
+       value_set(paramCount),
+       delete_blob_after_execute(paramCount)
   {
-    if (param_count) {
-      bind.reset(new MYSQL_BIND[paramCount]);
-      memset(bind.get(), 0, sizeof(MYSQL_BIND) * paramCount);
-
-      value_set.reset(new bool[paramCount]);
-      delete_blob_after_execute.reset(new bool[paramCount]);
+    if (paramCount) {
       for (unsigned int i = 0; i < paramCount; ++i) {
         bind[i].is_null_value = 1;
-        value_set[i] = false;
         delete_blob_after_execute[i] = false;
       }
     }
@@ -274,11 +268,15 @@ public:
   void unset(unsigned int position)
   {
     value_set[position] = false;
-    if (delete_blob_after_execute[position]) {
-      delete_blob_after_execute[position] = false;
-      std::visit(::sql::mysql::BlobBindDeleter(),blob_bind[position]);
-      blob_bind.erase(position);
-    }
+
+    if (!delete_blob_after_execute[position])
+      return;
+    if (!blob_bind.count(position))
+      return;
+
+    std::visit(::sql::mysql::BlobBindDeleter(), blob_bind[position]);
+    delete_blob_after_execute[position] = false;
+    blob_bind.erase(position);
   }
 
 
@@ -306,7 +304,7 @@ public:
 
   bool isAllSet()
   {
-    for (unsigned int i = 0; i < param_count; ++i) {
+    for (unsigned int i = 0; i < value_set.size(); ++i) {
       if (!value_set[i]) {
         return false;
       }
@@ -314,30 +312,31 @@ public:
     return true;
   }
 
-
   void clearParameters()
   {
-    for (unsigned int i = 0; i < param_count; ++i) {
-      delete bind[i].length;
+    size_t items_count = bind.size();
+    for (unsigned int i = 0; i < items_count; ++i)
+    {
+      if (bind[i].length)
+        delete bind[i].length;
+
       bind[i].length = NULL;
-      delete[] (char *)bind[i].buffer;
+
+      if (bind[i].buffer)
+        delete[] (char *)bind[i].buffer;
+
       bind[i].buffer = NULL;
+
       if (value_set[i]) {
-        Blobs::iterator it = blob_bind.find(i);
-        if (it != blob_bind.end() && delete_blob_after_execute[i]) {
-          std::visit(::sql::mysql::BlobBindDeleter(), it->second);
-          blob_bind.erase(it);
-        }
+        unset(i);
         blob_bind[i] = Blob_t();
-        value_set[i] = false;
       }
     }
   }
 
-  // Name get() was too confusing, since class objects are used with smart pointers
   MYSQL_BIND * getBindObject()
   {
-    return bind.get();
+    return bind.data();
   }
 
 
