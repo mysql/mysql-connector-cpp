@@ -679,16 +679,16 @@ MySQL_Names::get_name_pos(const sql::SQLString &name, set_type &type)
 {
   size_t names_count = s_names.size();
   size_t pos;
-  ssize_t free_pos = -1;
+  size_t free_pos = 0;
 
   // Try to find the position with the name specified
   // in the parameter.
 
   for (pos = 0; pos < names_count; ++pos)
   {
-    if (-1 == free_pos && !isSet(pos))
+    if (0 == free_pos && !isSet(pos))
     {
-      free_pos = pos;
+      free_pos = 1 + pos;
       continue;
     }
     if (name.caseCompare(s_names[pos]) == 0)
@@ -704,10 +704,10 @@ MySQL_Names::get_name_pos(const sql::SQLString &name, set_type &type)
     // report that name was not found without trying to add it
     return 0;
   }
-  else if (-1 != free_pos)
+  else if (0 < free_pos)
   {
     // use free slot
-    pos = free_pos;
+    pos = free_pos - 1;
   }
   else
   {
