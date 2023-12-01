@@ -232,6 +232,7 @@ public:
 private:
 
   size_t param_count;
+  bool   has_query_attributes = false;
 
   std::vector<MYSQL_BIND> bind;
   std::vector<bool> value_set;
@@ -248,8 +249,9 @@ private:
 
 public:
 
-  MySQL_ParamBind(unsigned int paramCount)
+  MySQL_ParamBind(unsigned int paramCount, bool has_query_attributes)
      : param_count(paramCount),
+       has_query_attributes(has_query_attributes),
        bind(paramCount, MYSQL_BIND {}),
        value_set(paramCount),
        delete_blob_after_execute(paramCount)
@@ -332,6 +334,16 @@ public:
     bool is_external
   )
   {
+    /*
+      Note: If we are talking to server that does not support query attributes then they are silently ignored.
+    */
+
+    if (!has_query_attributes)
+    {
+      assert(0 == attrs.size());
+      return 0;
+    }
+
     int pos = attrs.setQueryAttrString(name, value, is_external);
 
     /*
@@ -517,7 +529,9 @@ MySQL_Prepared_Statement::MySQL_Prepared_Statement(
     result_bind.reset(new MySQL_ResultBind(proxy, logger));
 
     param_count = proxy->param_count();
-    param_bind.reset(new MySQL_ParamBind(param_count));
+    param_bind.reset(new MySQL_ParamBind(
+      param_count, connProxy->has_query_attributes()
+    ));
 
     res_meta.reset(new MySQL_PreparedResultSetMetaData(proxy, logger));
     param_meta.reset(new MySQL_ParameterMetaData(proxy));
