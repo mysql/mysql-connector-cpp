@@ -2,3 +2,4 @@
 /CMakeSettings.json
 .vs
 out
+CMakeUserPresets.json

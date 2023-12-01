@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
@@ -81,6 +81,12 @@ override_dh_auto_install:
 	$(MAKE) install DESTDIR=../debian/tmp
 	install README.txt debian/tmp/usr/README.txt
 	install LICENSE.txt debian/tmp/usr/LICENSE.txt
+	install -d -m 0755 debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake
+	install -d -m 0755 debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/mysql-concpp
+	install debian/tmp/usr/mysql-concpp-config.cmake debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/mysql-concpp/mysql-concpp-config.cmake
+	install debian/tmp/usr/mysql-concpp-config-version.cmake debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/mysql-concpp/mysql-concpp-config-version.cmake
+	rm debian/tmp/usr/mysql-concpp-config.cmake
+	rm debian/tmp/usr/mysql-concpp-config-version.cmake
 	touch $@
 
 override_dh_installinit:

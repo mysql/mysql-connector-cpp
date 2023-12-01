@@ -31,11 +31,13 @@ cmake_minimum_required(VERSION 2.8.12)
 PROJECT(MySQL_CONCPP_TEST)
 
 #
-# Settings using by this project:
+# This project builds test application sources in this folder using an external 
+# installation of the connector.
 #
-# WITH_CONCPP             location of Connector/C++ 8.0 installation
-# CONCPP_INCLUDE_DIR      location of Connector/C++ 8.0 headers
-# CONCPP_LIB_DIR          location of Connector/C++ 8.0 libraries
+# Note: The project is *not* using connector library taken form the build tree 
+# of this source tree.
+#
+# Settings using by this project:
 #
 # BUILD_STATIC            whether to link with connector statically
 #                         or dynamically (the default)
@@ -45,324 +47,51 @@ PROJECT(MySQL_CONCPP_TEST)
 #
 # WITH_JDBC               also build JDBC API test application
 #
+# REQUIRED_COMPONENTS     list of required components passed to find_package()
 #
-# Note: Either WITH_CONCPP or CONCPP_INCLUDE_DIR and CONCPP_LIB_DIR must be
-# set.
+# To locate `mysql-concpp` package which is installed in non-standard location
+# the `mysql-concpp_DIR` variable can be set as usual (see find_package()).
+# Alternatively if the variable is not set but `WITH_CONCPP` is defined then
+# the latter path is used.
 #
-
-
-if((CMAKE_SIZEOF_VOID_P EQUAL 8) OR (CMAKE_CXX_COMPILER_ID MATCHES "SunPro"))
-  set(IS64BIT 1)
-  message("Generating 64bit code")
-else()
-  message("Generating 32bit code")
-endif()
-
-#
-# ========================================================================
-# Build configuration options
-#
-
-set(WITH_CONCPP $ENV{WITH_CONCPP} CACHE PATH
-  "MySQL Connector/C++ 8.0 install location"
-)
-
-set(CONCPP_INCLUDE_DIR $ENV{CONCPP_INCLUDE_DIR} CACHE PATH
-  "Location of Connector/C++ 8.0 headers"
-)
-
-set(CONCPP_LIB_DIR $ENV{CONCPP_LIB_DIR} CACHE PATH
-  "Location of Connector/C++ 8.0 libraries"
-)
-
-# Set include and library paths if not given
-
-if(WITH_CONCPP)
-  if(NOT CONCPP_INCLUDE_DIR)
-     set(CONCPP_INCLUDE_DIR "${WITH_CONCPP}/include")
-  endif()
-  if(NOT CONCPP_LIB_DIR)
-    if(IS64BIT AND EXISTS "${WITH_CONCPP}/lib64")
-      set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib64")
-    else()
-      set(CONCPP_LIB_DIR "${WITH_CONCPP}/lib")
-    endif()
-  endif()
-endif()
-
-# Location for static libraries (differs from base location on Windows)
-
-set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}")
-if(WIN32)
-  set(VS "vs14")
-  set(CONCPP_STATIC_LIB_DIR "${CONCPP_LIB_DIR}/vs14")
-endif()
-
-
-if(NOT CONCPP_INCLUDE_DIR OR NOT CONCPP_LIB_DIR)
-  message(FATAL_ERROR
-    "This project requires MySQL Connector/C++ 8.0, please specify install location"
-    " using WITH_CONCPP setting or set header/library paths with CONCPP_INCLUDE_DIR"
-    " and CONCPP_LIB_DIR settings."
-  )
-endif()
-
-if(NOT EXISTS "${CONCPP_INCLUDE_DIR}/mysqlx/xdevapi.h")
-  message(FATAL_ERROR
-    "Could not find MySQL Connector/C++ 8.0 headers at specified"
-    " location: ${CONCPP_INCLUDE_DIR}"
-  )
-endif()
-
-
-set(WITH_SSL $ENV{WITH_SSL} CACHE STRING
-  "Set to 'builtin' if connector was built with built-in SSL support"
-)
-
-option(WITH_JDBC "Also build the JDBC API test application" OFF)
-
-option(BUILD_STATIC "Link statically with the connector library" OFF)
-
-if(BUILD_STATIC)
-  message("Linking statically")
-else()
-  message("Liniking dynamically")
-endif()
-
-option(STATIC_MSVCRT "Use static MSVC runtime library" OFF)
-
-if(STATIC_MSVCRT)
-  message("Using static runtime library.")
-else()
-  message("Using dynamic runtime library.")
-endif()
 
 
 # ========================================================================
 # Dependencies
 
-#
-# Find Connector/C++ libraries
-#
-# Installation layout is as follows
-#
-# On Windows the install layout is as follows, where NN is the MSVC version
-# used to build the connector, A is the major ABI version:
-#
-#  {lib,lib64}/mysqlcppconn-A-vsNN.dll            <-- shared library
-#  {lib,lib64}/vsNN/mysqlcppconn-static.lib       <-- static with /MD
-#  {lib,lib64}/vsNN/mysqlcppconn-static-mt.lib    <-- static with /MT
-#  {lib,lib64}/vsNN/mysqlcppconn.lib              <-- import library for DLL
-#
-# On Linux it is as follows, where X.Y.Z is the connector version
-#
-#  {lib,lib64}/libmysqlcppconn.so.A.X.Y.Z         <-- shared library
-#  {lib,lib64}/libmysqlcppconn.so.A               <-- soname link
-#  {lib,lib64}/libmysqlcppconn.so                 <-- development link
-#  {lib,lib64}/libmysqlcppconn-static.a          <-- static library
-#
-# Additionally, if connector is built in debug mode, the libraries are installed
-# in debug/ subfolder of {lib,lib64}/ or {lib,lib64}/vsNN/.
-#
 
-set(find_name mysqlcppconn8)
-set(find_dir  "${CONCPP_LIB_DIR}")
+if(WITH_SSL)
 
-#
-# Note: On Windows we link with the import library located in the static
-# library dir and named the same as the shared library.
-#
+  message(STATUS "Using custom OpenSSL libraries at: ${WITH_SSL}")
+  
+  add_library(openssl INTERFACE)
+  target_link_directories(openssl INTERFACE "${WITH_SSL}")
 
-if(BUILD_STATIC OR WIN32)
-  set(find_dir  ${CONCPP_STATIC_LIB_DIR})
-endif()
-
-if(BUILD_STATIC)
-  set(find_name mysqlcppconn8-static)
-  if(WIN32 AND STATIC_MSVCRT)
-    set(find_name "${find_name}-mt")
-  endif()
-endif()
-
-#message("-- looking for: ${find_name}")
-#message("-- looking in: ${find_dir}")
-
-# This will cause find_libary() to perform search each time.
-
-set(CONCPP_LIB force-NOTFOUND CACHE PATH "" FORCE)
-set(CONCPP_LIB_DEBUG force-NOTFOUND CACHE BOOL "" FORCE)
-
-find_library(CONCPP_LIB
-  NAMES ${find_name}
-  PATHS "${find_dir}"
-  NO_DEFAULT_PATH
-)
-
-find_library(CONCPP_LIB_DEBUG
-  NAMES ${find_name}
-  PATHS "${find_dir}/debug"
-  NO_DEFAULT_PATH
-)
-
-
-if(NOT CONCPP_LIB AND NOT CONCPP_LIB_DEBUG)
-  message(FATAL_ERROR
-    "Could not find Connector/C++ libraries at: ${find_dir}"
-  )
-endif()
-
-message("Using connector lib at: ${CONCPP_LIB}")
-
-#
-# If debug or optimized version of the library is missing, replace it
-# with the other one. This will not work on Windows (compiler will complain)
-# but it might work on other platforms.
-#
-
-if(NOT CONCPP_LIB_DEBUG)
-  message(WARNING
-    "Using non-debug library for debug builds - this will not work on Windows"
-    )
-  set(CONCPP_LIB_DEBUG "${CONCPP_LIB}")
-elseif(NOT CONCPP_LIB)
-  message(WARNING
-    "Using debug library for non-debug builds - this will not work on Windows"
-  )
-  set(CONCPP_LIB "${CONCPP_LIB_DEBUG}")
-endif()
-
-
-#
-# Define imported target for the connector library.
-#
-
-add_library(MySQL::conncpp STATIC IMPORTED)
-
-#message("-- location: ${CONCPP_LIB}")
-#message("-- debug location: ${CONCPP_LIB_DEBUG}")
-
-set_target_properties(MySQL::conncpp PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES   "${CONCPP_INCLUDE_DIR}"
-  IMPORTED_LOCATION               "${CONCPP_LIB}"
-  IMPORTED_LOCATION_DEBUG         "${CONCPP_LIB_DEBUG}"
-)
-
-
-#
-# When linking statically, we need to link with libraries on which
-# connector depends (however, no need to do it on Windows).
-#
-
-if(BUILD_STATIC AND NOT WIN32)
-
-  set(libs)
-
-  # Connector/C++ requires these libraries on Unix.
-
-  if(NOT APPLE)
-    list(APPEND libs pthread)
-  endif()
-
-  # On Solaris we additionally need couple more libs.
-
-  if(CMAKE_SYSTEM_NAME MATCHES "SunOS")
-    list(APPEND libs socket nsl)
-  endif()
-
-  if(NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-    # Connector needs to Link with libresolv
-    list(APPEND libs resolv)
-  endif()
-
-  # OpenSSL dependency
-
-  if(WITH_SSL MATCHES "^(system|yes)$")
-
-    list(APPEND libs ssl crypto)
-
+  if(WIN32)
+    set(ssl_libs libssl libcrypto)
   else()
-
-    if(EXISTS ${WITH_SSL}/include/openssl/ssl.h)
-      set(OPENSSL_ROOT_DIR  "${WITH_SSL}")
-    endif()
-
-    find_package(OpenSSL REQUIRED)
-
-    MESSAGE(STATUS "OPENSSL_VERSION = ${OPENSSL_VERSION}")
-    MESSAGE(STATUS "OPENSSL_SSL_LIBRARY = ${OPENSSL_SSL_LIBRARY}")
-    MESSAGE(STATUS "OPENSSL_CRYPTO_LIBRARY = ${OPENSSL_CRYPTO_LIBRARY}")
-
-    list(APPEND libs ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
-
+    set(ssl_libs ssl crypto)
   endif()
 
-  set_property(TARGET MySQL::conncpp
-    APPEND PROPERTY INTERFACE_LINK_LIBRARIES
-    ${libs}
-  )
+  target_link_libraries(openssl INTERFACE ${ssl_libs})
+  add_library(mysql::openssl ALIAS openssl)
 
 endif()
 
-
-#
-# ========================================================================
-# Compiler settings
-#
-
-#
-# To use DevAPI we must enable C++11
-#
-
-if(NOT WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-
-#
-# Use clang's native C++ runtime library to match the one used
-# by Connector/C++.
-#
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
-# With SunPro we need to build in 64-bit mode
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
+if(NOT DEFINED mysql-concpp_DIR AND DEFINED WITH_CONCPP)
+  set(mysql-concpp_DIR "${WITH_CONCPP}")
 endif()
 
 
-#
-# Use static MSVC runtime on Windows if requested. If linking with static
-# connector library, a -mt variant of the library is needed in this case.
-#
-
-IF(WIN32 AND STATIC_MSVCRT)
-
-  foreach(LANG C CXX)
-    set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} /MT")
-    set(CMAKE_${LANG}_FLAGS_DEBUG "${CMAKE_${LANG}_FLAGS_DEBUG} /MTd")
-  endforeach(LANG)
-
-ENDIF()
-
-#
-# When linking with static library, this macro must be defined.
-#
-
-if(BUILD_STATIC)
-  add_definitions(-DSTATIC_CONCPP)
-endif()
+find_package(mysql-concpp REQUIRED ${REQUIRED_COMPONENTS})
 
 
 #
 # ========================================================================
 #
 # Arrange for executables to be built in either "run" or "run/debug" location,
-# depending on the build type. This is to simplify dependencies management
-# (see below).
+# depending on the build type. This is to simplify runtime dependencies
+# management (see below).
 #
 
 set(OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/run")
@@ -377,57 +106,49 @@ foreach(config ${CMAKE_CONFIGURATION_TYPES})
 endforeach()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIRECTORY}/debug")
 
-#
-# Make sure that bundled external dependencies are used, if available.
-#
-
-if(NOT WIN32)
-  set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-L${OUTPUT_DIRECTORY}/debug")
-  set(CMAKE_EXE_LINKER_FLAGS "-L${OUTPUT_DIRECTORY}")
-endif()
-
-#
-# This is needed on Windows to find import libraries for bundled
-# dependencies
-#
-# TODO: Use debug location for debug builds.
-#
-
-if(WIN32)
-  link_directories(${CONCPP_STATIC_LIB_DIR})
-endif()
-
 
 #
 # Targets to build test applications.
 #
 
+set(static_suffix)
+if(BUILD_STATIC)
+  set(devapi_lib mysql::concpp-static)
+  set(jdbc_lib mysql::concpp-jdbc-static)
+else()
+  set(devapi_lib mysql::concpp)
+  set(jdbc_lib mysql::concpp-jdbc)
+endif()
+
+
+if(NOT TARGET ${devapi_lib})
+  message(SEND_ERROR "The Con/C++ library target not defined")
+endif()
+
 add_executable(devapi_test devapi_test.cc)
-target_link_libraries(devapi_test MySQL::conncpp)
-
-
+target_link_libraries(devapi_test ${devapi_lib})
 
 add_executable(xapi_test xapi_test.c)
-target_link_libraries(xapi_test MySQL::conncpp)
+target_link_libraries(xapi_test ${devapi_lib})
+
+# FIXME: make it work with static libs on Linux
+
+if(WITH_JDBC AND (NOT BUILD_STATIC OR WIN32))
+
+  if(NOT TARGET ${jdbc_lib})
+    message(SEND_ERROR "The legacy Con/C++ library target not defined")
+  endif()
+
+  add_executable(jdbc_test jdbc_test.cc)
+  target_link_libraries(jdbc_test ${jdbc_lib})
+
+endif()
 
 
 #
-# Note: Connector/C++ library depends on C++ runtime library.
-# For that reason, even code that is otherwise plain C, should
-# be linked using C++ linker, so that dependency on the C++ runtime
-# is correctly resolved. In cmake this is achieved by setting
-# LINKER_LANGUAGE to CXX. Alternatively one could use plain C linker
-# and specify stdc++ (and m) as additional libraries to be linked in.
-#
-
-set_target_properties(xapi_test PROPERTIES LINKER_LANGUAGE CXX)
-
-#
-# Set RPATH so that libraries in run/ folder are found by the executable
+# Set RPATH so that executables find libraries that are next to it
 # (this is default behavior on Windows).
 #
-
-set_property(TARGET devapi_test xapi_test PROPERTY BUILD_WITH_INSTALL_RPATH ON)
 
 set(rpath)
 if(APPLE)
@@ -436,17 +157,19 @@ elseif(NOT WIN32)
   set(rpath "$ORIGIN")
 endif()
 
-if(rpath)
-  set_property(TARGET devapi_test xapi_test
-    APPEND PROPERTY INSTALL_RPATH "${rpath}"
-  )
+set(targets devapi_test xapi_test)
+if(TARGET jdbc_test)
+  list(APPEND targets jdbc_test)
 endif()
 
-# TODO
-if(WITH_JDBC)
+set_property(TARGET ${targets}
+  PROPERTY BUILD_WITH_INSTALL_RPATH ON
+)
 
-  add_subdirectory(../jdbc/link_test jdbc)
-
+if(rpath)
+  set_property(TARGET ${targets}
+    APPEND PROPERTY INSTALL_RPATH "${rpath}"
+  )
 endif()
 
 
@@ -458,30 +181,40 @@ endif()
 # the executable. (Note: On Unix it can be arranged by correctly setting
 # rpath, but this does not work on Windows)
 #
-
-message("Installing shared library dependencies.")
-
-file(GLOB libs "${CONCPP_LIB_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-file(INSTALL ${libs} DESTINATION run)
-
-# Also copy to debug folder in case debug variants are not available.
-
-file(INSTALL ${libs} DESTINATION run/debug)
-
-#
-# Overwrite libs in run/debug with debug versions if present.
+# Note: This needs to be done also when linking with static connector library
+# because resulting executable will be looking for connector dependencies
+# (e.g., OpenSSL DLLs)
 #
 
-file(GLOB debug_libs "${CONCPP_LIB_DIR}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-file(INSTALL ${debug_libs} DESTINATION run/debug)
+if(MYSQL_CONCPP_RUNTIME_LIBRARY_DIR)
 
-#
-# If non-debug libraries were not found and we are not on Windows, try
-# using debug ones, if present.
-#
+  message("Installing shared library dependencies.")
 
-if (NOT libs)
-  file(INSTALL ${debug_libs} DESTINATION run)
+  file(GLOB libs 
+    "${MYSQL_CONCPP_RUNTIME_LIBRARY_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+  )
+  file(INSTALL ${libs} DESTINATION run)
+
+  # Also copy to debug folder in case debug variants are not available.
+
+  file(INSTALL ${libs} DESTINATION run/debug)
+
+  #
+  # Overwrite libs in run/debug with debug versions if present.
+  #
+
+  file(GLOB debug_libs
+    "${MYSQL_CONCPP_RUNTIME_LIBRARY_DIR}/debug/*${CMAKE_SHARED_LIBRARY_SUFFIX}*"
+  )
+  file(INSTALL ${debug_libs} DESTINATION run/debug)
+
+  #
+  # If non-debug libraries were not found and we are not on Windows, try
+  # using debug ones, if present.
+  #
+
+  if (NOT libs)
+    file(INSTALL ${debug_libs} DESTINATION run)
+  endif()
+
 endif()
-
-

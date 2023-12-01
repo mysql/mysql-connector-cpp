@@ -616,7 +616,7 @@ include(testing/tests.cmake)
 
 
 #
-# Create the INFO_SRC and INFO_BIN files
+# Create the INFO_SRC, INFO_BIN and other supplementary files
 # =========================
 #
 
