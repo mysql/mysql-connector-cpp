@@ -1,4 +1,4 @@
-Copyright (c) 2008, 2023, Oracle and/or its affiliates.
+Copyright (c) 2008, 2024, Oracle and/or its affiliates.
 
 This is a release of MySQL Connector/C++, the C++ interface for communicating
 with MySQL servers.
