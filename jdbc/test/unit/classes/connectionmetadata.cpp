@@ -2071,13 +2071,12 @@ void connectionmetadata::getColumnsTypeConversions()
   std::vector<columndefinition>::iterator it;
   std::stringstream msg;
   int i;
-  bool got_warning;
+  bool got_warning=false;
   try
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
     stmt.reset(con->createStatement());
 
-    got_warning=false;
     logMsg("... looping over all kinds of column types");
     for (it=columns.begin(), i=0; it != columns.end(); i++, it++)
     {
