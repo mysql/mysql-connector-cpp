@@ -295,6 +295,12 @@ if(SUNPRO)
 
 endif()
 
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 12.0)
+  # Silence a warning produced by a regression in GCC 12.0 and newer
+  # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106199
+  add_compile_options(-Wno-stringop-overflow)
+endif()
+
 
 #
 # Testing framework
