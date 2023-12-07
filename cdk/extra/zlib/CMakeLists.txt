@@ -160,6 +160,13 @@ if(MSVC)
 
 endif()
 
+if (APPLE)
+  # Disable warning for zlib 1.2.13.
+  # In zlib version 1.3 this problem should be fixed:
+  # https://github.com/madler/zlib/issues/633
+  add_compile_options(-Wno-deprecated-non-prototype)
+endif()
+
 # -------------------------------------------------------------------------
 
 ADD_LIBRARY(zlib STATIC
