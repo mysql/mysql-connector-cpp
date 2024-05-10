@@ -571,9 +571,9 @@ function(process_deps)
       AND EXISTS "${libpath}"
     )
       if(lib MATCHES "protobuf|uuid_gen|libssl|libcrypto|mysqlclient")
-        list(APPEND LIBS1 "${lib}")
+        list(APPEND LIBS1 "${libpath}")
       else()
-        list(APPEND LIBS "${lib}")
+        list(APPEND LIBS "${libpath}")
       endif()
     endif()
 
