@@ -273,7 +273,13 @@ void Stmt_op::discard_result()
 
   // Finish current activity to see if we have any pending rows.
 
-  wait();
+  try {
+    wait();
+  } catch (...) {
+    m_op = nullptr;
+    m_state = ERROR;
+  }
+
   assert(!m_op || ERROR == m_state);
 
   switch (m_state)
@@ -615,8 +621,10 @@ void Cursor::close()
 {
   if (m_reply && this == m_reply->m_current_cursor)
   {
-    if (m_rows_op)
-      m_rows_op->wait();
+    try {
+      if (m_rows_op)
+        m_rows_op->wait();
+    } catch (...) {}
     m_rows_op = nullptr;
 
     /*
