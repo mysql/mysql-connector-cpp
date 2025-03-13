@@ -880,6 +880,7 @@ function(find_imp_lib var base_name path)
   set(CMAKE_FIND_LIBRARY_SUFFIXES .lib)
 
   #message("!!! Looking for import library for: ${path}")
+  unset(${var} CACHE)
   find_library(${var}
     NAMES ${base_name}
     PATHS ${base_path}
