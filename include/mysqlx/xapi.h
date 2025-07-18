@@ -821,6 +821,8 @@ mysqlx_get_session(const char *host, int port, const char *user,
   - `tls-ciphersuites=[...]` : see `#MYSQLX_OPT_TLS_CIPHERSUITES`
   - `compression=...` : see `#MYSQLX_OPT_COMPRESSION`
   - `compression-algorithms=[...]` : see `#MYSQLX_OPT_COMPRESSION_ALGORITHMS`
+  - `read-timeout=...`: see `#MYSQLX_OPT_READ_TIMEOUT`
+  - `write-timeout=...`: see `#MYSQLX_OPT_WRITE_TIMEOUT`
 
 
   @note The session returned by the function must be properly closed using

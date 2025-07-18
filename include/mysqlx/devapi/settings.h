@@ -517,6 +517,8 @@ public:
     - `tls-ciphersuites=[...]` : see `SessionOption::TLS_CIPHERSUITES`
     - `compression=...` : see `SessionOption::COMPRESSION`
     - `compression-algorithms=[...]` : see `SessionOption::COMPRESSION_ALGORITHMS`
+    - `read-timeout=...`: see `SessionOption::READ_TIMEOUT`
+    - `write-timeout=...`: see `SessionOption::WRITE_TIMEOUT`
   */
 
   SessionSettings(const string &uri)
