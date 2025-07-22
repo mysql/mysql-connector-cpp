@@ -54,7 +54,7 @@
 %global lib_base_name  libmysqlcppconnx@ABI_VERSION_MAJOR@
 %global lib_base_name_jdbc libmysqlcppconn@JDBC_ABI_VERSION_MAJOR@
 
-# TODO: use %rpmversion if available, note that it is in the format X.Y.Z.Y
+# TODO: use rpmversion if available, note that it is in the format X.Y.Z.Y
 # and the current logic requires numeric format XYYZZ.
 
 %global rpm_ver_num @RPM_VER_NUM@
@@ -139,6 +139,11 @@ to develop MySQL client applications in C++.
 
 SRC=`pwd`
 SRC1=%{name}-8.4.0-src
+
+# Note: Remove options related to warnings that are set by RPM tools because
+# our build system handles warning reporting levels.
+
+%global optflags %(echo %{optflags} | sed -e 's/-Wall//' -e 's/-Werror=[^ ]*//g')
 
 cd ${RPM_BUILD_DIR}
 
@@ -275,6 +280,9 @@ test -L /usr/include/mysql-cppconn && rm -f /usr/include/mysql-cppconn || true
 ###############################################
 
 %changelog
+
+* Tue Jul 22 2025 Rafal Somla <rafal.somla@oracle.com> - 9.4.0-1
+- Fix warnings control flags
 
 * Thu Sep 12 2024 Rafal Somla <rafal.somla@oracle.com> - 9.1.0-1
 - Add definitions for -compat package (WL#16462)
