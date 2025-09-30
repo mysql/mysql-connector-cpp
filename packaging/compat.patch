@@ -33,7 +33,7 @@ index 8b960402..37fac11d 100644
  #
  # Set higher warning level for the main connector code.
 diff --git a/doc/doxygen.cfg b/doc/doxygen.cfg
-index 7bf32bcf..2fd72a87 100644
+index 7bf32bcf..33d8bbbc 100644
 --- a/doc/doxygen.cfg
 +++ b/doc/doxygen.cfg
 @@ -66,7 +66,7 @@ PROJECT_NAME           = "MySQL Connector/C++"
@@ -41,20 +41,22 @@ index 7bf32bcf..2fd72a87 100644
  # control system is used.
  
 -PROJECT_NUMBER         = 8.0.23
-+PROJECT_NUMBER         = 9.4.0
++PROJECT_NUMBER         = 9.5.0
  
  # Using the PROJECT_BRIEF tag one can provide an optional one line description
  # for a project that appears at the top of each page and should give viewer a
 diff --git a/version.cmake b/version.cmake
-index 53f8f540..f5ae39db 100644
+index 53f8f540..3f2e37c1 100644
 --- a/version.cmake
 +++ b/version.cmake
-@@ -34,7 +34,7 @@ set(COPYRIGHT_YEAR "2024" CACHE INTERNAL "version info")
+@@ -34,8 +34,8 @@ set(COPYRIGHT_YEAR "2024" CACHE INTERNAL "version info")
  # Connector/C++ version
  #
  
 -set(CONCPP_VERSION_MAJOR  8 CACHE INTERNAL "version info")
+-set(CONCPP_VERSION_MINOR  4 CACHE INTERNAL "version info")
 +set(CONCPP_VERSION_MAJOR  9 CACHE INTERNAL "version info")
- set(CONCPP_VERSION_MINOR  4 CACHE INTERNAL "version info")
++set(CONCPP_VERSION_MINOR  5 CACHE INTERNAL "version info")
  set(CONCPP_VERSION_MICRO  0 CACHE INTERNAL "version info")
  # Level is "-alpha", "-beta", empty if GA
+ set(CONCPP_VERSION_LEVEL  "" CACHE INTERNAL "version info")
