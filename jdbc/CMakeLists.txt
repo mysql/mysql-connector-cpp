@@ -516,6 +516,7 @@ set(IGNORED_PLUGINS
 )
 
 set(IGNORED_LIBS
+  libicu  # since 9.5.0
   libabsl abseil_dll # Since 8.4.0
   libpolyglot  # present on MacOS since 8.4.0
   libmysql lber libprotobuf
