@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall  -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g -Wl,--dependency-file=CMakeFiles/save_linker_opts.dir/link.d CMakeFiles/save_linker_opts.dir/cmake/libutils/save_linker_opts.cc.o -o libutils/save_linker_opts

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcdk_mysqlx.a CMakeFiles/cdk_mysqlx.dir/session.cc.o CMakeFiles/cdk_mysqlx.dir/result.cc.o CMakeFiles/cdk_mysqlx.dir/auth_hash.cc.o
+/usr/bin/ranlib libcdk_mysqlx.a

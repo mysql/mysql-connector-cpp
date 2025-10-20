@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcdk_parser.a CMakeFiles/cdk_parser.dir/tokenizer.cc.o CMakeFiles/cdk_parser.dir/json_parser.cc.o CMakeFiles/cdk_parser.dir/expr_parser.cc.o CMakeFiles/cdk_parser.dir/uri_parser.cc.o
+/usr/bin/ranlib libcdk_parser.a

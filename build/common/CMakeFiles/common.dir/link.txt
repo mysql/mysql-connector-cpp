@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcommon.a CMakeFiles/common.dir/session.cc.o CMakeFiles/common.dir/result.cc.o CMakeFiles/common.dir/collection.cc.o CMakeFiles/common.dir/value.cc.o
+/usr/bin/ranlib libcommon.a

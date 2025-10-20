@@ -1,0 +1,2 @@
+/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/edit_cache.dir
+/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/rebuild_cache.dir

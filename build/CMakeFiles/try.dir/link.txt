@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall  -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g -Wno-stringop-overflow -Wl,--dependency-file=CMakeFiles/try.dir/link.d CMakeFiles/try.dir/try.cc.o -o try  -Wl,-rpath,/home/carlon/code/mysql-connector-cpp/build libmysqlcppconnx.so.2.9.4.0

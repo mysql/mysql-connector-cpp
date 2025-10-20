@@ -1,0 +1,3 @@
+/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zstd/CMakeFiles/zstd.dir
+/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zstd/CMakeFiles/edit_cache.dir
+/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zstd/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libxapi.a CMakeFiles/xapi.dir/crud.cc.o CMakeFiles/xapi.dir/result.cc.o CMakeFiles/xapi.dir/mysqlx.cc.o CMakeFiles/xapi.dir/session.cc.o
+/usr/bin/ranlib libxapi.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdevapi.a CMakeFiles/devapi.dir/session.cc.o CMakeFiles/devapi.dir/result.cc.o CMakeFiles/devapi.dir/document.cc.o CMakeFiles/devapi.dir/crud.cc.o
+/usr/bin/ranlib libdevapi.a

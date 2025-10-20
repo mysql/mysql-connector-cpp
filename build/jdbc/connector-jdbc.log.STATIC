@@ -1,0 +1,17 @@
+/home/carlon/code/mysql-connector-cpp/build/jdbc
+-fPIC
+-Wall
+-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=.
+-g
+-Wno-stringop-overflow
+-Wl,--dependency-file=CMakeFiles/connector-jdbc-deps.dir/link.d
+-shared
+-Wl,-soname,libconnector-jdbc-deps.so
+CMakeFiles/connector-jdbc-deps.dir/__/cmake/libutils/empty.cc.o
+-Wl,-rpath,/usr/lib64/mysql
+driver/libjdbc.a
+-lpthread
+-lresolv
+/usr/lib64/mysql/libmysqlclient.so
+-L/usr/lib64/mysql
+-L/usr/lib64/mysql/private

@@ -1,0 +1,3 @@
+Connector/C++ build information.
+
+jdbc-dependencies: pthread resolv

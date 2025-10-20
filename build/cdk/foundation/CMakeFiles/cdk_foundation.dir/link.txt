@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcdk_foundation.a CMakeFiles/cdk_foundation.dir/error.cc.o CMakeFiles/cdk_foundation.dir/stream.cc.o CMakeFiles/cdk_foundation.dir/connection_tcpip.cc.o CMakeFiles/cdk_foundation.dir/socket.cc.o CMakeFiles/cdk_foundation.dir/diagnostics.cc.o CMakeFiles/cdk_foundation.dir/socket_detail.cc.o CMakeFiles/cdk_foundation.dir/connection_openssl.cc.o
+/usr/bin/ranlib libcdk_foundation.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcdk.a CMakeFiles/cdk.dir/session.cc.o CMakeFiles/cdk.dir/codec.cc.o
+/usr/bin/ranlib libcdk.a
