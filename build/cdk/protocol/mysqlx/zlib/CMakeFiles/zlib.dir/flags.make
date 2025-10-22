@@ -6,5 +6,5 @@ C_DEFINES = -D_LARGEFILE64_SOURCE=1
 
 C_INCLUDES = -isystem /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib -isystem /home/carlon/code/mysql-connector-cpp/cdk/extra/zlib
 
-C_FLAGS = -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp/cdk/extra/zlib=. -g -fPIC
+C_FLAGS = -O1 -DNDEBUG -fPIC
 

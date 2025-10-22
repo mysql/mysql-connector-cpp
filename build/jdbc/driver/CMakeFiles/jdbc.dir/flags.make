@@ -6,5 +6,5 @@ CXX_DEFINES = -DCONCPP_BUILD_SHARED -DMYSQLCLIENT_STATIC_BINDING -DNOGDI -DTELEM
 
 CXX_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/build/jdbc/driver -I/home/carlon/code/mysql-connector-cpp/include -I/home/carlon/code/mysql-connector-cpp/jdbc -I/home/carlon/code/mysql-connector-cpp/build/jdbc -I/home/carlon/code/mysql-connector-cpp/build/jdbc/cppconn -I/home/carlon/code/mysql-connector-cpp/build/jdbc/driver/nativeapi -I/home/carlon/code/mysql-connector-cpp/jdbc/extra/otel/opentelemetry-cpp-1.12.0/api/include -isystem /usr/include/mysql
 
-CXX_FLAGS = -Wall  -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow -Wno-unused-parameter -Wno-deprecated-declarations -Wno-deprecated-builtins
+CXX_FLAGS = -Wall  -O3 -DNDEBUG -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow -Wno-unused-parameter -Wno-deprecated-declarations -Wno-deprecated-builtins
 

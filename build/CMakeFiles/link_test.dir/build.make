@@ -70,12 +70,12 @@ CMakeFiles/link_test:
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E echo ====\ Installing\ con/C++\ ====
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E remove_directory /home/carlon/code/mysql-connector-cpp/build/install
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E make_directory /home/carlon/code/mysql-connector-cpp/build/install
-	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -D CMAKE_INSTALL_PREFIX=/home/carlon/code/mysql-connector-cpp/build/install -D CMAKE_INSTALL_CONFIG_NAME=Debug -P /home/carlon/code/mysql-connector-cpp/build/cmake_install.cmake
+	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -D CMAKE_INSTALL_PREFIX=/home/carlon/code/mysql-connector-cpp/build/install -D CMAKE_INSTALL_CONFIG_NAME=Release -P /home/carlon/code/mysql-connector-cpp/build/cmake_install.cmake
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E echo ====\ Configuring\ test\ application\ build\ ====
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E remove -f /home/carlon/code/mysql-connector-cpp/build/link_test/CMakeCache.txt
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -G Unix\ Makefiles -D mysql-concpp_DIR=/home/carlon/code/mysql-connector-cpp/build/install -D mysql-concpp_FIND_VERBOSE=1 -D WITH_SSL="system" -D BUILD_STATIC=OFF -DWITH_JDBC=ON /home/carlon/code/mysql-connector-cpp/testapp
 	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake -E echo ====\ Building\ test\ application\ ====
-	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake --build . --config Debug --clean-first
+	cd /home/carlon/code/mysql-connector-cpp/build/link_test && /usr/bin/cmake --build . --config Release --clean-first
 
 CMakeFiles/link_test.dir/codegen:
 .PHONY : CMakeFiles/link_test.dir/codegen

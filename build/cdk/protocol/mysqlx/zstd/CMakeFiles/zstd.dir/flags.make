@@ -7,11 +7,11 @@ ASM_DEFINES = -DXXH_NAMESPACE=ZSTD_ -DZSTD_LEGACY_SUPPORT=0
 
 ASM_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/lib -I/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/lib/common
 
-ASM_FLAGS = -g -fPIC
+ASM_FLAGS = -O3 -DNDEBUG -fPIC
 
 C_DEFINES = -DXXH_NAMESPACE=ZSTD_ -DZSTD_LEGACY_SUPPORT=0
 
 C_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/lib -I/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/lib/common
 
-C_FLAGS = -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd=. -g -fPIC
+C_FLAGS = -O3 -DNDEBUG -fPIC
 

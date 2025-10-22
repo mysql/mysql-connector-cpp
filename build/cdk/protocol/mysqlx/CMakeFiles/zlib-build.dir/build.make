@@ -67,7 +67,7 @@ include cdk/protocol/mysqlx/CMakeFiles/zlib-build.dir/compiler_depend.make
 include cdk/protocol/mysqlx/CMakeFiles/zlib-build.dir/progress.make
 
 cdk/protocol/mysqlx/CMakeFiles/zlib-build:
-	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake -DBIN_DIR=/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib -DCONFIG=Debug -DOPTS=--parallel 4 -P /home/carlon/code/mysql-connector-cpp/cdk/cmake/ext/ext-build.cmake
+	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake -DBIN_DIR=/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib -DCONFIG=Release -DOPTS=--parallel 4 -P /home/carlon/code/mysql-connector-cpp/cdk/cmake/ext/ext-build.cmake
 
 cdk/protocol/mysqlx/CMakeFiles/zlib-build.dir/codegen:
 .PHONY : cdk/protocol/mysqlx/CMakeFiles/zlib-build.dir/codegen

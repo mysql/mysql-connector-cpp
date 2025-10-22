@@ -53,11 +53,11 @@ set_target_properties(ext_zlib PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib;/home/carlon/code/mysql-connector-cpp/cdk/extra/zlib"
 )
 
-# Import target "ext_zlib" for configuration "Debug"
-set_property(TARGET ext_zlib APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+# Import target "ext_zlib" for configuration "Release"
+set_property(TARGET ext_zlib APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(ext_zlib PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
-  IMPORTED_LOCATION_DEBUG "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib/libzlib.a"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+  IMPORTED_LOCATION_RELEASE "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib/libzlib.a"
   )
 
 # This file does not depend on other imported targets which have

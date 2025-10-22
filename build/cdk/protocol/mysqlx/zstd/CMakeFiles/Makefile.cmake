@@ -15,23 +15,16 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/home/carlon/code/mysql-connector-cpp/cdk/cmake/platform.cmake"
   "/home/carlon/code/mysql-connector-cpp/cdk/extra/setup.cmake"
   "/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/CMakeLists.txt"
-  "/usr/share/cmake/Modules/CMakeASMCompiler.cmake.in"
   "/usr/share/cmake/Modules/CMakeASMInformation.cmake"
   "/usr/share/cmake/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
   "/usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
-  "/usr/share/cmake/Modules/CMakeCompilerIdDetection.cmake"
-  "/usr/share/cmake/Modules/CMakeDetermineASMCompiler.cmake"
-  "/usr/share/cmake/Modules/CMakeDetermineCompiler.cmake"
-  "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake"
-  "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake"
   "/usr/share/cmake/Modules/CMakeGenericSystem.cmake"
   "/usr/share/cmake/Modules/CMakeInitializeConfigs.cmake"
   "/usr/share/cmake/Modules/CMakeLanguageInformation.cmake"
   "/usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake"
   "/usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake"
-  "/usr/share/cmake/Modules/CMakeTestASMCompiler.cmake"
   "/usr/share/cmake/Modules/CheckCXXCompilerFlag.cmake"
   "/usr/share/cmake/Modules/CheckCXXSourceCompiles.cmake"
   "/usr/share/cmake/Modules/CheckIncludeFile.cmake"
@@ -41,7 +34,6 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/usr/share/cmake/Modules/Compiler/GNU-ASM.cmake"
   "/usr/share/cmake/Modules/Compiler/GNU-C.cmake"
   "/usr/share/cmake/Modules/Compiler/GNU-CXX.cmake"
-  "/usr/share/cmake/Modules/Compiler/GNU-FindBinUtils.cmake"
   "/usr/share/cmake/Modules/Compiler/GNU.cmake"
   "/usr/share/cmake/Modules/Internal/CMakeASMLinkerInformation.cmake"
   "/usr/share/cmake/Modules/Internal/CMakeCLinkerInformation.cmake"
@@ -76,7 +68,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "CMakeFiles/3.31.6/CMakeASMCompiler.cmake"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 

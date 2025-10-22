@@ -68,8 +68,8 @@ include cdk/protocol/mysqlx/CMakeFiles/lz4-rebuild.dir/progress.make
 
 cdk/protocol/mysqlx/CMakeFiles/lz4-rebuild:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/carlon/code/mysql-connector-cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "re-building lz4"
-	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4 && /usr/bin/cmake --build . --config Debug --clean-first --parallel 4
-	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4 && /usr/bin/cmake -E touch /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4/build.Debug.stamp
+	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4 && /usr/bin/cmake --build . --config Release --clean-first --parallel 4
+	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4 && /usr/bin/cmake -E touch /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4/build.Release.stamp
 
 cdk/protocol/mysqlx/CMakeFiles/lz4-rebuild.dir/codegen:
 .PHONY : cdk/protocol/mysqlx/CMakeFiles/lz4-rebuild.dir/codegen

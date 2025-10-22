@@ -36,6 +36,9 @@
 #include <mysql/cdk.h>
 #include <expr_parser.h>
 
+// Add these to define standard integer types
+#include <cstdint>   // int64_t, uint64_t, etc.
+#include <cstddef>   // size_t
 
 namespace mysqlx {
 
@@ -93,7 +96,8 @@ using cdk::string;
 using cdk::byte;
 using cdk::bytes;
 using mysqlx::common::Value;
-
+using bigint_64_t = int64_t;
+using u_bigint_64_t = uint64_t;
 
 /*
   Wrappres which present a given Value instance as a CDK scalar or expression.

@@ -53,11 +53,11 @@ set_target_properties(ext_zstd PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "/home/carlon/code/mysql-connector-cpp/cdk/extra/zstd/lib"
 )
 
-# Import target "ext_zstd" for configuration "Debug"
-set_property(TARGET ext_zstd APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+# Import target "ext_zstd" for configuration "Release"
+set_property(TARGET ext_zstd APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(ext_zstd PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "ASM;C"
-  IMPORTED_LOCATION_DEBUG "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zstd/libzstd.a"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "ASM;C"
+  IMPORTED_LOCATION_RELEASE "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zstd/libzstd.a"
   )
 
 # This file does not depend on other imported targets which have

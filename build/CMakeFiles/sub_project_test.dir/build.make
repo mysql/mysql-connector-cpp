@@ -69,7 +69,7 @@ include CMakeFiles/sub_project_test.dir/progress.make
 CMakeFiles/sub_project_test:
 	cd /home/carlon/code/mysql-connector-cpp/build/sub_project_test && /usr/bin/cmake -E remove -f /home/carlon/code/mysql-connector-cpp/build/sub_project_test/CMakeCache.txt
 	cd /home/carlon/code/mysql-connector-cpp/build/sub_project_test && /usr/bin/cmake -G "Unix Makefiles" -D CONCPP_CACHE=/home/carlon/code/mysql-connector-cpp/build /home/carlon/code/mysql-connector-cpp/testing/sub_project_test
-	cd /home/carlon/code/mysql-connector-cpp/build/sub_project_test && /usr/bin/cmake --build . --config Debug --clean-first
+	cd /home/carlon/code/mysql-connector-cpp/build/sub_project_test && /usr/bin/cmake --build . --config Release --clean-first
 
 CMakeFiles/sub_project_test.dir/codegen:
 .PHONY : CMakeFiles/sub_project_test.dir/codegen

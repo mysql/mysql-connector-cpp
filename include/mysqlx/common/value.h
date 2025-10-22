@@ -40,11 +40,16 @@ PUSH_SYS_WARNINGS
 #include <string>
 POP_SYS_WARNINGS
 
+#include <cstdint>
+#include <cstddef>
 
 namespace mysqlx {
 MYSQLX_ABI_BEGIN(2,0)
 
 namespace common {
+
+using bigint_64_t = int64_t;
+using u_bigint_64_t = uint64_t;
 
 class Value_conv;
 

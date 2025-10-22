@@ -6,5 +6,5 @@ CXX_DEFINES = -DCONCPP_BUILD_SHARED
 
 CXX_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/cdk/include -I/home/carlon/code/mysql-connector-cpp/build/cdk/include -I/home/carlon/code/mysql-connector-cpp/cdk/extra/rapidjson/include -I/home/carlon/code/mysql-connector-cpp/cdk/parser
 
-CXX_FLAGS = -Wall  -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow -Wall -DRAPIDJSON_HAS_CXX11_NOEXCEPT=1 -DRAPIDJSON_HAS_CXX11_RANGE_FOR=1 -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=1
+CXX_FLAGS = -Wall  -O3 -DNDEBUG -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow -Wall -DRAPIDJSON_HAS_CXX11_NOEXCEPT=1 -DRAPIDJSON_HAS_CXX11_RANGE_FOR=1 -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=1
 

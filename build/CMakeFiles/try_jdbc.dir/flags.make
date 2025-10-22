@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/include -I/home/carlon/code/mysql-connector-cpp/build/include/jdbc -I/home/carlon/code/mysql-connector-cpp/build/include/jdbc/cppconn -isystem /usr/include/mysql
 
-CXX_FLAGS = -Wall  -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow
+CXX_FLAGS = -Wall  -O3 -DNDEBUG -std=c++17 -fPIC -fvisibility=hidden -Wno-stringop-overflow
 

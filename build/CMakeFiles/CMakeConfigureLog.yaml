@@ -61,8 +61,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA"
+      source: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ"
+      binary: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -71,13 +71,13 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA'
+        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2c43d/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_2c43d.dir/build.make CMakeFiles/cmTC_2c43d.dir/build
-        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA'
-        Building C object CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o
-        /usr/bin/cc   -v -o CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_320a1/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_320a1.dir/build.make CMakeFiles/cmTC_320a1.dir/build
+        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ'
+        Building C object CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -v -o CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
         Using built-in specs.
         COLLECT_GCC=/usr/bin/cc
         OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -87,8 +87,8 @@ events:
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
         gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/'
-         /usr/libexec/gcc/x86_64-redhat-linux/15/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_2c43d.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccHG9LxB.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/'
+         /usr/libexec/gcc/x86_64-redhat-linux/15/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_320a1.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccfmGvFw.s
         GNU C23 (GCC) version 15.2.1 20250808 (Red Hat 15.2.1-1) (x86_64-redhat-linux)
         	compiled by GNU C version 15.2.1 20250808 (Red Hat 15.2.1-1), GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.24-GMP
         
@@ -102,14 +102,14 @@ events:
          /usr/include
         End of search list.
         Compiler executable checksum: 2f5fb64c856191160801414dd9eb2451
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/'
-         as -v --64 -o CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o /tmp/ccHG9LxB.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/'
+         as -v --64 -o CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o /tmp/ccfmGvFw.s
         GNU assembler version 2.44 (x86_64-redhat-linux) using BFD version version 2.44-6.fc42
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.'
-        Linking C executable cmTC_2c43d
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2c43d.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.'
+        Linking C executable cmTC_320a1
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_320a1.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/cc
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper
@@ -122,14 +122,14 @@ events:
         gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) 
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_2c43d' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_2c43d.'
-         /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccvdcFVE.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_2c43d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_320a1' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_320a1.'
+         /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfGPXr1.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_320a1 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
         collect2 version 15.2.1 20250808 (Red Hat 15.2.1-1)
-        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccvdcFVE.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_2c43d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfGPXr1.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_320a1 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
         GNU ld version 2.44-6.fc42
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_2c43d' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_2c43d.'
-        /usr/bin/cc  -v -Wl,-v CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -o cmTC_2c43d
-        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_320a1' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_320a1.'
+        /usr/bin/cc  -v -Wl,-v CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -o cmTC_320a1
+        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ'
         
       exitCode: 0
   -
@@ -162,13 +162,13 @@ events:
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA']
+        ignore line: [Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2c43d/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_2c43d.dir/build.make CMakeFiles/cmTC_2c43d.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-UUbBlA']
-        ignore line: [Building C object CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o]
-        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_320a1/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_320a1.dir/build.make CMakeFiles/cmTC_320a1.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-D2qjbJ']
+        ignore line: [Building C object CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/cc]
         ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -178,8 +178,8 @@ events:
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
         ignore line: [gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/']
-        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_2c43d.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccHG9LxB.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/']
+        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_320a1.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccfmGvFw.s]
         ignore line: [GNU C23 (GCC) version 15.2.1 20250808 (Red Hat 15.2.1-1) (x86_64-redhat-linux)]
         ignore line: [	compiled by GNU C version 15.2.1 20250808 (Red Hat 15.2.1-1)  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.3.1  isl version isl-0.24-GMP]
         ignore line: []
@@ -193,14 +193,14 @@ events:
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
         ignore line: [Compiler executable checksum: 2f5fb64c856191160801414dd9eb2451]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o /tmp/ccHG9LxB.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o /tmp/ccfmGvFw.s]
         ignore line: [GNU assembler version 2.44 (x86_64-redhat-linux) using BFD version version 2.44-6.fc42]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.']
-        ignore line: [Linking C executable cmTC_2c43d]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2c43d.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.']
+        ignore line: [Linking C executable cmTC_320a1]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_320a1.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/cc]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper]
@@ -213,13 +213,13 @@ events:
         ignore line: [gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) ]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_2c43d' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_2c43d.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccvdcFVE.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_2c43d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_320a1' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_320a1.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfGPXr1.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_320a1 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/15/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/ccvdcFVE.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccfGPXr1.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -234,7 +234,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_2c43d] ==> ignore
+          arg [cmTC_320a1] ==> ignore
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o]
@@ -246,7 +246,7 @@ events:
           arg [-L/lib] ==> dir [/lib]
           arg [-L/usr/lib] ==> dir [/usr/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o] ==> ignore
           arg [-lgcc] ==> lib [gcc]
           arg [--push-state] ==> ignore
           arg [--as-needed] ==> ignore
@@ -261,7 +261,7 @@ events:
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
         ignore line: [collect2 version 15.2.1 20250808 (Red Hat 15.2.1-1)]
-        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccvdcFVE.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_2c43d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_2c43d.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
+        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccfGPXr1.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_320a1 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_320a1.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
         linker tool for 'C': /usr/bin/ld
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
@@ -298,8 +298,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9"
+      source: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl"
+      binary: "/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -309,13 +309,13 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9'
+        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_469ca/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_469ca.dir/build.make CMakeFiles/cmTC_469ca.dir/build
-        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9'
-        Building CXX object CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o
-        /usr/bin/c++   -v -o CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9945d/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_9945d.dir/build.make CMakeFiles/cmTC_9945d.dir/build
+        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl'
+        Building CXX object CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -v -o CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -325,8 +325,8 @@ events:
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
         gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/'
-         /usr/libexec/gcc/x86_64-redhat-linux/15/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_469ca.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccjL9BAm.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/'
+         /usr/libexec/gcc/x86_64-redhat-linux/15/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_9945d.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccbQPWa6.s
         GNU C++17 (GCC) version 15.2.1 20250808 (Red Hat 15.2.1-1) (x86_64-redhat-linux)
         	compiled by GNU C version 15.2.1 20250808 (Red Hat 15.2.1-1), GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.24-GMP
         
@@ -343,14 +343,14 @@ events:
          /usr/include
         End of search list.
         Compiler executable checksum: 7616bbd86ab77c360311eb36cf6ebbe2
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/'
-         as -v --64 -o CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccjL9BAm.s
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/'
+         as -v --64 -o CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccbQPWa6.s
         GNU assembler version 2.44 (x86_64-redhat-linux) using BFD version version 2.44-6.fc42
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.'
-        Linking CXX executable cmTC_469ca
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_469ca.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_9945d
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9945d.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper
@@ -363,14 +363,14 @@ events:
         gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) 
         COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_469ca' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_469ca.'
-         /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cclLUuG5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_469ca /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9945d' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_9945d.'
+         /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cc5zF09D.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9945d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
         collect2 version 15.2.1 20250808 (Red Hat 15.2.1-1)
-        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cclLUuG5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_469ca /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+        /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cc5zF09D.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9945d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
         GNU ld version 2.44-6.fc42
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_469ca' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_469ca.'
-        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_469ca
-        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9945d' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_9945d.'
+        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_9945d
+        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl'
         
       exitCode: 0
   -
@@ -409,13 +409,13 @@ events:
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9']
+        ignore line: [Change Dir: '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_469ca/fast]
-        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_469ca.dir/build.make CMakeFiles/cmTC_469ca.dir/build]
-        ignore line: [gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-4SRBt9']
-        ignore line: [Building CXX object CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o]
-        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9945d/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_9945d.dir/build.make CMakeFiles/cmTC_9945d.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeFiles/CMakeScratch/TryCompile-08Xvfl']
+        ignore line: [Building CXX object CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -425,8 +425,8 @@ events:
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
         ignore line: [gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/']
-        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_469ca.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccjL9BAm.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/']
+        ignore line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_9945d.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccbQPWa6.s]
         ignore line: [GNU C++17 (GCC) version 15.2.1 20250808 (Red Hat 15.2.1-1) (x86_64-redhat-linux)]
         ignore line: [	compiled by GNU C version 15.2.1 20250808 (Red Hat 15.2.1-1)  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.3.1  isl version isl-0.24-GMP]
         ignore line: []
@@ -443,14 +443,14 @@ events:
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
         ignore line: [Compiler executable checksum: 7616bbd86ab77c360311eb36cf6ebbe2]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccjL9BAm.s]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccbQPWa6.s]
         ignore line: [GNU assembler version 2.44 (x86_64-redhat-linux) using BFD version version 2.44-6.fc42]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.']
-        ignore line: [Linking CXX executable cmTC_469ca]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_469ca.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_9945d]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9945d.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper]
@@ -463,13 +463,13 @@ events:
         ignore line: [gcc version 15.2.1 20250808 (Red Hat 15.2.1-1) (GCC) ]
         ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_469ca' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_469ca.']
-        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cclLUuG5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_469ca /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_9945d' '-foffload-options=-l_GCC_stdc++' '-foffload-options=-l_GCC_m' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_9945d.']
+        link line: [ /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cc5zF09D.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9945d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
           arg [/usr/libexec/gcc/x86_64-redhat-linux/15/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/cclLUuG5.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/cc5zF09D.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -484,7 +484,7 @@ events:
           arg [-dynamic-linker] ==> ignore
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_469ca] ==> ignore
+          arg [cmTC_9945d] ==> ignore
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o]
@@ -496,7 +496,7 @@ events:
           arg [-L/lib] ==> dir [/lib]
           arg [-L/usr/lib] ==> dir [/usr/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
           arg [-lstdc++] ==> lib [stdc++]
           arg [-lm] ==> lib [m]
           arg [-lgcc_s] ==> lib [gcc_s]
@@ -507,7 +507,7 @@ events:
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/crtend.o]
           arg [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
         ignore line: [collect2 version 15.2.1 20250808 (Red Hat 15.2.1-1)]
-        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cclLUuG5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_469ca /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_469ca.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
+        ignore line: [/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/cc5zF09D.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_9945d /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_9945d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o]
         linker tool for 'CXX': /usr/bin/ld
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
         collapse obj [/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
@@ -542,435 +542,6 @@ events:
   -
     kind: "try_compile-v1"
     backtrace:
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:163 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:68 (__CHECK_SYMBOL_EXISTS_IMPL)"
-      - "cdk/cmake/DepFindSSL.cmake:96 (CHECK_SYMBOL_EXISTS)"
-      - "cdk/cmake/DepFindSSL.cmake:518 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "CMakeLists.txt:351 (find_dependency)"
-    checks:
-      - "Looking for SHA512_DIGEST_LENGTH"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_SHA512_DIGEST_LENGTH"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_275c2/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_275c2.dir/build.make CMakeFiles/cmTC_275c2.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_275c2.dir/CheckSymbolExists.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_275c2.dir/CheckSymbolExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR/CheckSymbolExists.c
-        Linking C executable cmTC_275c2
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_275c2.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_275c2.dir/CheckSymbolExists.c.o -o cmTC_275c2
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-8KilAR' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:163 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:68 (__CHECK_SYMBOL_EXISTS_IMPL)"
-      - "cdk/cmake/DepFindSSL.cmake:117 (CHECK_SYMBOL_EXISTS)"
-      - "cdk/cmake/DepFindSSL.cmake:105 (check_x509_functions)"
-      - "cdk/cmake/DepFindSSL.cmake:518 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "CMakeLists.txt:351 (find_dependency)"
-    checks:
-      - "Looking for X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_8c1ad/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_8c1ad.dir/build.make CMakeFiles/cmTC_8c1ad.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_8c1ad.dir/CheckSymbolExists.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_8c1ad.dir/CheckSymbolExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf/CheckSymbolExists.c
-        Linking C executable cmTC_8c1ad
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8c1ad.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_8c1ad.dir/CheckSymbolExists.c.o -o cmTC_8c1ad  /usr/lib64/libssl.so /usr/lib64/libcrypto.so
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-K8hhNf' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:163 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:68 (__CHECK_SYMBOL_EXISTS_IMPL)"
-      - "cdk/cmake/DepFindSSL.cmake:119 (CHECK_SYMBOL_EXISTS)"
-      - "cdk/cmake/DepFindSSL.cmake:105 (check_x509_functions)"
-      - "cdk/cmake/DepFindSSL.cmake:518 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "CMakeLists.txt:351 (find_dependency)"
-    checks:
-      - "Looking for SSL_get0_param"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_SSL_GET0_PARAM"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7bbc3/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_7bbc3.dir/build.make CMakeFiles/cmTC_7bbc3.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_7bbc3.dir/CheckSymbolExists.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_7bbc3.dir/CheckSymbolExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC/CheckSymbolExists.c
-        Linking C executable cmTC_7bbc3
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7bbc3.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_7bbc3.dir/CheckSymbolExists.c.o -o cmTC_7bbc3  /usr/lib64/libssl.so /usr/lib64/libcrypto.so
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nAuqJC' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:163 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:68 (__CHECK_SYMBOL_EXISTS_IMPL)"
-      - "cdk/cmake/DepFindSSL.cmake:121 (CHECK_SYMBOL_EXISTS)"
-      - "cdk/cmake/DepFindSSL.cmake:105 (check_x509_functions)"
-      - "cdk/cmake/DepFindSSL.cmake:518 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "CMakeLists.txt:351 (find_dependency)"
-    checks:
-      - "Looking for X509_VERIFY_PARAM_set_hostflags"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_X509_VERIFY_PARAM_SET_HOSTFLAGS"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_fe02c/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_fe02c.dir/build.make CMakeFiles/cmTC_fe02c.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_fe02c.dir/CheckSymbolExists.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_fe02c.dir/CheckSymbolExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb/CheckSymbolExists.c
-        Linking C executable cmTC_fe02c
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fe02c.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_fe02c.dir/CheckSymbolExists.c.o -o cmTC_fe02c  /usr/lib64/libssl.so /usr/lib64/libcrypto.so
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-JEjntb' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:163 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckSymbolExists.cmake:68 (__CHECK_SYMBOL_EXISTS_IMPL)"
-      - "cdk/cmake/DepFindSSL.cmake:123 (CHECK_SYMBOL_EXISTS)"
-      - "cdk/cmake/DepFindSSL.cmake:105 (check_x509_functions)"
-      - "cdk/cmake/DepFindSSL.cmake:518 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "CMakeLists.txt:351 (find_dependency)"
-    checks:
-      - "Looking for X509_VERIFY_PARAM_set1_host"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_X509_VERIFY_PARAM_SET1_HOST"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9587e/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_9587e.dir/build.make CMakeFiles/cmTC_9587e.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_9587e.dir/CheckSymbolExists.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_9587e.dir/CheckSymbolExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS/CheckSymbolExists.c
-        Linking C executable cmTC_9587e
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9587e.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_9587e.dir/CheckSymbolExists.c.o -o cmTC_9587e  /usr/lib64/libssl.so /usr/lib64/libcrypto.so
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-34q2xS' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:99 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:262 (check_include_file)"
-      - "cdk/foundation/CMakeLists.txt:39 (check_type_size)"
-    checks:
-      - "Looking for sys/types.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_SYS_TYPES_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_be748/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_be748.dir/build.make CMakeFiles/cmTC_be748.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_be748.dir/CheckIncludeFile.c.o
-        /usr/bin/cc   -std=c++17 -o CMakeFiles/cmTC_be748.dir/CheckIncludeFile.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr/CheckIncludeFile.c
-        cc1: let op: command-line option ‘-std=c++17’ is valid for C++/ObjC++ but not for C
-        Linking C executable cmTC_be748
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_be748.dir/link.txt --verbose=1
-        /usr/bin/cc   -std=c++17 CMakeFiles/cmTC_be748.dir/CheckIncludeFile.c.o -o cmTC_be748
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-7Y9dkr' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:99 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:263 (check_include_file)"
-      - "cdk/foundation/CMakeLists.txt:39 (check_type_size)"
-    checks:
-      - "Looking for stdint.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_STDINT_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_63984/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_63984.dir/build.make CMakeFiles/cmTC_63984.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_63984.dir/CheckIncludeFile.c.o
-        /usr/bin/cc   -std=c++17 -o CMakeFiles/cmTC_63984.dir/CheckIncludeFile.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF/CheckIncludeFile.c
-        cc1: let op: command-line option ‘-std=c++17’ is valid for C++/ObjC++ but not for C
-        Linking C executable cmTC_63984
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_63984.dir/link.txt --verbose=1
-        /usr/bin/cc   -std=c++17 CMakeFiles/cmTC_63984.dir/CheckIncludeFile.c.o -o cmTC_63984
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-VMpaeF' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:99 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:264 (check_include_file)"
-      - "cdk/foundation/CMakeLists.txt:39 (check_type_size)"
-    checks:
-      - "Looking for stddef.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_STDDEF_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_03b6d/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_03b6d.dir/build.make CMakeFiles/cmTC_03b6d.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_03b6d.dir/CheckIncludeFile.c.o
-        /usr/bin/cc   -std=c++17 -o CMakeFiles/cmTC_03b6d.dir/CheckIncludeFile.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D/CheckIncludeFile.c
-        cc1: let op: command-line option ‘-std=c++17’ is valid for C++/ObjC++ but not for C
-        Linking C executable cmTC_03b6d
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_03b6d.dir/link.txt --verbose=1
-        /usr/bin/cc   -std=c++17 CMakeFiles/cmTC_03b6d.dir/CheckIncludeFile.c.o -o cmTC_03b6d
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6c5a6D' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "cdk/foundation/CMakeLists.txt:39 (check_type_size)"
-    checks:
-      - "Check size of wchar_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_WCHAR_SIZE"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_8888d/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_8888d.dir/build.make CMakeFiles/cmTC_8888d.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_8888d.dir/WCHAR_SIZE.c.o
-        /usr/bin/cc   -std=c++17 -o CMakeFiles/cmTC_8888d.dir/WCHAR_SIZE.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF/WCHAR_SIZE.c
-        cc1: let op: command-line option ‘-std=c++17’ is valid for C++/ObjC++ but not for C
-        Linking C executable cmTC_8888d
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8888d.dir/link.txt --verbose=1
-        /usr/bin/cc   -std=c++17 CMakeFiles/cmTC_8888d.dir/WCHAR_SIZE.c.o -o cmTC_8888d
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-hBwyeF' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:99 (try_compile)"
-      - "cdk/protocol/mysqlx/CMakeLists.txt:34 (check_include_file)"
-    checks:
-      - "Looking for sys/endian.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_ENDIAN_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7dd4a/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_7dd4a.dir/build.make CMakeFiles/cmTC_7dd4a.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_7dd4a.dir/CheckIncludeFile.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_7dd4a.dir/CheckIncludeFile.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N/CheckIncludeFile.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N/CheckIncludeFile.c:1:10: fatale fout: sys/endian.h: Bestand of map bestaat niet
-            1 | #include <sys/endian.h>
-              |          ^~~~~~~~~~~~~~
-        compilatie is beëindigd.
-        gmake[1]: *** [CMakeFiles/cmTC_7dd4a.dir/build.make:81: CMakeFiles/cmTC_7dd4a.dir/CheckIncludeFile.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WVJC1N' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_7dd4a/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFile.cmake:99 (try_compile)"
-      - "cdk/protocol/mysqlx/CMakeLists.txt:37 (check_include_file)"
-    checks:
-      - "Looking for sys/byteorder.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cdk/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_BYTEORDER_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_8f47f/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_8f47f.dir/build.make CMakeFiles/cmTC_8f47f.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_8f47f.dir/CheckIncludeFile.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_8f47f.dir/CheckIncludeFile.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ/CheckIncludeFile.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ/CheckIncludeFile.c:1:10: fatale fout: sys/byteorder.h: Bestand of map bestaat niet
-            1 | #include <sys/byteorder.h>
-              |          ^~~~~~~~~~~~~~~~~
-        compilatie is beëindigd.
-        gmake[1]: *** [CMakeFiles/cmTC_8f47f.dir/build.make:81: CMakeFiles/cmTC_8f47f.dir/CheckIncludeFile.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-w5jjEQ' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_8f47f/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_run-v1"
-    backtrace:
-      - "jdbc/cmake/DepFindMySQL.cmake:421 (try_run)"
-      - "jdbc/cmake/DepFindMySQL.cmake:310 (get_version)"
-      - "jdbc/cmake/DepFindMySQL.cmake:618 (main)"
-      - "cdk/cmake/dependency.cmake:47 (include)"
-      - "jdbc/CMakeLists.txt:150 (find_dependency)"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "_compile_result"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_f36e7/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_f36e7.dir/build.make CMakeFiles/cmTC_f36e7.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_f36e7.dir/getmysqlversion.c.o
-        /usr/bin/cc  -I/usr/include/mysql  -o CMakeFiles/cmTC_f36e7.dir/getmysqlversion.c.o -c /home/carlon/code/mysql-connector-cpp/build/jdbc/getmysqlversion.c
-        Linking C executable cmTC_f36e7
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f36e7.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_f36e7.dir/getmysqlversion.c.o -o cmTC_f36e7
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt verlaten
-        
-      exitCode: 0
-    runResult:
-      variable: "_run_result"
-      cached: true
-      stdout: |
-        8.4.6
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
       - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:108 (try_compile)"
       - "/usr/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
       - "/usr/share/cmake/Modules/CheckCXXCompilerFlag.cmake:55 (cmake_check_compiler_flag)"
@@ -979,8 +550,8 @@ events:
     checks:
       - "Performing Test flag_supported"
     directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV"
+      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD"
+      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "-Wall "
       CMAKE_CXX_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
@@ -990,17 +561,19 @@ events:
       variable: "flag_supported"
       cached: true
       stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV'
+        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d96ef/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_d96ef.dir/build.make CMakeFiles/cmTC_d96ef.dir/build
-        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV'
-        Building CXX object CMakeFiles/cmTC_d96ef.dir/src.cxx.o
-        /usr/bin/c++ -Dflag_supported  -Wall   -std=c++17   -Wno-unused-parameter -o CMakeFiles/cmTC_d96ef.dir/src.cxx.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV/src.cxx
-        Linking CXX executable cmTC_d96ef
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d96ef.dir/link.txt --verbose=1
-        /usr/bin/c++ -Wall   CMakeFiles/cmTC_d96ef.dir/src.cxx.o -o cmTC_d96ef
-        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-yYEAVV'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_07eb3/fast
+        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_07eb3.dir/build.make CMakeFiles/cmTC_07eb3.dir/build
+        gmake[2]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD'
+        Building CXX object CMakeFiles/cmTC_07eb3.dir/src.cxx.o
+        /usr/bin/c++ -Dflag_supported  -Wall   -std=c++17   -Wno-unused-parameter -o CMakeFiles/cmTC_07eb3.dir/src.cxx.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD/src.cxx
+        Linking CXX executable cmTC_07eb3
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_07eb3.dir/link.txt --verbose=1
+        /usr/bin/c++ -Wall   CMakeFiles/cmTC_07eb3.dir/src.cxx.o -o cmTC_07eb3
+        gmake[2]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD'
+        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lg7FfD'
         
       exitCode: 0
   -
@@ -1014,8 +587,8 @@ events:
     checks:
       - "Performing Test flag_supported"
     directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi"
+      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt"
+      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "-Wall "
       CMAKE_CXX_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
@@ -1025,17 +598,19 @@ events:
       variable: "flag_supported"
       cached: true
       stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi'
+        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_357c5/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_357c5.dir/build.make CMakeFiles/cmTC_357c5.dir/build
-        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi'
-        Building CXX object CMakeFiles/cmTC_357c5.dir/src.cxx.o
-        /usr/bin/c++ -Dflag_supported  -Wall   -std=c++17   -Wno-deprecated-declarations -o CMakeFiles/cmTC_357c5.dir/src.cxx.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi/src.cxx
-        Linking CXX executable cmTC_357c5
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_357c5.dir/link.txt --verbose=1
-        /usr/bin/c++ -Wall   CMakeFiles/cmTC_357c5.dir/src.cxx.o -o cmTC_357c5
-        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-mmiIAi'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_98dd6/fast
+        gmake[1]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_98dd6.dir/build.make CMakeFiles/cmTC_98dd6.dir/build
+        gmake[2]: Entering directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt'
+        Building CXX object CMakeFiles/cmTC_98dd6.dir/src.cxx.o
+        /usr/bin/c++ -Dflag_supported  -Wall   -std=c++17   -Wno-deprecated-declarations -o CMakeFiles/cmTC_98dd6.dir/src.cxx.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt/src.cxx
+        Linking CXX executable cmTC_98dd6
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_98dd6.dir/link.txt --verbose=1
+        /usr/bin/c++ -Wall   CMakeFiles/cmTC_98dd6.dir/src.cxx.o -o cmTC_98dd6
+        gmake[2]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt'
+        gmake[1]: Leaving directory '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MYdEGt'
         
       exitCode: 0
   -
@@ -1056,940 +631,22 @@ events:
       stdout: |
         Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_f8138/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_f8138.dir/build.make CMakeFiles/cmTC_f8138.dir/build
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a93e7/fast
         gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_f8138.dir/type_vector.c.o
-        /usr/bin/cc  -I/usr/include/mysql  -o CMakeFiles/cmTC_f8138.dir/type_vector.c.o -c /home/carlon/code/mysql-connector-cpp/jdbc/cmake/type_vector.c
+        /usr/bin/gmake  -f CMakeFiles/cmTC_a93e7.dir/build.make CMakeFiles/cmTC_a93e7.dir/build
+        gmake[2]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt binnengegaan
+        Building C object CMakeFiles/cmTC_a93e7.dir/type_vector.c.o
+        /usr/bin/cc  -I/usr/include/mysql  -o CMakeFiles/cmTC_a93e7.dir/type_vector.c.o -c /home/carlon/code/mysql-connector-cpp/jdbc/cmake/type_vector.c
         /home/carlon/code/mysql-connector-cpp/jdbc/cmake/type_vector.c: In functie ‘main’:
         /home/carlon/code/mysql-connector-cpp/jdbc/cmake/type_vector.c:33:16: fout: ‘MYSQL_TYPE_VECTOR’ undeclared (first use in this function); did you mean ‘MYSQL_TYPE_SET’?
            33 |   printf("%d", MYSQL_TYPE_VECTOR);
               |                ^~~~~~~~~~~~~~~~~
               |                MYSQL_TYPE_SET
         /home/carlon/code/mysql-connector-cpp/jdbc/cmake/type_vector.c:33:16: note: each undeclared identifier is reported only once for each function it appears in
-        gmake[1]: *** [CMakeFiles/cmTC_f8138.dir/build.make:81: CMakeFiles/cmTC_f8138.dir/type_vector.c.o] Fout 1
+        gmake[2]: *** [CMakeFiles/cmTC_a93e7.dir/build.make:81: CMakeFiles/cmTC_a93e7.dir/type_vector.c.o] Fout 1
+        gmake[2]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt verlaten
+        gmake[1]: *** [Makefile:134: cmTC_a93e7/fast] Fout 2
         gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeTmp' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_f8138/fast] Fout 2
         
       exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckIncludeFiles.cmake:141 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:35 (CHECK_INCLUDE_FILES)"
-    checks:
-      - "Looking for include file inttypes.h"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_INTTYPES_H"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_47d82/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_47d82.dir/build.make CMakeFiles/cmTC_47d82.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_47d82.dir/HAVE_INTTYPES_H.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_47d82.dir/HAVE_INTTYPES_H.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4/HAVE_INTTYPES_H.c
-        Linking C executable cmTC_47d82
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_47d82.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_47d82.dir/HAVE_INTTYPES_H.c.o -o cmTC_47d82
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lpq1i4' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:37 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of int8_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_INT8_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7f4bc/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_7f4bc.dir/build.make CMakeFiles/cmTC_7f4bc.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_7f4bc.dir/HAVE_INT8_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_7f4bc.dir/HAVE_INT8_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy/HAVE_INT8_T.c
-        Linking C executable cmTC_7f4bc
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7f4bc.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_7f4bc.dir/HAVE_INT8_T.c.o -o cmTC_7f4bc
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-SGDUmy' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:38 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of uint8_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_UINT8_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d7a69/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_d7a69.dir/build.make CMakeFiles/cmTC_d7a69.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_d7a69.dir/HAVE_UINT8_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_d7a69.dir/HAVE_UINT8_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1/HAVE_UINT8_T.c
-        Linking C executable cmTC_d7a69
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d7a69.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_d7a69.dir/HAVE_UINT8_T.c.o -o cmTC_d7a69
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-H3hXh1' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:39 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of int16_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_INT16_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d40b7/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_d40b7.dir/build.make CMakeFiles/cmTC_d40b7.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_d40b7.dir/HAVE_INT16_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_d40b7.dir/HAVE_INT16_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK/HAVE_INT16_T.c
-        Linking C executable cmTC_d40b7
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d40b7.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_d40b7.dir/HAVE_INT16_T.c.o -o cmTC_d40b7
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-kW7zpK' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:40 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of uint16_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_UINT16_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_780cf/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_780cf.dir/build.make CMakeFiles/cmTC_780cf.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_780cf.dir/HAVE_UINT16_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_780cf.dir/HAVE_UINT16_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga/HAVE_UINT16_T.c
-        Linking C executable cmTC_780cf
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_780cf.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_780cf.dir/HAVE_UINT16_T.c.o -o cmTC_780cf
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6SK3ga' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:41 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of int32_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_INT32_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_c34cf/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_c34cf.dir/build.make CMakeFiles/cmTC_c34cf.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_c34cf.dir/HAVE_INT32_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_c34cf.dir/HAVE_INT32_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5/HAVE_INT32_T.c
-        Linking C executable cmTC_c34cf
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c34cf.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_c34cf.dir/HAVE_INT32_T.c.o -o cmTC_c34cf
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bc8Sq5' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:42 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of uint32_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_UINT32_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_b2471/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_b2471.dir/build.make CMakeFiles/cmTC_b2471.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_b2471.dir/HAVE_UINT32_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_b2471.dir/HAVE_UINT32_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs/HAVE_UINT32_T.c
-        Linking C executable cmTC_b2471
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b2471.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_b2471.dir/HAVE_UINT32_T.c.o -o cmTC_b2471
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-sOtFDs' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:43 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of int64_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_INT64_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_909cf/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_909cf.dir/build.make CMakeFiles/cmTC_909cf.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_909cf.dir/HAVE_INT64_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_909cf.dir/HAVE_INT64_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU/HAVE_INT64_T.c
-        Linking C executable cmTC_909cf
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_909cf.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_909cf.dir/HAVE_INT64_T.c.o -o cmTC_909cf
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-DP3yvU' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:44 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of uint64_t"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_UINT64_T"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_fab5f/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_fab5f.dir/build.make CMakeFiles/cmTC_fab5f.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_fab5f.dir/HAVE_UINT64_T.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_fab5f.dir/HAVE_UINT64_T.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy/HAVE_UINT64_T.c
-        Linking C executable cmTC_fab5f
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fab5f.dir/link.txt --verbose=1
-        /usr/bin/cc CMakeFiles/cmTC_fab5f.dir/HAVE_UINT64_T.c.o -o cmTC_fab5f
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-IXAHRy' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:45 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of __int8"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_INT8"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d96ad/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_d96ad.dir/build.make CMakeFiles/cmTC_d96ad.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_d96ad.dir/HAVE_MS_INT8.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_d96ad.dir/HAVE_MS_INT8.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x/HAVE_MS_INT8.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x/HAVE_MS_INT8.c:27:22: fout: ‘__int8’ undeclared here (not in a function); did you mean ‘u_int’?
-           27 | #define SIZE (sizeof(__int8))
-              |                      ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x/HAVE_MS_INT8.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_d96ad.dir/build.make:81: CMakeFiles/cmTC_d96ad.dir/HAVE_MS_INT8.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-vNu97x' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_d96ad/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:46 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of unsigned __int8"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_UINT8"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_9774d/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_9774d.dir/build.make CMakeFiles/cmTC_9774d.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_9774d.dir/HAVE_MS_UINT8.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_9774d.dir/HAVE_MS_UINT8.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:27:31: fout: expected ‘)’ before ‘__int8’
-           27 | #define SIZE (sizeof(unsigned __int8))
-              |                     ~         ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:27:31: fout: expected ‘)’ before ‘__int8’
-           27 | #define SIZE (sizeof(unsigned __int8))
-              |                     ~         ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:30:12: note: in expansion of macro ‘SIZE’
-           30 |   ('0' + ((SIZE / 1000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:27:31: fout: expected ‘)’ before ‘__int8’
-           27 | #define SIZE (sizeof(unsigned __int8))
-              |                     ~         ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:31:12: note: in expansion of macro ‘SIZE’
-           31 |   ('0' + ((SIZE / 100)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:27:31: fout: expected ‘)’ before ‘__int8’
-           27 | #define SIZE (sizeof(unsigned __int8))
-              |                     ~         ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:32:12: note: in expansion of macro ‘SIZE’
-           32 |   ('0' + ((SIZE / 10)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:27:31: fout: expected ‘)’ before ‘__int8’
-           27 | #define SIZE (sizeof(unsigned __int8))
-              |                     ~         ^~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg/HAVE_MS_UINT8.c:33:12: note: in expansion of macro ‘SIZE’
-           33 |   ('0' +  (SIZE    % 10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_9774d.dir/build.make:81: CMakeFiles/cmTC_9774d.dir/HAVE_MS_UINT8.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-WRWjvg' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_9774d/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:47 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of __int16"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_INT16"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_b0372/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_b0372.dir/build.make CMakeFiles/cmTC_b0372.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_b0372.dir/HAVE_MS_INT16.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_b0372.dir/HAVE_MS_INT16.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL/HAVE_MS_INT16.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL/HAVE_MS_INT16.c:27:22: fout: ‘__int16’ undeclared here (not in a function); did you mean ‘__int16_t’?
-           27 | #define SIZE (sizeof(__int16))
-              |                      ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL/HAVE_MS_INT16.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_b0372.dir/build.make:81: CMakeFiles/cmTC_b0372.dir/HAVE_MS_INT16.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-3XeguL' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_b0372/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:48 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of unsigned __int16"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_UINT16"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_c8d00/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_c8d00.dir/build.make CMakeFiles/cmTC_c8d00.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_c8d00.dir/HAVE_MS_UINT16.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_c8d00.dir/HAVE_MS_UINT16.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:27:31: fout: expected ‘)’ before ‘__int16’
-           27 | #define SIZE (sizeof(unsigned __int16))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:27:31: fout: expected ‘)’ before ‘__int16’
-           27 | #define SIZE (sizeof(unsigned __int16))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:30:12: note: in expansion of macro ‘SIZE’
-           30 |   ('0' + ((SIZE / 1000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:27:31: fout: expected ‘)’ before ‘__int16’
-           27 | #define SIZE (sizeof(unsigned __int16))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:31:12: note: in expansion of macro ‘SIZE’
-           31 |   ('0' + ((SIZE / 100)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:27:31: fout: expected ‘)’ before ‘__int16’
-           27 | #define SIZE (sizeof(unsigned __int16))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:32:12: note: in expansion of macro ‘SIZE’
-           32 |   ('0' + ((SIZE / 10)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:27:31: fout: expected ‘)’ before ‘__int16’
-           27 | #define SIZE (sizeof(unsigned __int16))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF/HAVE_MS_UINT16.c:33:12: note: in expansion of macro ‘SIZE’
-           33 |   ('0' +  (SIZE    % 10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_c8d00.dir/build.make:81: CMakeFiles/cmTC_c8d00.dir/HAVE_MS_UINT16.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-AiWwNF' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_c8d00/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:49 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of __int32"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_INT32"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_f8303/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_f8303.dir/build.make CMakeFiles/cmTC_f8303.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_f8303.dir/HAVE_MS_INT32.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_f8303.dir/HAVE_MS_INT32.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4/HAVE_MS_INT32.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4/HAVE_MS_INT32.c:27:22: fout: ‘__int32’ undeclared here (not in a function); did you mean ‘__int32_t’?
-           27 | #define SIZE (sizeof(__int32))
-              |                      ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4/HAVE_MS_INT32.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_f8303.dir/build.make:81: CMakeFiles/cmTC_f8303.dir/HAVE_MS_INT32.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-9OFsP4' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_f8303/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:50 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of unsigned __int32"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_UINT32"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_98fef/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_98fef.dir/build.make CMakeFiles/cmTC_98fef.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_98fef.dir/HAVE_MS_UINT32.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_98fef.dir/HAVE_MS_UINT32.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:27:31: fout: expected ‘)’ before ‘__int32’
-           27 | #define SIZE (sizeof(unsigned __int32))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:27:31: fout: expected ‘)’ before ‘__int32’
-           27 | #define SIZE (sizeof(unsigned __int32))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:30:12: note: in expansion of macro ‘SIZE’
-           30 |   ('0' + ((SIZE / 1000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:27:31: fout: expected ‘)’ before ‘__int32’
-           27 | #define SIZE (sizeof(unsigned __int32))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:31:12: note: in expansion of macro ‘SIZE’
-           31 |   ('0' + ((SIZE / 100)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:27:31: fout: expected ‘)’ before ‘__int32’
-           27 | #define SIZE (sizeof(unsigned __int32))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:32:12: note: in expansion of macro ‘SIZE’
-           32 |   ('0' + ((SIZE / 10)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:27:31: fout: expected ‘)’ before ‘__int32’
-           27 | #define SIZE (sizeof(unsigned __int32))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa/HAVE_MS_UINT32.c:33:12: note: in expansion of macro ‘SIZE’
-           33 |   ('0' +  (SIZE    % 10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_98fef.dir/build.make:81: CMakeFiles/cmTC_98fef.dir/HAVE_MS_UINT32.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-bX1wMa' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_98fef/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:51 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of __int64"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_INT64"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_8f623/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_8f623.dir/build.make CMakeFiles/cmTC_8f623.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_8f623.dir/HAVE_MS_INT64.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_8f623.dir/HAVE_MS_INT64.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w/HAVE_MS_INT64.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w/HAVE_MS_INT64.c:27:22: fout: ‘__int64’ undeclared here (not in a function); did you mean ‘__int64_t’?
-           27 | #define SIZE (sizeof(__int64))
-              |                      ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w/HAVE_MS_INT64.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_8f623.dir/build.make:81: CMakeFiles/cmTC_8f623.dir/HAVE_MS_INT64.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-6yxy7w' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_8f623/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:156 (try_compile)"
-      - "/usr/share/cmake/Modules/CheckTypeSize.cmake:283 (__check_type_size_impl)"
-      - "jdbc/cppconn/CMakeLists.txt:52 (CHECK_TYPE_SIZE)"
-    checks:
-      - "Check size of unsigned __int64"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_HAVE_MS_UINT64"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_936d5/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_936d5.dir/build.make CMakeFiles/cmTC_936d5.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_936d5.dir/HAVE_MS_UINT64.c.o
-        /usr/bin/cc    -o CMakeFiles/cmTC_936d5.dir/HAVE_MS_UINT64.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:27:31: fout: expected ‘)’ before ‘__int64’
-           27 | #define SIZE (sizeof(unsigned __int64))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:29:12: note: in expansion of macro ‘SIZE’
-           29 |   ('0' + ((SIZE / 10000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:27:31: fout: expected ‘)’ before ‘__int64’
-           27 | #define SIZE (sizeof(unsigned __int64))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:30:12: note: in expansion of macro ‘SIZE’
-           30 |   ('0' + ((SIZE / 1000)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:27:31: fout: expected ‘)’ before ‘__int64’
-           27 | #define SIZE (sizeof(unsigned __int64))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:31:12: note: in expansion of macro ‘SIZE’
-           31 |   ('0' + ((SIZE / 100)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:27:31: fout: expected ‘)’ before ‘__int64’
-           27 | #define SIZE (sizeof(unsigned __int64))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:32:12: note: in expansion of macro ‘SIZE’
-           32 |   ('0' + ((SIZE / 10)%10)),
-              |            ^~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:27:31: fout: expected ‘)’ before ‘__int64’
-           27 | #define SIZE (sizeof(unsigned __int64))
-              |                     ~         ^~~~~~~
-        /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj/HAVE_MS_UINT64.c:33:12: note: in expansion of macro ‘SIZE’
-           33 |   ('0' +  (SIZE    % 10)),
-              |            ^~~~
-        gmake[1]: *** [CMakeFiles/cmTC_936d5.dir/build.make:81: CMakeFiles/cmTC_936d5.dir/HAVE_MS_UINT64.c.o] Fout 1
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-oBTsXj' wordt verlaten
-        gmake: *** [Makefile:134: cmTC_936d5/fast] Fout 2
-        
-      exitCode: 2
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:55 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtold"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOLD"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2ee69/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_2ee69.dir/build.make CMakeFiles/cmTC_2ee69.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_2ee69.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtold -o CMakeFiles/cmTC_2ee69.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt/CheckFunctionExists.c
-        Linking C executable cmTC_2ee69
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2ee69.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtold CMakeFiles/cmTC_2ee69.dir/CheckFunctionExists.c.o -o cmTC_2ee69
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-qgiuXt' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:56 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtol"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOL"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_3d9e3/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_3d9e3.dir/build.make CMakeFiles/cmTC_3d9e3.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_3d9e3.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtol -o CMakeFiles/cmTC_3d9e3.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0/CheckFunctionExists.c
-        Linking C executable cmTC_3d9e3
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d9e3.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtol CMakeFiles/cmTC_3d9e3.dir/CheckFunctionExists.c.o -o cmTC_3d9e3
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-E6o0N0' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:57 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtoll"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOLL"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_d31ae/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_d31ae.dir/build.make CMakeFiles/cmTC_d31ae.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_d31ae.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtoll -o CMakeFiles/cmTC_d31ae.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8/CheckFunctionExists.c
-        Linking C executable cmTC_d31ae
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d31ae.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtoll CMakeFiles/cmTC_d31ae.dir/CheckFunctionExists.c.o -o cmTC_d31ae
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-a3bfg8' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:58 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtoul"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOUL"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_70c48/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_70c48.dir/build.make CMakeFiles/cmTC_70c48.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_70c48.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtoul -o CMakeFiles/cmTC_70c48.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo/CheckFunctionExists.c
-        Linking C executable cmTC_70c48
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_70c48.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtoul CMakeFiles/cmTC_70c48.dir/CheckFunctionExists.c.o -o cmTC_70c48
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-GW5BEo' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:59 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtoull"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOULL"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_38b82/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_38b82.dir/build.make CMakeFiles/cmTC_38b82.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_38b82.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtoull -o CMakeFiles/cmTC_38b82.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts/CheckFunctionExists.c
-        Linking C executable cmTC_38b82
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_38b82.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtoull CMakeFiles/cmTC_38b82.dir/CheckFunctionExists.c.o -o cmTC_38b82
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-MvKrts' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:60 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtoimax"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOIMAX"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a48eb/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_a48eb.dir/build.make CMakeFiles/cmTC_a48eb.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_a48eb.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtoimax -o CMakeFiles/cmTC_a48eb.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw/CheckFunctionExists.c
-        Linking C executable cmTC_a48eb
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a48eb.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtoimax CMakeFiles/cmTC_a48eb.dir/CheckFunctionExists.c.o -o cmTC_a48eb
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-nXC6zw' wordt verlaten
-        
-      exitCode: 0
-  -
-    kind: "try_compile-v1"
-    backtrace:
-      - "/usr/share/cmake/Modules/CheckFunctionExists.cmake:93 (try_compile)"
-      - "jdbc/cppconn/CMakeLists.txt:61 (CHECK_FUNCTION_EXISTS)"
-    checks:
-      - "Looking for strtoumax"
-    directories:
-      source: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c"
-      binary: "/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c"
-    cmakeVariables:
-      CMAKE_C_FLAGS: ""
-      CMAKE_C_FLAGS_DEBUG: "-fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp=. -g"
-      CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/jdbc/cmake;/home/carlon/code/mysql-connector-cpp/cmake;/home/carlon/code/mysql-connector-cpp/cmake/../cdk/cmake;/home/carlon/code/mysql-connector-cpp/cdk/cmake"
-    buildResult:
-      variable: "HAVE_FUNCTION_STRTOUMAX"
-      cached: true
-      stdout: |
-        Change Dir: '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c'
-        
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a5cee/fast
-        /usr/bin/gmake  -f CMakeFiles/cmTC_a5cee.dir/build.make CMakeFiles/cmTC_a5cee.dir/build
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c' wordt binnengegaan
-        Building C object CMakeFiles/cmTC_a5cee.dir/CheckFunctionExists.c.o
-        /usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strtoumax -o CMakeFiles/cmTC_a5cee.dir/CheckFunctionExists.c.o -c /home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c/CheckFunctionExists.c
-        Linking C executable cmTC_a5cee
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a5cee.dir/link.txt --verbose=1
-        /usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strtoumax CMakeFiles/cmTC_a5cee.dir/CheckFunctionExists.c.o -o cmTC_a5cee
-        gmake[1]: Map '/home/carlon/code/mysql-connector-cpp/build/CMakeFiles/CMakeScratch/TryCompile-lhx78c' wordt verlaten
-        
-      exitCode: 0
 ...

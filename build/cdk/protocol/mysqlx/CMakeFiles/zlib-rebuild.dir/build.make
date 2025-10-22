@@ -68,8 +68,8 @@ include cdk/protocol/mysqlx/CMakeFiles/zlib-rebuild.dir/progress.make
 
 cdk/protocol/mysqlx/CMakeFiles/zlib-rebuild:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/carlon/code/mysql-connector-cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "re-building zlib"
-	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake --build . --config Debug --clean-first --parallel 4
-	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake -E touch /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib/build.Debug.stamp
+	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake --build . --config Release --clean-first --parallel 4
+	cd /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib && /usr/bin/cmake -E touch /home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/zlib/build.Release.stamp
 
 cdk/protocol/mysqlx/CMakeFiles/zlib-rebuild.dir/codegen:
 .PHONY : cdk/protocol/mysqlx/CMakeFiles/zlib-rebuild.dir/codegen

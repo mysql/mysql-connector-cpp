@@ -53,11 +53,11 @@ set_target_properties(ext_lz4 PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "/home/carlon/code/mysql-connector-cpp/cdk/extra/lz4/lib"
 )
 
-# Import target "ext_lz4" for configuration "Debug"
-set_property(TARGET ext_lz4 APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+# Import target "ext_lz4" for configuration "Release"
+set_property(TARGET ext_lz4 APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(ext_lz4 PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "C"
-  IMPORTED_LOCATION_DEBUG "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4/liblz4.a"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+  IMPORTED_LOCATION_RELEASE "/home/carlon/code/mysql-connector-cpp/build/cdk/protocol/mysqlx/lz4/liblz4.a"
   )
 
 # This file does not depend on other imported targets which have

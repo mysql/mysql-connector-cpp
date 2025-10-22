@@ -235,7 +235,7 @@ CMAKE_AR-ADVANCED:INTERNAL=1
 CMAKE_AR:INTERNAL=/usr/bin/ar
 //DO NOT EDIT, CMAKE_BUILD_TYPE loaded from external file.  To
 // change this value edit this file: /home/carlon/code/mysql-connector-cpp/build/platform-cache/CMakeCache.txt
-CMAKE_BUILD_TYPE:INTERNAL=Debug
+CMAKE_BUILD_TYPE:INTERNAL=Release
 //This is the directory where this CMakeCache.txt was created
 CMAKE_CACHEFILE_DIR:INTERNAL=/home/carlon/code/mysql-connector-cpp/build
 //Major version of cmake used to create the current loaded cache
@@ -763,6 +763,7 @@ PROTOBUF_DIR_ADVANCED:INTERNAL=YES
 PROTOBUF_DIR_DOC:INTERNAL=Path to PROTOBUF instalation dir.
 PROTOBUF_INCLUDE_DIR_ADVANCED:INTERNAL=YES
 PROTOBUF_INCLUDE_DIR_DOC:INTERNAL=Path to PROTOBUF include directory.
+PROTOBUF_INCLUDE_DIR_SET:INTERNAL=true
 PROTOBUF_LIBRARY_ADVANCED:INTERNAL=YES
 PROTOBUF_LIBRARY_DOC:INTERNAL=PROTOBUF library name
 PROTOBUF_LIB_DIR_ADVANCED:INTERNAL=YES

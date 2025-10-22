@@ -1,10 +1,10 @@
 MySQL Connector/C++ Build Information
 
-build-date           :  2025-10-21
+build-date           :  2025-10-22
 os-info              :  Linux-6.16.11-200.fc42.x86_64
 compiler             :  GNU 15.2.1
 protobuf-version     :  3.6.1
-build-type           :  Debug
+build-type           :  Release
 ssl-library          :  OpenSSL 3.2.6
 mysql-version        :  8.4.6
 

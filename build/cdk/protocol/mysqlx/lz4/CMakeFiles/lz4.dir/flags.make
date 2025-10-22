@@ -6,5 +6,5 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/carlon/code/mysql-connector-cpp/cdk/extra/lz4/lib
 
-C_FLAGS = -fdebug-prefix-map=/home/carlon/code/mysql-connector-cpp/cdk/extra/lz4=. -g -fPIC
+C_FLAGS = -O1 -DNDEBUG -fPIC
 
