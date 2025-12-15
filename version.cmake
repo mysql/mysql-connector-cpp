@@ -28,7 +28,7 @@
 
 # Note: To be used in copyright notes of generated files
 
-set(COPYRIGHT_YEAR "2025" CACHE INTERNAL "version info")
+set(COPYRIGHT_YEAR "2026" CACHE INTERNAL "version info")
 
 #
 # Connector/C++ version
