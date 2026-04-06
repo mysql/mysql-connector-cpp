@@ -539,6 +539,10 @@ set(IGNORED_LIBS
   mysqlharness
 )
 
+if(WIN32)
+  list(APPEND IGNORED_LIBS "z[.]dll$")
+endif()
+
 
 # -------------
 
