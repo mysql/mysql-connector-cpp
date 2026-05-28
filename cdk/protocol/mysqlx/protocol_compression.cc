@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2026, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -387,16 +387,22 @@ bool
     return true;
 
   size_t orig_size = size;
+  size_t bytes_uncompressed = 0;
 
   do
   {
-    size -= do_uncompress(buf + orig_size - size, size);
+    bytes_uncompressed = do_uncompress(buf + orig_size - size, size);
+
+    if (COMPRESSION_ERROR == bytes_uncompressed)
+      return false;
+
+    if (bytes_uncompressed > size)
+      return false;
+
+    size -= bytes_uncompressed;
 
     if (0 == size)
       return true;
-
-    if (COMPRESSION_ERROR == size)
-      return false;
 
   }while(size);
 
@@ -423,9 +429,19 @@ size_t
     bytes_uncompressed = m_algorithm->uncompress
     (dst, dest_size, m_c_inp_size, bytes_consumed);
 
+    if (COMPRESSION_ERROR == bytes_uncompressed ||
+        bytes_consumed > m_c_inp_size ||
+        bytes_uncompressed > m_u_total_size ||
+        (0 == bytes_consumed && 0 == bytes_uncompressed))
+      return COMPRESSION_ERROR;
+
     m_c_inp_offset += bytes_consumed;
     m_c_inp_size -= bytes_consumed;
     m_u_total_size -= bytes_uncompressed;
+  }
+  else
+  {
+    return COMPRESSION_ERROR;
   }
 
   return bytes_uncompressed;

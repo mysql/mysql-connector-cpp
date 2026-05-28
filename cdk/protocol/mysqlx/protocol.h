@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2026, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -107,9 +107,18 @@ typedef unsigned short int  msg_type_t;
 ///  Length of mysqlx message header.
 const size_t header_length= 5;
 
-/// Maximum size of internal buffer used to send or receive messages.
-const size_t max_wr_size= 1024*1024*1024;  // 1GB
-const size_t max_rd_size= max_wr_size;
+/// Maximum X Protocol message size accepted for client-side buffering.
+///
+/// This follows the server-side hard upper bound for mysqlx_max_allowed_packet:
+/// X Plugin configures its max_message_size from that variable, whose range
+/// tops out at 1 GiB.
+const size_t max_msg_size= 1024*1024*1024;
+
+/// Maximum decompressed frame size reported by Compression.uncompressed_size.
+///
+/// The field includes the 4-byte X Protocol length field, while max_msg_size
+/// caps the value stored in that length field.
+const size_t max_frame_size= max_msg_size + sizeof(msg_size_t);
 
 // TODO: use throw_error or any other appropriate method when the code is ready
 #define THROW_PROTOCOL_ERROR(ERR) throw ERR

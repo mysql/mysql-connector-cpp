@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+# Copyright (c) 2018, 2026, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -38,13 +38,28 @@ set_property(
 
 #Add cdk includes because we are using their source tests
 add_test_includes(${PROJECT_SOURCE_DIR}/cdk/include)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/lz4/lib)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/protobuf/protobuf-3.19.6/src)
 add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/rapidjson/include)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/zlib)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/extra/zstd/lib)
+add_test_includes(${PROJECT_SOURCE_DIR}/cdk/protocol/mysqlx)
 add_test_includes(${PROJECT_BINARY_DIR}/cdk/include)
+add_test_includes(${PROJECT_BINARY_DIR}/cdk/protocol/mysqlx)
+add_test_includes(${PROJECT_BINARY_DIR}/cdk/protocol/mysqlx/zlib)
+add_test_includes(${PROTOBUF_INCLUDE_DIR})
 
 ADD_TEST_LIBRARIES(cdk_parser)
+ADD_TEST_LIBRARIES(cdk_proto_mysqlx)
 
 ADD_NG_TEST(common-t
   ${PROJECT_SOURCE_DIR}/cdk/parser/tests/parser-t.cc
+  protocol_mysqlx_frame_validation-t.cc
 )
 
-
+# protocol_mysqlx_frame_validation-t.cc includes protocol.h, which includes
+# generated protobuf headers. Build cdk_proto_mysqlx first so those headers
+# exist in clean parallel builds.
+if(TARGET common-t)
+  add_dependencies(common-t cdk_proto_mysqlx)
+endif()

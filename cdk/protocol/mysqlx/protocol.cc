@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2026, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2.0, as
@@ -603,24 +603,46 @@ bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
 
   size_t &buf_size = (side == SERVER ? m_rd_size : m_wr_size);
 
-  if (requested_size < buf_size)
+  if (requested_size > max_msg_size)
+    return false;
+
+  size_t required_size = requested_size;
+
+  if (side == CLIENT)
+  {
+    /*
+      For writes, requested_size is only the next frame. During pipelining
+      m_wr_buf already contains m_pipeline_size queued bytes, and wr_buffer()
+      appends after that occupied prefix.
+    */
+    if (m_pipeline_size > max_msg_size - requested_size)
+      return false;
+
+    required_size += m_pipeline_size;
+  }
+
+  if (required_size <= buf_size)
     return true;
 
-  // Note that since requested_size >= buf_size, the buffer size is
+  // Note that since required_size >= buf_size, the buffer size is
   // at least doubled here.
 
-  size_t new_size = buf_size + requested_size;
-  byte *ptr = (byte*)realloc(buf, new_size);
+  size_t new_size = 0;
+  byte *ptr = NULL;
+
+  if (buf_size <= max_msg_size - required_size)
+  {
+    new_size = buf_size + required_size;
+    ptr = (byte*)realloc(buf, new_size);
+  }
 
   // If allocating buffer with margin failed, try allocating
   // exact required amount.
 
   if (!ptr)
   {
-    if (side == CLIENT)
-      new_size = m_pipeline_size + requested_size;
-    else
-      new_size = requested_size;
+    new_size = required_size;
+
     ptr = (byte*)realloc(buf, new_size);
   }
 
@@ -633,8 +655,24 @@ bool Protocol_impl::resize_buf(Protocol_side side, size_t requested_size)
   return true;
 }
 
-#define GET_PAYLOAD_SIZE(S, B) S = *(msg_size_t*)(B); \
-                           NTOHSIZE(S)
+static size_t get_payload_size(const byte *header)
+{
+  msg_size_t raw_size;
+  memcpy(&raw_size, header, sizeof(raw_size));
+  NTOHSIZE(raw_size);
+
+  if (raw_size == 0 || raw_size > max_msg_size)
+    throw_error("Invalid X Protocol message size");
+
+  return raw_size - 1;
+}
+
+
+static void validate_uncompressed_size(uint64_t size)
+{
+  if (size < header_length || size > max_frame_size)
+    throw_error("Invalid X Protocol message size");
+}
 
 
 /*
@@ -655,8 +693,7 @@ void Protocol_impl::rd_process()
 
   if (m_msg_compressed_type == 0)
   {
-    GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
-    m_msg_size--;
+    m_msg_size = get_payload_size(m_rd_buf);
     // The read buffer already contains the message type
     m_msg_type = m_rd_buf[4];
 
@@ -693,6 +730,8 @@ void Protocol_impl::rd_process()
       if (!m_compressed_msg.ParseFromArray(m_rd_buf, (int)m_msg_size))
         throw_error("Invalid Compression message");
 
+      validate_uncompressed_size(m_compressed_msg.uncompressed_size());
+
       m_compressor.set_compressed_buf((byte*)m_compressed_msg.payload().data(),
         m_compressed_msg.payload().length(),
         (size_t)m_compressed_msg.uncompressed_size());
@@ -700,16 +739,14 @@ void Protocol_impl::rd_process()
       if (!m_compressor.uncompress(m_rd_buf, 5))
         throw_error("Error uncompressing the message header");
 
-      GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
-      --m_msg_size; // Subtract 1 byte of msg type, which we already know
+      m_msg_size = get_payload_size(m_rd_buf);
       m_msg_type = (msg_type_t)m_rd_buf[4];
     }
     else
     {
       if (!m_compressor.uncompression_finished())
       {
-        GET_PAYLOAD_SIZE(m_msg_size, m_rd_buf);
-        --m_msg_size; // Subtract 1 byte of msg type, which we already know
+        m_msg_size = get_payload_size(m_rd_buf);
       }
     }
   }
