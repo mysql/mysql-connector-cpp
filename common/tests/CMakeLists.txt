@@ -54,6 +54,7 @@ ADD_TEST_LIBRARIES(cdk_proto_mysqlx)
 
 ADD_NG_TEST(common-t
   ${PROJECT_SOURCE_DIR}/cdk/parser/tests/parser-t.cc
+  data_source_t.cc
   protocol_mysqlx_frame_validation-t.cc
 )
 

@@ -691,10 +691,8 @@ namespace ds {
       Query DNS and return results as a Multi_source.
     */
 
-    Multi_source get()
+    Multi_source get() const
     {
-      Multi_source src;
-
       auto list = cdk::foundation::connection::srv_list(m_host);
 
       if (list.empty())
@@ -703,19 +701,35 @@ namespace ds {
         throw_error(err.c_str());
       }
 
-      for (auto& el : list)
+      return get(list);
+    }
+
+  protected:
+
+    template <typename Srv_list>
+    Multi_source get(const Srv_list &list) const
+    {
+      Multi_source src;
+
+      for (const auto& el : list)
       {
         Options opt1(m_opts);
-        Options::TLS_options tls(m_opts.get_tls());
-        tls.set_host_name(el.name);
-        opt1.set_tls(tls);
+#ifdef WITH_SSL
+        const Options::TLS_options &tls = m_opts.get_tls();
+
+        if (Options::TLS_options::SSL_MODE::VERIFY_IDENTITY == tls.ssl_mode() &&
+            tls.get_host_name().empty())
+        {
+          Options::TLS_options tls1(tls);
+          tls1.set_host_name(m_host);
+          opt1.set_tls(tls1);
+        }
+#endif
         src.add_prio(ds::TCPIP(el.name, el.port), opt1, el.prio, el.weight);
       }
 
       return src;
     }
-
-  protected:
 
     std::string m_host;
     Options     m_opts;
