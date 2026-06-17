@@ -79,6 +79,8 @@ override_dh_auto_install:
 
 	install README.txt debian/tmp/usr/README.txt
 	install LICENSE.txt debian/tmp/usr/LICENSE.txt
+	# CONTRIBUTING.md is staged only for GPL/community packages.
+@DEB_CONTRIBUTING_STAGE@
 
 	install -d -m 0755 debian/tmp/.$(LIB_DIR)/cmake
 	install -d -m 0755 debian/tmp/.$(LIB_DIR)/cmake/mysql-concpp

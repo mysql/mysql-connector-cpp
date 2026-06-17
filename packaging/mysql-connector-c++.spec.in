@@ -247,12 +247,14 @@ test -L /usr/include/mysql-cppconn && rm -f /usr/include/mysql-cppconn || true
 %doc LICENSE.txt
 # Note: doc files are specified relative to the main source directory
 %doc README.txt ../build-dynamic/INFO_SRC ../build-dynamic/INFO_BIN
+%{!?commercial:%doc CONTRIBUTING.md}
 %{_libdir}/libmysqlcppconnx.so.@ABI_VERSION_MAJOR@*
 %{_libdir}/libmysqlcppconn8.so.2
 
 %files jdbc
 %doc LICENSE.txt
 %doc README.txt ../build-dynamic/INFO_SRC ../build-dynamic/INFO_BIN
+%{!?commercial:%doc CONTRIBUTING.md}
 %{_libdir}/libmysqlcppconn.so.@JDBC_ABI_VERSION_MAJOR@*
 %{plugin_dir}
 
@@ -260,12 +262,14 @@ test -L /usr/include/mysql-cppconn && rm -f /usr/include/mysql-cppconn || true
 %files compat
 %doc LICENSE.txt
 %doc README.txt
+%{!?commercial:%doc CONTRIBUTING.md}
 %{_libdir}/libmysqlcppconn.so.9*
 %endif
 
 %files devel
 %doc LICENSE.txt
 %doc README.txt ../build-dynamic/INFO_SRC ../build-dynamic/INFO_BIN
+%{!?commercial:%doc CONTRIBUTING.md}
 %{_libdir}/libmysqlcppconn.so
 %{_libdir}/libmysqlcppconn-static.a
 %{_libdir}/libmysqlcppconnx.so

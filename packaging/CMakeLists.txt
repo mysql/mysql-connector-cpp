@@ -167,6 +167,16 @@ foreach(file ${info_files})
 
 endforeach()
 
+if(CONCPP_LICENSE STREQUAL "GPL-2.0")
+  set(contributing_file "${CMAKE_BINARY_DIR}/CONTRIBUTING.md")
+  configure_file(
+    "${CMAKE_SOURCE_DIR}/CONTRIBUTING.md"
+    "${contributing_file}"
+    NEWLINE_STYLE ${newline}
+  )
+  install(FILES "${contributing_file}" DESTINATION ${INSTALL_DOC_DIR} COMPONENT Readme)
+endif()
+
 
 # ======================================================================
 # Package definitions

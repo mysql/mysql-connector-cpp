@@ -24,3 +24,5 @@
 # Legal
 usr/LICENSE.txt /usr/share/doc/@PACKAGE_BASE_NAME@-dbgsym
 usr/README.txt /usr/share/doc/@PACKAGE_BASE_NAME@-dbgsym
+# Include CONTRIBUTING.md only for GPL/community packages.
+@DEB_CONTRIBUTING_DOC_ENTRY@

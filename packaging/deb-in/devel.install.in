@@ -43,3 +43,5 @@ usr/include/jdbc/cppconn/*.h usr/include/mysql-cppconn/jdbc/cppconn
 # Legal
 usr/LICENSE.txt /usr/share/doc/@PACKAGE_BASE_NAME@
 usr/README.txt /usr/share/doc/@PACKAGE_BASE_NAME@
+# Include CONTRIBUTING.md only for GPL/community packages.
+@DEB_CONTRIBUTING_DOC_ENTRY@
