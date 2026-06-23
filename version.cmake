@@ -34,8 +34,8 @@ set(COPYRIGHT_YEAR "2026" CACHE INTERNAL "version info")
 # Connector/C++ version
 #
 
-set(CONCPP_VERSION_MAJOR  10 CACHE INTERNAL "version info")
-set(CONCPP_VERSION_MINOR  0 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MAJOR  26 CACHE INTERNAL "version info")
+set(CONCPP_VERSION_MINOR  7 CACHE INTERNAL "version info")
 set(CONCPP_VERSION_MICRO  0 CACHE INTERNAL "version info")
 # Level is "-alpha", "-beta", empty if GA
 set(CONCPP_VERSION_LEVEL  "" CACHE INTERNAL "version info")
