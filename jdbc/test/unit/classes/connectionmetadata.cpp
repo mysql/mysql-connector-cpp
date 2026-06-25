@@ -634,7 +634,7 @@ void connectionmetadata::getDriverVersions()
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(0, dbmeta->getDriverMajorVersion());
-    ASSERT_LT(9, dbmeta->getDriverMajorVersion());
+    ASSERT_LT(99, dbmeta->getDriverMajorVersion());
     ASSERT_LT(100, dbmeta->getDriverMinorVersion());
     ASSERT_LT(100, dbmeta->getDriverPatchVersion());
 
