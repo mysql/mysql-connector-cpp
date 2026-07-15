@@ -1,4 +1,4 @@
-# Copyright (c) 2014, 2024, Oracle and/or its affiliates.
+# Copyright (c) 2014, 2026, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -39,7 +39,7 @@
 #  cmake -DBOOST_INCLUDE_DIR=/usr/local/include -DBOOST_LIB_DIR=/usr/local/lib -DMY_INCLUDE_DIR=/usr/local/include:/usr/include  -DCMAKE_BUILD_TYPE=Debug -DCMAKE_ECLIPSE_VERSION=4.4 -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE -DGMOCK_LIBRARIES=gmock -G "Eclipse CDT4 - Unix Makefiles" ../process_launcher
 #
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.15)
 
 project (process_launcher)
 
@@ -97,4 +97,3 @@ endif()
 if(WIN32)
   CHANGE_MD_2_MT()
 endif()
-
