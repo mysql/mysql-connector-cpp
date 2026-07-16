@@ -192,7 +192,7 @@ else (protobuf_BUILD_SHARED_LIBS)
         MultiThreaded$<$<CONFIG:Debug>:Debug>)
     else()
       set(CMAKE_MSVC_RUNTIME_LIBRARY
-        MultiThreadedDLL$<$<CONFIG:Debug>:Debug>)
+        MultiThreaded$<$<CONFIG:Debug>:Debug>DLL)
     endif()
   else()
     # In case we are building static libraries, link also the runtime library statically
