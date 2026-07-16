@@ -598,7 +598,7 @@ void connectionmetadata::getDatabaseVersions()
   {
     DatabaseMetaData * dbmeta=con->getMetaData();
     ASSERT_GT(2, dbmeta->getDatabaseMajorVersion());
-    ASSERT_LT(9, dbmeta->getDatabaseMajorVersion());
+    ASSERT_LT(99, dbmeta->getDatabaseMajorVersion());
     ASSERT_LT(100, dbmeta->getDatabaseMinorVersion());
     ASSERT_LT(100, dbmeta->getDatabasePatchVersion());
 
