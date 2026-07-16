@@ -187,7 +187,13 @@ else (protobuf_BUILD_SHARED_LIBS)
   # making programmatic control difficult.  Prefer the functionality in newer
   # CMake versions when available.
   if(CMAKE_VERSION VERSION_GREATER 3.15 OR CMAKE_VERSION VERSION_EQUAL 3.15)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
+    if(MSVC AND protobuf_MSVC_STATIC_RUNTIME)
+      set(CMAKE_MSVC_RUNTIME_LIBRARY
+        MultiThreaded$<$<CONFIG:Debug>:Debug>)
+    else()
+      set(CMAKE_MSVC_RUNTIME_LIBRARY
+        MultiThreadedDLL$<$<CONFIG:Debug>:Debug>)
+    endif()
   else()
     # In case we are building static libraries, link also the runtime library statically
     # so that MSVCR*.DLL is not required at runtime.
