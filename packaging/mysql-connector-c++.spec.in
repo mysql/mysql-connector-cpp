@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+# Copyright (c) 2018, 2026, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0, as
@@ -31,7 +31,6 @@
 #
 #  mysql_dir     Path to the MySQL installation, where to find the client lib
 #  commercial    If set, is a commercial build
-#  with_compat   If set the -compat package is built
 ###############################################
 
 %{?mysql_dir:    %global mysql_opt -DMYSQL_DIR=%{mysql_dir}}
@@ -79,9 +78,6 @@ Obsoletes:      mysql-connector-c++%{?product_suffix} < %{version}-%{release}
 Obsoletes:      mysql-connector-c++ < %{version}-%{release}
 
 Source0:        https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++%{?product_suffix}-%{version}-src.tar.gz
-%if 0%{?with_compat}
-Source1:        https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++%{?product_suffix}-8.4.0-src.tar.gz
-%endif
 
 BuildRequires:  %{cmake_cmd} >= 3.15.0
 BuildRequires:  gcc
@@ -106,19 +102,6 @@ Obsoletes:      mysql-connector-c++-jdbc < %{version}-%{release}
 This MySQL Driver for C++ mimics the JDBC 4.0 API.
 
 
-%if 0%{?with_compat}
-%package        compat
-Summary:        MySQL Connector/C++ -- backward compatibility libraries
-Provides:       libmysqlcppconn9 = %{version}-%{release}
-Obsoletes:      libmysqlcppconn9 < %{version}-%{release}
-Obsoletes:      mysql-connector-c++%{?product_suffix}-compat < %{version}-%{release}
-Obsoletes:      mysql-connector-c++-compat < %{version}-%{release}
-Obsoletes:      mysql-connector-c++%{?product_suffix}-jdbc < 9.0.0
-Obsoletes:      mysql-connector-c++-jdbc < 9.0.0
-%description    compat
-MySQL Connector/C++ -- backward compatibility libraries
-%endif
-
 %package        devel
 Summary:        Development header files and libraries for MySQL C++ client applications
 Requires:       mysql-connector-c++%{?product_suffix} =  %{version}-%{release}
@@ -135,30 +118,17 @@ to develop MySQL client applications in C++.
 ###############################################
 
 %prep
-%setup -q %{?with_compat:-b1} -n %{name}-%{version}-src
-
-SRC=`pwd`
-SRC1=%{name}-8.4.0-src
+%setup -q -n %{name}-%{version}-src
 
 # Note: Remove options related to warnings that are set by RPM tools because
 # our build system handles warning reporting levels.
 
 %global optflags %(echo %{optflags} | sed -e 's/-Wall//' -e 's/-Werror=[^ ]*//g')
 
-cd ${RPM_BUILD_DIR}
-
-%if 0%{?with_compat}
-
-# Patch compatiblity sources:
-git apply --directory ${SRC1} ${SRC}/packaging/compat.patch
-
-%endif
-
 
 %build
 
 SRC=`pwd`
-SRC1=%{name}-8.4.0-src
 
 cd ${RPM_BUILD_DIR}
 
@@ -177,12 +147,6 @@ cd ${RPM_BUILD_DIR}
 %global __cmake_config %{cmake_cmd} %{__cmake_common_opts} %{__cmake_explicit_opts}
 %global __cmake_config_with_tests %{__cmake_config} %{__cmake_test_opts}
 
-%if 0%{?with_compat}
-rm -rf build-compat && mkdir build-compat
-%{__cmake_config} -S ${SRC1} -B build-compat
-%{cmake_cmd} --build build-compat --verbose
-%endif
-
 rm -rf build-static && mkdir build-static
 %{__cmake_config_with_tests} -S ${SRC} -B build-static -DBUILD_STATIC=1
 %{cmake_cmd} --build build-static --verbose
@@ -198,9 +162,6 @@ cd ${RPM_BUILD_DIR}
 
 # Note: order of installations is important!
 
-%if 0%{?with_compat}
-%{cmake_cmd} --install build-compat --prefix %{buildroot}
-%endif
 %{cmake_cmd} --install build-static --prefix %{buildroot}
 %{cmake_cmd} --install build-dynamic --prefix %{buildroot}
 
@@ -258,14 +219,6 @@ test -L /usr/include/mysql-cppconn && rm -f /usr/include/mysql-cppconn || true
 %{_libdir}/libmysqlcppconn.so.@JDBC_ABI_VERSION_MAJOR@*
 %{plugin_dir}
 
-%if 0%{?with_compat}
-%files compat
-%doc LICENSE.txt
-%doc README.txt
-%{!?commercial:%doc CONTRIBUTING.md}
-%{_libdir}/libmysqlcppconn.so.9*
-%endif
-
 %files devel
 %doc LICENSE.txt
 %doc README.txt ../build-dynamic/INFO_SRC ../build-dynamic/INFO_BIN
@@ -285,6 +238,9 @@ test -L /usr/include/mysql-cppconn && rm -f /usr/include/mysql-cppconn || true
 ###############################################
 
 %changelog
+
+* Tue Sep 15 2026 Filipe Silva <filipe.silva@oracle.com> - 26.10.0-1
+- Remove definitions for -compat package (WL#17361)
 
 * Tue Jul 22 2025 Rafal Somla <rafal.somla@oracle.com> - 9.4.0-1
 - Fix warnings control flags

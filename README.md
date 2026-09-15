@@ -17,6 +17,8 @@ We greatly appreciate feedback from our users, including bug reports and code co
 MySQL Connector/C++ can be installed from pre-compiled packages that can be downloaded from the [MySQL downloads page](https://dev.mysql.com/downloads/connector/cpp/).
 The process of installing of Connector/C++ from a binary distribution is described in [MySQL online manuals](https://dev.mysql.com/doc/connector-cpp/8.0/en/connector-cpp-installation-binary.html)
 
+Current RPM distributions no longer include the `mysql-connector-c++-compat` package or the legacy JDBC ABI 9 libraries. Upgrades from pre-9.0 installations that require ABI 9 compatibility are unsupported by current RPM packages. Applications that depend on ABI 9 must retain a suitable older package or be rebuilt against a supported Connector/C++ ABI before upgrading. Existing compatibility package installations are not migrated automatically.
+
 ### Build From Source
 
 MySQL Connector/C++ can be installed from the source. Please check [MySQL online manuals](https://dev.mysql.com/doc/connector-cpp/8.0/en/connector-cpp-installation-source.html)

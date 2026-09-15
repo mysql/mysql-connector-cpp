@@ -29,6 +29,16 @@ For the new features/bugfix history, see release notes at
 <https://dev.mysql.com/doc/relnotes/connector-cpp/en/news-8-0.html>.
 Note that the initial releases used major version 2.0.
 
+RPM UPGRADES
+============
+
+Current RPM distributions no longer include the mysql-connector-c++-compat
+package or the legacy JDBC ABI 9 libraries. Upgrades from pre-9.0 installations
+that require ABI 9 compatibility are unsupported by current RPM packages.
+Applications that depend on ABI 9 must retain a suitable older package or be
+rebuilt against a supported Connector/C++ ABI before upgrading. Existing
+compatibility package installations are not migrated automatically.
+
 CONTACT
 =======
 
