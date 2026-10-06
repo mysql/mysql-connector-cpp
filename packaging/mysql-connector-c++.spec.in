@@ -47,6 +47,10 @@
 %if 0%{?suse_version} == 1500
 %global dist            .sl15
 %endif
+%if 0%{?suse_version} == 1600
+%global dist            .sl16
+%global debug_package   %{nil}
+%endif
 
 %global source_date_epoch_from_changelog 0
 
