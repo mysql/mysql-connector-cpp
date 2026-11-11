@@ -256,7 +256,7 @@ protected:
   }
 
   template <typename... T>
-  static void add_values(Impl *impl, T... args)
+  static void add_values(Impl *impl, const T&... args)
   {
     Add_value::Impl row{ {}, 0 };
     Args_processor<Add_value>::process_args(&row, args...);

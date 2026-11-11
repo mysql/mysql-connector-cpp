@@ -3469,6 +3469,54 @@ TEST_F(Crud, PS_remove)
 
 }
 
+TEST_F(Crud, table_insert_expression_values)
+{
+  SKIP_IF_NO_XPLUGIN;
+
+  Schema sch = getSchema("test");
+  sql("DROP TABLE IF EXISTS test.insert_expression_values");
+  sql("CREATE TABLE test.insert_expression_values (id INT, value INT)");
+  Table table = sch.getTable("insert_expression_values");
+
+  int id = 1;
+  std::string expression = "1 + 2";
+  Result result = table.insert("id", "value")
+    .values(id, expr(expression))
+    .values(2, expr("3 + 4"))
+    .execute();
+  EXPECT_EQ(2U, result.getAffectedItemsCount());
+
+  // Preserve the single-Row overload for all value categories.
+  Row row(3, 11);
+  const Row const_row(4, 13);
+  result = table.insert("id", "value")
+    .values(row)
+    .values(const_row)
+    .values(Row(5, 17))
+    .execute();
+  EXPECT_EQ(3U, result.getAffectedItemsCount());
+
+  RowResult rows = table.select("id", "value").orderBy("id").execute();
+  Row first = rows.fetchOne();
+  ASSERT_FALSE(first.isNull());
+  EXPECT_EQ(1, first[0].get<int>());
+  EXPECT_EQ(3, first[1].get<int>());
+  Row second = rows.fetchOne();
+  ASSERT_FALSE(second.isNull());
+  EXPECT_EQ(2, second[0].get<int>());
+  EXPECT_EQ(7, second[1].get<int>());
+  for (int expected : {11, 13, 17})
+  {
+    Row next = rows.fetchOne();
+    ASSERT_FALSE(next.isNull());
+    EXPECT_EQ(expected, next[1].get<int>());
+  }
+  EXPECT_TRUE(rows.fetchOne().isNull());
+
+  sql("DROP TABLE test.insert_expression_values");
+}
+
+
 TEST_F(Crud, PS_table_insert)
 {
   SKIP_IF_NO_XPLUGIN

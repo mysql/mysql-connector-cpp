@@ -151,7 +151,7 @@ public:
   */
 
   template<typename... Types>
-  TableInsert& values(Types... rest)
+  TableInsert& values(const Types&... rest)
   {
     try {
       add_values(get_impl(), rest...);
